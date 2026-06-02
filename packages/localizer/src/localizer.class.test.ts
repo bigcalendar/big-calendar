@@ -1,6 +1,15 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { Localizer } from './localizer.class'
+import * as weekInfo from './ponyfills/weekInfo.function'
 import type { DateParts, DateTimeUnit, FixedUnit, TimeParts } from './types/localizer.type'
+
+// Spy on getWeekInfo while keeping its real behavior by default, so the
+// firstDayOfWeek fallback can be forced in one isolated test (below) without
+// affecting the locale-driven assertions elsewhere in this file.
+vi.mock('./ponyfills/weekInfo.function', async (importOriginal) => {
+  const actual = await importOriginal<typeof weekInfo>()
+  return { ...actual, getWeekInfo: vi.fn(actual.getWeekInfo) }
+})
 
 /**
  * Minimal UTC-only concrete localizer used to exercise the base class in
@@ -238,6 +247,16 @@ describe('Localizer base — week and visible range', () => {
   it('respects a Monday-first override', () => {
     const mon = new TestLocalizer({ ...base, firstDayOfWeek: 1 })
     expect(mon.startOfWeek(WED)).toBe('2026-06-01T00:00:00.000Z')
+  })
+  it('falls back to Monday (1) when neither an override nor locale weekInfo yields a firstDay', () => {
+    // Force the otherwise-unreachable last-resort branch: weekInfo with no firstDay.
+    vi.mocked(weekInfo.getWeekInfo).mockReturnValueOnce({
+      firstDay: undefined as unknown as number,
+      weekend: [6, 7],
+      minimalDays: 1,
+    })
+    const fallback = new TestLocalizer(base)
+    expect(fallback.firstDayOfWeek()).toBe(1)
   })
   it('computes the visible month grid', () => {
     expect(loc.firstVisibleDay(WED)).toBe('2026-05-31T00:00:00.000Z')
