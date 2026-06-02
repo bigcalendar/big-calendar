@@ -72,6 +72,14 @@
    navigation, accessors, selection FSM (§8.2). Parity §9 logic items covered by Vitest at the 85/95 bar.
    Build against the `LocalizerContract` (core depends on the contract type, never a concrete localizer).
 
+## Deferred (explicit — revisit later, not now)
+
+- **CSS Anchor Positioning** — use `@floating-ui/core` for all tethered positioning **for now**. Adopt
+  native CSS anchor positioning (`anchor-name`/`position-anchor`/`anchor()`/`position-try`) as a
+  feature-detected progressive enhancement **only once it is stable across engines** (Chromium-only as of
+  the Jan-2026 cutoff; Safari/Firefox not yet shipped). Trigger to revisit: confirm Safari + Firefox
+  stable support via caniuse/MDN. See `memory/spikes/phase1-css-layout.md` + DECISIONS.md (2026-06-02).
+
 ## Notes / watch-items
 
 - Toolchain pinned to latest stable at scaffold time: nx 22, TS 6, Vite 8, Vitest 4, ESLint 10,
