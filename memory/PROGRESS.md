@@ -247,23 +247,42 @@ All the standalone pure pieces are done (constants/accessors, store factory, nav
 range, layout algos, month + time-grid + agenda view models, resource grouping, selection FSM,
 messages). What remains to satisfy the Phase-2 exit (§4.2 store shape + §9 logic) is INTEGRATION:
 
+### Phase 2 — Task 2j: store view-model integration ✓ (commit e3909c4, pushed)
+
+- **`src/views/viewModel.{type,function}.ts`** — `CalendarViewModel<TEvent>` discriminated union
+  (`{kind:'month',view,month}` | `{kind:'time',view,timeGrid}` | `{kind:'agenda',view,agenda}`),
+  `ViewModelOptions` (step/timeslots/dayStartMin/dayEndMin/dayLayoutAlgorithm/allDayMaxRows/
+  showMultiDayTimes/weekEventLimit, all `| undefined`), and `buildViewModel({ localizer, accessors,
+  view, days, events, options? })` — exhaustive `switch (view)` dispatching to the month / time-grid /
+  agenda builders. Since `days` is passed in, the builders need only day+minute localizer methods
+  (no viewRange dep).
+- **`src/types/config.type.ts`** — added parity options: `step`, `timeslots`, `min`, `max` (datetime
+  strings; only time-of-day used; midnight `max` = end-of-day), `dayLayoutAlgorithm`, `allDayMaxRows`,
+  `showMultiDayTimes`, `showAllEvents`, `selectable`. (Removed the stale "Phase 2b surface" note.)
+- **`src/store/store.type.ts` + `createCalendarStore.function.ts`** — added
+  `viewModel: ReadonlySignal<CalendarViewModel<TEvent>>`, a computed over view/range/events/config.
+  Store resolves `min`/`max` → `dayStartMin`/`dayEndMin` minutes via `getMinutesFromMidnight`
+  (`max` 00:00 → 1440), and folds `showAllEvents` into the all-day row limit (`allDayMaxRows`).
+- Barrel exports `buildViewModel` + `CalendarViewModel`/`ViewModelOptions`.
+- Tests: buildViewModel (5, pure) + store viewModel (4, via a combined time+range localizer fake
+  `{...makeTimeLocalizer(), ...makeRangeLocalizer(1)}`). 166 tests total; every file clears the bar
+  (total 94.78% branch / 100% func). typecheck/lint/test/build green.
+- **Notes:** month `weekEventLimit` is left unlimited from the store (month "+N more" overflow is
+  adapter-measured — core can't know cell height); call `monthViewModel` directly with a measured
+  limit if needed. `selectable` config added but not yet consumed (next task).
+
 ## In progress
 
-- (none — pick up 2j next)
+- (none — pick up 2k next)
 
 ## Next — remaining Phase 2 integration tasks (PR-sized; `/compact` between them)
 
-1. **2j — store view-model integration**: a derived `viewModel: ReadonlySignal<ViewModel>` on the
-   store that selects month / time-grid (day/week/work_week) / agenda by `view.value` and builds it
-   from config; add the parity config options it needs (`step`, `timeslots`, `min`, `max` [as time
-   strings or minutes — pick + document], `dayLayoutAlgorithm`, `allDayMaxRows`, `showMultiDayTimes`,
-   `showAllEvents`, `selectable`). Decide the `ViewModel` union shape.
-2. **2k — view registry** (custom views): widen `ViewKey`; map view key → { build view model, navigate,
-   range } so custom views register (the §9 "core view registry" item). Today `ViewKey` = built-ins.
-3. **2l — background events**: position `backgroundEvents` in the time-grid (and month) models
-   (currently only foreground timed + all-day are placed).
-4. **Store-level selection**: expose the `createSelection` controller on the store keyed to the active
-   view's slot list (+ `onSelectSlot`/`onSelecting` config), and `beginSlotSelection` per §4.2.
+1. **2k — store-level selection**: expose the `createSelection` controller on the store, keyed to the
+   active view's slot list, mapping slot indices → dates and wiring `selectable`/`onSelectSlot`/
+   `onSelecting` config; add `beginSlotSelection` per §4.2.
+2. **2l — background events**: position `backgroundEvents` in the time-grid (and month) models.
+3. **2m — view registry** (custom views): widen `ViewKey`; map view key → { build view model,
+   navigate, range } so custom views register (§9 "core view registry").
 
 All built against `LocalizerContract` (core depends on the contract type, never a concrete localizer).
 Per-file coverage bar 85% branch / 95% function throughout.
