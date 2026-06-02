@@ -12,13 +12,8 @@
 - **Install:** `pnpm install` at repo root.
 - **Verify:** `pnpm exec nx run-many -t lint typecheck test build` (all green as of latest commit).
 - **Coverage:** per-file bar 85% branch / 95% function (Vitest `perFile`).
-- **Next:** finish **Task 1b** — implement `@big-calendar/localizer-temporal` per the fully-worked plan in
-  "In progress" below. The polyfill dep is already installed; no re-probing needed — just write the files.
-
-> ⏸️ **PAUSED 2026-06-01** mid-Task-1b for a VS Code restart. Task 1a is committed + pushed. Task 1b
-> only has its dependency added (`temporal-polyfill@0.3.2`) — **no source written yet**. The complete
-> implementation design (verified against `temporal-spec@0.3.1`) is captured below so the next session
-> implements directly.
+- **Next:** **Task 1c** — Phase 1 browser-support spike (subgrid + Popover API + CSS anchor-positioning
+  + `:dir()` matrix); commit a spike report to `memory/`. Closes Phase 1.
 
 ## Done
 
@@ -43,65 +38,29 @@
 - Tests: 44 cases via a UTC `TestLocalizer` fixture + ponyfill suites. Coverage 95.78% branch /
   100% function. Lint + typecheck + build green.
 
+### Phase 1 — Task 1b: `@big-calendar/localizer-temporal` ✓ (committed)
+
+- **`src/loadTemporal.function.ts`** — lazy `loadTemporal()`: feature-detects `globalThis.Temporal`,
+  else dynamic-imports `temporal-polyfill`; caches. `TemporalAPI` is a hand-written structural interface
+  (the `import type { Temporal }` value-namespace approach tripped `consistent-type-imports`; the
+  narrow interface — `Instant`/`ZonedDateTime`/`PlainDate` `.from` — is what the full namespace assigns to).
+- **`src/localizer-temporal.class.ts`** — `TemporalLocalizer extends Localizer<Temporal.ZonedDateTime>`
+  implementing all engine primitives over `Temporal.ZonedDateTime` (DST-aware via `startOfDay`, offset
+  via `offsetNanoseconds`, RFC 3339 vs 9557 via `toString({ timeZoneName })`, date-only via `PlainDate`).
+- **`src/index.ts`** — `createTemporalLocalizer(options)` async factory + `TemporalLocalizer`/`loadTemporal` exports.
+- Tests: 17 cases incl. real DST (EST/EDT 300/240, 60-min shift), RFC 9557 bracket round-trip, date-only
+  parse, loader native+cached branches (via `vi.resetModules`). class.ts 88.23% branch / 100% function.
+
 ## In progress
 
-### Task 1b — `@big-calendar/localizer-temporal` (design ready; implement next)
-
-**Done so far:** added dep `temporal-polyfill@0.3.2` (in `packages/localizer-temporal/package.json`).
-Probed the runtime + types: namespace `Temporal` exported as a value; `dt.toString()` →
-RFC 9557 bracket form, `dt.toString({ timeZoneName: 'never' })` → RFC 3339 offset form;
-`offsetNanoseconds` is east-positive; `TimeZoneLike = string | ZonedDateTime`.
-
-**Files to create under `packages/localizer-temporal/src/` (remove `smoke.test.ts`):**
-
-1. **`loadTemporal.function.ts`** — lazy loader:
-   ```ts
-   import type { Temporal } from 'temporal-polyfill'
-   export type TemporalAPI = typeof import('temporal-polyfill').Temporal
-   let cached: TemporalAPI | undefined
-   export async function loadTemporal(): Promise<TemporalAPI> {
-     if (cached) return cached
-     const native = (globalThis as { Temporal?: TemporalAPI }).Temporal
-     cached = native ?? (await import('temporal-polyfill')).Temporal
-     return cached
-   }
-   ```
-   ⚠️ If `typeof import('temporal-polyfill').Temporal` won't resolve as a *value* type, fall back to a
-   hand-written `TemporalAPI` interface typing only the constructors used (`Instant`, `ZonedDateTime`,
-   `PlainDate`). Verify with `nx run localizer-temporal:typecheck`.
-
-2. **`localizer-temporal.class.ts`** — `TemporalLocalizer extends Localizer<Temporal.ZonedDateTime>`;
-   `constructor(options: LocalizerOptions = {}, private readonly api: TemporalAPI) { super(options) }`
-   (super never calls primitives, so `api` is set before any primitive runs). Primitives, all verified:
-   - `PLURAL = { year:'years', month:'months', week:'weeks', day:'days', hour:'hours', minute:'minutes', second:'seconds', millisecond:'milliseconds' }`
-   - `parse(v)`: `v.includes('[')` → `api.ZonedDateTime.from(v).toInstant().toZonedDateTimeISO(this.timezone)`;
-     else `!/[T ]/.test(v)` (date-only) → `api.PlainDate.from(v).toZonedDateTime(this.timezone)`;
-     else → `api.Instant.from(v).toZonedDateTimeISO(this.timezone)`. (Always normalized to `this.timezone`.)
-   - `serialize(dt)`: `this.extendedZone ? dt.toString() : dt.toString({ timeZoneName: 'never' })`
-   - `toEpochMs(dt)`: `dt.epochMilliseconds`
-   - `getParts(dt)`: `{ year,month,day,hour,minute,second,millisecond, weekday: dt.dayOfWeek }`
-   - `addUnits(dt,n,u)`: `dt.add({ [PLURAL[u]]: n } as Temporal.DurationLike)`
-   - `startOfUnit(dt,u)`: year→`dt.with({month:1,day:1}).startOfDay()`; month→`dt.with({day:1}).startOfDay()`;
-     day→`dt.startOfDay()`; else `dt.round({ smallestUnit: u, roundingMode: 'floor' })` (u narrows to hour/min/sec/ms)
-   - `endOfUnit(dt,u)`: `this.addUnits(this.startOfUnit(dt,u),1,u).subtract({ milliseconds: 1 })`
-   - `diffUnits(a,b,u)`: `a.since(b,{ largestUnit:u, smallestUnit:u, roundingMode:'trunc' })[PLURAL[u]]`
-   - `withTime(dt,t)`: `dt.with({ hour:t.hour, minute:t.minute, second:t.second??0, millisecond:t.millisecond??0, microsecond:0, nanosecond:0 })`
-   - `offsetMinutes(dt)`: `dt.offsetNanoseconds / 60_000_000_000`
-
-3. **`index.ts`** — `export const PACKAGE_NAME = '@big-calendar/localizer-temporal'`; export `TemporalLocalizer`;
-   `export async function createTemporalLocalizer(options?: LocalizerOptions) { return new TemporalLocalizer(options, await loadTemporal()) }`
-
-4. **`localizer-temporal.class.test.ts`** — `const loc = await createTemporalLocalizer({ locale:'en-US', timezone:'America/New_York' })` in `beforeAll`. Cover:
-   DST → `getTimezoneOffset('2026-01-15T12:00:00-05:00')`=300, July=240, `getDstOffset` across 2026-03-08 = 60;
-   `extendedZone:true` serialize round-trips the `[America/New_York]` bracket, false → offset only;
-   date-only parse `'2026-06-03'` → NY midnight; plus representative contract behaviors (startOfWeek/visibleDays/add/diff/sortEvents) for branch coverage. Bar: 85% branch / 95% function per file.
+- (none — Task 1b complete and committed)
 
 ## Next
 
-1. Finish **Task 1b** above → gates green → conventional commit `feat(localizer-temporal): ...` → push.
-2. **Task 1c** — Phase 1 browser spike: subgrid + Popover API + CSS anchor-positioning + `:dir()`
-   support matrix; commit a spike report to `memory/`. (Closes Phase 1 exit criteria.)
-3. Then `/compact` and start Phase 2 (core engine).
+1. **Task 1c** — Phase 1 browser spike: subgrid + Popover API + CSS anchor-positioning + `:dir()`
+   support matrix; commit a spike report to `memory/` (e.g. `memory/spikes/phase1-css-layout.md`).
+   This closes the Phase 1 exit criteria ("spike report committed").
+2. Then `/compact` and start **Phase 2** (core engine: store, view models, layout, navigation, selection FSM).
 
 ## Notes / watch-items
 
