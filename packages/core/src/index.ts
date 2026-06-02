@@ -27,6 +27,16 @@ export type {
   DayLayoutEvent,
 } from './layout/layout.type'
 
+export { createSelection } from './selection/selection.function'
+export type { SelectionController } from './selection/selection.function'
+export type {
+  SelectableMode,
+  SelectAction,
+  SelectionRange,
+  SelectionState,
+  SlotSelection,
+} from './selection/selection.type'
+
 export { agendaViewModel } from './views/agenda.function'
 export type { AgendaDay, AgendaViewModel } from './views/agenda.type'
 export { groupEventsByResource } from './resources/resources.function'
