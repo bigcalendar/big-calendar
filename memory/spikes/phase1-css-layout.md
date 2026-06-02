@@ -5,8 +5,8 @@
 
 ## What this spike answers
 
-Whether the four modern CSS/HTML capabilities the rewrite leans on are safe to depend on, and what the
-fallback is where they are not:
+Whether the four modern CSS/HTML capabilities the rewrite leans on are safe to depend on under a
+**Baseline-2024 support floor** (no engines before 2024, no pre-2024 fallbacks):
 
 1. **CSS Subgrid** — month-grid + time-grid alignment without JS measurement (§8.1).
 2. **Popover API** (`popover` attr + top layer) — popups, "show more", tooltips, dialogs (§7.5, §9 Popups).
@@ -33,52 +33,40 @@ fallback is where they are not:
 ## Findings
 
 ### Subgrid — ADOPT (primary layout mechanism)
-Cross-engine for ~2+ years. Use it for the month grid (weeks as subgrid rows) and the time grid
-(day columns sharing the parent's row tracks), per §8.1. This is the load-bearing choice that removes
-JS measurement.
-**Fallback (older engines only):** a flat grid with explicit, duplicated row-track definitions on each
-row container; multi-day event-row alignment then needs the layout algorithm's normalized fractions
-(which `core` already emits) rather than `subgrid` inheritance. Acceptable degradation, not pixel-perfect.
+Cross-engine since ~2022–2023, well inside the Baseline-2024 support floor. Use it for the month grid
+(weeks as subgrid rows) and the time grid (day columns sharing the parent's row tracks), per §8.1. This
+is the load-bearing choice that removes JS measurement. No fallback — it is depended on unconditionally.
 
 ### Popover API — ADOPT (top-layer mechanism)
-Cross-engine since Firefox shipped it (Apr 2024). Use `popover` (+ `popovertarget`, `::backdrop`,
-light-dismiss) for popups, the "show more" overflow, tooltips, and dialogs — this gives real top-layer
-stacking (escapes `overflow`/`z-index`/transform containing blocks) for free.
-**Fallback (pre-2024 engines):** a JS-managed portal overlay (render to a body-level container) with a
-manual focus trap and a high stacking context. This is the one piece `@floating-ui` does **not** solve —
-floating-ui positions but does not provide top-layer stacking.
+Cross-engine since Firefox shipped it (Apr 2024) — the latest of the four to land, but inside the
+Baseline-2024 floor. Use `popover` (+ `popovertarget`, `::backdrop`, light-dismiss) for popups, the
+"show more" overflow, tooltips, and dialogs — this gives real top-layer stacking (escapes
+`overflow`/`z-index`/transform containing blocks) for free. No fallback — depended on unconditionally.
+Note the division of labor: the Popover API provides **top-layer stacking**; `@floating-ui/core`
+provides **positioning**. They are complementary, not alternatives.
 
-### `:dir()` — ADOPT (with a cheap fallback), RTL via logical properties
-Cross-engine since ~Dec 2023. Combined with CSS logical properties (`inline-start`/`block-end`/etc.,
-which are universally supported) this delivers RTL with **no `rtl` prop**, per §6/§9.
-**Fallback:** `[dir="rtl"] …` attribute selectors. Trivial, fully supported, so RTL has effectively no
-support risk — logical properties do the heavy lifting and `:dir()` is only sugar.
+### `:dir()` — ADOPT, RTL via logical properties
+Cross-engine since ~Dec 2023, inside the Baseline-2024 floor. Combined with CSS logical properties
+(`inline-start`/`block-end`/etc.) this delivers RTL with **no `rtl` prop**, per §6/§9. No fallback —
+depended on unconditionally.
 
 ### Anchor Positioning — DO **NOT** depend on; progressive enhancement only
-This is the **only non-Baseline** capability of the four: Chromium-only in stable as of the cutoff, with
-Safari and Firefox **not yet shipping it in stable** (most-uncertain row — verify). Per §15.4, the
-support floor for the rewrite is therefore set **without** anchor positioning.
+This is **not** a back-compat concern — it is the one capability of the four that is **still not
+cross-engine in *current* browsers.** As of the Jan-2026 cutoff it is Chromium-only in stable; Safari
+and Firefox **have not shipped it in stable** (most-uncertain row — verify). So even under a strict
+"no engines before 2024" floor, anchor positioning is excluded because today's Safari/Firefox lack it.
 **Decision:** **`@floating-ui/core` is the default positioning engine** for tethered top-layer elements
-(it is already a dependency of `@big-calendar/react`, plan §11). Native CSS anchor positioning may be
-layered on later as a progressive enhancement (feature-detect `CSS.supports('anchor-name: --x')`), but
-nothing in the baseline relies on it.
+(it is already a dependency of `@big-calendar/react`, plan §11). This is a permanent default, not a
+legacy fallback. Native CSS anchor positioning may be layered on later as a progressive enhancement
+(feature-detect `CSS.supports('anchor-name: --x')`) once it is cross-engine — but nothing relies on it.
 
 ## Resulting support floor (sets §15.4)
 
-- **Baseline-2024 capable engines** (subgrid + Popover + `:dir()` + logical properties): full fidelity,
-  zero JS layout measurement, native top layer.
-- **Positioning:** always via `@floating-ui/core` (not CSS `anchor()`), so positioning is engine-agnostic.
-- **Older engines:** degrade via the per-capability fallbacks above; layout stays correct (fractions come
-  from `core`), only subgrid auto-alignment and native top-layer are emulated.
-
-## Fallback matrix (quick reference)
-
-| Capability | If unsupported, fall back to | Owner |
-|---|---|---|
-| Subgrid | flat grid + explicit row tracks; alignment from `core` fractions | `@big-calendar/styles` + `core` layout algo |
-| Popover top layer | JS portal overlay + focus trap + stacking context | `@big-calendar/react` (top-layer component, §7.5) |
-| Anchor positioning | `@floating-ui/core` (the default — not a fallback) | `@big-calendar/react` |
-| `:dir()` | `[dir="rtl"]` selectors + logical properties | `@big-calendar/styles` |
+- **Floor = Baseline 2024.** We support no engine released before 2024; there are **no pre-2024
+  fallbacks.** Subgrid, Popover, `:dir()`, and logical properties are all inside this floor and are
+  depended on **unconditionally** — full fidelity, zero JS layout measurement, native top layer.
+- **Positioning:** always via `@floating-ui/core` (not CSS `anchor()`). This is a permanent default
+  because anchor positioning is not yet cross-engine in current browsers — not a concession to old ones.
 
 ## Watch-items / follow-ups
 

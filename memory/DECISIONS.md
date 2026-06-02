@@ -73,13 +73,16 @@
 > Full report: `memory/spikes/phase1-css-layout.md`. Spike was a **desk review** vs. the Jan-2026
 > platform-knowledge cutoff (no live browser run); empirical Playwright verification deferred to Phase 3.
 
-- **Support floor (sets §15.4):** Subgrid, Popover API, and CSS `:dir()` are cross-engine / Baseline and
-  are **adopted** as primary mechanisms (month/time-grid alignment via subgrid; top layer via Popover;
-  RTL via `:dir()` + logical properties — confirms **no `rtl` prop**).
-- **CSS Anchor Positioning is the lone non-Baseline feature** (Chromium-only in stable; Safari/Firefox
-  not yet shipped — flagged uncertain). **Decision: do NOT depend on it.** `@floating-ui/core` is the
-  **default** positioning engine for tethered top-layer elements (already a `@big-calendar/react` dep,
-  §11). Native `anchor()` may be added later as a feature-detected progressive enhancement only.
-- **Fallbacks** recorded per capability (flat-grid + `core` fractions for subgrid; JS portal+focus-trap
-  for the top layer; `[dir="rtl"]` selectors for `:dir()`). floating-ui covers positioning, **not**
-  top-layer stacking — that gap is the Popover API's job.
+- **Support floor = Baseline 2024 (no pre-2024 fallbacks).** Per user direction (2026-06-02): we support
+  no engine released before 2024 and do **not** spend effort on pre-2024 fallbacks. Subgrid, Popover API,
+  and CSS `:dir()` are all cross-engine inside that floor and are **adopted unconditionally** as primary
+  mechanisms (month/time-grid alignment via subgrid; top layer via Popover; RTL via `:dir()` + logical
+  properties — confirms **no `rtl` prop**). The earlier per-capability "older-engine" fallbacks
+  (flat-grid for subgrid, JS portal for top layer, `[dir="rtl"]` selectors) are **dropped.**
+- **CSS Anchor Positioning — excluded, but NOT as a back-compat concern.** It is the one capability still
+  not cross-engine in *current* browsers (Chromium-only in stable; Safari/Firefox not yet shipped as of
+  the Jan-2026 cutoff — flagged uncertain). **Decision: do NOT depend on it.** `@floating-ui/core` is the
+  **permanent default** positioning engine for tethered top-layer elements (already a
+  `@big-calendar/react` dep, §11) — confirmed with the user 2026-06-02. Native `anchor()` may be added
+  later as a feature-detected progressive enhancement once it is cross-engine. Division of labor:
+  floating-ui does **positioning**, the Popover API does **top-layer stacking** — complementary.
