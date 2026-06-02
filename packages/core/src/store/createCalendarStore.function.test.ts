@@ -1,9 +1,18 @@
+import type { LocalizerContract } from '@big-calendar/localizer'
 import { describe, expect, it, vi } from 'vitest'
 import { Navigate, Views } from '../constants/views.constant'
+import { makeTimeLocalizer } from '../timegrid/slotMetrics.function.test'
 import type { CalendarConfig } from '../types/config.type'
 import { createCalendarStore } from './createCalendarStore.function'
 import { makeFakeLocalizer } from './navigateDate.function.test'
 import { makeRangeLocalizer } from './viewRange.function.test'
+
+// A localizer that supports both the visible-range math (week/month/day) and the
+// minute-level slot math the view-model builders need.
+const fullLocalizer = {
+  ...makeTimeLocalizer(),
+  ...makeRangeLocalizer(1),
+} as unknown as LocalizerContract
 
 interface Event {
   id: number
@@ -250,5 +259,48 @@ describe('createCalendarStore — range + drilldown', () => {
     disabled.drilldown({ date: '2026-06-20T00:00:00.000Z' })
     expect(disabled.view.value).toBe(Views.MONTH)
     expect(disabled.date.value).toBe(monday)
+  })
+})
+
+describe('createCalendarStore — viewModel', () => {
+  const monday = '2026-06-15T00:00:00.000Z'
+
+  it('derives a month model in the month view', () => {
+    const store = createCalendarStore<Event>({ localizer: fullLocalizer, date: monday, view: Views.MONTH })
+    expect(store.viewModel.value.kind).toBe('month')
+  })
+
+  it('derives a time-grid model with one column per visible day', () => {
+    const dayStore = createCalendarStore<Event>({ localizer: fullLocalizer, date: monday, view: Views.DAY })
+    const dayVm = dayStore.viewModel.value
+    expect(dayVm.kind).toBe('time')
+    if (dayVm.kind === 'time') expect(dayVm.timeGrid.columns).toHaveLength(1)
+
+    const weekStore = createCalendarStore<Event>({ localizer: fullLocalizer, date: monday, view: Views.WEEK })
+    const weekVm = weekStore.viewModel.value
+    if (weekVm.kind === 'time') expect(weekVm.timeGrid.columns).toHaveLength(7)
+  })
+
+  it('recomputes the view model when the view changes', () => {
+    const store = createCalendarStore<Event>({ localizer: fullLocalizer, date: monday, view: Views.DAY })
+    expect(store.viewModel.value.kind).toBe('time')
+    store.setView({ view: Views.AGENDA })
+    expect(store.viewModel.value.kind).toBe('agenda')
+  })
+
+  it('applies the configured time window to time-grid columns', () => {
+    const store = createCalendarStore<Event>({
+      localizer: fullLocalizer,
+      date: monday,
+      view: Views.DAY,
+      min: '2026-06-15T08:00:00.000Z',
+      max: '2026-06-15T18:00:00.000Z',
+      events: [{ id: 1, title: 'e1', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' }],
+    })
+    const vm = store.viewModel.value
+    if (vm.kind === 'time') {
+      expect(vm.timeGrid.columns[0]?.min).toBe('2026-06-15T08:00:00.000Z')
+      expect(vm.timeGrid.columns[0]?.events[0]?.top).toBeCloseTo(0.1)
+    }
   })
 })

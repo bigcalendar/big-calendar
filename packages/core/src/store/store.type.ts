@@ -3,6 +3,7 @@ import type { ReadonlySignal, Signal } from '@preact/signals-core'
 import type { Accessors } from '../accessors/accessors.type'
 import type { EventId, ViewKey, VisibleRange } from '../types/calendar.type'
 import type { NavigateDirection } from '../constants/views.constant'
+import type { CalendarViewModel } from '../views/viewModel.type'
 
 /**
  * An isolated calendar store: reactive state signals plus the actions that
@@ -27,6 +28,11 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
   // --- derived state ---
   /** Visible day-range for the current date + view (recomputes on either change). */
   readonly range: ReadonlySignal<VisibleRange>
+  /**
+   * The view model for the active view (month / time-grid / agenda),
+   * recomputed from the view, range, events and config. Discriminated by `kind`.
+   */
+  readonly viewModel: ReadonlySignal<CalendarViewModel<TEvent>>
 
   // --- resolved config (stable for the store's lifetime) ---
   /** The localizer instance, reused everywhere. */

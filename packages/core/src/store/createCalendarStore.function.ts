@@ -3,6 +3,7 @@ import { resolveAccessors } from '../accessors/accessors.function'
 import { BUILTIN_VIEWS, Views } from '../constants/views.constant'
 import type { EventId, ViewKey } from '../types/calendar.type'
 import type { CalendarConfig } from '../types/config.type'
+import { buildViewModel } from '../views/viewModel.function'
 import { resolveDrilldownView } from './drilldown.function'
 import { navigateDate } from './navigateDate.function'
 import type { CalendarStore } from './store.type'
@@ -42,6 +43,32 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     viewRange({ localizer, date: date.value, view: view.value, length: config.length }),
   )
 
+  // Resolve the time-grid window once (config is stable). A midnight `max`
+  // (00:00) means end-of-day → the full 1440-minute window.
+  const dayStartMin = config.min == null ? 0 : localizer.getMinutesFromMidnight(config.min)
+  const dayEndMin =
+    config.max == null ? 1440 : localizer.getMinutesFromMidnight(config.max) || 1440
+  const allDayMaxRows = config.showAllEvents ? Infinity : (config.allDayMaxRows ?? Infinity)
+
+  const viewModel = computed(() =>
+    buildViewModel({
+      localizer,
+      accessors,
+      view: view.value,
+      days: range.value.days,
+      events: events.value,
+      options: {
+        step: config.step,
+        timeslots: config.timeslots,
+        dayStartMin,
+        dayEndMin,
+        dayLayoutAlgorithm: config.dayLayoutAlgorithm,
+        allDayMaxRows,
+        showMultiDayTimes: config.showMultiDayTimes,
+      },
+    }),
+  )
+
   const disposers: Array<() => void> = []
 
   // Emit onRangeChange whenever the visible range changes — but not on init,
@@ -69,6 +96,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     backgroundEvents,
     resources,
     range,
+    viewModel,
     localizer,
     accessors,
 
