@@ -27,6 +27,9 @@ export type {
   DayLayoutEvent,
 } from './layout/layout.type'
 
+export { monthViewModel } from './views/month.function'
+export type { MonthSegment, MonthViewModel, MonthWeek } from './views/month.type'
+
 export { createCalendarStore } from './store/createCalendarStore.function'
 export { resolveDrilldownView } from './store/drilldown.function'
 export type { GetDrilldownView } from './store/drilldown.function'
