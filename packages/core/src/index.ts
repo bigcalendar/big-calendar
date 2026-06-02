@@ -29,6 +29,18 @@ export type {
 
 export { monthViewModel } from './views/month.function'
 export type { MonthSegment, MonthViewModel, MonthWeek } from './views/month.type'
+export { datedEvents, rowSegments } from './views/segments.function'
+export type { DatedEvent } from './views/segments.function'
+export type { EventSegment, SegmentRows } from './views/segments.type'
+
+export { createSlotMetrics } from './timegrid/slotMetrics.function'
+export type { SlotMetrics, SlotRange } from './timegrid/slotMetrics.type'
+export { timeGridViewModel } from './timegrid/timeGrid.function'
+export type {
+  PositionedEvent,
+  TimeGridColumn,
+  TimeGridViewModel,
+} from './timegrid/timeGrid.type'
 
 export { createCalendarStore } from './store/createCalendarStore.function'
 export { resolveDrilldownView } from './store/drilldown.function'

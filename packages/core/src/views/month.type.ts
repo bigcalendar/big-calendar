@@ -1,16 +1,10 @@
+import type { EventSegment } from './segments.type'
+
 /**
- * One event's placement within a single week row of the month grid.
- *
- * `left`/`right` are 1-based day columns within the week (`1`–`7`); `span` is
- * how many day columns the event covers. A segment is always clamped to its
- * week, so a multi-week event yields one segment per week it touches.
+ * One event's placement within a single week row of the month grid: a
+ * 1-based day-column span (1–7). Alias of the shared {@link EventSegment}.
  */
-export interface MonthSegment<TEvent> {
-  event: TEvent
-  span: number
-  left: number
-  right: number
-}
+export type MonthSegment<TEvent> = EventSegment<TEvent>
 
 /**
  * A single week of the month grid: its seven day-start strings, the event
