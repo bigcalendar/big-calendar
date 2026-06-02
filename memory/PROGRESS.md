@@ -271,18 +271,47 @@ messages). What remains to satisfy the Phase-2 exit (§4.2 store shape + §9 log
   adapter-measured — core can't know cell height); call `monthViewModel` directly with a measured
   limit if needed. `selectable` config added but not yet consumed (next task).
 
+### Phase 2 — Task 2l: background events in time-grid ✓ (commit a651ee7, pushed)
+
+- **`src/timegrid/timeGrid.{type,function}.ts`** — `timeGridViewModel` now accepts
+  `backgroundEvents?` and each `TimeGridColumn` carries `backgroundEvents: PositionedEvent[]`,
+  positioned full-width behind the foreground (`top`/`height` from slot metrics, `left:0`/`width:1`,
+  `zIndex:0`, no overlap packing) — v1 parity. Threaded through `buildViewModel` (new
+  `backgroundEvents?` arg) and the store's `viewModel` computed (`backgroundEvents.value`).
+- Tests: +2 (positions bg full-width; defaults to empty). 168 tests; all files clear the bar.
+  typecheck/lint/test/build green.
+
 ## In progress
 
-- (none — pick up 2k next)
+- (none)
 
-## Next — remaining Phase 2 integration tasks (PR-sized; `/compact` between them)
+## Phase 2 status
 
-1. **2k — store-level selection**: expose the `createSelection` controller on the store, keyed to the
-   active view's slot list, mapping slot indices → dates and wiring `selectable`/`onSelectSlot`/
-   `onSelecting` config; add `beginSlotSelection` per §4.2.
-2. **2l — background events**: position `backgroundEvents` in the time-grid (and month) models.
-3. **2m — view registry** (custom views): widen `ViewKey`; map view key → { build view model,
-   navigate, range } so custom views register (§9 "core view registry").
+Concrete core logic is COMPLETE and pushed: constants/accessors, store factory + navigation/
+drilldown/range, layout algos, all 5 view models (month / time-grid day-week-work_week / agenda),
+resource grouping, selection FSM, messages, derived `viewModel` store signal + parity config,
+background events. 168 Vitest cases, every file ≥85% branch / ≥95% func, build green.
+
+## Next — open design decisions (do NOT guess; confirm with Cutter first)
+
+1. **2m — view registry (custom views, §9)** — DEFERRED pending design input. The 5 built-in views are
+   hardcoded across `viewRange` (range), `navigateDate` (navigate) and `buildViewModel` (model kind).
+   A registry would map a (widened, `string`) `ViewKey` → `{ navigate, range, model-kind/builder }`.
+   The sticking point is the **model shape for a custom view**: `CalendarViewModel` is a closed union
+   (`month|time|agenda`); custom views need either a generic/escape-hatch model kind or a
+   plugin-provided builder. This is coupled to the **framework view-component contract** (Phase 4), so
+   building it now risks the wrong abstraction (CLAUDE.md: simplest-first, no speculative abstractions,
+   ask before architectural changes). **Decision needed:** define the custom-view model contract now,
+   or defer 2m until the React view-component contract exists in Phase 4.
+2. **Store-level selection wiring** — the selection FSM (2h) is the core logic. Mapping slot indices →
+   dates is view/adapter-specific (month = day cells; time-grid = (column, slot) 2D), so the store/
+   `beginSlotSelection` wiring is better done alongside the adapter (Phase 4). Confirm this split.
+
+## Possible next phase
+
+**Phase 3 — Styles** (`@big-calendar/styles`): reset, `--bc-*` tokens, `@layer`s, container-query
+layout, logical props, `:dir()` RTL, granular exports; visual spike renders all views from core
+geometry. (Per §14 roadmap; begins after Phase 2 sign-off.)
 
 All built against `LocalizerContract` (core depends on the contract type, never a concrete localizer).
 Per-file coverage bar 85% branch / 95% function throughout.
