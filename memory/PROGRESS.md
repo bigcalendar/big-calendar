@@ -166,19 +166,51 @@ sub-tasks (2a…2i); see "Done" / "Next" below.
   via a compact UTC localizer double in the test file. 100 tests total; month.function.ts 94.11%
   branch / 100% func. typecheck/lint/build green.
 
+### Phase 2 — Task 2f: time-grid view model + slot metrics ✓ (commit b881720, pushed)
+
+- **`src/views/segments.{type,function}.ts`** (NEW shared module, extracted from 2e's month):
+  `EventSegment<TEvent>`, `SegmentRows<TEvent>`; `DatedEvent<TEvent>`, `datedEvents` (resolve
+  start/end/allDay via accessors, drop unresolved), `segsOverlap`, `eventSegments` (clamp event to a
+  row of N days → 1-based columns), `stackIntoLevels` (limit → `extra` overflow), `sortRowEvents`
+  (multi-day first), and `rowSegments` (filter→sort→segment→stack for one row of days). Used by BOTH
+  the month grid (one call per week) and the time-grid all-day header (one call across all visible days).
+- **`src/views/month.{function,type}.ts`** REWRITTEN to consume `datedEvents`/`rowSegments`;
+  `MonthSegment<TEvent>` is now an alias of `EventSegment<TEvent>`. Behaviour unchanged (2e tests green).
+- **`src/timegrid/slotMetrics.{type,function}.ts`** — `createSlotMetrics({ localizer, min, max, step=30,
+  timeslots=2 })` ports v1 `getSlotMetrics` to **fractions 0..1** (not %): `numSlots`/`totalMin`/`slots`
+  (incl. closing boundary, each rebuilt from midnight via `getSlotDate` for DST safety), `getRange`
+  ({start,end,ignoreMin?,ignoreMax?} → `{top,height,start,end,startDate,endDate}`; overrun nudge +
+  `getDstOffset` correction), `getCurrentTimePosition`.
+- **`src/timegrid/timeGrid.{type,function}.ts`** — `timeGridViewModel({ localizer, accessors, days,
+  events, dayStartMin=0, dayEndMin=1440, step, timeslots, dayLayoutAlgorithm='overlap', allDayMaxRows,
+  showMultiDayTimes })` → `{ days, columns: TimeGridColumn[], allDay: SegmentRows }`. Splits events
+  into all-day (explicit allDay | date-only | multi-day-without-showMultiDayTimes — v1 rule) vs timed;
+  all-day → `rowSegments`; per day builds slot metrics over `[dayStartMin,dayEndMin]`, positions timed
+  events (`getRange` → `top/height`, minutes → `start/end`), packs via `resolveDayLayoutAlgorithm`
+  (minimumStartDifference = `ceil(step*timeslots/2)`), maps boxes back to `PositionedEvent<TEvent>`.
+- Barrel exports segments (types + `datedEvents`/`rowSegments`), slot metrics, time-grid model + types.
+- Tests: slot metrics (5) + time-grid (7). 117 tests total; every file clears the per-file bar
+  (total 94.67% branch / 100% func). typecheck/lint/build green.
+- **Follow-ups noted:** the time-grid model takes window as `dayStartMin`/`dayEndMin` (minutes) for
+  purity — the store-config integration (config `min`/`max` Date/string → minutes, plus a
+  `dayLayoutAlgorithm`/`step`/`timeslots` config option + derived view-model signals) is a later
+  wiring task. Background events not yet positioned (foreground timed + all-day only).
+
 ## In progress
 
-- (none — tasks 2a–2e committed + pushed; pick up 2f next)
+- (none — tasks 2a–2f committed + pushed; pick up 2g next)
 
 ## Next
 
 Phase 2 sub-tasks, in order (PR-sized; `/compact` between them per Appendix B.3/B.5):
 
-1. **2f — time-grid (day/week/work_week) view models** (slot metrics → `top`/`height` fractions,
-   then wire `resolveDayLayoutAlgorithm` + a `dayLayoutAlgorithm` config option; also the week
-   all-day header row can reuse the month segmentation helpers — consider exporting them then);
-   **2g — agenda view model + resource grouping**.
-2. **2h — selection FSM** (pointer + keyboard, §8.2); **2i — messages map** (English defaults, overridable).
+1. **2g — agenda view model + resource grouping** (agenda = flat sorted list over the range;
+   resource grouping likely a cross-cutting helper the month/time-grid models can also use).
+2. **2h — selection FSM** (pointer + keyboard, §8.2; slot metrics already expose `slots` — add the
+   selection-only helpers `closestSlot*`/`nextSlot`/`dateIsInGroup` here); **2i — messages map**
+   (English defaults, overridable).
+3. **Later store wiring** (not a numbered task yet): expose view models as derived store signals and
+   map parity config (`min`/`max`/`step`/`timeslots`/`dayLayoutAlgorithm`/`allDayMaxRows`) into them.
 
 All built against `LocalizerContract` (core depends on the contract type, never a concrete localizer).
 Per-file coverage bar 85% branch / 95% function throughout.
