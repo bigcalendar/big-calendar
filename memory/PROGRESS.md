@@ -146,16 +146,37 @@ sub-tasks (2a…2i); see "Done" / "Next" below.
 - **Note:** these consume `start`/`end`/`top`/`height` the time-grid will produce in 2f; 2f wires
   `resolveDayLayoutAlgorithm` + a `dayLayoutAlgorithm` config option (not added yet — added by 2f).
 
+### Phase 2 — Task 2e: month view model ✓ (commit fa78b10, pushed)
+
+- **`src/views/month.type.ts`** — `MonthSegment<TEvent>` (`event`, `span`, 1-based `left`/`right`
+  day columns), `MonthWeek<TEvent>` (`days`, `levels: MonthSegment[][]`, `extra`),
+  `MonthViewModel<TEvent>` (`weeks`).
+- **`src/views/month.function.ts`** — `monthViewModel({ localizer, accessors, days, events,
+  weekEventLimit? })`: chunks `days` (the padded grid, e.g. `store.range.value.days`) into weeks of
+  7; per week filters overlapping events (`inEventRange`), sorts (multi-day first then single, via
+  `localizer.sortEvents`), clamps each to day-column segments (`eventSegments`, ports v1 minus the
+  `segmentOffset` tz hack), and stacks them into non-overlapping `levels` with overflow into `extra`
+  once `weekEventLimit` rows are full (default `Infinity` = no limit). Internal helpers
+  `segsOverlap`/`eventSegments`/`stackIntoLevels`/`sortWeekEvents` are private (not exported).
+  Reads event fields via `wrapAccessor(accessors.start|end|allDay)`; events with unresolved
+  start/end are skipped.
+- Barrel exports `monthViewModel` + the three month types.
+- Tests: 8 cases (week chunking, single-day column/level, week-spanning → one segment per week,
+  level sharing vs stacking, limit→extra overflow, skips unresolved events, multi-day sorts first)
+  via a compact UTC localizer double in the test file. 100 tests total; month.function.ts 94.11%
+  branch / 100% func. typecheck/lint/build green.
+
 ## In progress
 
-- (none — tasks 2a–2d committed + pushed; pick up 2e next)
+- (none — tasks 2a–2e committed + pushed; pick up 2f next)
 
 ## Next
 
 Phase 2 sub-tasks, in order (PR-sized; `/compact` between them per Appendix B.3/B.5):
 
-1. **2e — month view model**; **2f — time-grid (day/week/work_week) view models** (wires
-   `resolveDayLayoutAlgorithm` + `dayLayoutAlgorithm` config option + slot metrics → `top`/`height`);
+1. **2f — time-grid (day/week/work_week) view models** (slot metrics → `top`/`height` fractions,
+   then wire `resolveDayLayoutAlgorithm` + a `dayLayoutAlgorithm` config option; also the week
+   all-day header row can reuse the month segmentation helpers — consider exporting them then);
    **2g — agenda view model + resource grouping**.
 2. **2h — selection FSM** (pointer + keyboard, §8.2); **2i — messages map** (English defaults, overridable).
 
