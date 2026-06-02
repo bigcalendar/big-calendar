@@ -27,6 +27,9 @@ export type {
   DayLayoutEvent,
 } from './layout/layout.type'
 
+export { DEFAULT_MESSAGES, resolveMessages } from './messages/messages.function'
+export type { Messages } from './messages/messages.type'
+
 export { createSelection } from './selection/selection.function'
 export type { SelectionController } from './selection/selection.function'
 export type {
