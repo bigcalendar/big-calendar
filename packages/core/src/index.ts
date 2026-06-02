@@ -12,3 +12,8 @@ export {
   wrapAccessor,
 } from './accessors/accessors.function'
 export type { Accessor, AccessorFn, Accessors, WrappedAccessor } from './accessors/accessors.type'
+
+export { createCalendarStore } from './store/createCalendarStore.function'
+export { navigateDate } from './store/navigateDate.function'
+export type { CalendarStore } from './store/store.type'
+export type { CalendarConfig } from './types/config.type'
