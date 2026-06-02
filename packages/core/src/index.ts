@@ -27,6 +27,11 @@ export type {
   DayLayoutEvent,
 } from './layout/layout.type'
 
+export { agendaViewModel } from './views/agenda.function'
+export type { AgendaDay, AgendaViewModel } from './views/agenda.type'
+export { groupEventsByResource } from './resources/resources.function'
+export type { ResourceGroup } from './resources/resources.type'
+
 export { monthViewModel } from './views/month.function'
 export type { MonthSegment, MonthViewModel, MonthWeek } from './views/month.type'
 export { datedEvents, rowSegments } from './views/segments.function'

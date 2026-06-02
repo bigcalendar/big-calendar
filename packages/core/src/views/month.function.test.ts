@@ -23,7 +23,7 @@ const diffDays = (a: string, b: string): number => Math.round((ms(b) - ms(a)) / 
  * Day-aligned math (the model floors/ceils everything to day starts), cast to
  * the contract. Lives in a test file → out of coverage.
  */
-function makeMonthLocalizer(): LocalizerContract {
+export function makeMonthLocalizer(): LocalizerContract {
   return {
     add: ({ value, amount, unit }: { value: string; amount: number; unit: string }) =>
       unit === 'day' ? addDays(value, amount) : value,
