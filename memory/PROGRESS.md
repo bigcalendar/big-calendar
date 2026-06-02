@@ -212,19 +212,40 @@ sub-tasks (2a…2i); see "Done" / "Next" below.
 - Tests: agenda (4) + resources (4). 133 tests total; every file clears the per-file bar
   (total 94.91% branch / 100% func). typecheck/lint/build green.
 
+### Phase 2 — Task 2h: slot-selection FSM ✓ (commit b68fde8, pushed)
+
+- **`src/selection/selection.{type,function}.ts`** — `createSelection({ selectable?, onSelecting?,
+  onSelect? })` → `SelectionController`: a pure `@preact/signals-core` FSM over **slot indices**
+  (`SelectionState` = `{idle}` | `{selecting, anchor, head}`). Actions: `start`/`to`/`complete`
+  (drag via pointer or keyboard Shift+Arrow), `click` (single slot), `cancel`. `onSelecting` fires on
+  every range change and vetoes when it returns `false` (start dropped / head left unchanged);
+  `onSelect` fires on commit with `{ start, end, action: 'select' | 'click' }`. `range` is a
+  `ReadonlySignal<SelectionRange | null>` (normalized min/max) for the live highlight overlay.
+  `selectable: false` disables; `'ignoreEvents'` treated as enabled (the over-event decision is
+  adapter-side). Types: `SelectableMode`, `SelectAction`, `SelectionRange`, `SlotSelection`,
+  `SelectionState`. (Renamed range type to `SelectionRange` to avoid colliding with slot-metrics'
+  `SlotRange`.)
+- Barrel exports `createSelection` + `SelectionController` + the selection types.
+- Tests: 11 cases (idle, drag+normalize, commit, onSelecting fires/vetoes start+extend, ignores
+  to/complete when idle, click, cancel, selectable:false, 'ignoreEvents'). 144 tests total; file
+  100% branch/func. typecheck/lint/test/build all green.
+- **Note:** keyboard movement is `to({ slot })` (adapter computes the target slot + bounds); no core
+  timers (long-press is adapter timing). The selection-only slot-metric helpers
+  (`closestSlot*`/`nextSlot`/`dateIsInGroup`) were NOT needed by this index-based FSM — defer until an
+  adapter needs pixel/point→slot mapping.
+
 ## In progress
 
-- (none — tasks 2a–2g committed + pushed; pick up 2h next)
+- (none — tasks 2a–2h committed + pushed; pick up 2i next — the last Phase 2 sub-task)
 
 ## Next
 
 Phase 2 sub-tasks, in order (PR-sized; `/compact` between them per Appendix B.3/B.5):
 
-1. **2h — selection FSM** (pointer + keyboard, §8.2; slot metrics already expose `slots` — add the
-   selection-only helpers `closestSlot*`/`nextSlot`/`dateIsInGroup` here); **2i — messages map**
-   (English defaults, overridable).
+1. **2i — messages map** (English defaults, overridable) — the last Phase 2 sub-task.
 2. **Later store wiring** (not a numbered task yet): expose view models as derived store signals and
-   map parity config (`min`/`max`/`step`/`timeslots`/`dayLayoutAlgorithm`/`allDayMaxRows`) into them.
+   map parity config (`min`/`max`/`step`/`timeslots`/`dayLayoutAlgorithm`/`allDayMaxRows`/`selectable`)
+   into them, including a store-level selection controller keyed to the active view's slots.
 
 All built against `LocalizerContract` (core depends on the contract type, never a concrete localizer).
 Per-file coverage bar 85% branch / 95% function throughout.
