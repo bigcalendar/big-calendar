@@ -4,7 +4,8 @@
 
 ## Current phase
 
-**Phase 1 — Localizer + spikes** ✓ COMPLETE (all three tasks done; ready for Phase 2)
+**Phase 2 — Core engine** (in progress). Phase 1 complete. Phase 2 is split into PR-sized
+sub-tasks (2a…2i); see "Done" / "Next" below.
 
 ## How to resume
 
@@ -60,17 +61,38 @@
   `anchor()` only as a later progressive enhancement. Desk review (Jan-2026 cutoff); empirical Playwright
   verification deferred to Phase 3 (watch-item in the report).
 
+### Phase 2 — Task 2a: core constants + accessors ✓ (commit 8096d7a, pushed)
+
+- **`src/constants/views.constant.ts`** — `Views` + `Navigate` const objects (values matched to v1
+  `views`/`navigate` for parity) with derived `BuiltinViewKey`/`NavigateDirection` unions.
+- **`src/types/calendar.type.ts`** — `ViewKey` (= built-in set for now; widens when the view registry
+  lands), `EventId`, `ResourceId`.
+- **`src/accessors/accessors.{type,function}.ts`** — `Accessor`/`Accessors`/`WrappedAccessor` types and
+  `accessor`/`wrapAccessor`/`resolveAccessors` + `DEFAULT_ACCESSORS`. Default field names match v1 exactly
+  (`tooltip`→'title', `resourceId`→'id', `id`/`eventId`→'id'). 100% stmt/branch/func/line coverage.
+- Barrel `src/index.ts` re-exports all of the above. Placeholder `smoke.test.ts` left in place.
+
 ## In progress
 
-- (none — Phase 1 complete: Tasks 1a, 1b, 1c all committed + pushed)
+- (none — task 2a committed + pushed; pick up 2b next)
 
 ## Next
 
-1. `/compact` (phase boundary, per Appendix B.3).
-2. **Phase 2 — Core engine** (`@big-calendar/core`): signals store (`@preact/signals-core`), view models
-   for all 5 views (month/week/day/agenda/+resources), layout algorithms (overlap/no-overlap),
-   navigation, accessors, selection FSM (§8.2). Parity §9 logic items covered by Vitest at the 85/95 bar.
-   Build against the `LocalizerContract` (core depends on the contract type, never a concrete localizer).
+Phase 2 sub-tasks, in order (PR-sized; `/compact` between them per Appendix B.3/B.5):
+
+1. **2b — store factory** `createCalendarStore(config)`: signals (`date`/`view`/`selected`), config
+   normalization (accessors via `resolveAccessors`, required localizer), actions
+   (`navigate`/`setView`/`select`/`destroy`), `viewModel` computed wiring (stub until view models land).
+2. **2c — navigation**: `navigate(date, direction, view)` (PREV/NEXT/TODAY/DATE), drilldown resolution,
+   derived range / range-change computation. Built on `LocalizerContract`.
+3. **2d — layout algorithms**: `overlap` + `no-overlap` as pure fns returning normalized boxes
+   (`{ top, height, left, width, zIndex }` fractions).
+4. **2e — month view model**; **2f — time-grid (day/week/work_week) view models**;
+   **2g — agenda view model + resource grouping**.
+5. **2h — selection FSM** (pointer + keyboard, §8.2); **2i — messages map** (English defaults, overridable).
+
+All built against `LocalizerContract` (core depends on the contract type, never a concrete localizer).
+Per-file coverage bar 85% branch / 95% function throughout.
 
 ## Deferred (explicit — revisit later, not now)
 
