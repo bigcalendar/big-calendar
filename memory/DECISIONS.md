@@ -62,5 +62,24 @@
   regular runtime `dependency` of `localizer-temporal` only and stays external in the Vite build.
 - **Async construction:** the localizer needs `Temporal` synchronously in its methods, so the public
   entry is an async factory `createTemporalLocalizer(options)` that resolves the namespace (native or
-  polyfilled) and injects it into the `TemporalLocalizer` constructor. (Implementation pending — full
-  design in `PROGRESS.md`.)
+  polyfilled) and injects it into the `TemporalLocalizer` constructor.
+- **`TemporalAPI` typed as a hand-written structural interface** (not `typeof import(...).Temporal`):
+  the `import()` type expression violates the `consistent-type-imports` ESLint rule. The narrow
+  interface (`Instant`/`ZonedDateTime`/`PlainDate` `.from`) is what the full namespace structurally
+  assigns to.
+
+## 2026-06-01 — Phase 1 Task 1c: CSS layout/top-layer support floor (spike)
+
+> Full report: `memory/spikes/phase1-css-layout.md`. Spike was a **desk review** vs. the Jan-2026
+> platform-knowledge cutoff (no live browser run); empirical Playwright verification deferred to Phase 3.
+
+- **Support floor (sets §15.4):** Subgrid, Popover API, and CSS `:dir()` are cross-engine / Baseline and
+  are **adopted** as primary mechanisms (month/time-grid alignment via subgrid; top layer via Popover;
+  RTL via `:dir()` + logical properties — confirms **no `rtl` prop**).
+- **CSS Anchor Positioning is the lone non-Baseline feature** (Chromium-only in stable; Safari/Firefox
+  not yet shipped — flagged uncertain). **Decision: do NOT depend on it.** `@floating-ui/core` is the
+  **default** positioning engine for tethered top-layer elements (already a `@big-calendar/react` dep,
+  §11). Native `anchor()` may be added later as a feature-detected progressive enhancement only.
+- **Fallbacks** recorded per capability (flat-grid + `core` fractions for subgrid; JS portal+focus-trap
+  for the top layer; `[dir="rtl"]` selectors for `:dir()`). floating-ui covers positioning, **not**
+  top-layer stacking — that gap is the Popover API's job.

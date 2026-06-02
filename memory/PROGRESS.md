@@ -4,7 +4,7 @@
 
 ## Current phase
 
-**Phase 1 — Localizer + spikes** (in progress)
+**Phase 1 — Localizer + spikes** ✓ COMPLETE (all three tasks done; ready for Phase 2)
 
 ## How to resume
 
@@ -12,8 +12,9 @@
 - **Install:** `pnpm install` at repo root.
 - **Verify:** `pnpm exec nx run-many -t lint typecheck test build` (all green as of latest commit).
 - **Coverage:** per-file bar 85% branch / 95% function (Vitest `perFile`).
-- **Next:** **Task 1c** — Phase 1 browser-support spike (subgrid + Popover API + CSS anchor-positioning
-  + `:dir()` matrix); commit a spike report to `memory/`. Closes Phase 1.
+- **Next:** start **Phase 2 — Core engine** (`@big-calendar/core`): signals store, view models for all
+  5 views, layout algorithms, navigation, accessors, selection FSM. Build on the `LocalizerContract`.
+  `/compact` first (phase boundary).
 
 ## Done
 
@@ -51,16 +52,25 @@
 - Tests: 17 cases incl. real DST (EST/EDT 300/240, 60-min shift), RFC 9557 bracket round-trip, date-only
   parse, loader native+cached branches (via `vi.resetModules`). class.ts 88.23% branch / 100% function.
 
+### Phase 1 — Task 1c: CSS layout/top-layer support spike ✓ (committed)
+
+- **`memory/spikes/phase1-css-layout.md`** — support + fallback matrix for Subgrid / Popover API /
+  CSS Anchor Positioning / `:dir()`. Outcome: adopt subgrid + Popover + `:dir()` (Baseline); **anchor
+  positioning is non-Baseline → use `@floating-ui/core` as the default positioning engine**, native
+  `anchor()` only as a later progressive enhancement. Desk review (Jan-2026 cutoff); empirical Playwright
+  verification deferred to Phase 3 (watch-item in the report).
+
 ## In progress
 
-- (none — Task 1b complete and committed)
+- (none — Phase 1 complete: Tasks 1a, 1b, 1c all committed + pushed)
 
 ## Next
 
-1. **Task 1c** — Phase 1 browser spike: subgrid + Popover API + CSS anchor-positioning + `:dir()`
-   support matrix; commit a spike report to `memory/` (e.g. `memory/spikes/phase1-css-layout.md`).
-   This closes the Phase 1 exit criteria ("spike report committed").
-2. Then `/compact` and start **Phase 2** (core engine: store, view models, layout, navigation, selection FSM).
+1. `/compact` (phase boundary, per Appendix B.3).
+2. **Phase 2 — Core engine** (`@big-calendar/core`): signals store (`@preact/signals-core`), view models
+   for all 5 views (month/week/day/agenda/+resources), layout algorithms (overlap/no-overlap),
+   navigation, accessors, selection FSM (§8.2). Parity §9 logic items covered by Vitest at the 85/95 bar.
+   Build against the `LocalizerContract` (core depends on the contract type, never a concrete localizer).
 
 ## Notes / watch-items
 
