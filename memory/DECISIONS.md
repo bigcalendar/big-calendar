@@ -42,12 +42,13 @@
   `T` (internal datetime type) never escapes the public surface; `core` types against `LocalizerContract`.
 - **weekday convention = ISO-8601 `1=Mon … 7=Sun`** across `DateParts.weekday`, `firstDayOfWeek`, and
   `weekInfo.firstDay` — matches `Intl.Locale` weekInfo and Temporal `dayOfWeek` (no 0-based JS `getDay`).
-- **`firstDayOfWeek` resolution:** explicit option → locale `weekInfo.firstDay` (native or ponyfilled) →
-  `?? 7` (Sunday) as the spec's last-resort. Because §5 mandates *guaranteeing* weekInfo via ponyfill,
-  the Sunday fallback is effectively unreachable; the ponyfill's own no-region default is CLDR "001"
-  (Monday). **Flagged deviation:** the plan's prose says "fallback Sunday" for the unresolved case, but
-  the guaranteed-weekInfo requirement means the practical default for an unknown region is CLDR Monday.
-  Surfaced to the user; revisit if a blanket-Sunday default is actually wanted.
+- **`firstDayOfWeek` resolution (resolved 2026-06-02):** explicit override option → locale
+  `weekInfo.firstDay` (native or ponyfilled) → **Monday (1)** as the last-resort fallback. Per user
+  direction: default to locale, fall back to Monday, allow an override argument. The earlier `?? 7`
+  (Sunday) last-resort was changed to `?? 1`; this aligns the unreachable base-class fallback with the
+  ponyfill's own CLDR "001" no-region default (Monday) and supersedes the plan's "fallback Sunday" prose.
+  Because §5 guarantees weekInfo via ponyfill, the fallback remains effectively unreachable — locale
+  values still drive real behavior (e.g. en-US resolves to Sunday=7 via weekInfo).
 - **Slot/minute math is wall-clock, not instant-based:** `getMinutesFromMidnight` uses wall-clock
   `hour*60+minute` and `getSlotDate` uses `withTime`, so a DST day still maps minute-630 ↔ 10:30 wall
   time (grid slots are wall-clock). `getTotalMin`/`getDstOffset` remain instant-based (real elapsed).

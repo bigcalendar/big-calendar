@@ -55,10 +55,11 @@ export abstract class Localizer<T = unknown> implements LocalizerContract {
     this.timezone = resolveTimezone(options.timezone)
     this.extendedZone = options.extendedZone ?? false
     this.formats = { ...DEFAULT_FORMATS, ...(options.formats ?? {}) }
-    // Primary: locale weekInfo (native or ponyfilled). The trailing `?? 7`
-    // (Sunday) is the spec's last-resort fallback; the weekInfo guarantee makes
-    // it effectively unreachable.
-    this._firstDayOfWeek = options.firstDayOfWeek ?? getWeekInfo(this.locale).firstDay ?? 7
+    // Resolution order: explicit override → locale weekInfo (native or
+    // ponyfilled) → Monday (1) as the last-resort fallback. The weekInfo
+    // guarantee makes the trailing fallback effectively unreachable; Monday
+    // matches the CLDR "001" no-region default.
+    this._firstDayOfWeek = options.firstDayOfWeek ?? getWeekInfo(this.locale).firstDay ?? 1
   }
 
   // ── engine primitives (supplied by the date-library subclass) ──────────────
