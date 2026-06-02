@@ -93,22 +93,48 @@ sub-tasks (2a…2i); see "Done" / "Next" below.
   only to produce a string the localizer then interprets.
 - Barrel exports `createCalendarStore`, `navigateDate`, `CalendarStore`, `CalendarConfig`.
 
+### Phase 2 — Task 2c: navigation refinements ✓ (commit cd579c9, pushed)
+
+- **`src/store/viewRange.function.ts`** — pure `viewRange({ localizer, date, view, length })` →
+  `VisibleRange` (`firstVisibleDay`/`lastVisibleDay`/`days`, all day-start strings). Mirrors v1 per-view
+  `range` statics: month = padded grid (localizer `firstVisibleDay`/`lastVisibleDay`/`visibleDays`);
+  week = the date's week; work_week = week minus Sat/Sun (weekday derived by offset from
+  `firstDayOfWeek()`, so no per-date weekday lookup is needed); day = single floored day; agenda =
+  `length` days from the date (default 30). Uses `min`/`max` for bounds to avoid index assertions.
+- **`src/store/drilldown.function.ts`** — `GetDrilldownView` type + pure `resolveDrilldownView(...)`:
+  defer to `getDrilldownView` when present (its nullish result disables drilldown), else the static
+  `drilldownView` (which may be `null` to disable). Matches v1 `Calendar.getDrilldownView`.
+- **`src/types/calendar.type.ts`** — added `VisibleRange`.
+- **`src/constants/views.constant.ts`** — added `BUILTIN_VIEWS = Object.values(Views)` (drilldown needs
+  the view list).
+- **`src/types/config.type.ts`** — added `drilldownView?` (`ViewKey | null`, default `day`),
+  `getDrilldownView?`, `onRangeChange?`, `onDrillDown?`.
+- **`src/store/store.type.ts`** — added `range: ReadonlySignal<VisibleRange>` and the `drilldown({ date })`
+  action.
+- **`src/store/createCalendarStore.function.ts`** — `range` computed (date+view → `viewRange`);
+  `onRangeChange` wired via an `effect` that **skips the initial run** (parity: v1 fires only on
+  navigate/view change), registered in `disposers` so `destroy()` now actually tears something down;
+  `drilldown` resolves the target view then either delegates to `onDrillDown` or, in a `batch`,
+  switches view (firing `onView` only when it changes) + sets date + fires `onNavigate`. Navigate/
+  setView/setDate now all trigger `onRangeChange` for free via the effect.
+- Tests: `viewRange` (7) + `resolveDrilldownView` (4) + store range/drilldown/onRangeChange (8). New
+  fuller UTC fake `makeRangeLocalizer(firstDayOfWeek)` lives in `viewRange.function.test.ts` (out of
+  coverage), imported by the store test. 72 tests, **100% stmt/branch/func/line**. typecheck/lint/build green.
+- Barrel exports `viewRange`, `resolveDrilldownView`, `BUILTIN_VIEWS`, `VisibleRange`, `GetDrilldownView`.
+
 ## In progress
 
-- (none — tasks 2a + 2b committed + pushed; pick up 2c next)
+- (none — tasks 2a + 2b + 2c committed + pushed; pick up 2d next)
 
 ## Next
 
 Phase 2 sub-tasks, in order (PR-sized; `/compact` between them per Appendix B.3/B.5):
 
-1. **2c — navigation refinements**: drilldown resolution (`drilldownView`/`getDrilldownView`/`onDrillDown`),
-   per-view **visible range** derivation (firstVisibleDay/lastVisibleDay), and `onRangeChange` emission.
-   Likely introduces a `viewModel`/range computed on the store. Built on `LocalizerContract`.
-2. **2d — layout algorithms**: `overlap` + `no-overlap` as pure fns returning normalized boxes
+1. **2d — layout algorithms**: `overlap` + `no-overlap` as pure fns returning normalized boxes
    (`{ top, height, left, width, zIndex }` fractions).
-3. **2e — month view model**; **2f — time-grid (day/week/work_week) view models**;
+2. **2e — month view model**; **2f — time-grid (day/week/work_week) view models**;
    **2g — agenda view model + resource grouping**.
-4. **2h — selection FSM** (pointer + keyboard, §8.2); **2i — messages map** (English defaults, overridable).
+3. **2h — selection FSM** (pointer + keyboard, §8.2); **2i — messages map** (English defaults, overridable).
 
 All built against `LocalizerContract` (core depends on the contract type, never a concrete localizer).
 Per-file coverage bar 85% branch / 95% function throughout.
