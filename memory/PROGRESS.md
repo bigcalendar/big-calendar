@@ -122,19 +122,42 @@ sub-tasks (2a…2i); see "Done" / "Next" below.
   coverage), imported by the store test. 72 tests, **100% stmt/branch/func/line**. typecheck/lint/build green.
 - Barrel exports `viewRange`, `resolveDrilldownView`, `BUILTIN_VIEWS`, `VisibleRange`, `GetDrilldownView`.
 
+### Phase 2 — Task 2d: layout algorithms ✓ (commit 63acdbc, pushed)
+
+- **`src/layout/layout.type.ts`** — `DayLayoutEvent` (`id`, numeric `start`/`end`, fraction
+  `top`/`height`), `DayLayoutBox` (`id`, `top`/`height`/`left`/`width` fractions, `zIndex`),
+  `DayLayoutArgs` (`events`, `minimumStartDifference`), `DayLayoutAlgorithm` fn type,
+  `DayLayoutAlgorithmKey` (`'overlap' | 'no-overlap'`). Vertical placement is an INPUT (slot
+  metrics own it, Task 2f); the algorithms only compute horizontal packing.
+- **`src/layout/overlap.function.ts`** — faithful v1 `overlap` port: `sortByRender` (start asc,
+  longer first, groups pulled contiguous), then container→row→leaf grouping; widths grow ×1.7
+  (capped) for the dense Google-style overlap. Output in paint order; `zIndex` = render index.
+  All fractions (v1's 0–100 → 0..1).
+- **`src/layout/noOverlap.function.ts`** — v1 `no-overlap` port, fraction-based: builds a
+  vertical-overlap "friends" graph, assigns each event the lowest free column, splits each
+  connected component evenly, stretches the right-most column to the edge. Drops v1's pixel
+  `calc()` padding (React layer adds gaps). `minimumStartDifference` unused here.
+- **`src/layout/dayLayout.function.ts`** — `DEFAULT_DAY_LAYOUT_ALGORITHMS` registry +
+  `resolveDayLayoutAlgorithm(key | fn)` (defaults to `overlap`; unknown key → `overlap`).
+- Barrel exports all of the above (fns + types). **Deleted** the scaffold `smoke.test.ts`.
+- Tests: overlap (10) + no-overlap (6) + resolver (5). 92 tests total; coverage clears the
+  per-file bar (overlap 86.66% branch after covering the multi-leaf grow + onSameRow second-clause
+  + second-row paths; others 100%). typecheck/lint/build green.
+- **Note:** these consume `start`/`end`/`top`/`height` the time-grid will produce in 2f; 2f wires
+  `resolveDayLayoutAlgorithm` + a `dayLayoutAlgorithm` config option (not added yet — added by 2f).
+
 ## In progress
 
-- (none — tasks 2a + 2b + 2c committed + pushed; pick up 2d next)
+- (none — tasks 2a–2d committed + pushed; pick up 2e next)
 
 ## Next
 
 Phase 2 sub-tasks, in order (PR-sized; `/compact` between them per Appendix B.3/B.5):
 
-1. **2d — layout algorithms**: `overlap` + `no-overlap` as pure fns returning normalized boxes
-   (`{ top, height, left, width, zIndex }` fractions).
-2. **2e — month view model**; **2f — time-grid (day/week/work_week) view models**;
+1. **2e — month view model**; **2f — time-grid (day/week/work_week) view models** (wires
+   `resolveDayLayoutAlgorithm` + `dayLayoutAlgorithm` config option + slot metrics → `top`/`height`);
    **2g — agenda view model + resource grouping**.
-3. **2h — selection FSM** (pointer + keyboard, §8.2); **2i — messages map** (English defaults, overridable).
+2. **2h — selection FSM** (pointer + keyboard, §8.2); **2i — messages map** (English defaults, overridable).
 
 All built against `LocalizerContract` (core depends on the contract type, never a concrete localizer).
 Per-file coverage bar 85% branch / 95% function throughout.
