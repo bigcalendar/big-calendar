@@ -196,20 +196,34 @@ sub-tasks (2a…2i); see "Done" / "Next" below.
   `dayLayoutAlgorithm`/`step`/`timeslots` config option + derived view-model signals) is a later
   wiring task. Background events not yet positioned (foreground timed + all-day only).
 
+### Phase 2 — Task 2g: agenda view model + resource grouping ✓ (commit 42b497c, pushed)
+
+- **`src/views/agenda.{type,function}.ts`** — `AgendaDay<TEvent>` (`day`, `events`),
+  `AgendaViewModel<TEvent>` (`days`); `agendaViewModel({ localizer, accessors, days, events })` sorts
+  the dated events once (`localizer.sortEvents`), then for each visible day emits `{ day, events }`
+  only when that day has events touching it (`inEventRange` over `[startOf(day), +1 day)`). Empty days
+  omitted (v1 parity); multi-day events repeat on each day they span.
+- **`src/resources/resources.{type,function}.ts`** — `ResourceGroup<TEvent, TResource>`
+  (`resource`/`resourceId` nullable, `events`); `groupEventsByResource({ events, resources, accessors })`
+  → one `null` group with all events when `resources` is undefined, else one group per resource (in
+  order) with events bucketed by `accessors.resource` (single id or array → each matching group;
+  unmatched dropped). Pure port of v1 `Resources.groupEvents`; reusable across resource-aware views.
+- Barrel exports `agendaViewModel`/agenda types and `groupEventsByResource`/`ResourceGroup`.
+- Tests: agenda (4) + resources (4). 133 tests total; every file clears the per-file bar
+  (total 94.91% branch / 100% func). typecheck/lint/build green.
+
 ## In progress
 
-- (none — tasks 2a–2f committed + pushed; pick up 2g next)
+- (none — tasks 2a–2g committed + pushed; pick up 2h next)
 
 ## Next
 
 Phase 2 sub-tasks, in order (PR-sized; `/compact` between them per Appendix B.3/B.5):
 
-1. **2g — agenda view model + resource grouping** (agenda = flat sorted list over the range;
-   resource grouping likely a cross-cutting helper the month/time-grid models can also use).
-2. **2h — selection FSM** (pointer + keyboard, §8.2; slot metrics already expose `slots` — add the
+1. **2h — selection FSM** (pointer + keyboard, §8.2; slot metrics already expose `slots` — add the
    selection-only helpers `closestSlot*`/`nextSlot`/`dateIsInGroup` here); **2i — messages map**
    (English defaults, overridable).
-3. **Later store wiring** (not a numbered task yet): expose view models as derived store signals and
+2. **Later store wiring** (not a numbered task yet): expose view models as derived store signals and
    map parity config (`min`/`max`/`step`/`timeslots`/`dayLayoutAlgorithm`/`allDayMaxRows`) into them.
 
 All built against `LocalizerContract` (core depends on the contract type, never a concrete localizer).
