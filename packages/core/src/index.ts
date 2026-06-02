@@ -13,6 +13,20 @@ export {
 } from './accessors/accessors.function'
 export type { Accessor, AccessorFn, Accessors, WrappedAccessor } from './accessors/accessors.type'
 
+export {
+  DEFAULT_DAY_LAYOUT_ALGORITHMS,
+  resolveDayLayoutAlgorithm,
+} from './layout/dayLayout.function'
+export { noOverlap } from './layout/noOverlap.function'
+export { overlap } from './layout/overlap.function'
+export type {
+  DayLayoutAlgorithm,
+  DayLayoutAlgorithmKey,
+  DayLayoutArgs,
+  DayLayoutBox,
+  DayLayoutEvent,
+} from './layout/layout.type'
+
 export { createCalendarStore } from './store/createCalendarStore.function'
 export { resolveDrilldownView } from './store/drilldown.function'
 export type { GetDrilldownView } from './store/drilldown.function'
