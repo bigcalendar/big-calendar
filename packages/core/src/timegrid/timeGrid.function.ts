@@ -38,6 +38,7 @@ export function timeGridViewModel<TEvent, TResource = unknown>(args: {
   accessors: Accessors<TEvent, TResource>
   days: string[]
   events: TEvent[]
+  backgroundEvents?: TEvent[] | undefined
   dayStartMin?: number | undefined
   dayEndMin?: number | undefined
   step?: number | undefined
@@ -51,6 +52,7 @@ export function timeGridViewModel<TEvent, TResource = unknown>(args: {
     accessors,
     days,
     events,
+    backgroundEvents = [],
     dayStartMin = 0,
     dayEndMin = 1440,
     step = 30,
@@ -63,6 +65,7 @@ export function timeGridViewModel<TEvent, TResource = unknown>(args: {
   const algorithm = resolveDayLayoutAlgorithm(dayLayoutAlgorithm)
   const minimumStartDifference = Math.ceil((step * timeslots) / 2)
   const items = datedEvents({ events, accessors })
+  const bgItems = datedEvents({ events: backgroundEvents, accessors })
 
   const allDayItems: DatedEvent<TEvent>[] = []
   const timedItems: DatedEvent<TEvent>[] = []
@@ -106,7 +109,20 @@ export function timeGridViewModel<TEvent, TResource = unknown>(args: {
       })
     }
 
-    return { date, min, max, events }
+    // Background events sit full-width behind the foreground (no overlap packing).
+    const background: PositionedEvent<TEvent>[] = bgItems
+      .filter((item) =>
+        localizer.inEventRange({
+          event: { start: item.start, end: item.end },
+          range: { start: min, end: max },
+        }),
+      )
+      .map((item) => {
+        const range = metrics.getRange({ start: item.start, end: item.end })
+        return { event: item.event, top: range.top, height: range.height, left: 0, width: 1, zIndex: 0 }
+      })
+
+    return { date, min, max, events, backgroundEvents: background }
   })
 
   return { days, columns, allDay }

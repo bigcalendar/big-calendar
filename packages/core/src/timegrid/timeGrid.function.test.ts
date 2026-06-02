@@ -112,6 +112,28 @@ describe('timeGridViewModel', () => {
     expect(model.columns.slice(1).every((c) => c.events.length === 0)).toBe(true)
   })
 
+  it('positions background events full-width behind the foreground', () => {
+    const model = timeGridViewModel({
+      localizer,
+      accessors,
+      days: [day],
+      events: [event(1, at(9), at(10))],
+      backgroundEvents: [event(2, at(8), at(18))],
+    })
+    const bg = model.columns[0]?.backgroundEvents ?? []
+    expect(bg).toHaveLength(1)
+    expect(bg[0]?.event.id).toBe(2)
+    expect(bg[0]?.left).toBe(0)
+    expect(bg[0]?.width).toBe(1)
+    // foreground is unaffected
+    expect(model.columns[0]?.events[0]?.event.id).toBe(1)
+  })
+
+  it('defaults background events to an empty list', () => {
+    const model = timeGridViewModel({ localizer, accessors, days: [day], events: [event(1, at(9), at(10))] })
+    expect(model.columns[0]?.backgroundEvents).toEqual([])
+  })
+
   it('respects a custom window via dayStartMin/dayEndMin', () => {
     const model = timeGridViewModel({
       localizer,

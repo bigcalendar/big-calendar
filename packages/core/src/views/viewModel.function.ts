@@ -18,9 +18,10 @@ export function buildViewModel<TEvent, TResource = unknown>(args: {
   view: ViewKey
   days: string[]
   events: TEvent[]
+  backgroundEvents?: TEvent[] | undefined
   options?: ViewModelOptions
 }): CalendarViewModel<TEvent> {
-  const { localizer, accessors, view, days, events, options = {} } = args
+  const { localizer, accessors, view, days, events, backgroundEvents, options = {} } = args
 
   switch (view) {
     case Views.MONTH:
@@ -40,6 +41,7 @@ export function buildViewModel<TEvent, TResource = unknown>(args: {
           accessors,
           days,
           events,
+          backgroundEvents,
           dayStartMin: options.dayStartMin,
           dayEndMin: options.dayEndMin,
           step: options.step,

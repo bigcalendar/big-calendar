@@ -57,6 +57,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       view: view.value,
       days: range.value.days,
       events: events.value,
+      backgroundEvents: backgroundEvents.value,
       options: {
         step: config.step,
         timeslots: config.timeslots,

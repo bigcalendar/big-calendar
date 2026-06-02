@@ -14,12 +14,15 @@ export interface PositionedEvent<TEvent> {
   zIndex: number
 }
 
-/** One day's time column: its window bounds and the timed events laid out in it. */
+/** One day's time column: its window bounds and the events laid out in it. */
 export interface TimeGridColumn<TEvent> {
   date: string
   min: string
   max: string
+  /** Foreground timed events, packed by the day-layout algorithm. */
   events: PositionedEvent<TEvent>[]
+  /** Background events, rendered full-width behind the foreground (`left: 0, width: 1`). */
+  backgroundEvents: PositionedEvent<TEvent>[]
 }
 
 /**
