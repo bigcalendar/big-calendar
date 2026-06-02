@@ -53,3 +53,14 @@
   time (grid slots are wall-clock). `getTotalMin`/`getDstOffset` remain instant-based (real elapsed).
 - **Ponyfill guarantee (§5/§15.3):** `getWeekInfo` and `formatDuration` feature-detect the native
   `Intl` API and fall back (CLDR region table / `NumberFormat`+`ListFormat`) when absent.
+
+## 2026-06-01 — Phase 1 Task 1b: Temporal polyfill choice
+
+- **Polyfill = `temporal-polyfill` (v0.3.2)**, not `@js-temporal/polyfill`. Lighter bundle (matches
+  §15.10 "monitor Temporal polyfill weight"), spec-compliant. Loaded **lazily** via dynamic `import()`
+  behind a `globalThis.Temporal` feature-detect, so native hosts pay zero polyfill cost (§5.2). It is a
+  regular runtime `dependency` of `localizer-temporal` only and stays external in the Vite build.
+- **Async construction:** the localizer needs `Temporal` synchronously in its methods, so the public
+  entry is an async factory `createTemporalLocalizer(options)` that resolves the namespace (native or
+  polyfilled) and injects it into the `TemporalLocalizer` constructor. (Implementation pending — full
+  design in `PROGRESS.md`.)
