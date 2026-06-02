@@ -234,18 +234,36 @@ sub-tasks (2a…2i); see "Done" / "Next" below.
   (`closestSlot*`/`nextSlot`/`dateIsInGroup`) were NOT needed by this index-based FSM — defer until an
   adapter needs pixel/point→slot mapping.
 
+### Phase 2 — Task 2i: messages map ✓ (commit 1b4ad37, pushed)
+
+- **`src/messages/messages.{type,function}.ts`** — `Messages` interface (all UI/ARIA strings, v1
+  parity incl. `work_week` + `showMore(total)` fn), `DEFAULT_MESSAGES` (English), `resolveMessages`
+  (merge overrides over defaults, no mutation). Barrel exports all three. Tests: 4. 148 tests total;
+  file 100% branch/func.
+
+## Phase 2 pure-logic sub-tasks 2a–2i: COMPLETE ✓
+
+All the standalone pure pieces are done (constants/accessors, store factory, navigation/drilldown/
+range, layout algos, month + time-grid + agenda view models, resource grouping, selection FSM,
+messages). What remains to satisfy the Phase-2 exit (§4.2 store shape + §9 logic) is INTEGRATION:
+
 ## In progress
 
-- (none — tasks 2a–2h committed + pushed; pick up 2i next — the last Phase 2 sub-task)
+- (none — pick up 2j next)
 
-## Next
+## Next — remaining Phase 2 integration tasks (PR-sized; `/compact` between them)
 
-Phase 2 sub-tasks, in order (PR-sized; `/compact` between them per Appendix B.3/B.5):
-
-1. **2i — messages map** (English defaults, overridable) — the last Phase 2 sub-task.
-2. **Later store wiring** (not a numbered task yet): expose view models as derived store signals and
-   map parity config (`min`/`max`/`step`/`timeslots`/`dayLayoutAlgorithm`/`allDayMaxRows`/`selectable`)
-   into them, including a store-level selection controller keyed to the active view's slots.
+1. **2j — store view-model integration**: a derived `viewModel: ReadonlySignal<ViewModel>` on the
+   store that selects month / time-grid (day/week/work_week) / agenda by `view.value` and builds it
+   from config; add the parity config options it needs (`step`, `timeslots`, `min`, `max` [as time
+   strings or minutes — pick + document], `dayLayoutAlgorithm`, `allDayMaxRows`, `showMultiDayTimes`,
+   `showAllEvents`, `selectable`). Decide the `ViewModel` union shape.
+2. **2k — view registry** (custom views): widen `ViewKey`; map view key → { build view model, navigate,
+   range } so custom views register (the §9 "core view registry" item). Today `ViewKey` = built-ins.
+3. **2l — background events**: position `backgroundEvents` in the time-grid (and month) models
+   (currently only foreground timed + all-day are placed).
+4. **Store-level selection**: expose the `createSelection` controller on the store keyed to the active
+   view's slot list (+ `onSelectSlot`/`onSelecting` config), and `beginSlotSelection` per §4.2.
 
 All built against `LocalizerContract` (core depends on the contract type, never a concrete localizer).
 Per-file coverage bar 85% branch / 95% function throughout.
