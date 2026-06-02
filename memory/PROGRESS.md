@@ -10,9 +10,14 @@
 
 - **Branch:** `feat/initial` (all baseline work lands here; no PRs — user merges manually).
 - **Install:** `pnpm install` at repo root.
-- **Verify:** `pnpm exec nx report` · `pnpm exec nx run-many -t lint typecheck`.
-- **Last command run:** scaffolding root config + package placeholders.
-- **Next command:** finish Phase 0 verification, then start Phase 1 (localizer base + temporal).
+- **Verify:** `pnpm exec nx run-many -t lint typecheck test build` (all green as of Phase 0 commit).
+- **Last command run:** committed Phase 0 (`f6147ae`).
+- **Next command:** retry `git push -u origin feat/initial` once auth is fixed, then start Phase 1.
+
+> ⚠️ **PUSH BLOCKED (user action required):** `git push` returned **403 — permission denied to
+> `cutterbl`** on `bigcalendar/big-calendar`. The account needs write access to the `bigcalendar`
+> org/repo (or a credential/SSH-remote fix). The Phase 0 commit is safe locally; re-run the push
+> after access is granted.
 
 ## Done
 
