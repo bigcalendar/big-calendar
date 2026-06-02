@@ -1,0 +1,27 @@
+{
+  "name": "localizer-luxon",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/localizer-luxon/src",
+  "tags": ["scope:localizer"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": { "command": "vite build", "cwd": "packages/localizer-luxon" }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": { "command": "vitest run", "cwd": "packages/localizer-luxon" }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": { "command": "eslint packages/localizer-luxon/src" }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit -p packages/localizer-luxon/tsconfig.json"
+      }
+    }
+  }
+}

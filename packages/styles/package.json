@@ -1,0 +1,28 @@
+{
+  "name": "@big-calendar/styles",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Big Calendar — @big-calendar/styles (Baseline 2024 CSS)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bigcalendar/big-calendar.git",
+    "directory": "packages/styles"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    "./index.css": "./dist/index.css",
+    "./reset.css": "./dist/reset.css",
+    "./tokens.css": "./dist/tokens.css",
+    "./layout.css": "./dist/layout.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

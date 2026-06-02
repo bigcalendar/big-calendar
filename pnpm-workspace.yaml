@@ -1,0 +1,6 @@
+packages:
+  - 'packages/*'
+  - 'apps/*'
+  - 'e2e'
+allowBuilds:
+  nx: true

@@ -1,0 +1,33 @@
+{
+  "name": "@big-calendar/core",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Big Calendar — @big-calendar/core",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bigcalendar/big-calendar.git",
+    "directory": "packages/core"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@preact/signals-core": "^1.14.2",
+    "@big-calendar/localizer": "workspace:*"
+  },
+  "peerDependencies": {},
+  "devDependencies": {}
+}

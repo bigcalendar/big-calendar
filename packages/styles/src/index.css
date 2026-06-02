@@ -1,0 +1,5 @@
+/* Big Calendar styles — Baseline 2024 CSS. Cascade layer order (plan §6). */
+@layer bc.reset, bc.tokens, bc.layout, bc.components, bc.theme, bc.overrides;
+
+@import './tokens.css' layer(bc.tokens);
+@import './layout.css' layer(bc.layout);

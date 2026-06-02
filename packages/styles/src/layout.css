@@ -1,0 +1,4 @@
+/* View layout primitives (grid/subgrid). Placeholder — built out in Phase 3. */
+:where(.bc-calendar) {
+  display: grid;
+}

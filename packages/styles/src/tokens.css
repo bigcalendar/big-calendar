@@ -1,0 +1,10 @@
+/* Overridable design tokens. All prefixed --bc-* (plan §6). */
+:where(.bc-calendar) {
+  --bc-color-bg: Canvas;
+  --bc-color-fg: CanvasText;
+  --bc-color-accent: AccentColor;
+  --bc-space-1: 0.25rem;
+  --bc-space-2: 0.5rem;
+  --bc-radius: 0.375rem;
+  --bc-focus-ring: 2px solid var(--bc-color-accent);
+}

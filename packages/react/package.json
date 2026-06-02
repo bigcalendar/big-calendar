@@ -1,0 +1,42 @@
+{
+  "name": "@big-calendar/react",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Big Calendar — @big-calendar/react",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bigcalendar/big-calendar.git",
+    "directory": "packages/react"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@big-calendar/core": "workspace:*",
+    "@big-calendar/styles": "workspace:*",
+    "@floating-ui/core": "^1.7.5"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "@types/react": "^19.2.16",
+    "@types/react-dom": "^19.2.3"
+  }
+}

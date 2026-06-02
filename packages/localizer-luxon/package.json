@@ -1,0 +1,37 @@
+{
+  "name": "@big-calendar/localizer-luxon",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Big Calendar — @big-calendar/localizer-luxon",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bigcalendar/big-calendar.git",
+    "directory": "packages/localizer-luxon"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@big-calendar/localizer": "workspace:*"
+  },
+  "peerDependencies": {
+    "luxon": "^3.7.2"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.7.1",
+    "luxon": "^3.7.2"
+  }
+}

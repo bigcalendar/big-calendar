@@ -1,0 +1,8 @@
+/* Opt-in modern reset, scoped under the calendar root (plan §6). */
+@layer bc.reset {
+  .bc-calendar *,
+  .bc-calendar *::before,
+  .bc-calendar *::after {
+    box-sizing: border-box;
+  }
+}
