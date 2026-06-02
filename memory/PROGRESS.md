@@ -72,24 +72,43 @@ sub-tasks (2a…2i); see "Done" / "Next" below.
   (`tooltip`→'title', `resourceId`→'id', `id`/`eventId`→'id'). 100% stmt/branch/func/line coverage.
 - Barrel `src/index.ts` re-exports all of the above. Placeholder `smoke.test.ts` left in place.
 
+### Phase 2 — Task 2b: store factory ✓ (commit 19a912f, pushed)
+
+- **`src/types/config.type.ts`** — `CalendarConfig<TEvent, TResource>` (Phase-2b subset: localizer
+  required, events/backgroundEvents/resources, view/date, accessor overrides, `getNow`, `length`,
+  `onNavigate`/`onView`/`onSelect`). Parity-complete options (`step`/`timeslots`/`min`/`max`/`selectable`/…)
+  added by the tasks that consume them.
+- **`src/store/store.type.ts`** — `CalendarStore` interface: state signals
+  (`date`/`view`/`selected`/`events`/`backgroundEvents`/`resources`), resolved `localizer`+`accessors`,
+  and named-parameter actions (`navigate`/`setView`/`setDate`/`select`/`setEvents`/`setBackgroundEvents`/
+  `setResources`/`destroy`).
+- **`src/store/navigateDate.function.ts`** — pure `navigateDate`: TODAY→`getNow()`, DATE→`target`,
+  PREV/NEXT→one view-sized step (month/week/day; agenda by `length`, default 30). All math via the
+  localizer. Note: pass-through optionals (`target`/`length`) typed `| undefined` for
+  `exactOptionalPropertyTypes`.
+- **`src/store/createCalendarStore.function.ts`** — the factory: validates the localizer, resolves
+  accessors, seeds signals from config (defaults applied), wires actions + the optional callbacks.
+  `destroy()` runs a disposers array (empty in 2b; ready for effects). 100% branch/function coverage.
+- Default "now" = `new Date().toISOString()` (UTC RFC 3339) — the one place core touches `Date`, and
+  only to produce a string the localizer then interprets.
+- Barrel exports `createCalendarStore`, `navigateDate`, `CalendarStore`, `CalendarConfig`.
+
 ## In progress
 
-- (none — task 2a committed + pushed; pick up 2b next)
+- (none — tasks 2a + 2b committed + pushed; pick up 2c next)
 
 ## Next
 
 Phase 2 sub-tasks, in order (PR-sized; `/compact` between them per Appendix B.3/B.5):
 
-1. **2b — store factory** `createCalendarStore(config)`: signals (`date`/`view`/`selected`), config
-   normalization (accessors via `resolveAccessors`, required localizer), actions
-   (`navigate`/`setView`/`select`/`destroy`), `viewModel` computed wiring (stub until view models land).
-2. **2c — navigation**: `navigate(date, direction, view)` (PREV/NEXT/TODAY/DATE), drilldown resolution,
-   derived range / range-change computation. Built on `LocalizerContract`.
-3. **2d — layout algorithms**: `overlap` + `no-overlap` as pure fns returning normalized boxes
+1. **2c — navigation refinements**: drilldown resolution (`drilldownView`/`getDrilldownView`/`onDrillDown`),
+   per-view **visible range** derivation (firstVisibleDay/lastVisibleDay), and `onRangeChange` emission.
+   Likely introduces a `viewModel`/range computed on the store. Built on `LocalizerContract`.
+2. **2d — layout algorithms**: `overlap` + `no-overlap` as pure fns returning normalized boxes
    (`{ top, height, left, width, zIndex }` fractions).
-4. **2e — month view model**; **2f — time-grid (day/week/work_week) view models**;
+3. **2e — month view model**; **2f — time-grid (day/week/work_week) view models**;
    **2g — agenda view model + resource grouping**.
-5. **2h — selection FSM** (pointer + keyboard, §8.2); **2i — messages map** (English defaults, overridable).
+4. **2h — selection FSM** (pointer + keyboard, §8.2); **2i — messages map** (English defaults, overridable).
 
 All built against `LocalizerContract` (core depends on the contract type, never a concrete localizer).
 Per-file coverage bar 85% branch / 95% function throughout.
