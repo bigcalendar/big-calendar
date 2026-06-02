@@ -3,6 +3,7 @@ import { Navigate, Views } from '../constants/views.constant'
 import type { CalendarConfig } from '../types/config.type'
 import { createCalendarStore } from './createCalendarStore.function'
 import { makeFakeLocalizer } from './navigateDate.function.test'
+import { makeRangeLocalizer } from './viewRange.function.test'
 
 interface Event {
   id: number
@@ -139,5 +140,115 @@ describe('createCalendarStore', () => {
       store.destroy()
       store.destroy()
     }).not.toThrow()
+  })
+})
+
+describe('createCalendarStore — range + drilldown', () => {
+  const rangeLocalizer = makeRangeLocalizer(1)
+  const monday = '2026-06-15T00:00:00.000Z'
+
+  it('exposes a derived visible range that tracks date + view', () => {
+    const store = createCalendarStore<Event>({
+      localizer: rangeLocalizer,
+      date: monday,
+      view: Views.WEEK,
+    })
+    expect(store.range.value.days).toHaveLength(7)
+    store.setView({ view: Views.DAY })
+    expect(store.range.value.days).toEqual([monday])
+  })
+
+  it('fires onRangeChange on change but not on init', () => {
+    const onRangeChange = vi.fn()
+    const store = createCalendarStore<Event>({
+      localizer: rangeLocalizer,
+      date: monday,
+      view: Views.WEEK,
+      onRangeChange,
+    })
+    expect(onRangeChange).not.toHaveBeenCalled()
+    store.navigate({ direction: Navigate.NEXT })
+    expect(onRangeChange).toHaveBeenCalledTimes(1)
+    expect(onRangeChange).toHaveBeenLastCalledWith({
+      range: store.range.value,
+      view: Views.WEEK,
+    })
+  })
+
+  it('stops emitting onRangeChange after destroy', () => {
+    const onRangeChange = vi.fn()
+    const store = createCalendarStore<Event>({
+      localizer: rangeLocalizer,
+      date: monday,
+      onRangeChange,
+    })
+    store.destroy()
+    store.setDate({ date: '2026-07-01T00:00:00.000Z' })
+    expect(onRangeChange).not.toHaveBeenCalled()
+  })
+
+  it('drilldown defaults to the day view, switching view + date', () => {
+    const onView = vi.fn()
+    const onNavigate = vi.fn()
+    const store = createCalendarStore<Event>({
+      localizer: rangeLocalizer,
+      date: monday,
+      view: Views.MONTH,
+      onView,
+      onNavigate,
+    })
+    store.drilldown({ date: '2026-06-20T00:00:00.000Z' })
+    expect(store.view.value).toBe(Views.DAY)
+    expect(store.date.value).toBe('2026-06-20T00:00:00.000Z')
+    expect(onView).toHaveBeenCalledWith({ view: Views.DAY })
+    expect(onNavigate).toHaveBeenCalledWith({ date: '2026-06-20T00:00:00.000Z', view: Views.DAY })
+  })
+
+  it('drilldown into the current view skips onView but still moves the date', () => {
+    const onView = vi.fn()
+    const store = createCalendarStore<Event>({
+      localizer: rangeLocalizer,
+      date: monday,
+      view: Views.DAY,
+      onView,
+    })
+    store.drilldown({ date: '2026-06-20T00:00:00.000Z' })
+    expect(store.date.value).toBe('2026-06-20T00:00:00.000Z')
+    expect(onView).not.toHaveBeenCalled()
+  })
+
+  it('drilldown delegates to onDrillDown without mutating state', () => {
+    const onDrillDown = vi.fn()
+    const store = createCalendarStore<Event>({
+      localizer: rangeLocalizer,
+      date: monday,
+      view: Views.MONTH,
+      onDrillDown,
+    })
+    store.drilldown({ date: '2026-06-20T00:00:00.000Z' })
+    expect(onDrillDown).toHaveBeenCalledWith({ date: '2026-06-20T00:00:00.000Z', view: Views.DAY })
+    expect(store.view.value).toBe(Views.MONTH)
+    expect(store.date.value).toBe(monday)
+  })
+
+  it('drilldown honours getDrilldownView and is a no-op when disabled', () => {
+    const resolved = createCalendarStore<Event>({
+      localizer: rangeLocalizer,
+      date: monday,
+      view: Views.MONTH,
+      getDrilldownView: () => Views.WEEK,
+    })
+    resolved.drilldown({ date: '2026-06-20T00:00:00.000Z' })
+    expect(resolved.view.value).toBe(Views.WEEK)
+
+    const disabled = createCalendarStore<Event>({
+      localizer: rangeLocalizer,
+      date: monday,
+      view: Views.MONTH,
+      drilldownView: null,
+    })
+    disabled.drilldown({ date: '2026-06-20T00:00:00.000Z' })
+    expect(disabled.view.value).toBe(Views.MONTH)
+    expect(disabled.date.value).toBe(monday)
   })
 })

@@ -15,6 +15,9 @@ export const Views = {
 /** Union of the built-in view string values (`'month' | 'week' | …`). */
 export type BuiltinViewKey = (typeof Views)[keyof typeof Views]
 
+/** The built-in view keys as an ordered list (handy for drilldown resolution). */
+export const BUILTIN_VIEWS = Object.values(Views)
+
 /**
  * Navigation directions accepted by the store's `navigate` action.
  *

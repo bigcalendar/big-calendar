@@ -1,7 +1,7 @@
 import type { LocalizerContract } from '@big-calendar/localizer'
-import type { Signal } from '@preact/signals-core'
+import type { ReadonlySignal, Signal } from '@preact/signals-core'
 import type { Accessors } from '../accessors/accessors.type'
-import type { EventId, ViewKey } from '../types/calendar.type'
+import type { EventId, ViewKey, VisibleRange } from '../types/calendar.type'
 import type { NavigateDirection } from '../constants/views.constant'
 
 /**
@@ -24,6 +24,10 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
   /** Resource objects (`undefined` when ungrouped). */
   readonly resources: Signal<TResource[] | undefined>
 
+  // --- derived state ---
+  /** Visible day-range for the current date + view (recomputes on either change). */
+  readonly range: ReadonlySignal<VisibleRange>
+
   // --- resolved config (stable for the store's lifetime) ---
   /** The localizer instance, reused everywhere. */
   readonly localizer: LocalizerContract
@@ -39,6 +43,12 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
   setDate(args: { date: string }): void
   /** Select an event by id, or clear with `null`. */
   select(args: { id: EventId | null }): void
+  /**
+   * Drill into a clicked date: resolve the target view (per `drilldownView` /
+   * `getDrilldownView`) and either delegate to `onDrillDown` or switch view +
+   * focus date. A `null` resolution is a no-op (drilldown disabled).
+   */
+  drilldown(args: { date: string }): void
   /** Replace the foreground event list. */
   setEvents(args: { events: TEvent[] }): void
   /** Replace the background event list. */

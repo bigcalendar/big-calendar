@@ -1,10 +1,12 @@
-import { signal } from '@preact/signals-core'
+import { batch, computed, effect, signal } from '@preact/signals-core'
 import { resolveAccessors } from '../accessors/accessors.function'
-import { Views } from '../constants/views.constant'
+import { BUILTIN_VIEWS, Views } from '../constants/views.constant'
 import type { EventId, ViewKey } from '../types/calendar.type'
 import type { CalendarConfig } from '../types/config.type'
+import { resolveDrilldownView } from './drilldown.function'
 import { navigateDate } from './navigateDate.function'
 import type { CalendarStore } from './store.type'
+import { viewRange } from './viewRange.function'
 
 /** Default "now" source: the current instant as a UTC RFC 3339 string. */
 const defaultGetNow = (): string => new Date().toISOString()
@@ -35,7 +37,29 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   const backgroundEvents = signal<TEvent[]>(config.backgroundEvents ?? [])
   const resources = signal<TResource[] | undefined>(config.resources)
 
+  const { drilldownView = Views.DAY } = config
+  const range = computed(() =>
+    viewRange({ localizer, date: date.value, view: view.value, length: config.length }),
+  )
+
   const disposers: Array<() => void> = []
+
+  // Emit onRangeChange whenever the visible range changes — but not on init,
+  // matching v1 (which only fires on navigate / view change).
+  const { onRangeChange } = config
+  if (onRangeChange) {
+    let initialized = false
+    disposers.push(
+      effect(() => {
+        const current = range.value
+        if (!initialized) {
+          initialized = true
+          return
+        }
+        onRangeChange({ range: current, view: view.value })
+      }),
+    )
+  }
 
   return {
     date,
@@ -44,6 +68,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     events,
     backgroundEvents,
     resources,
+    range,
     localizer,
     accessors,
 
@@ -73,6 +98,33 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     select({ id }) {
       selected.value = id
       config.onSelect?.({ id })
+    },
+
+    drilldown({ date: target }) {
+      const resolved = resolveDrilldownView({
+        date: target,
+        view: view.value,
+        views: BUILTIN_VIEWS,
+        drilldownView,
+        getDrilldownView: config.getDrilldownView,
+      })
+      if (resolved == null) return
+
+      if (config.onDrillDown) {
+        config.onDrillDown({ date: target, view: resolved })
+        return
+      }
+
+      // Switch view (if needed) and focus date together so the range effect
+      // fires exactly once.
+      batch(() => {
+        if (resolved !== view.value) {
+          view.value = resolved
+          config.onView?.({ view: resolved })
+        }
+        date.value = target
+        config.onNavigate?.({ date: target, view: resolved })
+      })
     },
 
     setEvents({ events: nextEvents }) {
