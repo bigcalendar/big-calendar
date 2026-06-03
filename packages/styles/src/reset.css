@@ -1,8 +1,71 @@
-/* Opt-in modern reset, scoped under the calendar root (plan §6). */
+/*
+ * Big Calendar — opt-in modern reset, scoped entirely under `.bc-calendar`
+ * (plan §6). It never touches global/host elements: every rule is nested under
+ * the calendar root, so importing this can't disturb the surrounding app.
+ *
+ * Self-wrapped in the `bc.reset` layer so it sits at the bottom of the cascade
+ * whether you import `reset.css` directly or via `index.css`.
+ */
 @layer bc.reset {
+  .bc-calendar,
   .bc-calendar *,
   .bc-calendar *::before,
   .bc-calendar *::after {
     box-sizing: border-box;
+  }
+
+  .bc-calendar {
+    /* Base typographic surface; tokens supply the actual values. */
+    font-family: var(--bc-font-family);
+    font-size: var(--bc-font-size);
+    line-height: var(--bc-line-height);
+    color: var(--bc-color-fg);
+    background: var(--bc-color-bg);
+    text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .bc-calendar :is(h1, h2, h3, h4, h5, h6, p, figure) {
+    margin: 0;
+  }
+
+  .bc-calendar :is(ul, ol) {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .bc-calendar :is(button, input, select, textarea) {
+    font: inherit;
+    color: inherit;
+    margin: 0;
+  }
+
+  .bc-calendar button {
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .bc-calendar table {
+    border-collapse: collapse;
+    inline-size: 100%;
+  }
+
+  /* Consistent, token-driven focus ring; only for keyboard focus. */
+  .bc-calendar :focus-visible {
+    outline: var(--bc-focus-ring);
+    outline-offset: var(--bc-focus-ring-offset);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bc-calendar *,
+    .bc-calendar *::before,
+    .bc-calendar *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }

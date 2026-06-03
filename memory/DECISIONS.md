@@ -87,3 +87,21 @@
   `@big-calendar/react` dep, §11) — confirmed with the user 2026-06-02. Native `anchor()` may be added
   later as a feature-detected progressive enhancement once it is cross-engine. Division of labor:
   floating-ui does **positioning**, the Popover API does **top-layer stacking** — complementary.
+
+## 2026-06-02 — End of Phase 2 core logic; 2m + selection-wiring deferred to Phase 4
+
+- **Phase 2 core logic = COMPLETE** (sub-tasks 2a–2l): all 5 view models, layout algos, navigation/
+  drilldown/range, accessors, resource grouping, selection FSM, messages, derived `viewModel` store
+  signal + parity config, background events. 168 Vitest cases, per-file bar met, build green.
+- **2m — view registry (custom views): DEFERRED to Phase 4.** Per Cutter (2026-06-02). Rationale: a
+  custom view's model shape can't be settled without the framework view-component contract, and
+  `CalendarViewModel` is a closed `month|time|agenda` union. Building the registry now would be a
+  speculative abstraction (violates CLAUDE.md simplest-first / ask-before-architecture). Revisit once
+  the React view-component contract exists; the registry + custom-view model escape-hatch are designed
+  together then.
+- **Store-level selection wiring: DEFERRED to Phase 4 (with the React adapter).** Per Cutter
+  (2026-06-02): the split is confirmed — the selection **FSM lives in `core`** (done, 2h, slot-index
+  space); the **adapter** owns slot-index↔date mapping (month = day cells; time-grid = (column, slot)
+  2D) and `beginSlotSelection`. **This split MUST be well documented in Storybook** (Cutter's explicit
+  ask) — the React Storybook explains how an adapter drives the core FSM and maps coordinates.
+- **Next: Phase 3 — Styles** (`@big-calendar/styles`), per §14 roadmap.
