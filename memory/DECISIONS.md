@@ -283,3 +283,34 @@ pragmatic-DnD's touch path) but never stated it as a requirement. Now it is.
   "fix core now" precedent. Net: the retrofit caught **two** real production sign bugs, both rooted in the
   fakes implementing `diff` as `b − a` against the contract's `a − b`. Localizer retrofit COMPLETE;
   `<Calendar>` is next. Luxon arm still deferred until `localizer-luxon` exists.
+
+## 2026-06-03 — Serialization: canonical UTC-`Z`, offset opt-in (SUPERSEDES the `+00:00` behavior)
+
+- **Decision (Cutter):** the localizer's serialized instant is **canonical UTC terminated with `Z`** by default
+  — `2026-06-03T10:30:00Z`, or `…Z[America/Los_Angeles]` when `extendedZone`. A new instance option
+  `output: 'utc' | 'offset'` (default `'utc'`) lets an app opt into local-offset wire format
+  (`…±hh:mm`, or `…±hh:mm[Zone]`). **Supersedes** the prior implicit behavior where `serialize` emitted a
+  numeric offset (`+00:00` in UTC) via `dt.toString({timeZoneName:'never'})` / `dt.toString()`.
+- **Rationale:** a calendar date is an absolute instant; it always needs a UTC/epoch reference, and the IANA
+  zone is only the *display* lens (DST-aware). So values are never zoneless — both forms carry `Z`; the
+  bracket is metadata. Per-value "mirror the input format" was rejected: `parse` normalizes into the
+  localizer timezone and discards the input's textual form, so mirroring would require threading raw strings
+  through the whole base class, has no defined meaning for multi/zero-input methods (`min`/`max`/`getNow`),
+  and reintroduces the offset-vs-`Z` ambiguity. An instance-level flag matches how `timezone`/`locale`/
+  `extendedZone` already work.
+- **Implementation:** option added to `LocalizerOptions` + `LocalizerContract` (readonly) + base `Localizer`
+  (`this.output = options.output ?? 'utc'`). Only `TemporalLocalizer.serialize` changed: `body =
+  output==='offset' ? dt.toString({timeZoneName:'never'}) : dt.toInstant().toString()`, then append
+  `[${dt.timeZoneId}]` when `extendedZone`. **Parse untouched** — verified `Instant.from` already accepts
+  `Z`, `+00:00`, `-07:00`, and `…Z[Zone]`, all to the same instant. (`Instant.toString()` also drops the
+  `.000` trailing zeros, so outputs are `…00Z`, not `…00.000Z`.)
+- **Verified gotcha for the future Luxon adapter:** `DateTime.fromISO('…Z[America/Los_Angeles]')` returns
+  `isValid:true` but the **wrong instant** (off by the zone offset — it reads the wall digits as local and
+  discards `Z`). The luxon adapter MUST IXDTF-split the bracket and parse the instant separately
+  (`fromISO(isoPart, { zone })`), and its `serialize` must compose `…Z` + `[zone]` by hand (Luxon's
+  `toISO()` emits offset, never `Z`/bracket). Temporal needs no such workaround.
+- **Tests:** `localizer-temporal.class.test.ts` keeps its NY wall-clock assertions readable by constructing
+  those localizers with `output:'offset'` (reproduces prior output exactly), plus a new "output modes" block
+  covering `utc` default (`…Z`), `…Z[Zone]`, offset mode, and mixed-input→same-instant. Base
+  `localizer.class.test.ts` asserts the `output` default/override. Retrofitted core/react suites read values
+  back from the localizer, so they're format-agnostic and unaffected.

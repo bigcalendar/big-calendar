@@ -47,8 +47,11 @@ export class TemporalLocalizer extends Localizer<Temporal.ZonedDateTime> {
   }
 
   protected serialize(dt: Temporal.ZonedDateTime): string {
-    // extendedZone → RFC 9557 (IANA bracket); otherwise RFC 3339 (offset only).
-    return this.extendedZone ? dt.toString() : dt.toString({ timeZoneName: 'never' })
+    // The instant is canonical UTC (`…Z`) unless the app opts into local offset.
+    // extendedZone then appends the IANA bracket → RFC 9557, e.g. `…Z[America/New_York]`.
+    const body =
+      this.output === 'offset' ? dt.toString({ timeZoneName: 'never' }) : dt.toInstant().toString()
+    return this.extendedZone ? `${body}[${dt.timeZoneId}]` : body
   }
 
   protected toEpochMs(dt: Temporal.ZonedDateTime): number {

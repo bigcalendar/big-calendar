@@ -87,6 +87,8 @@ export interface LocalizerOptions {
   timezone?: string
   /** `false` → RFC 3339 I/O; `true` → RFC 9557 (IANA bracket suffix) I/O. */
   extendedZone?: boolean
+  /** `'utc'` → serialize the instant as `…Z` (default); `'offset'` → local `…±hh:mm`. */
+  output?: 'utc' | 'offset'
   /** Overrides merged over the built-in default format roles. */
   formats?: FormatMap
   /** 1 = Monday … 7 = Sunday. Defaults to locale `weekInfo`, fallback Sunday. */
@@ -109,6 +111,7 @@ export interface LocalizerContract {
   readonly locale: Intl.Locale
   readonly timezone: string
   readonly extendedZone: boolean
+  readonly output: 'utc' | 'offset'
 
   /** Human-facing formatting via a named role or explicit Intl options. */
   format(args: { value: string; format: FormatInput }): string

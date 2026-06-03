@@ -46,6 +46,7 @@ export abstract class Localizer<T = unknown> implements LocalizerContract {
   readonly locale: Intl.Locale
   readonly timezone: string
   readonly extendedZone: boolean
+  readonly output: 'utc' | 'offset'
 
   protected readonly formats: Record<FormatKey, Intl.DateTimeFormatOptions>
   private readonly _firstDayOfWeek: number
@@ -54,6 +55,7 @@ export abstract class Localizer<T = unknown> implements LocalizerContract {
     this.locale = resolveLocale(options.locale)
     this.timezone = resolveTimezone(options.timezone)
     this.extendedZone = options.extendedZone ?? false
+    this.output = options.output ?? 'utc'
     this.formats = { ...DEFAULT_FORMATS, ...(options.formats ?? {}) }
     // Resolution order: explicit override → locale weekInfo (native or
     // ponyfilled) → Monday (1) as the last-resort fallback. The weekInfo
@@ -66,7 +68,10 @@ export abstract class Localizer<T = unknown> implements LocalizerContract {
 
   /** Parse an RFC 3339/9557 string into the internal datetime, in `timezone`. */
   protected abstract parse(value: string): T
-  /** Serialize back to RFC 3339 (or RFC 9557 when `extendedZone`). */
+  /**
+   * Serialize back to RFC 3339, or RFC 9557 (IANA bracket) when `extendedZone`.
+   * The instant is rendered as `…Z` unless `output` is `'offset'`.
+   */
   protected abstract serialize(dt: T): string
   /** Epoch milliseconds for the instant (used for compare/format). */
   protected abstract toEpochMs(dt: T): number

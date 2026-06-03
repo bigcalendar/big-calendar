@@ -140,6 +140,7 @@ describe('Localizer base — construction', () => {
     expect(loc.locale.toString()).toBe('en-US')
     expect(loc.timezone).toBe('UTC')
     expect(loc.extendedZone).toBe(false)
+    expect(loc.output).toBe('utc')
   })
 
   it('resolves locale and timezone from the host when omitted', () => {
@@ -155,8 +156,9 @@ describe('Localizer base — construction', () => {
   })
 
   it('honors extendedZone and firstDayOfWeek overrides', () => {
-    const d = new TestLocalizer({ ...base, extendedZone: true, firstDayOfWeek: 1 })
+    const d = new TestLocalizer({ ...base, extendedZone: true, output: 'offset', firstDayOfWeek: 1 })
     expect(d.extendedZone).toBe(true)
+    expect(d.output).toBe('offset')
     expect(d.firstDayOfWeek()).toBe(1)
   })
 })

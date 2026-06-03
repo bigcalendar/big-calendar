@@ -8,9 +8,11 @@ let loc: TemporalLocalizer
 let extended: TemporalLocalizer
 
 beforeAll(async () => {
-  loc = await createTemporalLocalizer(NY)
+  // `output: 'offset'` so the DST/math/week assertions below read as NY wall
+  // time; the default `utc` (…Z) output is covered in its own block.
+  loc = await createTemporalLocalizer({ ...NY, output: 'offset' })
   // Second factory call exercises the loader's cached path.
-  extended = await createTemporalLocalizer({ ...NY, extendedZone: true })
+  extended = await createTemporalLocalizer({ ...NY, extendedZone: true, output: 'offset' })
 })
 
 describe('loadTemporal', () => {
@@ -33,7 +35,7 @@ describe('loadTemporal', () => {
 })
 
 describe('TemporalLocalizer — parsing & serialization', () => {
-  it('round-trips RFC 3339 (offset only) by default', () => {
+  it('round-trips RFC 3339 offset notation in offset mode', () => {
     expect(loc.startOf({ value: FRI, unit: 'day' })).toBe('2026-07-03T00:00:00-04:00')
   })
   it('emits RFC 9557 (bracket suffix) when extendedZone is on', () => {
@@ -50,6 +52,36 @@ describe('TemporalLocalizer — parsing & serialization', () => {
   it('accepts a date-only input as local midnight', () => {
     expect(loc.getMinutesFromMidnight('2026-07-03')).toBe(0)
     expect(loc.startOf({ value: '2026-07-03', unit: 'day' })).toBe('2026-07-03T00:00:00-04:00')
+  })
+})
+
+describe('TemporalLocalizer — output modes', () => {
+  let utc: TemporalLocalizer
+  let utcExtended: TemporalLocalizer
+  beforeAll(async () => {
+    utc = await createTemporalLocalizer(NY) // default output: 'utc'
+    utcExtended = await createTemporalLocalizer({ ...NY, extendedZone: true })
+  })
+
+  it('serializes the instant as UTC (…Z) by default', () => {
+    // 00:00 EDT on Jul 3 is 04:00Z.
+    expect(utc.startOf({ value: FRI, unit: 'day' })).toBe('2026-07-03T04:00:00Z')
+  })
+  it('appends the IANA bracket (…Z[Zone]) when extendedZone is on', () => {
+    expect(utcExtended.startOf({ value: FRI, unit: 'day' })).toBe(
+      '2026-07-03T04:00:00Z[America/New_York]',
+    )
+  })
+  it('renders local offset when output is offset', () => {
+    expect(loc.startOf({ value: FRI, unit: 'day' })).toBe('2026-07-03T00:00:00-04:00')
+  })
+  it('reads offset, Z, and Z[Zone] inputs to the same instant', () => {
+    const fromOffset = utc.startOf({ value: '2026-07-03T12:00:00-04:00', unit: 'hour' })
+    const fromZ = utc.startOf({ value: '2026-07-03T16:00:00Z', unit: 'hour' })
+    const fromBracket = utc.startOf({ value: '2026-07-03T16:00:00Z[America/New_York]', unit: 'hour' })
+    expect(fromOffset).toBe('2026-07-03T16:00:00Z')
+    expect(fromZ).toBe('2026-07-03T16:00:00Z')
+    expect(fromBracket).toBe('2026-07-03T16:00:00Z')
   })
 })
 
