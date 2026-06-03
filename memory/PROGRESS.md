@@ -55,21 +55,49 @@ folded into Phase 4 (per Cutter). See DECISIONS.md (2026-06-02).
   sibling reads state via `useSignalValue`; throws outside provider). react: 15 tests; **100% br/fn/stmt/line**.
   typecheck/lint/test/build green.
 
-## ⚠ NEXT — Phase 4 build order (contract is settled; build straight through)
+### Phase 4 — Task 4d: geometry bridge ✓ (commit cbb574b, pushed)
 
-Contract decided (4c). Remaining Phase-4 build order:
-1. **4d — view components** (`<MonthView>`/`<TimeGridView>`/`<AgendaView>`): consume context +
-   `store.viewModel`, attach `@big-calendar/styles` class names, set the geometry custom props inline
-   from core fractions. Each accepts a `components` override map (event/header slots).
-2. **4e — Toolbar + Event** (first overridable slots → this is when `messages` + the resolved
-   `components` map get promoted into the context value, per A.6).
-3. **4f — `<Calendar>`** batteries-included default tree (toolbar + active view), consuming context.
-4. **4g — top-layer** (§7.5): Popover-API show-more/tooltip components + floating-ui positioning.
-5. **4h — selection wiring** (adapter maps pointer/keyboard → slot coords → core FSM) **+ its Storybook
-   docs** (Cutter's explicit ask). Plus **2m view registry** (revisit once view components exist).
+- **`src/internal/geometry.function.ts`** — core→CSS bridge: `eventBoxStyle`/`segmentStyle`/
+  `nowIndicatorStyle`/`selectionStyle` map core's normalized fractions to the documented `--bc-*`
+  custom properties (styles/VOCABULARY.md). `StyleWithVars = CSSProperties & Record<\`--${string}\`,
+  string|number>` re-permits custom props (csstype rejects them). 4 tests, 100%.
 
-⚠ **Open design input still needed at its task:** exact `components` map slot names per view (4d/4e);
-top-layer component vocabulary (4g). See [[bigcal-selection-storybook-phase4]].
+### Phase 4 — Task 4d: core viewLabel + store.label ✓ (commit edbd211, pushed)
+
+- **DECISION (Cutter 2026-06-02): localized labels computed in CORE** (a `label` signal), so every
+  adapter renders the identical title. See DECISIONS.md.
+- **`packages/core/src/store/viewLabel.function.ts`** — `viewLabel({localizer,view,date,range})`:
+  month→`monthHeader`(date), day→`dayHeader`(date), week/work_week/agenda→`monthDay` span. Added
+  `label: ReadonlySignal<string>` to the store (computed). Barrel exports `viewLabel`/`ViewLabelArgs`.
+  core: 174 tests; viewLabel 100%, store still 100%.
+
+### Phase 4 — Task 4d: Toolbar + components override + messages-in-context ✓ (commit b49ce61, pushed)
+
+- **`src/components.type.ts`** — `CalendarComponents` (override map; starts with `toolbar`, non-generic
+  until event-shaped slots land) + `ToolbarProps` (label/view/views/messages/onNavigate/onView).
+- **`CalendarProvider` / `calendar.context.ts`** — context value extended to `{ store, components,
+  messages }` (A.6: real consumers now exist). Provider resolves `resolveMessages(messages)` and carries
+  `components ?? {}`; both stripped from the props passed to `useCalendar`.
+- **`src/Toolbar/`** — `Toolbar.component.tsx` (resolves `components.toolbar ?? DefaultToolbar`, feeds
+  `useToolbarProps`), `hooks/useToolbarProps.memo.ts` (label/view via signals + bound navigate/setView),
+  `components/DefaultToolbar/` (today/prev/next + label + view switcher, `.bc-toolbar*` classes, aria).
+  Barrel exports `Toolbar`/`DefaultToolbar`/`CalendarComponents`/`ToolbarProps`. react: 23 tests, 100%.
+- **Coverage note:** the per-file/global bar enforces **95% functions** — inline JSX `onClick` arrows
+  each count as a function, so every interactive control must be exercised in tests (clicked Today/Back/
+  Next + a view button). See ERRORS.md.
+
+## ⚠ NEXT — Phase 4 remaining build order
+
+1. **View components** (consume context + `store.viewModel`, attach `.bc-*` classes + geometry props):
+   **AgendaView** (simplest, no geometry) → **MonthView** (segments) → **TimeGridView** (event boxes +
+   all-day + now-indicator + bg). Each adds its event/header slots to `CalendarComponents` (which then
+   becomes generic over `TEvent`). Slot names at my discretion (Cutter 2026-06-02).
+2. **`<Calendar>`** batteries-included default tree (Toolbar + active view), consuming context.
+3. **Top-layer** (§7.5): Popover-API show-more/tooltip + floating-ui positioning.
+4. **Selection wiring** (pointer/keyboard → slot coords → core FSM) **+ Storybook docs** (Cutter's ask).
+   Plus **2m view registry**. Plus a **coarse-pointer/touch pass on `@big-calendar/styles`** (§7.7).
+
+See [[bigcal-selection-storybook-phase4]].
 
 ## Possible next phase
 
