@@ -78,6 +78,10 @@ importers:
       '@preact/signals-core':
         specifier: ^1.14.2
         version: 1.14.2
+    devDependencies:
+      '@big-calendar/localizer-temporal':
+        specifier: workspace:*
+        version: link:../localizer-temporal
 
   packages/dnd:
     dependencies:
@@ -127,6 +131,9 @@ importers:
         specifier: ^1.14.2
         version: 1.14.2
     devDependencies:
+      '@big-calendar/localizer-temporal':
+        specifier: workspace:*
+        version: link:../localizer-temporal
       '@testing-library/dom':
         specifier: ^10.4.1
         version: 10.4.1

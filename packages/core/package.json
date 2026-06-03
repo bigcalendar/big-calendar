@@ -29,5 +29,7 @@
     "@big-calendar/localizer": "workspace:*"
   },
   "peerDependencies": {},
-  "devDependencies": {}
+  "devDependencies": {
+    "@big-calendar/localizer-temporal": "workspace:*"
+  }
 }
