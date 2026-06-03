@@ -105,3 +105,21 @@
   2D) and `beginSlotSelection`. **This split MUST be well documented in Storybook** (Cutter's explicit
   ask) — the React Storybook explains how an adapter drives the core FSM and maps coordinates.
 - **Next: Phase 3 — Styles** (`@big-calendar/styles`), per §14 roadmap.
+
+## 2026-06-02 — Phase 3 (Styles) complete
+
+- **`@big-calendar/styles` authored** (tokens, reset, layout, components/*, index bundle) per §6:
+  Baseline-2024 CSS, `@layer bc.{reset,tokens,layout,components,theme,overrides}`, all visual values
+  as overridable `--bc-*` tokens (system-color defaults via `color-mix` → auto light/dark), month via
+  **nested subgrid**, logical properties + `:dir()` for RTL (confirmed **no `rtl` prop**), `@container`
+  (not viewport) responsive, native Popover for top layer.
+- **Geometry contract locked** (the bridge core→CSS, documented in `packages/styles/VOCABULARY.md`):
+  events use `--bc-top/height/left/width` fractions + `--bc-z`; month/all-day segments use
+  `--bc-seg-left/span/row` grid spans; now-line `--bc-now-top`. The React adapter (Phase 4) sets these
+  inline from core's normalized output and attaches the documented `.bc-*` class names — **framework
+  packages ship no CSS** (§6 boundary).
+- **Granular exports**: `reset.css` / `tokens.css` / `layout.css` / `components/*.css` / `index.css`;
+  each file self-wraps its `bc.*` layer so standalone imports stay correctly layered.
+- **Not done in this env:** no browser render / visual-regression (none available) and no CSS linter
+  (ESLint is TS-only). `spike/index.html` is authored for manual/Storybook verification; empirical
+  subgrid/anchor/visual checks ride with Phase 4/7.

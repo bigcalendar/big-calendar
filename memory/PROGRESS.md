@@ -4,8 +4,45 @@
 
 ## Current phase
 
-**Phase 2 — Core engine** (in progress). Phase 1 complete. Phase 2 is split into PR-sized
-sub-tasks (2a…2i); see "Done" / "Next" below.
+**Phase 3 — Styles** (`@big-calendar/styles`) COMPLETE. Phases 0–2 complete (Phase 2 core logic;
+2m view-registry + store-selection wiring deferred to Phase 4 per Cutter). **Next: Phase 4 — React
+(MVP).** See DECISIONS.md (2026-06-02) for the deferrals.
+
+### Phase 3 — Styles ✓ (commits 0f1a20f, ca0f567, 5d3bac6; pushed)
+
+- **`tokens.css`** — full `--bc-*` set (surfaces, event/now/selection colors via `color-mix` over
+  system colors for auto light/dark, spacing/typography/border scales, focus ring, density sizing,
+  popover elevation), self-wrapped in `@layer bc.tokens` on `:where(.bc-calendar)`.
+- **`reset.css`** — opt-in modern reset scoped entirely under `.bc-calendar` (`@layer bc.reset`):
+  box-sizing, margin/list/form/button/table normalization, token-driven `:focus-visible`,
+  reduced-motion.
+- **`layout.css`** (`@layer bc.layout`) — structural grids + the **geometry contract** (documented in
+  the file header + VOCABULARY.md): month grid as nested **subgrid** (week rows re-expose 7 cols so
+  date cells + multi-day segments align via two overlapping full-width subgrids), time grid
+  (gutter + day columns, scrollable slot body, all-day segment row), agenda rows, toolbar/header flex,
+  now-indicator + selection overlays. Event boxes from `--bc-top/height/left/width` fractions;
+  segments from `--bc-seg-left/span/row` grid spans; **logical properties** throughout; **container
+  queries** (`@container bc`) for responsive collapse (long↔short weekday names, gutter shrink).
+- **`components/*.css`** (`@layer bc.components`) — visual skin only, all via tokens: toolbar, month
+  (date cells/today/off-range/show-more), timegrid (headings, gutter labels, slot-line gradient,
+  now-knob), event (timed/segment/bg/selected/title/time), agenda, popover (native `[popover]` +
+  `:popover-open`, `::backdrop`), selection.
+- **`index.css`** — declares the `bc.reset,tokens,layout,components,theme,overrides` layer order then
+  plain-imports every self-layered file. **`package.json`** exports add `./components/*.css`.
+- **`VOCABULARY.md`** — the class-name + geometry-custom-prop contract the React layer will consume.
+- **`spike/index.html`** — static visual spike rendering month / time-grid / agenda from representative
+  core geometry (link `../dist/index.css`; `nx build styles` first). RTL via `:dir()` + logical props
+  (no `rtl` prop); top layer via native Popover; positioning later via floating-ui (Phase 4).
+- **Gate:** `nx build styles` green (copies src→dist incl. components/); CSS brace/paren-balanced.
+  **Caveat:** no browser/visual-regression run in this environment — the spike is authored but not
+  empirically rendered here; real visual + the deferred Phase-1 subgrid/anchor Playwright check land in
+  Phase 4/7. No CSS linter is configured (ESLint is TS-only).
+
+---
+
+## (historical) Phase 2 — Core engine sub-task log
+
+Phase 2 is split into PR-sized sub-tasks (2a…2l); see the log below.
 
 ## How to resume
 
