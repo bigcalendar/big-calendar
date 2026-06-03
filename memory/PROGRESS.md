@@ -86,12 +86,28 @@ folded into Phase 4 (per Cutter). See DECISIONS.md (2026-06-02).
   each count as a function, so every interactive control must be exercised in tests (clicked Today/Back/
   Next + a view button). See ERRORS.md.
 
+### Phase 4 — Task 4e: AgendaView ✓ (commits cfa5d2c core, 980168c react; pushed)
+
+- **DECISION (Cutter 2026-06-02): event TIME strings formatted adapter-side** via a shared tested
+  `formatEventTime` helper (not core) — events already reach the adapter; only the localized *label*
+  lives in core. Flagged for Cutter; easy to promote later. See DECISIONS.md.
+- **`packages/core/src/index.ts`** — re-export `LocalizerContract` (store's public surface; adapters
+  need the type without depending on `@big-calendar/localizer`).
+- **`src/internal/formatEventTime.function.ts`** — all-day label vs "start – end" (null-safe), `agendaTime`/
+  `time` roles. 5 tests, 100%.
+- **`src/components.type.ts`** — `CalendarComponents<TEvent>` now generic; added `agenda` slots
+  (`date`/`event`/`empty`) + their prop types.
+- **`src/AgendaView/`** — `AgendaView.component.tsx` (reads agenda model from context, renders nothing
+  outside agenda view, resolves `components.agenda.{date,event,empty}` ?? defaults), `hooks/useAgendaRows.memo.ts`
+  (resolves title via accessors + time via formatEventTime), 3 `components/DefaultAgenda*.component.tsx`.
+  Barrel exports `AgendaView` + agenda slot types. react: 32 tests, 100% all metrics.
+
 ## ⚠ NEXT — Phase 4 remaining build order
 
-1. **View components** (consume context + `store.viewModel`, attach `.bc-*` classes + geometry props):
-   **AgendaView** (simplest, no geometry) → **MonthView** (segments) → **TimeGridView** (event boxes +
-   all-day + now-indicator + bg). Each adds its event/header slots to `CalendarComponents` (which then
-   becomes generic over `TEvent`). Slot names at my discretion (Cutter 2026-06-02).
+1. **MonthView** (segments + geometry: `.bc-month`/subgrid, `segmentStyle` for `.bc-segment`, date cells,
+   show-more, drilldown) → **TimeGridView** (event boxes via `eventBoxStyle`, all-day row, now-indicator,
+   bg events). Each adds its slots to `CalendarComponents`. Slot names at my discretion (Cutter 2026-06-02).
+   ⚠ Heavier localizer fakes needed (month grid / slot metrics) — consider `/compact` before starting.
 2. **`<Calendar>`** batteries-included default tree (Toolbar + active view), consuming context.
 3. **Top-layer** (§7.5): Popover-API show-more/tooltip + floating-ui positioning.
 4. **Selection wiring** (pointer/keyboard → slot coords → core FSM) **+ Storybook docs** (Cutter's ask).

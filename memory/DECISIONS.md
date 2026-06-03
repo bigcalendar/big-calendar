@@ -181,3 +181,14 @@ pragmatic-DnD's touch path) but never stated it as a requirement. Now it is.
   long-press/`touch-action`, DnD touch) + a **coarse-pointer pass on the already-built styles package**
   (current `@big-calendar/styles` has no `pointer: coarse` target-sizing yet — follow-up).
 - a11y note: keyboard model (§7.6) is unchanged; touch is additive, not a replacement.
+
+## 2026-06-02 — Labels in core; per-event time strings adapter-side
+
+- **View label → CORE** (Cutter chose this): `store.label` computed via `viewLabel` so every adapter
+  renders the identical localized title. Done (task 4d).
+- **Per-event time strings → ADAPTER** (my call, flagged for Cutter): a shared, separately-tested
+  `formatEventTime` helper in `@big-calendar/react` formats event times for display. Rationale: the raw
+  events already reach the adapter (a custom event component needs them), and enriching every event in
+  every view model with formatted strings is heavier than one shared formatter. **Open to revisiting** —
+  if cross-framework parity of event-time formatting matters, promote `formatEventTime` to a core/shared
+  util. Title/allDay are trivial accessor reads done inline in the adapter.
