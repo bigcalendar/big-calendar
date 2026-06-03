@@ -7,6 +7,7 @@ import { buildViewModel } from '../views/viewModel.function'
 import { resolveDrilldownView } from './drilldown.function'
 import { navigateDate } from './navigateDate.function'
 import type { CalendarStore } from './store.type'
+import { viewLabel } from './viewLabel.function'
 import { viewRange } from './viewRange.function'
 
 /** Default "now" source: the current instant as a UTC RFC 3339 string. */
@@ -41,6 +42,12 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   const { drilldownView = Views.DAY } = config
   const range = computed(() =>
     viewRange({ localizer, date: date.value, view: view.value, length: config.length }),
+  )
+
+  // Localized toolbar title for the active view + focus date. Computed here so
+  // every framework adapter renders the identical label.
+  const label = computed(() =>
+    viewLabel({ localizer, view: view.value, date: date.value, range: range.value }),
   )
 
   // Resolve the time-grid window once (config is stable). A midnight `max`
@@ -97,6 +104,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     backgroundEvents,
     resources,
     range,
+    label,
     viewModel,
     localizer,
     accessors,

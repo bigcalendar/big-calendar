@@ -304,3 +304,20 @@ describe('createCalendarStore — viewModel', () => {
     }
   })
 })
+
+describe('createCalendarStore — label', () => {
+  const monday = '2026-06-15T00:00:00.000Z'
+  // fullLocalizer + a marker `format` so we can assert which role/date was used.
+  const labelLocalizer = {
+    ...makeTimeLocalizer(),
+    ...makeRangeLocalizer(1),
+    format: ({ value, format }: { value: string; format: string }) => `${format}:${value}`,
+  } as unknown as LocalizerContract
+
+  it('derives a localized label from the active view + focus date', () => {
+    const store = createCalendarStore<Event>({ localizer: labelLocalizer, date: monday, view: Views.MONTH })
+    expect(store.label.value).toBe(`monthHeader:${monday}`)
+    store.setView({ view: Views.DAY })
+    expect(store.label.value).toBe(`dayHeader:${monday}`)
+  })
+})

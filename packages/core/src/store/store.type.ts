@@ -28,6 +28,8 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
   // --- derived state ---
   /** Visible day-range for the current date + view (recomputes on either change). */
   readonly range: ReadonlySignal<VisibleRange>
+  /** Localized toolbar title for the active view + focus date. */
+  readonly label: ReadonlySignal<string>
   /**
    * The view model for the active view (month / time-grid / agenda),
    * recomputed from the view, range, events and config. Discriminated by `kind`.
