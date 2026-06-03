@@ -10,3 +10,5 @@ export {
   useCalendarStore,
 } from './CalendarProvider'
 export type { CalendarProviderProps, CalendarContextValue } from './CalendarProvider'
+export { Toolbar, DefaultToolbar } from './Toolbar'
+export type { CalendarComponents, ToolbarProps } from './components.type'

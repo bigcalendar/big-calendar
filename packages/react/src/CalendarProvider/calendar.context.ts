@@ -1,17 +1,22 @@
 import { createContext } from 'react'
-import type { CalendarStore } from '@big-calendar/core'
+import type { CalendarStore, Messages } from '@big-calendar/core'
+import type { CalendarComponents } from '../components.type'
 
 /**
- * Shared calendar state exposed to every descendant of a {@link CalendarProvider}.
- *
- * Kept intentionally minimal (Appendix A.6): it carries only the store, which is
- * the one genuinely cross-cutting value. `messages` and the resolved `components`
- * override map join this value when their first concrete consumers (Toolbar /
- * overridable Event) land — not before.
+ * Shared calendar state exposed to every descendant of a {@link CalendarProvider}:
+ * the reactive store, the (partial) component override map, and the resolved UI
+ * strings. These three are genuinely cross-cutting — many components read them —
+ * so they live in context (Appendix A.6). Slot defaults are resolved at each
+ * render site (a slot falls back to its built-in default locally), which keeps
+ * the provider from importing every default component.
  */
 export interface CalendarContextValue<TEvent = unknown, TResource = unknown> {
   /** The reactive calendar store: state signals + actions. */
   store: CalendarStore<TEvent, TResource>
+  /** Component overrides as supplied to the provider (empty when none). */
+  components: CalendarComponents
+  /** Fully-resolved UI strings (defaults merged with any overrides). */
+  messages: Messages
 }
 
 /**

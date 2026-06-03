@@ -1,16 +1,23 @@
+import { resolveMessages } from '@big-calendar/core'
+import type { Messages } from '@big-calendar/core'
 import { useMemo } from 'react'
 import type { ReactNode } from 'react'
+import type { CalendarComponents } from '../components.type'
 import { useCalendar } from '../useCalendar'
 import type { CalendarProps } from '../useCalendar'
 import { CalendarContext } from './calendar.context'
 import type { CalendarContextValue } from './calendar.context'
 
 /**
- * Props for {@link CalendarProvider}: the full {@link CalendarProps} surface plus
- * the children it wraps.
+ * Props for {@link CalendarProvider}: the full {@link CalendarProps} surface, the
+ * component override map, message overrides, and the children it wraps.
  */
 export interface CalendarProviderProps<TEvent = unknown, TResource = unknown>
   extends CalendarProps<TEvent, TResource> {
+  /** Per-slot component overrides (§7). */
+  components?: CalendarComponents | undefined
+  /** UI string overrides, merged over the English defaults. */
+  messages?: Partial<Messages> | undefined
   /** Calendar UI — typically `<Calendar>` plus any siblings that read context. */
   children?: ReactNode
 }
@@ -26,10 +33,16 @@ export interface CalendarProviderProps<TEvent = unknown, TResource = unknown>
  */
 function CalendarProvider<TEvent = unknown, TResource = unknown>({
   children,
+  components,
+  messages,
   ...props
 }: CalendarProviderProps<TEvent, TResource>) {
   const store = useCalendar<TEvent, TResource>(props)
-  const value = useMemo<CalendarContextValue<TEvent, TResource>>(() => ({ store }), [store])
+  const resolvedMessages = useMemo(() => resolveMessages(messages), [messages])
+  const value = useMemo<CalendarContextValue<TEvent, TResource>>(
+    () => ({ store, components: components ?? {}, messages: resolvedMessages }),
+    [store, components, resolvedMessages],
+  )
   return <CalendarContext.Provider value={value as CalendarContextValue}>{children}</CalendarContext.Provider>
 }
 
