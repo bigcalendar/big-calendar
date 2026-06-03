@@ -161,3 +161,23 @@ Settled with Cutter (AskUserQuestion + follow-ups). All future Vue/Angular/Lit a
   avoid React-19-only APIs (`<Context>` as provider, `use()`, ref-as-prop).
 - Build order: 4c provider+context → view components (consume context + `store.viewModel`) + Toolbar/
   Event with overrides → `<Calendar>` default tree → top-layer (§7.5) → selection wiring (+Storybook).
+
+## 2026-06-02 — Touch support is a first-class design requirement (cross-cutting)
+
+Per Cutter: the calendar must **support touch for use on tablets and phones** — explicitly, not just
+"responsive." Responsive (container queries, Phase 3) sizes the *layout*; touch is orthogonal (a tablet
+is large **and** touch). The plan implied touch (§8 "pointer + keyboard" FSM, `longPressThreshold`,
+pragmatic-DnD's touch path) but never stated it as a requirement. Now it is.
+
+- **Pointer Events, unified** — adapters bind `pointerdown/move/up` (not separate mouse+touch); set CSS
+  `touch-action` on selectable/draggable surfaces so slot-drag / event-drag don't fight page scroll.
+- **Coarse-pointer adaptations** (`@media (pointer: coarse)` / `(hover: none)`): ≥44×44px hit targets;
+  **no hover-only affordances** — show-more, resize handles, tooltips must be tap-reachable.
+- **Long-press to begin selection** on touch (the in-scope `longPressThreshold`, adapter-timed) vs
+  immediate mouse drag; disambiguate **scroll-vs-select** in the time grid.
+- **Touch DnD** — wire pragmatic-drag-and-drop's touch path + `touch-action: none` on drag handles.
+- **Scope:** touches the **adapter + styles ONLY, never `core`** — the selection FSM is already
+  pointer-agnostic (slot indices). Lands in Phase 4 (4g top-layer tap targets, 4h selection
+  long-press/`touch-action`, DnD touch) + a **coarse-pointer pass on the already-built styles package**
+  (current `@big-calendar/styles` has no `pointer: coarse` target-sizing yet — follow-up).
+- a11y note: keyboard model (§7.6) is unchanged; touch is additive, not a replacement.
