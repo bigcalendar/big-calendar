@@ -31,6 +31,10 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
 
   const getNow = config.getNow ?? defaultGetNow
   const accessors = resolveAccessors<TEvent, TResource>(config.accessors)
+  // Resolved time-grid slot params (defaults mirror the view builders). Exposed
+  // on the store so adapters can rebuild slot metrics for the now-indicator.
+  const step = config.step ?? 30
+  const timeslots = config.timeslots ?? 2
 
   const date = signal<string>(config.date ?? getNow())
   const view = signal<ViewKey>(config.view ?? Views.MONTH)
@@ -66,8 +70,8 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       events: events.value,
       backgroundEvents: backgroundEvents.value,
       options: {
-        step: config.step,
-        timeslots: config.timeslots,
+        step,
+        timeslots,
         dayStartMin,
         dayEndMin,
         dayLayoutAlgorithm: config.dayLayoutAlgorithm,
@@ -110,6 +114,8 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     localizer,
     accessors,
     getNow,
+    step,
+    timeslots,
 
     navigate({ direction, date: target }) {
       const next = navigateDate({

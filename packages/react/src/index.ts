@@ -12,6 +12,7 @@ export {
 export type { CalendarProviderProps, CalendarContextValue } from './CalendarProvider'
 export { Toolbar, DefaultToolbar } from './Toolbar'
 export { MonthView } from './MonthView'
+export { TimeGridView } from './TimeGridView'
 export { AgendaView } from './AgendaView'
 export type {
   AgendaComponents,
@@ -24,5 +25,11 @@ export type {
   MonthEventProps,
   MonthShowMoreProps,
   MonthWeekdayProps,
+  TimeAllDayEventProps,
+  TimeComponents,
+  TimeDayHeadingProps,
+  TimeEventProps,
+  TimeLabelProps,
+  TimeShowMoreProps,
   ToolbarProps,
 } from './components.type'

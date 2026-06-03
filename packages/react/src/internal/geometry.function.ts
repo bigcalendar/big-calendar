@@ -67,6 +67,18 @@ export function monthGridStyle(weekCount: number): CSSProperties {
   return style
 }
 
+/** Inline custom property for time-grid containers (`.bc-time-header`, `.bc-allday-segments`): how many day columns. */
+export function dayCountStyle(dayCount: number): CSSProperties {
+  const style: StyleWithVars = { '--bc-day-count': dayCount }
+  return style
+}
+
+/** Inline custom property for the `.bc-time-body`: how many slot rows tall it is. */
+export function slotCountStyle(slotCount: number): CSSProperties {
+  const style: StyleWithVars = { '--bc-slot-count': slotCount }
+  return style
+}
+
 /** Inline custom property for the `.bc-now-indicator` line, fraction `0..1` down the column. */
 export function nowIndicatorStyle(top: number): CSSProperties {
   const style: StyleWithVars = { '--bc-now-top': top }

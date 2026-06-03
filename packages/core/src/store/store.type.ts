@@ -46,6 +46,17 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    * the current UTC instant). Adapters use it for today / now-indicator state.
    */
   readonly getNow: () => string
+  /**
+   * Resolved time-grid slot size in minutes (`config.step`, default 30). Exposed
+   * so adapters can rebuild slot metrics — e.g. to place the now-indicator on the
+   * same vertical span the model used for event boxes.
+   */
+  readonly step: number
+  /**
+   * Resolved slots per labelled group (`config.timeslots`, default 2). Pairs with
+   * {@link CalendarStore.step} when an adapter rebuilds slot metrics.
+   */
+  readonly timeslots: number
 
   // --- actions (named-parameter objects, per Appendix A) ---
   /** Move the focus date: PREV/NEXT step by view; TODAY resets to now; DATE jumps. */

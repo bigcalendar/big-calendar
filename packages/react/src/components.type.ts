@@ -13,6 +13,8 @@ export interface CalendarComponents<TEvent = unknown> {
   toolbar?: ComponentType<ToolbarProps>
   /** Month-view slot overrides. */
   month?: MonthComponents<TEvent>
+  /** Time-grid (day / week / work-week) slot overrides. */
+  time?: TimeComponents<TEvent>
   /** Agenda-view slot overrides. */
   agenda?: AgendaComponents<TEvent>
 }
@@ -85,6 +87,66 @@ export interface MonthShowMoreProps {
   label: string
   /** Day-start string of the week's first day (overflow anchor). */
   day: string
+}
+
+/** Time-grid (day / week / work-week) slot overrides. */
+export interface TimeComponents<TEvent> {
+  /** A day column heading (the date label + today state + drilldown). */
+  dayHeading?: ComponentType<TimeDayHeadingProps>
+  /** A labelled time in the left gutter. */
+  timeLabel?: ComponentType<TimeLabelProps>
+  /** A timed event box within a day column. */
+  event?: ComponentType<TimeEventProps<TEvent>>
+  /** An all-day event segment in the header row. */
+  allDayEvent?: ComponentType<TimeAllDayEventProps<TEvent>>
+  /** The "+N more" overflow indicator for the all-day row. */
+  showMore?: ComponentType<TimeShowMoreProps>
+}
+
+/** Props for a day column heading. */
+export interface TimeDayHeadingProps {
+  /** Day-start string (RFC 3339/9557). */
+  day: string
+  /** Localized day heading label. */
+  label: string
+  /** Whether the day is the current date. */
+  isToday: boolean
+  /** Drill into this day (resolves the drilldown view). */
+  onDrillDown: () => void
+}
+
+/** Props for a gutter time label. */
+export interface TimeLabelProps {
+  /** Day-start-relative slot time the label marks. */
+  time: string
+  /** Localized time label (e.g. "9 AM"). */
+  label: string
+}
+
+/** Props for a timed event box. */
+export interface TimeEventProps<TEvent> {
+  /** The original event object. */
+  event: TEvent
+  /** Resolved event title. */
+  title: string
+  /** Formatted "start – end" time. */
+  time: string
+}
+
+/** Props for an all-day event segment. */
+export interface TimeAllDayEventProps<TEvent> {
+  /** The original event object. */
+  event: TEvent
+  /** Resolved event title. */
+  title: string
+}
+
+/** Props for the all-day row's "+N more" overflow indicator. */
+export interface TimeShowMoreProps {
+  /** How many events overflowed the all-day row limit. */
+  count: number
+  /** Localized overflow label (e.g. "+2 more"). */
+  label: string
 }
 
 /** Agenda-view slot overrides. */
