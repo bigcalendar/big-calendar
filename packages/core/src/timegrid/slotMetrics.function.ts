@@ -34,8 +34,10 @@ export function createSlotMetrics(args: {
   }
 
   const positionFromDate = (date: string): number => {
+    // Wall-clock minutes from the window start: real elapsed (`date − min`) plus
+    // the DST offset delta over that span. `diff` is `a − b`, so `date` is `a`.
     const diff =
-      localizer.diff({ a: min, b: date, unit: 'minute' }) +
+      localizer.diff({ a: date, b: min, unit: 'minute' }) +
       localizer.getDstOffset({ start: min, end: date })
     return Math.min(diff, totalMin)
   }

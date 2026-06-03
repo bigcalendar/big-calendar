@@ -11,7 +11,7 @@ export default defineConfig({
       perFile: true,
       thresholds: { branches: 85, functions: 95 },
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/**/*.{test,spec}.{ts,tsx}', 'src/index.ts'],
+      exclude: ['src/**/*.{test,spec}.{ts,tsx}', 'src/index.ts', 'src/testing/**'],
     },
   },
 })

@@ -1,8 +1,8 @@
 import { Navigate, Views } from '@big-calendar/core'
 import type { ViewKey } from '@big-calendar/core'
 import { act, renderHook } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
-import type { CalendarProps } from './useCalendar'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
+import { LOCALIZER_CASES } from './testing/localizers'
 import { useCalendar } from './useCalendar'
 
 interface Event {
@@ -12,11 +12,12 @@ interface Event {
   end: string
 }
 
-// The store only touches the localizer when range/viewModel are read; these
-// hook tests read state signals + call actions, so a stub localizer suffices.
-const localizer = { getMinutesFromMidnight: () => 0 } as unknown as CalendarProps<Event>['localizer']
+describe.each(LOCALIZER_CASES)('useCalendar [$name]', ({ create }) => {
+  let localizer: Awaited<ReturnType<typeof create>>
+  beforeAll(async () => {
+    localizer = await create()
+  })
 
-describe('useCalendar', () => {
   it('seeds an uncontrolled view from defaultView', () => {
     const { result } = renderHook(() => useCalendar<Event>({ localizer, defaultView: Views.WEEK }))
     expect(result.current.view.value).toBe(Views.WEEK)
@@ -59,15 +60,10 @@ describe('useCalendar', () => {
     const onSelect = vi.fn()
     const onDrillDown = vi.fn()
     const onRangeChange = vi.fn()
-    // Day view only needs startOf(day) for its range, so this stub is enough.
-    const lz = {
-      startOf: ({ value }: { value: string }) => value,
-      getMinutesFromMidnight: () => 0,
-    } as unknown as CalendarProps<Event>['localizer']
 
     const { result } = renderHook(() =>
       useCalendar<Event>({
-        localizer: lz,
+        localizer,
         view: Views.DAY,
         date: '2026-06-15T00:00:00.000Z',
         onView,

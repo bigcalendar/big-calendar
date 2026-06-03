@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { DEFAULT_ACCESSORS } from '../accessors/accessors.function'
 import type { Accessors } from '../accessors/accessors.type'
-import { makeTimeLocalizer } from './slotMetrics.function.test'
+import { LOCALIZER_CASES } from '../testing/localizers'
 import { timeGridViewModel } from './timeGrid.function'
 
 interface Event {
@@ -12,13 +12,10 @@ interface Event {
   allDay?: boolean
 }
 
-const localizer = makeTimeLocalizer()
 const accessors = DEFAULT_ACCESSORS as unknown as Accessors<Event, unknown>
 
-const DAY_MS = 86_400_000
 const day = '2026-06-15T00:00:00.000Z'
 const at = (h: number): string => `2026-06-15T${String(h).padStart(2, '0')}:00:00.000Z`
-const weekDays = Array.from({ length: 7 }, (_, i) => new Date(Date.parse(day) + i * DAY_MS).toISOString())
 
 const event = (id: number, start: string, end: string, allDay = false): Event => ({
   id,
@@ -28,7 +25,15 @@ const event = (id: number, start: string, end: string, allDay = false): Event =>
   allDay,
 })
 
-describe('timeGridViewModel', () => {
+describe.each(LOCALIZER_CASES)('timeGridViewModel [$name]', ({ create }) => {
+  let localizer: Awaited<ReturnType<typeof create>>
+  let weekDays: string[]
+  beforeAll(async () => {
+    localizer = await create()
+    // Seven consecutive days from `day`, stepped through the localizer (no Date).
+    weekDays = Array.from({ length: 7 }, (_, i) => localizer.add({ value: day, amount: i, unit: 'day' }))
+  })
+
   it('positions a timed event in its day column', () => {
     const model = timeGridViewModel({
       localizer,
@@ -145,7 +150,8 @@ describe('timeGridViewModel', () => {
     })
     // 9am in an 8am–6pm (600-min) window: top = 60/600
     expect(model.columns[0]?.events[0]?.top).toBeCloseTo(0.1)
-    expect(model.columns[0]?.min).toBe(at(8))
-    expect(model.columns[0]?.max).toBe(at(18))
+    // min/max are rebuilt from midnight via getSlotDate — derive their serialization.
+    expect(model.columns[0]?.min).toBe(localizer.getSlotDate({ date: day, minutesFromMidnight: 8 * 60 }))
+    expect(model.columns[0]?.max).toBe(localizer.getSlotDate({ date: day, minutesFromMidnight: 18 * 60 }))
   })
 })

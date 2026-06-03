@@ -1,81 +1,27 @@
-import type { LocalizerContract } from '@big-calendar/localizer'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
+import { LOCALIZER_CASES } from '../testing/localizers'
 import { createSlotMetrics } from './slotMetrics.function'
 
-const MIN_MS = 60_000
-const DAY_MS = 86_400_000
-const ms = (v: string): number => new Date(v).getTime()
-const iso = (n: number): string => new Date(n).toISOString()
-const startOfDay = (v: string): string => {
-  const d = new Date(v)
-  d.setUTCHours(0, 0, 0, 0)
-  return d.toISOString()
-}
-const ceilDay = (v: string): string => (startOfDay(v) === v ? v : iso(ms(startOfDay(v)) + DAY_MS))
-
-/**
- * Minute-accurate UTC localizer double for the time grid (no DST). Implements
- * exactly the methods slot metrics + the time-grid model call. Lives in a test
- * file → out of coverage; exported so the time-grid test can reuse it.
- */
-export function makeTimeLocalizer(): LocalizerContract {
-  return {
-    getTotalMin: ({ start, end }: { start: string; end: string }) => (ms(end) - ms(start)) / MIN_MS,
-    getMinutesFromMidnight: (v: string) => (ms(v) - ms(startOfDay(v))) / MIN_MS,
-    getSlotDate: ({ date, minutesFromMidnight }: { date: string; minutesFromMidnight: number }) =>
-      iso(ms(startOfDay(date)) + minutesFromMidnight * MIN_MS),
-    getDstOffset: () => 0,
-    diff: ({ a, b, unit }: { a: string; b: string; unit: string }) =>
-      unit === 'minute'
-        ? Math.round((ms(b) - ms(a)) / MIN_MS)
-        : unit === 'day'
-          ? Math.round((ms(b) - ms(a)) / DAY_MS)
-          : 0,
-    add: ({ value, amount, unit }: { value: string; amount: number; unit: string }) =>
-      unit === 'day'
-        ? iso(ms(value) + amount * DAY_MS)
-        : unit === 'minute'
-          ? iso(ms(value) + amount * MIN_MS)
-          : value,
-    startOf: ({ value, unit }: { value: string; unit: string }) =>
-      unit === 'day' ? startOfDay(value) : value,
-    ceil: ({ value, unit }: { value: string; unit: string }) =>
-      unit === 'day' ? ceilDay(value) : value,
-    min: ({ values }: { values: string[] }) =>
-      values.reduce((acc, v) => (ms(v) < ms(acc) ? v : acc)),
-    max: ({ values }: { values: string[] }) =>
-      values.reduce((acc, v) => (ms(v) > ms(acc) ? v : acc)),
-    eq: ({ a, b }: { a: string; b: string }) => ms(a) === ms(b),
-    isSameDate: ({ a, b }: { a: string; b: string }) => startOfDay(a) === startOfDay(b),
-    daySpan: ({ start, end }: { start: string; end: string }) =>
-      Math.max(1, Math.round((ms(ceilDay(end)) - ms(startOfDay(start))) / DAY_MS)),
-    inEventRange: ({
-      event,
-      range,
-    }: {
-      event: { start: string; end: string }
-      range: { start: string; end: string }
-    }) => ms(event.start) < ms(range.end) && ms(event.end) > ms(range.start),
-    startAndEndAreDateOnly: ({ start, end }: { start: string; end: string }) =>
-      ms(start) === ms(startOfDay(start)) && ms(end) === ms(startOfDay(end)),
-    sortEvents: ({ events }: { events: { start: string; end: string }[] }) =>
-      [...events].sort((a, b) => ms(a.start) - ms(b.start) || ms(b.end) - ms(a.end)),
-  } as unknown as LocalizerContract
-}
-
-const localizer = makeTimeLocalizer()
 const day = '2026-06-15T00:00:00.000Z'
 const at = (h: number, m = 0): string => `2026-06-15T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00.000Z`
 const nextMidnight = '2026-06-16T00:00:00.000Z'
 
-describe('createSlotMetrics', () => {
+describe.each(LOCALIZER_CASES)('createSlotMetrics [$name]', ({ create }) => {
+  let localizer: Awaited<ReturnType<typeof create>>
+  beforeAll(async () => {
+    // UTC, so there is no DST term and slot positions are pure wall-clock.
+    localizer = await create()
+  })
+
   it('derives slot counts for a full day at 30-min steps', () => {
     const m = createSlotMetrics({ localizer, min: day, max: nextMidnight, step: 30, timeslots: 2 })
     expect(m.numSlots).toBe(48)
     expect(m.totalMin).toBe(1441)
     expect(m.slots).toHaveLength(49)
-    expect(m.slots[0]).toBe(day)
-    expect(m.slots.at(-1)).toBe(nextMidnight)
+    // slot boundaries are rebuilt from midnight via getSlotDate — compare to the
+    // localizer's own serialization rather than a literal Z string.
+    expect(m.slots[0]).toBe(localizer.getSlotDate({ date: day, minutesFromMidnight: 0 }))
+    expect(m.slots.at(-1)).toBe(localizer.getSlotDate({ date: day, minutesFromMidnight: 1440 }))
   })
 
   it('positions an event as fractions of the column', () => {

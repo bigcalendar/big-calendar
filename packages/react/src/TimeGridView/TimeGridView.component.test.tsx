@@ -1,10 +1,10 @@
 import { Views } from '@big-calendar/core'
 import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { CalendarProvider } from '../CalendarProvider'
 import type { CalendarProviderProps } from '../CalendarProvider'
 import type { TimeEventProps } from '../components.type'
-import type { CalendarProps } from '../useCalendar'
+import { LOCALIZER_CASES } from '../testing/localizers'
 import TimeGridView from './TimeGridView.component'
 
 interface Event {
@@ -14,60 +14,6 @@ interface Event {
   end: string
   allDay?: boolean
 }
-
-const day = (v: string) => v.slice(0, 10)
-const ms = (v: string) => new Date(v.length <= 10 ? `${v}T00:00:00.000Z` : v).getTime()
-const iso = (t: number) => new Date(t).toISOString()
-const minMid = (v: string) => (ms(v) - ms(day(v))) / 60000
-const hhmm = (v: string) => {
-  const d = new Date(ms(v))
-  return `${d.getUTCHours()}:${String(d.getUTCMinutes()).padStart(2, '0')}`
-}
-const dayDiff = (a: string, b: string) => Math.round((ms(day(b)) - ms(day(a))) / 86400000)
-
-// A UTC fake covering the full time-grid build (slot metrics + all-day segments)
-// plus the now-indicator and today derivations. No DST (UTC), so getDstOffset is 0.
-const baseLocalizer = {
-  format: ({ value, format }: { value: string; format: string }) => {
-    if (format === 'dayHeader') return `Day ${day(value)}`
-    if (format === 'timeGutter' || format === 'time') return hhmm(value)
-    return `${format}:${value}`
-  },
-  startOf: ({ value, unit }: { value: string; unit: string }) =>
-    unit === 'day' ? iso(ms(day(value))) : day(value),
-  add: ({ value, amount }: { value: string; amount: number }) => iso(ms(day(value)) + amount * 86400000),
-  ceil: ({ value }: { value: string }) =>
-    ms(value) === ms(day(value)) ? iso(ms(day(value))) : iso(ms(day(value)) + 86400000),
-  diff: ({ a, b, unit }: { a: string; b: string; unit?: string }) =>
-    unit === 'day' ? dayDiff(a, b) : (ms(b) - ms(a)) / 60000,
-  min: ({ values }: { values: string[] }) => values.reduce((m, v) => (ms(v) < ms(m) ? v : m)),
-  max: ({ values }: { values: string[] }) => values.reduce((m, v) => (ms(v) > ms(m) ? v : m)),
-  range: ({ start, end }: { start: string; end: string }) => {
-    const out: string[] = []
-    for (let t = ms(day(start)); t <= ms(day(end)); t += 86400000) out.push(iso(t))
-    return out
-  },
-  eq: ({ a, b }: { a: string; b: string }) => ms(a) === ms(b),
-  isSameDate: ({ a, b }: { a: string; b: string }) => day(a) === day(b),
-  inEventRange: ({
-    event,
-    range,
-  }: {
-    event: { start: string; end: string }
-    range: { start: string; end: string }
-  }) => ms(event.start) < ms(range.end) && ms(event.end) > ms(range.start),
-  startAndEndAreDateOnly: ({ start, end }: { start: string; end: string }) =>
-    minMid(start) === 0 && minMid(end) === 0,
-  daySpan: ({ start, end }: { start: string; end: string }) => dayDiff(start, end) + 1,
-  sortEvents: ({ events }: { events: Array<{ start: string }> }) =>
-    [...events].sort((a, b) => (ms(a.start) < ms(b.start) ? -1 : 1)),
-  getMinutesFromMidnight: (value: string) => minMid(value),
-  getTotalMin: ({ start, end }: { start: string; end: string }) => (ms(end) - ms(start)) / 60000,
-  getDstOffset: () => 0,
-  getSlotDate: ({ date, minutesFromMidnight }: { date: string; minutesFromMidnight: number }) =>
-    iso(ms(day(date)) + minutesFromMidnight * 60000),
-}
-const localizer = baseLocalizer as unknown as CalendarProps<Event>['localizer']
 
 const focus = '2026-06-15'
 const NOW = '2026-06-15T12:00:00.000Z'
@@ -87,34 +33,48 @@ const backgroundEvents: Event[] = [
   { start: '2026-06-15T13:30:00.000Z', end: '2026-06-15T14:30:00.000Z' },
 ]
 
-function renderGrid(extra?: Partial<CalendarProviderProps<Event>>) {
-  return render(
-    <CalendarProvider<Event>
-      localizer={localizer}
-      defaultDate={focus}
-      defaultView={Views.DAY}
-      events={events}
-      backgroundEvents={backgroundEvents}
-      getNow={() => NOW}
-      {...extra}
-    >
-      <TimeGridView />
-    </CalendarProvider>,
-  )
-}
+describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
+  let localizer: Awaited<ReturnType<typeof create>>
+  // Expected heading + first gutter label read back from the real localizer
+  // (UTC, so the day window is the full 1440-minute column, no DST).
+  let dayStart: string
+  let heading: string
+  let firstLabel: string
 
-describe('TimeGridView', () => {
+  beforeAll(async () => {
+    localizer = await create()
+    dayStart = localizer.startOf({ value: focus, unit: 'day' })
+    heading = localizer.format({ value: dayStart, format: 'dayHeader' })
+    firstLabel = localizer.format({ value: dayStart, format: 'timeGutter' })
+  })
+
+  function renderGrid(extra?: Partial<CalendarProviderProps<Event>>) {
+    return render(
+      <CalendarProvider<Event>
+        localizer={localizer}
+        defaultDate={focus}
+        defaultView={Views.DAY}
+        events={events}
+        backgroundEvents={backgroundEvents}
+        getNow={() => NOW}
+        {...extra}
+      >
+        <TimeGridView />
+      </CalendarProvider>,
+    )
+  }
+
   it('renders headings, gutter, positioned events, all-day segments, and the now-line', () => {
     const { container } = renderGrid()
 
     // day heading carries today state
-    const heading = screen.getByText('Day 2026-06-15')
-    expect(heading.classList.contains('bc-day-heading')).toBe(true)
-    expect(heading.classList.contains('bc-today')).toBe(true)
+    const headingEl = screen.getByText(heading)
+    expect(headingEl.classList.contains('bc-day-heading')).toBe(true)
+    expect(headingEl.classList.contains('bc-today')).toBe(true)
 
     // gutter: a label per slot group (full day, step 30 / timeslots 2 → 24 groups)
     expect(container.querySelectorAll('.bc-time-label').length).toBe(24)
-    expect(container.querySelector('.bc-time-label')?.textContent).toBe('0:00')
+    expect(container.querySelector('.bc-time-label')?.textContent).toBe(firstLabel)
 
     // body height in slot rows (48 thirty-minute slots)
     const body = container.querySelector('.bc-time-body') as HTMLElement
@@ -141,8 +101,12 @@ describe('TimeGridView', () => {
 
   it('omits the now-line when the column is not today', () => {
     const { container } = renderGrid({ defaultDate: '2026-06-16' })
+    const heading16 = localizer.format({
+      value: localizer.startOf({ value: '2026-06-16', unit: 'day' }),
+      format: 'dayHeader',
+    })
     expect(container.querySelector('.bc-now-indicator')).toBeNull()
-    expect(screen.getByText('Day 2026-06-16').classList.contains('bc-today')).toBe(false)
+    expect(screen.getByText(heading16).classList.contains('bc-today')).toBe(false)
   })
 
   it('omits the now-line when now falls outside the visible time window', () => {
@@ -151,15 +115,15 @@ describe('TimeGridView', () => {
       min: '2026-06-15T13:00:00.000Z',
       max: '2026-06-15T14:00:00.000Z',
     })
-    expect(screen.getByText('Day 2026-06-15').classList.contains('bc-today')).toBe(true)
+    expect(screen.getByText(heading).classList.contains('bc-today')).toBe(true)
     expect(container.querySelector('.bc-now-indicator')).toBeNull()
   })
 
   it('drills into a day when its heading is clicked', () => {
     const onDrillDown = vi.fn()
     renderGrid({ onDrillDown })
-    fireEvent.click(screen.getByText('Day 2026-06-15'))
-    expect(onDrillDown).toHaveBeenCalledWith({ date: '2026-06-15T00:00:00.000Z', view: Views.DAY })
+    fireEvent.click(screen.getByText(heading))
+    expect(onDrillDown).toHaveBeenCalledWith({ date: dayStart, view: Views.DAY })
   })
 
   it('renders nothing when the active view is not a time grid', () => {

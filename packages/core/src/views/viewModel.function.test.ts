@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { DEFAULT_ACCESSORS } from '../accessors/accessors.function'
 import type { Accessors } from '../accessors/accessors.type'
 import { Views } from '../constants/views.constant'
-import { makeTimeLocalizer } from '../timegrid/slotMetrics.function.test'
+import { LOCALIZER_CASES } from '../testing/localizers'
 import { buildViewModel } from './viewModel.function'
 
 interface Event {
@@ -12,18 +12,21 @@ interface Event {
   end: string
 }
 
-const localizer = makeTimeLocalizer()
 const accessors = DEFAULT_ACCESSORS as unknown as Accessors<Event, unknown>
 
-const DAY_MS = 86_400_000
 const day = '2026-06-15T00:00:00.000Z'
-const days = (n: number): string[] =>
-  Array.from({ length: n }, (_, i) => new Date(Date.parse(day) + i * DAY_MS).toISOString())
 const events: Event[] = [
   { id: 1, title: 'e1', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' },
 ]
 
-describe('buildViewModel', () => {
+describe.each(LOCALIZER_CASES)('buildViewModel [$name]', ({ create }) => {
+  let localizer: Awaited<ReturnType<typeof create>>
+  // `n` consecutive days from `day`, stepped through the localizer (no Date).
+  const days = (n: number): string[] => Array.from({ length: n }, (_, i) => localizer.add({ value: day, amount: i, unit: 'day' }))
+  beforeAll(async () => {
+    localizer = await create()
+  })
+
   it('dispatches month to a month model', () => {
     const vm = buildViewModel({ localizer, accessors, view: Views.MONTH, days: days(35), events })
     expect(vm.kind).toBe('month')
@@ -65,7 +68,7 @@ describe('buildViewModel', () => {
       options: { dayStartMin: 8 * 60, dayEndMin: 18 * 60, dayLayoutAlgorithm: 'no-overlap' },
     })
     if (vm.kind === 'time') {
-      expect(vm.timeGrid.columns[0]?.min).toBe('2026-06-15T08:00:00.000Z')
+      expect(vm.timeGrid.columns[0]?.min).toBe(localizer.getSlotDate({ date: day, minutesFromMidnight: 8 * 60 }))
       expect(vm.timeGrid.columns[0]?.events[0]?.top).toBeCloseTo(0.1) // 9am in 8–6 window
     }
   })
