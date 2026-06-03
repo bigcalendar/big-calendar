@@ -5,9 +5,10 @@
  * scheme out of the box; override any token to theme.
  *
  * Defined on `:where(.bc-calendar)` (zero specificity) so host overrides win
- * easily. When pulled in via `index.css` these land in the `bc.tokens` layer.
+ * easily, inside the `bc.tokens` cascade layer.
  */
-:where(.bc-calendar) {
+@layer bc.tokens {
+  :where(.bc-calendar) {
   /* ── color: surfaces ───────────────────────────────────────────────── */
   --bc-color-bg: Canvas;
   --bc-color-fg: CanvasText;
@@ -80,4 +81,5 @@
 
   /* ── elevation (top-layer popovers) ────────────────────────────────── */
   --bc-shadow-popover: 0 4px 16px color-mix(in oklab, CanvasText 25%, transparent);
+  }
 }

@@ -1,0 +1,38 @@
+/*
+ * Top-layer surfaces (show-more popup, tooltips, dialogs). Rendered via the
+ * native Popover API, so they live in the browser top layer; positioning is the
+ * adapter's job (floating-ui). `:popover-open` styles the open state.
+ */
+@layer bc.components {
+  .bc-popover {
+    margin: 0;
+    padding: var(--bc-space-2);
+    border: var(--bc-border);
+    border-radius: var(--bc-radius);
+    background: var(--bc-color-bg);
+    color: var(--bc-color-fg);
+    box-shadow: var(--bc-shadow-popover);
+  }
+
+  .bc-popover:popover-open {
+    display: grid;
+    gap: var(--bc-space-1);
+  }
+
+  .bc-popover::backdrop {
+    background: transparent;
+  }
+
+  .bc-popover-title {
+    font-weight: var(--bc-font-weight-bold);
+  }
+
+  .bc-tooltip {
+    padding-block: var(--bc-space-1);
+    padding-inline: var(--bc-space-2);
+    border-radius: var(--bc-radius-sm);
+    font-size: var(--bc-font-size-sm);
+    background: var(--bc-color-fg);
+    color: var(--bc-color-bg);
+  }
+}

@@ -1,0 +1,68 @@
+/* Time grid: day headings, time gutter labels, slot lines, now-indicator. */
+@layer bc.components {
+  .bc-time-header {
+    border-block-end: var(--bc-border);
+  }
+
+  .bc-day-heading {
+    padding: var(--bc-space-1);
+    text-align: center;
+    font-weight: var(--bc-font-weight-bold);
+  }
+
+  .bc-day-heading.bc-today {
+    color: var(--bc-color-accent);
+  }
+
+  .bc-allday-label,
+  .bc-time-gutter {
+    color: var(--bc-color-muted);
+    font-size: var(--bc-font-size-sm);
+  }
+
+  .bc-allday-label {
+    grid-column: 1;
+    padding: var(--bc-space-1);
+    text-align: end;
+  }
+
+  /* Gutter time labels sit on the slot boundary line. */
+  .bc-time-label {
+    padding-inline-end: var(--bc-space-1);
+    text-align: end;
+    translate: 0 -50%;
+  }
+
+  /* Slot boundary lines drawn as a repeating gradient behind each column. */
+  .bc-day-column {
+    border-inline-start: var(--bc-border);
+    background-image: repeating-linear-gradient(
+      to bottom,
+      var(--bc-color-border) 0,
+      var(--bc-color-border) var(--bc-border-width),
+      transparent var(--bc-border-width),
+      transparent var(--bc-slot-height)
+    );
+  }
+
+  .bc-day-column.bc-today {
+    background-color: var(--bc-color-today-bg);
+  }
+
+  .bc-now-indicator {
+    background: var(--bc-color-now);
+  }
+
+  /* A small knob at the inline-start end of the now line. */
+  .bc-now-indicator::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0;
+    inset-block-start: 50%;
+    inline-size: var(--bc-space-2);
+    block-size: var(--bc-space-2);
+    border-radius: 50%;
+    background: var(--bc-color-now);
+    translate: -50% -50%;
+  }
+}

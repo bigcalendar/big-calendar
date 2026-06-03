@@ -1,0 +1,31 @@
+/* Agenda: day groups with date / time / event columns. */
+@layer bc.components {
+  .bc-agenda-header {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    gap: var(--bc-space-2);
+    padding: var(--bc-space-1);
+    border-block-end: var(--bc-border);
+    font-weight: var(--bc-font-weight-bold);
+  }
+
+  .bc-agenda-day {
+    border-block-start: var(--bc-border);
+  }
+
+  .bc-agenda-day:first-child {
+    border-block-start: 0;
+  }
+
+  .bc-agenda-date,
+  .bc-agenda-time {
+    color: var(--bc-color-muted);
+    white-space: nowrap;
+  }
+
+  .bc-agenda-empty {
+    padding: var(--bc-space-4);
+    text-align: center;
+    color: var(--bc-color-muted);
+  }
+}

@@ -17,6 +17,7 @@
     "./reset.css": "./dist/reset.css",
     "./tokens.css": "./dist/tokens.css",
     "./layout.css": "./dist/layout.css",
+    "./components/*.css": "./dist/components/*.css",
     "./package.json": "./package.json"
   },
   "files": [

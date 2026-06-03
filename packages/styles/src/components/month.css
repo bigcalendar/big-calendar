@@ -1,0 +1,63 @@
+/* Month grid: weekday header, date cells, today/off-range states, show-more. */
+@layer bc.components {
+  .bc-month-header {
+    border-block-end: var(--bc-border);
+  }
+
+  .bc-weekday {
+    padding: var(--bc-space-1);
+    text-align: center;
+    color: var(--bc-color-muted);
+    font-size: var(--bc-font-size-sm);
+    font-weight: var(--bc-font-weight-bold);
+  }
+
+  /* Grid lines: each cell draws its inline-start + block-start edge; the grid
+     wrapper closes the remaining two edges. First-in-row cells drop the start
+     edge (DOM order maps to inline order in both LTR and RTL). */
+  .bc-month-grid {
+    border-block-end: var(--bc-border);
+    border-inline-end: var(--bc-border);
+  }
+
+  .bc-date-cell {
+    border-inline-start: var(--bc-border);
+    border-block-start: var(--bc-border);
+  }
+
+  .bc-date-cell:first-child {
+    border-inline-start: 0;
+  }
+
+  .bc-date-number {
+    align-self: flex-end;
+    padding: var(--bc-space-1);
+    font-size: var(--bc-font-size-sm);
+    color: var(--bc-color-fg);
+  }
+
+  .bc-date-cell.bc-today {
+    background: var(--bc-color-today-bg);
+  }
+
+  .bc-date-cell.bc-today .bc-date-number {
+    font-weight: var(--bc-font-weight-bold);
+    color: var(--bc-color-accent);
+  }
+
+  .bc-date-cell.bc-off-range {
+    background: var(--bc-color-offrange-bg);
+  }
+
+  .bc-date-cell.bc-off-range .bc-date-number {
+    color: var(--bc-color-muted);
+  }
+
+  .bc-show-more {
+    margin-inline: var(--bc-event-gap);
+    font-size: var(--bc-font-size-sm);
+    color: var(--bc-color-accent);
+    text-align: start;
+    pointer-events: auto;
+  }
+}

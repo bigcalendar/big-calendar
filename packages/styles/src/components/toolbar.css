@@ -1,0 +1,27 @@
+/* Toolbar: navigation buttons, view switch, current-range label. */
+@layer bc.components {
+  .bc-toolbar-label {
+    font-size: var(--bc-font-size-lg);
+    font-weight: var(--bc-font-weight-bold);
+  }
+
+  .bc-toolbar button {
+    padding-block: var(--bc-space-1);
+    padding-inline: var(--bc-space-2);
+    border: var(--bc-border);
+    border-radius: var(--bc-radius-sm);
+    background: var(--bc-color-bg);
+    color: var(--bc-color-fg);
+  }
+
+  .bc-toolbar button:hover {
+    background: var(--bc-color-hover-bg);
+  }
+
+  .bc-toolbar button[aria-pressed='true'],
+  .bc-toolbar button.bc-active {
+    background: var(--bc-color-accent);
+    color: var(--bc-color-accent-fg);
+    border-color: transparent;
+  }
+}

@@ -1,0 +1,48 @@
+/* Events: timed boxes, multi-day segments, background events. */
+@layer bc.components {
+  .bc-event,
+  .bc-segment {
+    border: var(--bc-border-width) solid var(--bc-color-event-border);
+    border-radius: var(--bc-radius-sm);
+    background: var(--bc-color-event-bg);
+    color: var(--bc-color-event-fg);
+    padding-inline: var(--bc-space-1);
+    font-size: var(--bc-font-size-sm);
+    line-height: var(--bc-segment-height);
+    cursor: pointer;
+  }
+
+  .bc-event {
+    line-height: var(--bc-line-height);
+    padding-block: var(--bc-space-1);
+  }
+
+  .bc-event:hover,
+  .bc-segment:hover {
+    filter: brightness(0.96);
+  }
+
+  .bc-event.bc-selected,
+  .bc-segment.bc-selected {
+    outline: var(--bc-focus-ring);
+    outline-offset: -1px;
+  }
+
+  .bc-event-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: var(--bc-font-weight-bold);
+  }
+
+  .bc-event-time {
+    font-size: var(--bc-font-size-sm);
+    opacity: 0.85;
+  }
+
+  .bc-bg-event {
+    border-radius: var(--bc-radius-sm);
+    background: var(--bc-color-bg-event-bg);
+    opacity: var(--bc-color-bg-event-opacity);
+  }
+}
