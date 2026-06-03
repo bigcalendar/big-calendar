@@ -206,3 +206,20 @@ pragmatic-DnD's touch path) but never stated it as a requirement. Now it is.
   computed — it was plumbed through `monthViewModel`/`buildViewModel` but the store never passed it, so
   the month "+N more" overflow path was unreachable. Supersedes the 2j note that said month
   `weekEventLimit` is "left unlimited from the store."
+
+## 2026-06-03 — TimeGridView: resolved step/timeslots on the store for now-indicator alignment
+
+- **DECISION (my call, flagged for Cutter):** exposed resolved **`store.step`** and **`store.timeslots`**
+  on the public `CalendarStore` (siblings to `getNow`). The time-grid now-line is derived adapter-side
+  (per the getNow decision) by rebuilding `createSlotMetrics` on today's column and calling
+  `getCurrentTimePosition(getNow())`. To land the line on the *same* vertical span the model used for
+  event boxes (`span = step * numSlots`, which can exceed the raw `[min,max]` window when it isn't a
+  whole number of slot groups), the adapter needs the resolved `step`/`timeslots` — so they're exposed
+  rather than re-guessing the defaults.
+- **Implementation:** resolved once in `createCalendarStore` (`config.step ?? 30`, `config.timeslots ?? 2`)
+  and threaded into the viewModel options as the single source of truth (previously the options passed
+  raw `config.step`/`config.timeslots` and the defaults lived only inside the view builders).
+- **What was rejected:** (a) computing the now-fraction in core/the view model — rejected to keep the
+  model "now"-free and pure; (b) approximating the fraction adapter-side from `min`/`max` alone via
+  `getMinutesFromMidnight` — rejected because it can misalign with event boxes near the window edge when
+  the window isn't a whole number of slot groups.

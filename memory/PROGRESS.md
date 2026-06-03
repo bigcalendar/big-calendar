@@ -123,16 +123,35 @@ folded into Phase 4 (per Cutter). See DECISIONS.md (2026-06-02).
 - **Gates:** react 38 tests (100% stmt/fn/line, 98.66% branch overall; hook 91.66% branch — one
   defensive `?? ''` fallback unreachable, >85% bar). core 174 green. typecheck/lint/build green.
 
+### Phase 4 — Task 4g: TimeGridView ✓ (commit on feat/initial; pushed)
+
+- **DECISION (2026-06-03): expose resolved `store.step` / `store.timeslots`** on the public
+  `CalendarStore` (sibling to `getNow`). Needed so the adapter can rebuild `createSlotMetrics` on
+  today's column and place the now-line on the *same vertical span* the model used for event boxes
+  (`span = step * numSlots`, which can exceed the raw window). Resolved once in `createCalendarStore`
+  (`config.step ?? 30`, `config.timeslots ?? 2`) and also threaded into the viewModel options as the
+  single source of truth. Additive; flagged to Cutter. See DECISIONS.md.
+- **core** — `step` / `timeslots` added to `CalendarStore` + returned by `createCalendarStore`.
+- **`src/internal/geometry.function.ts`** — added `dayCountStyle(n)` → `--bc-day-count` and
+  `slotCountStyle(n)` → `--bc-slot-count`.
+- **`src/components.type.ts`** — `CalendarComponents.time` (`TimeComponents<TEvent>`): slots
+  `dayHeading`/`timeLabel`/`event`/`allDayEvent`/`showMore` + their prop types.
+- **`src/TimeGridView/`** — `TimeGridView.component.tsx` (renders `.bc-time-grid` → `.bc-time-header`
+  + `.bc-allday-row` + `.bc-time-body`/`.bc-time-gutter`/`.bc-day-column`; timed boxes are `.bc-event`
+  carrying `eventBoxStyle`, all-day events wrap in `.bc-segment`, bg events are `.bc-bg-event`,
+  now-line is `.bc-now-indicator` on today only), `hooks/useTimeGrid.memo.ts` (resolves the time-grid
+  model → headings + gutter labels + slot count + per-column events/bg/nowTop + all-day segments/
+  overflow; gutter + now-line built from `createSlotMetrics`), 5 `components/DefaultTime*`. Barrel
+  exports `TimeGridView` + time slot types. DOM follows styles VOCABULARY "Time grid" exactly.
+- **Gates:** react 45 tests (100% stmt/fn/line, 97.47% branch overall; `useTimeGrid` hook 91.66%
+  branch — defensive `if(first)` / `slots ?? ''` / out-of-window fallbacks, >85% bar). core 174 green.
+  typecheck/lint/build green.
+
 ## ⚠ NEXT — Phase 4 remaining build order
 
-1. **TimeGridView** (event boxes via `eventBoxStyle`, all-day row via `segmentStyle`, now-indicator via
-   `nowIndicatorStyle` + `store.getNow()`, bg events). Adds its slots to `CalendarComponents`. Slot names
-   at my discretion (Cutter 2026-06-02). ⚠ Heaviest localizer fake yet (slot metrics: `getSlotDate`/
-   `getMinutesFromMidnight`/`getTotalMin`/`getDstOffset`/`diff` + the time-grid model) — consider
-   `/compact` before starting. MonthView ✓ done.
-2. **`<Calendar>`** batteries-included default tree (Toolbar + active view), consuming context.
-3. **Top-layer** (§7.5): Popover-API show-more/tooltip + floating-ui positioning.
-4. **Selection wiring** (pointer/keyboard → slot coords → core FSM) **+ Storybook docs** (Cutter's ask).
+1. **`<Calendar>`** batteries-included default tree (Toolbar + active view), consuming context.
+2. **Top-layer** (§7.5): Popover-API show-more/tooltip + floating-ui positioning.
+3. **Selection wiring** (pointer/keyboard → slot coords → core FSM) **+ Storybook docs** (Cutter's ask).
    Plus **2m view registry**. Plus a **coarse-pointer/touch pass on `@big-calendar/styles`** (§7.7).
 
 See [[bigcal-selection-storybook-phase4]].
