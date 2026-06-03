@@ -21,6 +21,23 @@ folded into Phase 4 (per Cutter). See DECISIONS.md (2026-06-02).
 - Tests: 4 (renderHook: read, update, computed, unsubscribe-on-unmount). react: 5 tests total
   (incl. scaffold smoke), typecheck/lint/test/build green.
 
+### Phase 4 — Task 4b: useCalendar headless hook ✓ (commit 7dfbaaa, pushed)
+
+- **DECISION (Cutter 2026-06-02): React state model = HYBRID** (uncontrolled by default, opt-in
+  controlled per prop). See DECISIONS.md.
+- **`src/useCalendar.ts`** — `CalendarProps<TEvent,TResource>` = `Omit<CalendarConfig,'view'|'date'>`
+  + `defaultView`/`defaultDate` (uncontrolled) + `view`/`date` (controlled). `useCalendar(props)`
+  creates the store once (ref), syncs controlled `view`/`date` by writing the signals directly (no
+  callback re-fire), always syncs `events`/`backgroundEvents`/`resources`, wraps callbacks to read
+  latest props, wraps `onRangeChange` only when provided (keeps the range effect off when unused),
+  destroys on unmount. Returns the `CalendarStore`.
+- **`packages/core/src/types/config.type.ts`** — widened all optional fields to `?: T | undefined`
+  (the codebase's exactOptional pass-through convention) so adapters pass props through cleanly.
+- Barrel exports `useCalendar` + `CalendarProps`. Tests: 6 (uncontrolled default, controlled
+  reflect+update, events sync, uncontrolled action + latest callback, all callbacks forwarded, single
+  instance + destroy-on-unmount). react: 11 tests; both src files 100% br/fn. core unaffected (168
+  green). typecheck/lint/test/build green across react+core.
+
 ## ⚠ NEXT NEEDS A DESIGN DECISION (Cutter) before building — do NOT guess
 
 **Phase 4 React component/API contract** is the canonical framework contract (all future Vue/Angular/

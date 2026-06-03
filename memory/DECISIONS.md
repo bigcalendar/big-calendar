@@ -123,3 +123,16 @@
 - **Not done in this env:** no browser render / visual-regression (none available) and no CSS linter
   (ESLint is TS-only). `spike/index.html` is authored for manual/Storybook verification; empirical
   subgrid/anchor/visual checks ride with Phase 4/7.
+
+## 2026-06-02 — Phase 4 React state model = HYBRID
+
+- **Cutter chose the HYBRID controlled/uncontrolled model** for `@big-calendar/react` (the canonical
+  contract all future Vue/Angular/Lit mirror): uncontrolled by default (store owns state, seeded by
+  `defaultView`/`defaultDate`; `useCalendar` returns the store), opt into control per-prop by passing
+  `view`/`date` + wiring `onView`/`onNavigate`. Controlled values are written straight to the signals
+  (no callback re-fire); `events`/`backgroundEvents`/`resources` always sync.
+- Implemented in `useCalendar` (task 4b). Also widened `CalendarConfig` optionals to `?: T | undefined`
+  (exactOptional pass-through) so adapters forward props cleanly.
+- STILL OPEN (Cutter to decide next): `<Calendar>` component vocabulary + `components` override map
+  (§7), top-layer popover components (§7.5), selection wiring + its Storybook docs, and the 2m view
+  registry.
