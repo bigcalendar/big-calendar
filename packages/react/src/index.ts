@@ -11,4 +11,12 @@ export {
 } from './CalendarProvider'
 export type { CalendarProviderProps, CalendarContextValue } from './CalendarProvider'
 export { Toolbar, DefaultToolbar } from './Toolbar'
-export type { CalendarComponents, ToolbarProps } from './components.type'
+export { AgendaView } from './AgendaView'
+export type {
+  AgendaComponents,
+  AgendaDateProps,
+  AgendaEmptyProps,
+  AgendaEventProps,
+  CalendarComponents,
+  ToolbarProps,
+} from './components.type'

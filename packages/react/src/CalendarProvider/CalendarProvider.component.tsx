@@ -15,7 +15,7 @@ import type { CalendarContextValue } from './calendar.context'
 export interface CalendarProviderProps<TEvent = unknown, TResource = unknown>
   extends CalendarProps<TEvent, TResource> {
   /** Per-slot component overrides (§7). */
-  components?: CalendarComponents | undefined
+  components?: CalendarComponents<TEvent> | undefined
   /** UI string overrides, merged over the English defaults. */
   messages?: Partial<Messages> | undefined
   /** Calendar UI — typically `<Calendar>` plus any siblings that read context. */

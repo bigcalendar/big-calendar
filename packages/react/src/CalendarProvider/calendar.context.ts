@@ -14,7 +14,7 @@ export interface CalendarContextValue<TEvent = unknown, TResource = unknown> {
   /** The reactive calendar store: state signals + actions. */
   store: CalendarStore<TEvent, TResource>
   /** Component overrides as supplied to the provider (empty when none). */
-  components: CalendarComponents
+  components: CalendarComponents<TEvent>
   /** Fully-resolved UI strings (defaults merged with any overrides). */
   messages: Messages
 }
