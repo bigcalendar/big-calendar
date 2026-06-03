@@ -62,7 +62,9 @@ export function eventSegments<TEvent>(args: {
   const end = localizer.min({ values: [localizer.ceil({ value: eEnd, unit: 'day' }), last] })
 
   const padding = days.findIndex((day) => localizer.isSameDate({ a: day, b: start }))
-  const span = Math.max(Math.min(localizer.diff({ a: start, b: end, unit: 'day' }), slots), 1)
+  // Day count the clamped event covers. `diff` is `a − b`, so the later bound
+  // (`end`) is `a` to keep the span positive.
+  const span = Math.max(Math.min(localizer.diff({ a: end, b: start, unit: 'day' }), slots), 1)
 
   return { event, span, left: padding + 1, right: Math.max(padding + span, 1) }
 }
@@ -127,7 +129,9 @@ export function rowSegments<TEvent>(args: {
   if (!first || !lastDay) return { levels: [], extra: [] }
 
   const last = localizer.add({ value: lastDay, amount: 1, unit: 'day' })
-  const slots = localizer.diff({ a: first, b: last, unit: 'day' })
+  // Width of the row in days. `diff` is `a − b`, so the later bound (`last`) is
+  // `a` to keep the count positive.
+  const slots = localizer.diff({ a: last, b: first, unit: 'day' })
 
   const inRow = items.filter((item) =>
     localizer.inEventRange({

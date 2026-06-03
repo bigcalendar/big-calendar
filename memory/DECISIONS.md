@@ -270,3 +270,16 @@ pragmatic-DnD's touch path) but never stated it as a requirement. Now it is.
   for the no-fakes policy. Remaining core 6 (`resources`, `month`, `agenda`, `viewLabel`, `navigateDate`,
   `viewRange`) still use fakes (green) and convert next. **Gotcha:** react tests resolve `@big-calendar/core`
   from its built `dist`, so core src fixes need `pnpm nx build core` before react tests see them.
+- **Outcome / completion + second catch (2026-06-03):** core 6 converted — all 10 core test files now run
+  against the real `TemporalLocalizer`. `resources` needed no change (no localizer fake; pure accessor
+  grouping). `viewRange` keeps the original dual-week-start coverage by running work-week under both `en-US`
+  (Sunday-first, the harness default) and `en-GB` (Monday-first, via `create({locale:'en-GB'})`, since
+  `firstDayOfWeek` resolves from locale `weekInfo`). The `month` conversion exposed **BUG #2, same class as
+  the slotMetrics one**: `core/views/segments.function.ts` built `slots` and the multi-day `span` with
+  `diff()` args swapped, so `slots` went negative and every multi-day month segment collapsed to `span:1`.
+  The `makeMonthLocalizer` fake's `diff = b − a` canceled it, and single-day events (span 1 regardless) hid
+  it from every other test. Fixed both call sites to put the later bound in `a`
+  (`diff({a:end,b:start})` for span, `diff({a:last,b:first})` for slots) — consistent with the established
+  "fix core now" precedent. Net: the retrofit caught **two** real production sign bugs, both rooted in the
+  fakes implementing `diff` as `b − a` against the contract's `a − b`. Localizer retrofit COMPLETE;
+  `<Calendar>` is next. Luxon arm still deferred until `localizer-luxon` exists.

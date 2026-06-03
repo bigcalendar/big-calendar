@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { DEFAULT_ACCESSORS } from '../accessors/accessors.function'
 import type { Accessors } from '../accessors/accessors.type'
+import { LOCALIZER_CASES } from '../testing/localizers'
 import { agendaViewModel } from './agenda.function'
-import { makeMonthLocalizer } from './month.function.test'
 
 interface Event {
   id: number
@@ -11,16 +11,20 @@ interface Event {
   end: string
 }
 
-const localizer = makeMonthLocalizer()
 const accessors = DEFAULT_ACCESSORS as unknown as Accessors<Event, unknown>
 
-const DAY_MS = 86_400_000
-const days = Array.from({ length: 3 }, (_, i) =>
-  new Date(Date.parse('2026-06-15T00:00:00.000Z') + i * DAY_MS).toISOString(),
-)
-const event = (id: number, start: string, end: string): Event => ({ id, title: `e${id}`, start, end })
+const start = '2026-06-15T00:00:00.000Z'
+const event = (id: number, s: string, e: string): Event => ({ id, title: `e${id}`, start: s, end: e })
 
-describe('agendaViewModel', () => {
+describe.each(LOCALIZER_CASES)('agendaViewModel [$name]', ({ create }) => {
+  let localizer: Awaited<ReturnType<typeof create>>
+  // Three consecutive days from `start`, stepped through the localizer (no Date).
+  let days: string[]
+  beforeAll(async () => {
+    localizer = await create()
+    days = Array.from({ length: 3 }, (_, i) => localizer.add({ value: start, amount: i, unit: 'day' }))
+  })
+
   it('lists only days with events, each sorted by start', () => {
     const { days: agenda } = agendaViewModel({
       localizer,

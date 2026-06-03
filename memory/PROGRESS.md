@@ -166,16 +166,27 @@ folded into Phase 4 (per Cutter). See DECISIONS.md (2026-06-02).
    - ✅ **core 4 of 10 done** (commit `ce8f640`, pulled forward): `slotMetrics`, `timeGrid`, `viewModel`,
      `createCalendarStore`. These shared `makeTimeLocalizer`/`makeRangeLocalizer`/`makeFakeLocalizer`
      fakes; cross-test-file imports were also re-running `createSlotMetrics` under 4 files (now gone).
-   - ⚠ **BUG FOUND + FIXED** (the retrofit's first real catch — see DECISIONS.md): `createSlotMetrics.
+   - ⚠ **BUG #1 FOUND + FIXED** (the retrofit's first real catch — see DECISIONS.md): `createSlotMetrics.
      positionFromDate` called `diff()` with `a`/`b` swapped (`min − date`), negating every event top /
      now-indicator. The fakes' `diff = b − a` exactly canceled it, so it was invisible. Fixed to
      `diff({ a: date, b: min })`; `getDstOffset` term now on the correct sign. `fix(core)` in `ce8f640`.
-   - ⏳ **core 6 remaining** (still on fakes, currently green): `resources`, `month`, `agenda`,
-     `viewLabel`, `navigateDate`, `viewRange`. Convert these next (same harness; derive serialization-
-     dependent assertions from the localizer, not literal `Z` strings).
+   - ✅ **core 6 done** (this commit): `navigateDate`, `viewLabel`, `month`, `agenda`, `viewRange`
+     converted to the harness; **`resources` needed no change** (it has no localizer fake — pure
+     accessor grouping). `navigateDate`/`viewLabel` derive expected via `localizer.add`/`format`;
+     `month` builds its 35-day grid fixture via `localizer.add` and keeps geometry literals exact;
+     `viewRange` runs work-week under BOTH `en-US` (Sunday-first, harness default) and `en-GB`
+     (Monday-first) to keep the original dual-week-start coverage, deriving boundaries from the localizer.
+   - ⚠ **BUG #2 FOUND + FIXED** (same class, caught by the `month` conversion — see DECISIONS.md):
+     `segments.function.ts` computed `slots` and multi-day `span` with `diff()` args swapped, so `slots`
+     was negative and every multi-day month segment collapsed to `span:1`. The `makeMonthLocalizer`
+     fake's `diff = b − a` canceled it; single-day events (span 1 regardless) hid it from the other
+     tests. Fixed both call sites to put the later bound in `a` (`diff({a:end,b:start})`,
+     `diff({a:last,b:first})`). Only the multi-day month-segment path was affected in production.
+   - **All 10 core test files now on the real localizer.** Two production sign bugs found by the
+     retrofit; both in the `diff` (`a − b`) convention vs the fakes' inverted `b − a`.
    - **Luxon arm = still deferred** until `localizer-luxon` (currently a scaffold) is implemented (§5.3).
-1. **Finish core 6 retrofit** (above), then **`<Calendar>`** batteries-included default tree
-   (Toolbar + active view), consuming context.
+1. **`<Calendar>`** batteries-included default tree (Toolbar + active view), consuming context.
+   (Localizer retrofit COMPLETE — react 6 + core 10 all on the real `TemporalLocalizer`.)
 2. **Top-layer** (§7.5): Popover-API show-more/tooltip + floating-ui positioning.
 3. **Selection wiring** (pointer/keyboard → slot coords → core FSM) **+ Storybook docs** (Cutter's ask).
    Plus **2m view registry**. Plus a **coarse-pointer/touch pass on `@big-calendar/styles`** (§7.7).
