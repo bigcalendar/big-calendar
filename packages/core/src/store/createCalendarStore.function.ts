@@ -73,6 +73,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
         dayLayoutAlgorithm: config.dayLayoutAlgorithm,
         allDayMaxRows,
         showMultiDayTimes: config.showMultiDayTimes,
+        weekEventLimit: config.weekEventLimit,
       },
     }),
   )
@@ -108,6 +109,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     viewModel,
     localizer,
     accessors,
+    getNow,
 
     navigate({ direction, date: target }) {
       const next = navigateDate({

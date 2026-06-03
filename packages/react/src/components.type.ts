@@ -11,6 +11,8 @@ import type { ComponentType } from 'react'
 export interface CalendarComponents<TEvent = unknown> {
   /** Replaces the navigation toolbar. */
   toolbar?: ComponentType<ToolbarProps>
+  /** Month-view slot overrides. */
+  month?: MonthComponents<TEvent>
   /** Agenda-view slot overrides. */
   agenda?: AgendaComponents<TEvent>
 }
@@ -29,6 +31,60 @@ export interface ToolbarProps {
   onNavigate: (direction: NavigateDirection) => void
   /** Switch the active view. */
   onView: (view: ViewKey) => void
+}
+
+/** Month-view slot overrides. */
+export interface MonthComponents<TEvent> {
+  /** A column heading in the weekday row. */
+  weekday?: ComponentType<MonthWeekdayProps>
+  /** A single day cell's date header (the number, today / off-range state). */
+  dateCell?: ComponentType<MonthDateProps>
+  /** One event segment within a week row. */
+  event?: ComponentType<MonthEventProps<TEvent>>
+  /** The "+N more" overflow indicator for a week. */
+  showMore?: ComponentType<MonthShowMoreProps>
+}
+
+/** Props for a weekday column heading. */
+export interface MonthWeekdayProps {
+  /** Day-start string of the representative day for this column. */
+  day: string
+  /** Full weekday name (e.g. "Monday"). */
+  long: string
+  /** Abbreviated weekday name (e.g. "Mon"). */
+  short: string
+}
+
+/** Props for a day cell's date header. */
+export interface MonthDateProps {
+  /** Day-start string (RFC 3339/9557). */
+  day: string
+  /** Localized day-of-month number. */
+  label: string
+  /** Whether the day is the current date. */
+  isToday: boolean
+  /** Whether the day belongs to an adjacent month. */
+  isOffRange: boolean
+  /** Drill into this day (resolves the drilldown view). */
+  onDrillDown: () => void
+}
+
+/** Props for a single month event segment. */
+export interface MonthEventProps<TEvent> {
+  /** The original event object. */
+  event: TEvent
+  /** Resolved event title. */
+  title: string
+}
+
+/** Props for a week's "+N more" overflow indicator. */
+export interface MonthShowMoreProps {
+  /** How many events overflowed the week's row limit. */
+  count: number
+  /** Localized overflow label (e.g. "+2 more"). */
+  label: string
+  /** Day-start string of the week's first day (overflow anchor). */
+  day: string
 }
 
 /** Agenda-view slot overrides. */

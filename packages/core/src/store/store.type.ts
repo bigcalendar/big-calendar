@@ -41,6 +41,11 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
   readonly localizer: LocalizerContract
   /** Fully-resolved accessor set (defaults merged with overrides). */
   readonly accessors: Accessors<TEvent, TResource>
+  /**
+   * Resolved "now" source as a datetime string (from `config.getNow`, default
+   * the current UTC instant). Adapters use it for today / now-indicator state.
+   */
+  readonly getNow: () => string
 
   // --- actions (named-parameter objects, per Appendix A) ---
   /** Move the focus date: PREV/NEXT step by view; TODAY resets to now; DATE jumps. */

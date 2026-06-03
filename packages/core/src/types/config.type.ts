@@ -54,6 +54,8 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
   dayLayoutAlgorithm?: DayLayoutAlgorithmKey | DayLayoutAlgorithm | undefined
   /** Max rows in the all-day header before events overflow. Defaults to unlimited. */
   allDayMaxRows?: number | undefined
+  /** Max event rows per week in the month grid before events overflow into "+N more". Defaults to unlimited. */
+  weekEventLimit?: number | undefined
   /** Render multi-day events in the time columns rather than the all-day header. Defaults to false. */
   showMultiDayTimes?: boolean | undefined
   /** Show every all-day event (ignore `allDayMaxRows`). Defaults to false. */

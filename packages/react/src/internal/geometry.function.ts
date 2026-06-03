@@ -61,6 +61,12 @@ export function segmentStyle({ left, span, row }: SegmentGeometry): CSSPropertie
   return style
 }
 
+/** Inline custom property for the `.bc-month-grid` container: how many week rows it holds. */
+export function monthGridStyle(weekCount: number): CSSProperties {
+  const style: StyleWithVars = { '--bc-week-count': weekCount }
+  return style
+}
+
 /** Inline custom property for the `.bc-now-indicator` line, fraction `0..1` down the column. */
 export function nowIndicatorStyle(top: number): CSSProperties {
   const style: StyleWithVars = { '--bc-now-top': top }
