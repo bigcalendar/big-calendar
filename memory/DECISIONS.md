@@ -260,3 +260,13 @@ pragmatic-DnD's touch path) but never stated it as a requirement. Now it is.
 - **What was rejected:** keeping exhaustive temporal-vs-luxon parity *only* in the localizer package while
   view tests use a single default localizer — rejected by Cutter: `core` and every non-localizer consumer
   must themselves prove parity against both real localizers, not delegate it.
+- **Outcome / first catch (2026-06-03, commits `b692032` + `ce8f640`):** step 0 + react 6 + **core 4 of 10**
+  (`slotMetrics`, `timeGrid`, `viewModel`, `createCalendarStore`) done. The real localizer immediately
+  exposed a **sign bug in `core/createSlotMetrics.positionFromDate`** — it called `diff()` with `a`/`b`
+  swapped (`min − date`), negating every timed-event top, all-day/background offset, and the now-indicator;
+  the hand-rolled fakes implemented `diff` as `b − a`, **exactly canceling** the bug so all suites were
+  green against fakes. Fixed to `diff({ a: date, b: min })` (with `getDstOffset` now on the correct sign).
+  Cutter chose **fix core now + pull the 4 affected core files forward**. This is the concrete justification
+  for the no-fakes policy. Remaining core 6 (`resources`, `month`, `agenda`, `viewLabel`, `navigateDate`,
+  `viewRange`) still use fakes (green) and convert next. **Gotcha:** react tests resolve `@big-calendar/core`
+  from its built `dist`, so core src fixes need `pnpm nx build core` before react tests see them.

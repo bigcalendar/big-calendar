@@ -151,21 +151,31 @@ folded into Phase 4 (per Cutter). See DECISIONS.md (2026-06-02).
 
 0. **Localizer test retrofit (interim, temporal)** — Cutter decision 2026-06-03 (see DECISIONS.md
    "Test date handling"). Replace the temporary cast-fake localizers in **non-localizer** tests with the
-   **real `TemporalLocalizer`**; no JS `Date` for date logic in assertions. **Order: react 6 → core 10 →
-   then `<Calendar>`.** Files: react (`useCalendar`, `CalendarProvider`, `Toolbar`, `AgendaView`,
-   `MonthView`, `TimeGridView`) + core (`resources`, `timeGrid`, `slotMetrics`, `month`, `viewModel`,
-   `viewLabel`, `agenda`, `createCalendarStore`, `navigateDate`, `viewRange`).
-   - **Harness:** shared per-package helper; `await createTemporalLocalizer({ locale: 'en-US',
-     timezone: 'UTC' })` in `beforeAll` (factory is async — loads Temporal namespace). Structure as a
-     `describe.each` array so the **luxon arm** drops in as row 2 once `localizer-luxon` is implemented.
-   - **Step 0:** prove `@big-calendar/localizer-temporal` (dist) imports + its dynamic `temporal-polyfill`
-     import resolves under Vitest, with a one-line smoke test, **before** converting files. Add
-     `@big-calendar/localizer-temporal` as a devDependency to `react` and `core`.
-   - **Assertions (Cutter): from `localizer.format()` output** — assert rendered text equals the real
-     localizer's `format(value, preset)` (not hardcoded ICU glyphs). Geometry/counts/`bc-today`/drilldown
-     stay exact (UTC math unchanged).
+   **real `TemporalLocalizer`**; no JS `Date` for date logic in assertions.
+   - ✅ **Step 0 done** (commit `b692032`): `@big-calendar/localizer-temporal` added as devDep to
+     `react` + `core`; per-package smoke tests prove the dist + dynamic `temporal-polyfill` import resolve
+     under both jsdom (react) and node (core). Shared harness `src/testing/localizers.ts` in each package
+     exports `LOCALIZER_CASES` (`describe.each` array; **luxon = row 2 later**); `src/testing/**` excluded
+     from coverage.
+   - ✅ **react 6 done** (commit `ce8f640`): `useCalendar`, `CalendarProvider`, `Toolbar`, `AgendaView`,
+     `MonthView`, `TimeGridView` all on the real localizer. Expected text/dates read back from
+     `localizer.format()` / `add` / `startOf` / `getSlotDate`; geometry/counts/`bc-today`/drilldown exact.
+     MonthView empty-grid edge uses a **delegating `Proxy`** (forwards to the real localizer, overrides
+     only `visibleDays → []`), not a fake. **react tests resolve `@big-calendar/core` from its built
+     `dist`** → rebuild core (`pnpm nx build core`) after any core src change or they test stale code.
+   - ✅ **core 4 of 10 done** (commit `ce8f640`, pulled forward): `slotMetrics`, `timeGrid`, `viewModel`,
+     `createCalendarStore`. These shared `makeTimeLocalizer`/`makeRangeLocalizer`/`makeFakeLocalizer`
+     fakes; cross-test-file imports were also re-running `createSlotMetrics` under 4 files (now gone).
+   - ⚠ **BUG FOUND + FIXED** (the retrofit's first real catch — see DECISIONS.md): `createSlotMetrics.
+     positionFromDate` called `diff()` with `a`/`b` swapped (`min − date`), negating every event top /
+     now-indicator. The fakes' `diff = b − a` exactly canceled it, so it was invisible. Fixed to
+     `diff({ a: date, b: min })`; `getDstOffset` term now on the correct sign. `fix(core)` in `ce8f640`.
+   - ⏳ **core 6 remaining** (still on fakes, currently green): `resources`, `month`, `agenda`,
+     `viewLabel`, `navigateDate`, `viewRange`. Convert these next (same harness; derive serialization-
+     dependent assertions from the localizer, not literal `Z` strings).
    - **Luxon arm = still deferred** until `localizer-luxon` (currently a scaffold) is implemented (§5.3).
-1. **`<Calendar>`** batteries-included default tree (Toolbar + active view), consuming context.
+1. **Finish core 6 retrofit** (above), then **`<Calendar>`** batteries-included default tree
+   (Toolbar + active view), consuming context.
 2. **Top-layer** (§7.5): Popover-API show-more/tooltip + floating-ui positioning.
 3. **Selection wiring** (pointer/keyboard → slot coords → core FSM) **+ Storybook docs** (Cutter's ask).
    Plus **2m view registry**. Plus a **coarse-pointer/touch pass on `@big-calendar/styles`** (§7.7).
