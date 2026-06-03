@@ -9,6 +9,9 @@ import type { EventId, ViewKey, VisibleRange } from './calendar.type'
  * Configuration accepted by {@link createCalendarStore}. Only the localizer is
  * required; everything else has a sensible default applied during normalization.
  *
+ * Optional fields are typed `?: T | undefined` so framework adapters can pass
+ * through possibly-undefined props directly under `exactOptionalPropertyTypes`.
+ *
  * Prop-getter callbacks remain an adapter concern and are not part of this
  * (framework-agnostic) config.
  */
@@ -16,65 +19,65 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
   /** Required. All date math flows through this localizer; core never touches `Date`. */
   localizer: LocalizerContract
   /** Foreground events. */
-  events?: TEvent[]
+  events?: TEvent[] | undefined
   /** Background events (rendered behind foreground events; not selectable). */
-  backgroundEvents?: TEvent[]
+  backgroundEvents?: TEvent[] | undefined
   /** Resource objects for resource-grouped views. */
-  resources?: TResource[]
+  resources?: TResource[] | undefined
   /** Initial view. Defaults to `month`. */
-  view?: ViewKey
+  view?: ViewKey | undefined
   /** Initial focus date (RFC 3339/9557). Defaults to `getNow()`. */
-  date?: string
+  date?: string | undefined
   /** Accessor overrides merged over the v1-parity defaults. */
-  accessors?: Partial<Accessors<TEvent, TResource>>
+  accessors?: Partial<Accessors<TEvent, TResource>> | undefined
   /** Source of "now" as a datetime string. Defaults to the current UTC instant. */
-  getNow?: () => string
+  getNow?: (() => string) | undefined
   /** Number of days the agenda view spans per page. Defaults to 30. */
-  length?: number
+  length?: number | undefined
 
   // --- time-grid controls (day / week / work_week) ---
   /** Slot size in minutes. Defaults to 30. */
-  step?: number
+  step?: number | undefined
   /** Slots per labelled group. Defaults to 2. */
-  timeslots?: number
+  timeslots?: number | undefined
   /**
    * Start of the visible time window as a datetime string; only its
    * time-of-day is used. Defaults to midnight (start of day).
    */
-  min?: string
+  min?: string | undefined
   /**
    * End of the visible time window as a datetime string; only its time-of-day
    * is used. A midnight (`00:00`) time means end-of-day. Defaults to end of day.
    */
-  max?: string
+  max?: string | undefined
   /** Day-layout algorithm for overlapping timed events: a built-in key or a custom fn. Defaults to `overlap`. */
-  dayLayoutAlgorithm?: DayLayoutAlgorithmKey | DayLayoutAlgorithm
+  dayLayoutAlgorithm?: DayLayoutAlgorithmKey | DayLayoutAlgorithm | undefined
   /** Max rows in the all-day header before events overflow. Defaults to unlimited. */
-  allDayMaxRows?: number
+  allDayMaxRows?: number | undefined
   /** Render multi-day events in the time columns rather than the all-day header. Defaults to false. */
-  showMultiDayTimes?: boolean
+  showMultiDayTimes?: boolean | undefined
   /** Show every all-day event (ignore `allDayMaxRows`). Defaults to false. */
-  showAllEvents?: boolean
+  showAllEvents?: boolean | undefined
   /** Whether slot selection is enabled (`true`/`false`/`'ignoreEvents'`). Defaults to false. */
-  selectable?: SelectableMode
+  selectable?: SelectableMode | undefined
   /**
    * View a drilldown lands on by default. Defaults to `day`; pass `null` to
    * disable drilldown. Ignored when `getDrilldownView` is supplied.
    */
-  drilldownView?: ViewKey | null
+  drilldownView?: ViewKey | null | undefined
   /** Per-call drilldown resolver; overrides `drilldownView` when supplied. */
-  getDrilldownView?: GetDrilldownView
+  getDrilldownView?: GetDrilldownView | undefined
   /** Fired after the focus date changes via `navigate`. */
-  onNavigate?: (args: { date: string; view: ViewKey }) => void
+  onNavigate?: ((args: { date: string; view: ViewKey }) => void) | undefined
   /** Fired after the view changes via `setView`. */
-  onView?: (args: { view: ViewKey }) => void
+  onView?: ((args: { view: ViewKey }) => void) | undefined
   /** Fired after the selected event changes via `select`. */
-  onSelect?: (args: { id: EventId | null }) => void
+  onSelect?: ((args: { id: EventId | null }) => void) | undefined
   /** Fired when the visible range changes (date or view change), not on init. */
-  onRangeChange?: (args: { range: VisibleRange; view: ViewKey }) => void
+  onRangeChange?: ((args: { range: VisibleRange; view: ViewKey }) => void) | undefined
   /**
    * Fired when a drilldown is requested. When provided, the store delegates
    * entirely to this callback (it will not change view/date itself).
    */
-  onDrillDown?: (args: { date: string; view: ViewKey }) => void
+  onDrillDown?: ((args: { date: string; view: ViewKey }) => void) | undefined
 }
