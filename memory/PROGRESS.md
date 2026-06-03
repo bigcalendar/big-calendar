@@ -38,21 +38,38 @@ folded into Phase 4 (per Cutter). See DECISIONS.md (2026-06-02).
   instance + destroy-on-unmount). react: 11 tests; both src files 100% br/fn. core unaffected (168
   green). typecheck/lint/test/build green across react+core.
 
-## ⚠ NEXT NEEDS A DESIGN DECISION (Cutter) before building — do NOT guess
+### Phase 4 — Task 4c: CalendarProvider + CalendarContext ✓ (commit 2c36865, pushed)
 
-**Phase 4 React component/API contract** is the canonical framework contract (all future Vue/Angular/
-Lit mirror it). Before building `useCalendar` + view components, settle:
-1. **Controlled vs uncontrolled props.** v1 is heavily controlled (`date`/`view`/`events` as props +
-   `onNavigate`/`onView`). Options: (a) controlled like v1 (props drive store via effects;
-   callbacks required to move); (b) uncontrolled/headless (store owns state; config is initial-only;
-   `useCalendar` returns state+actions); (c) hybrid (uncontrolled by default, opt-in controlled per
-   prop). This decides how `useCalendar` syncs config→store signals.
-2. **Component vocabulary & override model** (§7): the `<Calendar>` props surface, the `components`
-   slot/override map shape, and whether view components are exposed individually.
-3. **Top-layer** (§7.5): Popover-API components + floating-ui positioning for show-more/tooltip.
-4. **Selection wiring + its Storybook docs** (Cutter's explicit ask) and the **2m view registry**.
+- **DECISION (Cutter 2026-06-02): component/API contract settled** (see DECISIONS.md). Shell = HYBRID
+  (`<Calendar>` + standalone exports); override = BOTH (`components` map primary + render-prop escape
+  hatch); **context REQUIRED and WRAPS `<Calendar>`** (provider owns the store; `<Calendar>` + siblings
+  consume it — `<Calendar>` does not create its own context).
+- **`src/CalendarProvider/`** — `calendar.context.ts` (`CalendarContext` = `createContext<CalendarContextValue
+  | null>(null)`; value carries **only `store`** for now, per A.6 — `messages`/`components` join when
+  Toolbar/Event arrive); `CalendarProvider.component.tsx` (runs `useCalendar(props)`, memoizes
+  `{ store }`, publishes via `CalendarContext.Provider` — React-18-safe, not the React-19 `<Context>`
+  form); `useCalendarContext.ts` (throws outside a provider → enforces "must be inside a provider" for
+  every calendar component); `useCalendarStore.ts` (convenience = `useCalendarContext().store`).
+- Barrel exports `CalendarProvider`, `CalendarContext`, `useCalendarContext`, `useCalendarStore` + the
+  `CalendarProviderProps`/`CalendarContextValue` types. Tests: 4 (provides store; convenience hook;
+  sibling reads state via `useSignalValue`; throws outside provider). react: 15 tests; **100% br/fn/stmt/line**.
+  typecheck/lint/test/build green.
 
-See [[bigcal-selection-storybook-phase4]]. Recommend a short design pass with Cutter before 4b.
+## ⚠ NEXT — Phase 4 build order (contract is settled; build straight through)
+
+Contract decided (4c). Remaining Phase-4 build order:
+1. **4d — view components** (`<MonthView>`/`<TimeGridView>`/`<AgendaView>`): consume context +
+   `store.viewModel`, attach `@big-calendar/styles` class names, set the geometry custom props inline
+   from core fractions. Each accepts a `components` override map (event/header slots).
+2. **4e — Toolbar + Event** (first overridable slots → this is when `messages` + the resolved
+   `components` map get promoted into the context value, per A.6).
+3. **4f — `<Calendar>`** batteries-included default tree (toolbar + active view), consuming context.
+4. **4g — top-layer** (§7.5): Popover-API show-more/tooltip components + floating-ui positioning.
+5. **4h — selection wiring** (adapter maps pointer/keyboard → slot coords → core FSM) **+ its Storybook
+   docs** (Cutter's explicit ask). Plus **2m view registry** (revisit once view components exist).
+
+⚠ **Open design input still needed at its task:** exact `components` map slot names per view (4d/4e);
+top-layer component vocabulary (4g). See [[bigcal-selection-storybook-phase4]].
 
 ## Possible next phase
 
