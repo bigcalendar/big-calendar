@@ -1,5 +1,9 @@
 export const PACKAGE_NAME = '@big-calendar/core'
 
+// Re-exported because the store's public surface (`store.localizer`) is typed as
+// it; adapters need the type without depending on `@big-calendar/localizer`.
+export type { LocalizerContract } from '@big-calendar/localizer'
+
 export { BUILTIN_VIEWS, Navigate, Views } from './constants/views.constant'
 export type { BuiltinViewKey, NavigateDirection } from './constants/views.constant'
 
