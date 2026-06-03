@@ -223,3 +223,40 @@ pragmatic-DnD's touch path) but never stated it as a requirement. Now it is.
   model "now"-free and pure; (b) approximating the fraction adapter-side from `min`/`max` alone via
   `getMinutesFromMidnight` — rejected because it can misalign with event boxes near the window edge when
   the window isn't a whole number of slot groups.
+
+## 2026-06-03 — Test date handling: real localizers only, dual-localizer parity (base decision, Cutter)
+
+- **DECISION (Cutter):** Tests never use JS `Date` for date logic. All date math/formatting in tests goes
+  through a **real** Big Calendar localizer — **no mocked/faked localizers** outside the `localizer`
+  package. `Date` is allowed *only* to mint mock RFC-3339 primitive strings or seed fixtures, never for
+  assertions or arithmetic.
+- **Parity scope (Cutter, corrected from "non-core" → "non-localizer"):** every package **except**
+  `@big-calendar/localizer` (`core`, `react`, future framework packages) runs its date-dependent tests
+  against **both** shipped localizers — `localizer-temporal` **and** `localizer-luxon` — via a
+  parameterized suite (`describe.each([temporal, luxon])`); a behavior passes only when it passes
+  identically under both. The `localizer` package tests its own abstract base class directly. Tests pin
+  `timezone` (e.g. UTC) and pass `getNow` explicitly for determinism.
+- **Sequencing (Cutter: "adopt rule, defer retrofit"):** `localizer-temporal` is **built and usable**
+  (1b ✓; `createTemporalLocalizer()` async-loads the Temporal namespace), but `localizer-luxon` is only a
+  **scaffold** (`PACKAGE_NAME` + smoke test, no `LuxonLocalizer` class), so the *dual*-localizer parity
+  requirement can't be met yet. The rule is recorded now but the existing **cast-fakes stay as a stopgap**
+  in the 6 non-localizer react test files (`useCalendar`, `CalendarProvider`, `Toolbar`, `AgendaView`,
+  `MonthView`, `TimeGridView`) and in `core`. They are retrofitted to the dual-localizer pattern **once
+  `localizer-luxon` is implemented** (§5.3). Acknowledged tech debt, flagged for retrofit. `<Calendar>`
+  proceeds first.
+  - **Correction:** an earlier draft of this entry said "the concrete localizer packages don't exist /
+    base is non-instantiable" — wrong. Temporal exists and works; only Luxon is unimplemented.
+- **Execution plan (Cutter, 2026-06-03):** retrofit **interim to real temporal NOW** (don't wait for luxon).
+  Order **react 6 → core 10 → `<Calendar>`**. Assertion style: **read expected text from the real
+  `localizer.format(value, preset)` output** (not hardcoded en-US ICU literals, not formats-overrides) —
+  faithful to wiring, robust to ICU/Node data drift; geometry/counts/`bc-today`/drilldown stay exact UTC
+  values. Harness = shared per-package helper, `await createTemporalLocalizer({ locale:'en-US',
+  timezone:'UTC' })` in `beforeAll`, built as a `describe.each` array so the luxon arm slots in later.
+  Step 0 before converting: smoke-test that the temporal dist + its dynamic `temporal-polyfill` import
+  resolve under Vitest, and add `@big-calendar/localizer-temporal` as a devDependency to `react`/`core`.
+  **Checkpointed here before starting any conversion (usage budget).**
+- **Plan:** recorded in `Upgrade_plan_prompt.md` — new §2 Locked-Decisions row ("Test date handling") and
+  new **§5.5 Localizer testing policy**.
+- **What was rejected:** keeping exhaustive temporal-vs-luxon parity *only* in the localizer package while
+  view tests use a single default localizer — rejected by Cutter: `core` and every non-localizer consumer
+  must themselves prove parity against both real localizers, not delegate it.

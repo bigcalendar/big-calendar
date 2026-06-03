@@ -149,6 +149,22 @@ folded into Phase 4 (per Cutter). See DECISIONS.md (2026-06-02).
 
 ## ⚠ NEXT — Phase 4 remaining build order
 
+0. **Localizer test retrofit (interim, temporal)** — Cutter decision 2026-06-03 (see DECISIONS.md
+   "Test date handling"). Replace the temporary cast-fake localizers in **non-localizer** tests with the
+   **real `TemporalLocalizer`**; no JS `Date` for date logic in assertions. **Order: react 6 → core 10 →
+   then `<Calendar>`.** Files: react (`useCalendar`, `CalendarProvider`, `Toolbar`, `AgendaView`,
+   `MonthView`, `TimeGridView`) + core (`resources`, `timeGrid`, `slotMetrics`, `month`, `viewModel`,
+   `viewLabel`, `agenda`, `createCalendarStore`, `navigateDate`, `viewRange`).
+   - **Harness:** shared per-package helper; `await createTemporalLocalizer({ locale: 'en-US',
+     timezone: 'UTC' })` in `beforeAll` (factory is async — loads Temporal namespace). Structure as a
+     `describe.each` array so the **luxon arm** drops in as row 2 once `localizer-luxon` is implemented.
+   - **Step 0:** prove `@big-calendar/localizer-temporal` (dist) imports + its dynamic `temporal-polyfill`
+     import resolves under Vitest, with a one-line smoke test, **before** converting files. Add
+     `@big-calendar/localizer-temporal` as a devDependency to `react` and `core`.
+   - **Assertions (Cutter): from `localizer.format()` output** — assert rendered text equals the real
+     localizer's `format(value, preset)` (not hardcoded ICU glyphs). Geometry/counts/`bc-today`/drilldown
+     stay exact (UTC math unchanged).
+   - **Luxon arm = still deferred** until `localizer-luxon` (currently a scaffold) is implemented (§5.3).
 1. **`<Calendar>`** batteries-included default tree (Toolbar + active view), consuming context.
 2. **Top-layer** (§7.5): Popover-API show-more/tooltip + floating-ui positioning.
 3. **Selection wiring** (pointer/keyboard → slot coords → core FSM) **+ Storybook docs** (Cutter's ask).
