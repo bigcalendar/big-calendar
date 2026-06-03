@@ -4,9 +4,40 @@
 
 ## Current phase
 
-**Phase 3 — Styles** (`@big-calendar/styles`) COMPLETE. Phases 0–2 complete (Phase 2 core logic;
-2m view-registry + store-selection wiring deferred to Phase 4 per Cutter). **Next: Phase 4 — React
-(MVP).** See DECISIONS.md (2026-06-02) for the deferrals.
+**Phase 4 — React (MVP)** STARTED. Phases 0–3 complete. 2m view-registry + store-selection wiring
+folded into Phase 4 (per Cutter). See DECISIONS.md (2026-06-02).
+
+### Phase 4 — Task 4a: React test infra + signals→React bridge ✓ (commit f7929a4, pushed)
+
+- **Test infra:** installed `jsdom` + `@testing-library/react` + `@testing-library/dom` (Cutter
+  OK'd Testing Library 2026-06-02). `packages/react/vitest.config.ts` → `environment: 'jsdom'`,
+  `globals: true`, `setupFiles: ['./vitest.setup.ts']` (afterEach `cleanup()`), includes `.tsx`,
+  coverage over `.{ts,tsx}`. Same per-file bar (85% branch / 95% func).
+- **`src/internal/useSignalValue.ts`** — the one subscription primitive: `useSyncExternalStore`
+  over a `@preact/signals-core` signal; shared client/server snapshot (SSR-safe) reads the signal's
+  cached `.value` (stable identity → no Object.is loop). 100% branch/func.
+- Added `@preact/signals-core` as a **direct dependency** of `@big-calendar/react` (store's public
+  API exposes its `Signal`/`ReadonlySignal` types). Barrel exports `useSignalValue`.
+- Tests: 4 (renderHook: read, update, computed, unsubscribe-on-unmount). react: 5 tests total
+  (incl. scaffold smoke), typecheck/lint/test/build green.
+
+## ⚠ NEXT NEEDS A DESIGN DECISION (Cutter) before building — do NOT guess
+
+**Phase 4 React component/API contract** is the canonical framework contract (all future Vue/Angular/
+Lit mirror it). Before building `useCalendar` + view components, settle:
+1. **Controlled vs uncontrolled props.** v1 is heavily controlled (`date`/`view`/`events` as props +
+   `onNavigate`/`onView`). Options: (a) controlled like v1 (props drive store via effects;
+   callbacks required to move); (b) uncontrolled/headless (store owns state; config is initial-only;
+   `useCalendar` returns state+actions); (c) hybrid (uncontrolled by default, opt-in controlled per
+   prop). This decides how `useCalendar` syncs config→store signals.
+2. **Component vocabulary & override model** (§7): the `<Calendar>` props surface, the `components`
+   slot/override map shape, and whether view components are exposed individually.
+3. **Top-layer** (§7.5): Popover-API components + floating-ui positioning for show-more/tooltip.
+4. **Selection wiring + its Storybook docs** (Cutter's explicit ask) and the **2m view registry**.
+
+See [[bigcal-selection-storybook-phase4]]. Recommend a short design pass with Cutter before 4b.
+
+## Possible next phase
 
 ### Phase 3 — Styles ✓ (commits 0f1a20f, ca0f567, 5d3bac6; pushed)
 
