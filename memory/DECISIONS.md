@@ -136,3 +136,28 @@
 - STILL OPEN (Cutter to decide next): `<Calendar>` component vocabulary + `components` override map
   (§7), top-layer popover components (§7.5), selection wiring + its Storybook docs, and the 2m view
   registry.
+
+## 2026-06-02 — Phase 4 React component/API contract (the canonical framework contract)
+
+Settled with Cutter (AskUserQuestion + follow-ups). All future Vue/Angular/Lit adapters mirror this.
+
+- **Shell = HYBRID** (matches §7.1 "Exports: `<Calendar>`, all sub-components"): a batteries-included
+  `<Calendar>` for the common/novice path **and** standalone exports (view components, etc.) for full
+  composition. Tree-shakeable (compose only what you import) — aligns with the bundle-size priority
+  Cutter raised re: resources/selection packaging.
+- **Override model = BOTH** (matches §7 L254 "`components` prop / render props"): a `components`
+  override map is the primary API (v1 parity → easiest migration); render-prop functions are the
+  escape hatch where a function fits better (e.g. show-more content). Type-safe, framework-native.
+- **Context REQUIRED, and it WRAPS `<Calendar>` (it is not created inside it).** Per Cutter:
+  `CalendarProvider` is the outer container that owns the store (via `useCalendar`) and publishes it on
+  `CalendarContext`. `<Calendar>` and any **sibling** components (custom toolbars, sidebars, mini-maps)
+  render *inside* the provider and share one store. `<Calendar>` therefore **consumes** context rather
+  than creating its own. `useCalendarContext` throws outside a provider, which enforces this for every
+  calendar component automatically.
+- **Context kept minimal (Appendix A.6):** the context value carries only `store` for now; `messages`
+  and the resolved `components` map join the value when their first real consumers (Toolbar /
+  overridable Event) land — not before (A.6: promote to context only once a concrete consumer exists).
+- **React 18 floor** (peerDeps `react >=18`, CLAUDE.md): use `Context.Provider`/`useContext`/`forwardRef`;
+  avoid React-19-only APIs (`<Context>` as provider, `use()`, ref-as-prop).
+- Build order: 4c provider+context → view components (consume context + `store.viewModel`) + Toolbar/
+  Event with overrides → `<Calendar>` default tree → top-layer (§7.5) → selection wiring (+Storybook).
