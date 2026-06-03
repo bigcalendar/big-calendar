@@ -192,3 +192,17 @@ pragmatic-DnD's touch path) but never stated it as a requirement. Now it is.
   every view model with formatted strings is heavier than one shared formatter. **Open to revisiting** —
   if cross-framework parity of event-time formatting matters, promote `formatEventTime` to a core/shared
   util. Title/allDay are trivial accessor reads done inline in the adapter.
+
+## 2026-06-03 — Per-day "now"/state via store.getNow() (not in the view model)
+
+- **DECISION (Cutter):** MonthView's today highlight (and the upcoming time-grid now-indicator) get
+  "now" from a newly-exposed **`store.getNow()`** on the public `CalendarStore` (sibling to
+  `localizer`/`accessors`; was internal-only, used by `navigate`). The adapter derives `isToday`
+  (`localizer.isSameDate`) and `isOffRange` (`localizer.neq({unit:'month'})` vs the focus date) itself.
+- **What was rejected:** enriching every view model with per-day `isToday`/`isOffRange` (and a now-fraction
+  for time grid). Rejected to keep view-model shapes lean and avoid baking display semantics into core;
+  the single primitive `getNow` is reusable by all views and the now-indicator.
+- **Coupled change:** surfaced `config.weekEventLimit` and threaded it into the store's `viewModel`
+  computed — it was plumbed through `monthViewModel`/`buildViewModel` but the store never passed it, so
+  the month "+N more" overflow path was unreachable. Supersedes the 2j note that said month
+  `weekEventLimit` is "left unlimited from the store."

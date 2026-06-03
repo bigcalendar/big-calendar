@@ -102,12 +102,34 @@ folded into Phase 4 (per Cutter). See DECISIONS.md (2026-06-02).
   (resolves title via accessors + time via formatEventTime), 3 `components/DefaultAgenda*.component.tsx`.
   Barrel exports `AgendaView` + agenda slot types. react: 32 tests, 100% all metrics.
 
+### Phase 4 — Task 4f: MonthView ✓ (commit on feat/initial; pushed)
+
+- **DECISION (Cutter 2026-06-03): per-day "now" source = `store.getNow()`** (exposed on the public
+  `CalendarStore`, sibling to `localizer`/`accessors`). Adapters derive today / now-indicator state
+  themselves; off-range is an adapter-side localizer month-compare vs the focus date. Chosen over
+  enriching every view model with `isToday`/`isOffRange` (keeps view-model shapes lean). See DECISIONS.md.
+- **core** — `store.getNow()` added to `CalendarStore` + returned by `createCalendarStore`. **Plus**
+  surfaced `config.weekEventLimit` and threaded it into the `viewModel` computed (was plumbed through
+  `monthViewModel`/`buildViewModel` but the store never passed it → the month overflow path was
+  unreachable). Flagged to Cutter; updates the stale 2j "weekEventLimit left unlimited" note below.
+- **`src/internal/geometry.function.ts`** — added `monthGridStyle(weekCount)` → `--bc-week-count`.
+- **`src/components.type.ts`** — `CalendarComponents.month` (`MonthComponents<TEvent>`): slots
+  `weekday`/`dateCell`/`event`/`showMore` + their prop types.
+- **`src/MonthView/`** — `MonthView.component.tsx` (renders `.bc-month` header + grid, resolves the 4
+  month slots ?? defaults, wraps each event in a `.bc-segment` carrying `segmentStyle`, date cells
+  drill down on click, per-week `.bc-show-more`), `hooks/useMonthWeeks.memo.ts` (resolves the month
+  model → weekday headings + day cells with today/off-range + placed segments + overflow), 4
+  `components/DefaultMonth*.component.tsx`. Barrel exports `MonthView` + month slot types.
+- **Gates:** react 38 tests (100% stmt/fn/line, 98.66% branch overall; hook 91.66% branch — one
+  defensive `?? ''` fallback unreachable, >85% bar). core 174 green. typecheck/lint/build green.
+
 ## ⚠ NEXT — Phase 4 remaining build order
 
-1. **MonthView** (segments + geometry: `.bc-month`/subgrid, `segmentStyle` for `.bc-segment`, date cells,
-   show-more, drilldown) → **TimeGridView** (event boxes via `eventBoxStyle`, all-day row, now-indicator,
-   bg events). Each adds its slots to `CalendarComponents`. Slot names at my discretion (Cutter 2026-06-02).
-   ⚠ Heavier localizer fakes needed (month grid / slot metrics) — consider `/compact` before starting.
+1. **TimeGridView** (event boxes via `eventBoxStyle`, all-day row via `segmentStyle`, now-indicator via
+   `nowIndicatorStyle` + `store.getNow()`, bg events). Adds its slots to `CalendarComponents`. Slot names
+   at my discretion (Cutter 2026-06-02). ⚠ Heaviest localizer fake yet (slot metrics: `getSlotDate`/
+   `getMinutesFromMidnight`/`getTotalMin`/`getDstOffset`/`diff` + the time-grid model) — consider
+   `/compact` before starting. MonthView ✓ done.
 2. **`<Calendar>`** batteries-included default tree (Toolbar + active view), consuming context.
 3. **Top-layer** (§7.5): Popover-API show-more/tooltip + floating-ui positioning.
 4. **Selection wiring** (pointer/keyboard → slot coords → core FSM) **+ Storybook docs** (Cutter's ask).
@@ -413,9 +435,10 @@ messages). What remains to satisfy the Phase-2 exit (§4.2 store shape + §9 log
 - Tests: buildViewModel (5, pure) + store viewModel (4, via a combined time+range localizer fake
   `{...makeTimeLocalizer(), ...makeRangeLocalizer(1)}`). 166 tests total; every file clears the bar
   (total 94.78% branch / 100% func). typecheck/lint/test/build green.
-- **Notes:** month `weekEventLimit` is left unlimited from the store (month "+N more" overflow is
-  adapter-measured — core can't know cell height); call `monthViewModel` directly with a measured
-  limit if needed. `selectable` config added but not yet consumed (next task).
+- **Notes:** ~~month `weekEventLimit` is left unlimited from the store~~ **UPDATED (4f, 2026-06-03):**
+  `config.weekEventLimit` is now surfaced and threaded into the `viewModel` computed, so a caller can
+  cap month rows from config (a measured/responsive limit is still set adapter-side by passing the prop).
+  `selectable` config added but not yet consumed (next task).
 
 ### Phase 2 — Task 2l: background events in time-grid ✓ (commit a651ee7, pushed)
 
