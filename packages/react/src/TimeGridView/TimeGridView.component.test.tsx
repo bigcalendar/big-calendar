@@ -99,6 +99,15 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
     expect((container.querySelector('.bc-day-column') as HTMLElement).classList.contains('bc-today')).toBe(true)
   })
 
+  it('sets --bc-day-count on the grid container so every row shares the column tracks', () => {
+    // The header, all-day row, and body all build their grid from repeat(var(--bc-day-count)…);
+    // the var must live on the .bc-time-grid container so all three inherit a valid track count.
+    // (Missing it collapses repeat() → the gutter spans full width and no day columns form.)
+    const { container } = renderGrid({ defaultView: Views.WEEK })
+    const grid = container.querySelector('.bc-time-grid') as HTMLElement
+    expect(grid.style.getPropertyValue('--bc-day-count')).toBe('7')
+  })
+
   it('omits the now-line when the column is not today', () => {
     const { container } = renderGrid({ defaultDate: '2026-06-16' })
     const heading16 = localizer.format({

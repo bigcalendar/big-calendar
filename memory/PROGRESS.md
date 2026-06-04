@@ -608,6 +608,26 @@ Outlook + v1. **Fix is adapter + CSS only (NO core change)** — confirmed `week
 - **Note (deferred):** the **time-grid all-day row** "+N more" is still single/row-level (Cutter chose
   month-only for now). Per-day for the all-day row is the larger TimeGridView option if wanted later.
 
+### Phase 4 — Task 4i-fix2: time-grid layout collapse — `--bc-day-count` on the container (Cutter, 2026-06-04) ✓ (this commit)
+
+Cutter compared the new TimeGrid Storybook to react-big-calendar's: our time gutter spanned the full
+width with **no day columns**. Root cause was an **adapter bug, not CSS/build** — `layout.css` lays out
+`.bc-time-header`, `.bc-allday-row`, `.bc-time-body` from `grid-template-columns: var(--bc-gutter-width)
+repeat(var(--bc-day-count), …)`, but `TimeGridView` only set `--bc-day-count` on `.bc-time-header` and
+`.bc-allday-segments` — never on `.bc-time-body` or `.bc-allday-row`. With the var undefined, `repeat()`
+is invalid → the whole `grid-template-columns` is dropped → body falls back to one implicit column
+(gutter full-width, right-aligned labels at the screen edge, no columns).
+
+- **Fix (Cutter chose "on container, dedupe"):** set `--bc-day-count` **once on `.bc-time-grid`** so the
+  header, all-day row, all-day segments, and body all inherit it (custom props inherit). Removed the now-
+  redundant inline `dayCountStyle` from `.bc-time-header` and `.bc-allday-segments`. Matches the layout.css
+  contract comment ("Counts the adapter sets on **containers**"). No CSS change; `layout.css`/dist already
+  in sync and correct.
+- **Tests** — new TimeGridView test asserts `--bc-day-count === '7'` on `.bc-time-grid` in WEEK view. react
+  **78 tests**; coverage clears the per-file bar; typecheck/lint/build green; `react:build-storybook` green.
+- **Note (untouched):** the Storybook toolbar in the same screenshot also looked unstyled (view buttons run
+  together). Not investigated — out of scope for this fix. Flag if you want it looked at.
+
 ## In progress
 
 - (none — Task 4i + per-day follow-up complete. Next: selection wiring (pointer/keyboard → slot coords →

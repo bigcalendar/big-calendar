@@ -47,8 +47,8 @@ function TimeGridView<TEvent = unknown>() {
     components.time?.showMore ?? DefaultTimeShowMore
 
   return (
-    <div className="bc-time-grid">
-      <div className="bc-time-header" style={dayCountStyle(grid.headings.length)}>
+    <div className="bc-time-grid" style={dayCountStyle(grid.headings.length)}>
+      <div className="bc-time-header">
         {grid.headings.map((heading) => (
           <DayHeading
             key={heading.day}
@@ -62,7 +62,7 @@ function TimeGridView<TEvent = unknown>() {
 
       <div className="bc-allday-row">
         <div className="bc-allday-label">{messages.allDay}</div>
-        <div className="bc-allday-segments" style={dayCountStyle(grid.headings.length)}>
+        <div className="bc-allday-segments">
           {grid.allDay.segments.map((segment) => (
             <div
               key={segment.key}
