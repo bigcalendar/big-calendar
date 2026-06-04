@@ -31,7 +31,7 @@ function MonthView<TEvent = unknown>() {
   const DateCell: ComponentType<MonthDateProps> = components.month?.dateCell ?? DefaultMonthDate
   const EventSlot: ComponentType<MonthEventProps<TEvent>> =
     components.month?.event ?? DefaultMonthEvent
-  const ShowMore: ComponentType<MonthShowMoreProps> =
+  const ShowMore: ComponentType<MonthShowMoreProps<TEvent>> =
     components.month?.showMore ?? DefaultMonthShowMore
 
   return (
@@ -71,6 +71,7 @@ function MonthView<TEvent = unknown>() {
                   count={week.extra.count}
                   label={messages.showMore(week.extra.count)}
                   day={week.extra.day}
+                  events={week.extra.events}
                 />
               )}
             </div>

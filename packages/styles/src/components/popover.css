@@ -27,6 +27,28 @@
     font-weight: var(--bc-font-weight-bold);
   }
 
+  .bc-popover-events {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: var(--bc-space-1);
+  }
+
+  .bc-dialog {
+    margin: auto;
+    padding: var(--bc-space-2);
+    border: var(--bc-border);
+    border-radius: var(--bc-radius);
+    background: var(--bc-color-bg);
+    color: var(--bc-color-fg);
+    box-shadow: var(--bc-shadow-popover);
+  }
+
+  .bc-dialog::backdrop {
+    background: rgb(0 0 0 / 0.32);
+  }
+
   .bc-tooltip {
     padding-block: var(--bc-space-1);
     padding-inline: var(--bc-space-2);

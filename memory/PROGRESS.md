@@ -187,7 +187,7 @@ folded into Phase 4 (per Cutter). See DECISIONS.md (2026-06-02).
    - **Luxon arm = still deferred** until `localizer-luxon` (currently a scaffold) is implemented (§5.3).
 1. ✅ **`<Calendar>`** batteries-included default tree (Toolbar + active view), consuming context —
    **DONE, see Task 4h below.** Light Storybook + the Toolbar/reset CSS fix landed in the same task.
-2. **Top-layer** (§7.5): Popover-API show-more/tooltip + floating-ui positioning.
+2. ✅ **Top-layer** (§7.5): Popover-API show-more/tooltip + floating-ui positioning — **DONE, see Task 4i below.**
 3. **Selection wiring** (pointer/keyboard → slot coords → core FSM) **+ Storybook docs** (Cutter's ask).
    Plus **2m view registry**. Plus a **coarse-pointer/touch pass on `@big-calendar/styles`** (§7.7).
 
@@ -543,10 +543,52 @@ Executed in the order Cutter set (CSS → Storybook → `<Calendar>`). See the d
   (Calendar.component.tsx 100%; the two pre-existing month/time memo hooks sit at 91.66% branch, >85%
   bar). typecheck/lint/build green; both Storybooks build.
 
+### Phase 4 — Task 4i: Top-layer UI (§7.5) — Popover / Tooltip / Dialog + show-more popovers ✓ (this commit)
+
+Cutter's scope calls (AskUserQuestion 2026-06-03): **full §7.5 surface** (Popover + show-mores +
+Tooltip + modal Dialog), **thread overflow events through** the show-more slots, **lazy-load
+floating-ui on first open**. See the dated DECISIONS.md entry.
+
+- **`src/internal/floatingPosition.ts`** — `positionFloating(anchor, floating, {placement, offset})`:
+  lazily `import('@floating-ui/core')` (cached promise; the import stays in value position to satisfy
+  `consistent-type-imports`), a **minimal viewport DOM platform** (`getElementRects`/`getDimensions`/
+  `getClippingRect` from `getBoundingClientRect` + `window.inner*`), `strategy:'fixed'`, middleware
+  `[offset, flip, shift, size]`. `size` both constrains oversized popovers to the viewport **and** is
+  what exercises the otherwise-uncalled `getDimensions`. **Verified in the dist build:** floating-ui is
+  externalized and referenced by a single dynamic `import("@floating-ui/core")` → truly lazy.
+- **`src/internal/useFloatingAnchor.ts`** — shared hook keeping a floating element positioned against an
+  anchor while open (repositions on scroll/resize). Extracted from Popover/Tooltip so the floating-ui
+  wiring + its defensive empty-ref guards live in one directly-unit-tested place.
+- **`src/Popover/`** — anchored top-layer popover. **Declarative `popovertarget`** (browser owns
+  open/close + light-dismiss + Esc); React tracks open via the panel's `toggle` event (`onToggle` prop,
+  no imperative effect) and positions via the hook. `popover="auto"`, `aria-haspopup/expanded/controls`,
+  `trigger` render-prop. Content mounts only while open.
+- **`src/Tooltip/`** — `popover="manual"` top-layer tooltip; opens on hover **and** focus, **toggles on
+  tap** (coarse-pointer reachable, §7.7); `role="tooltip"` + `aria-describedby` (via `cloneElement`).
+  Native show/hide guarded by `typeof` (jsdom has none).
+- **`src/Dialog/`** — thin native `<dialog>` modal wrapper. `showModal()` → focus-trap + Esc +
+  `::backdrop`; **restores focus** to the prior element on close; `close` event → `onClose`.
+- **Threaded overflow events** (Cutter's call): `components.type.ts` — `MonthShowMoreProps`/
+  `TimeShowMoreProps` are now **generic `<TEvent>`** and gain `events: ReadonlyArray<ShowMoreEvent<TEvent>>`
+  (new exported `ShowMoreEvent` = `{key,event,title}`). `useMonthWeeks`/`useTimeGrid` resolve the
+  overflow titles; `MonthView`/`TimeGridView` pass `events` to `ShowMore`. **`DefaultMonthShowMore`/
+  `DefaultTimeShowMore` now render a `Popover`** (the `.bc-show-more` button is the trigger) whose panel
+  lists the hidden events.
+- **styles:** `components/popover.css` gained `.bc-popover-events`/`.bc-popover-event` (top-layer content
+  is outside the reset root, so the list is reset locally) and `.bc-dialog` + `::backdrop`. Additive only.
+- **Storybook:** stories + required `.mdx` (top-layer + floating-ui-fallback note per §7.5) for
+  `React/Top layer/{Popover,Tooltip,Dialog}`, **plus a `React/Calendar` → `ShowMorePopover` story**
+  (clustered events + `weekEventLimit={2}`) — answers Cutter's note that no existing story had enough
+  events on one day to surface "+N more". Did NOT mutate the shared `demoEvents` (kept other stories
+  intact); the overflow story passes its own `events`.
+- **Gates:** react **89 tests** (13 new), per-file coverage clears the bar (all 100% func; lowest branch
+  Tooltip 88.88% / Dialog 89.47%, both >85%; floatingPosition + useFloatingAnchor + Popover ≥ bar).
+  typecheck/lint/test/build green for react/styles/core; `react:build-storybook` green.
+
 ## In progress
 
-- (none — Task 4h complete. Next: Top-layer §7.5 popover/floating-ui, then selection wiring + Storybook
-  docs + 2m view registry + coarse-pointer/touch styles.)
+- (none — Task 4i complete. Next: selection wiring (pointer/keyboard → slot coords → core FSM) +
+  Storybook docs, then 2m view registry + coarse-pointer/touch pass on `@big-calendar/styles`.)
 
 ## Phase 2 status
 

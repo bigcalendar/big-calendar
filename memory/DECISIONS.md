@@ -370,3 +370,50 @@ resolved by Cutter before install — see "Storybook layout (resolved)".
   shipped as `toolbar?: boolean | undefined` (the `| undefined` required by `exactOptionalPropertyTypes`);
   no `CalendarProps` interface was added for it — that name is already the public config type from
   `useCalendar.ts`, so the single prop is inlined to avoid a clashing export.
+
+## 2026-06-03 — Top-layer UI (§7.5): Popover / Tooltip / Dialog, lazy floating-ui, threaded overflow
+
+**Status: IMPLEMENTED 2026-06-03** (Phase 4 Task 4i — see PROGRESS.md). All gates green.
+
+Scope settled with Cutter (AskUserQuestion + the show-more follow-up):
+- **Full §7.5 surface** (not simplest-first): `Popover` + wired show-mores + standalone `Tooltip` +
+  modal `Dialog`. Cutter chose to build ahead of every consumer (Tooltip/Dialog have no internal
+  consumer yet; stories demonstrate them).
+- **Thread overflow events through the show-more slots** (a public prop-type change): `MonthShowMoreProps`
+  / `TimeShowMoreProps` became generic `<TEvent>` and gained `events: ReadonlyArray<ShowMoreEvent<TEvent>>`
+  (new exported `ShowMoreEvent = {key,event,title}`). The default show-mores render a `Popover` listing the
+  hidden events. Rejected "label/count only" (would leave the default popover empty).
+- **Lazy-load floating-ui on first open** (not direct import): `floatingPosition.ts` dynamically
+  `import('@floating-ui/core')` the first time a surface opens. Verified in the dist build — externalized +
+  a single dynamic import → out of the initial bundle.
+
+Engineering decisions:
+- **Plan vs. locked-decision reconciliation:** the plan §7.5 calls floating-ui a *"fallback … lazy-loaded
+  behind feature detection"* for when Anchor Positioning is missing. The **locked DECISIONS entry
+  (2026-06-02) supersedes that**: floating-ui is the **permanent default** positioning engine (Anchor
+  Positioning is Chromium-only). Implemented per the locked decision; flagged the stale plan prose to Cutter.
+  "Lazy-loaded" is honored as a bundle optimization (dynamic import on first open), not as feature-detection.
+- **Minimal DOM platform for `@floating-ui/core`:** `computePosition` needs a caller-supplied `platform`
+  (core has no DOM knowledge). Because our surfaces live in the top layer (viewport-relative, `strategy:
+  'fixed'`), we supply only `getElementRects`/`getDimensions`/`getClippingRect` from `getBoundingClientRect`
+  + the viewport box — the small footprint the decision intends, **no `@floating-ui/dom`**. Middleware
+  `[offset, flip, shift, size]`; `size` both viewport-constrains big popovers and is what calls
+  `getDimensions` (so the required platform method is covered).
+- **Popover = declarative `popovertarget`** (not imperative show/hide). jsdom 29 has **no** Popover/dialog
+  imperative API and **no `ToggleEvent`** (probed empirically), and `popover="auto"` + a manual onClick
+  double-fires against native light-dismiss. So the trigger carries `popovertarget`, the browser owns
+  open/close/light-dismiss/Esc, and React only reads the panel's `toggle` event (via the `onToggle` prop —
+  React wires a direct 'toggle' listener; confirmed in tests) to track open state + position. Tooltip and
+  Dialog DO use the imperative API (`popover="manual"` / `showModal`) guarded by `typeof` (no-op when absent).
+- **Shared `useFloatingAnchor` hook:** extracted the open→position→reposition→cleanup effect out of Popover
+  and Tooltip. Concentrates the floating-ui wiring and makes the defensive empty-ref guards directly
+  unit-testable (pass `{current:null}` refs) — which is how the per-file 85% branch bar is met for these
+  small components.
+- **Tap-reachable Tooltip (§7.7):** opens on hover **and** focus, **toggles on tap** — no hover-only
+  affordance, so it works on coarse-pointer/touch.
+- **Storybook show-more demonstrability (Cutter's note):** the existing stories had no day with enough
+  events to surface "+N more". Added a `React/Calendar → ShowMorePopover` story (clustered events +
+  `weekEventLimit={2}`) instead of mutating the shared `demoEvents` (kept the other stories' intent intact).
+- **No jest-dom:** the suite uses plain matchers (`getAttribute().toBe()`, `toBeTruthy()`); native-API
+  branches are covered by mocking `showPopover`/`hidePopover`/`showModal` onto the prototype via a typed
+  `as unknown as {…}` cast (the `no-explicit-any` lint bars `as any`).

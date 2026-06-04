@@ -1,5 +1,6 @@
 import { wrapAccessor } from '@big-calendar/core'
 import { useMemo } from 'react'
+import type { ShowMoreEvent } from '../../components.type'
 import { useCalendarContext } from '../../CalendarProvider'
 import { useSignalValue } from '../../internal/useSignalValue'
 
@@ -50,7 +51,7 @@ export interface MonthWeekCell<TEvent> {
   /** Events placed into stack levels. */
   segments: MonthSegmentCell<TEvent>[]
   /** Overflow indicator, or `null` when nothing spilled past the limit. */
-  extra: { count: number; day: string } | null
+  extra: { count: number; day: string; events: ShowMoreEvent<TEvent>[] } | null
 }
 
 /** The resolved month grid: weekday headings plus laid-out week rows. */
@@ -105,7 +106,17 @@ export default function useMonthWeeks<TEvent>(): MonthGrid<TEvent> | null {
       )
 
       const extra =
-        week.extra.length > 0 ? { count: week.extra.length, day: week.days[0] ?? '' } : null
+        week.extra.length > 0
+          ? {
+              count: week.extra.length,
+              day: week.days[0] ?? '',
+              events: week.extra.map((segment, extraIndex) => ({
+                key: `${weekIndex}-extra-${extraIndex}-${String(id(segment.event) ?? '')}`,
+                event: segment.event,
+                title: title(segment.event) ?? '',
+              })),
+            }
+          : null
 
       return { key: String(weekIndex), days, segments, extra }
     })

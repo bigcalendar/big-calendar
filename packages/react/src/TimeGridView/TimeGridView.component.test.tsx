@@ -137,6 +137,19 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
     expect((container.querySelector('.bc-show-more') as HTMLElement).textContent).toBe('+2 more')
   })
 
+  it('lists the overflowed all-day events in the show-more popover when opened', () => {
+    const { container } = renderGrid({ allDayMaxRows: 0 })
+    const showMore = container.querySelector('.bc-show-more') as HTMLElement
+    expect(container.querySelectorAll('.bc-popover-event').length).toBe(0)
+
+    const panel = document.getElementById(showMore.getAttribute('aria-controls') ?? '')
+    if (!panel) throw new Error('popover panel not found')
+    fireEvent(panel, Object.assign(new Event('toggle'), { newState: 'open' }))
+
+    expect(container.querySelectorAll('.bc-popover-event').length).toBe(2)
+    expect(screen.getAllByText('Holiday').length).toBeGreaterThan(0)
+  })
+
   it('honors slot overrides (dayHeading / timeLabel / event / allDayEvent / showMore)', () => {
     renderGrid({
       allDayMaxRows: 1,

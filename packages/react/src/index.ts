@@ -15,6 +15,12 @@ export { Toolbar, DefaultToolbar } from './Toolbar'
 export { MonthView } from './MonthView'
 export { TimeGridView } from './TimeGridView'
 export { AgendaView } from './AgendaView'
+export { Popover } from './Popover'
+export type { PopoverProps, PopoverTriggerProps } from './Popover'
+export { Tooltip } from './Tooltip'
+export type { TooltipProps } from './Tooltip'
+export { Dialog } from './Dialog'
+export type { DialogProps } from './Dialog'
 export type {
   AgendaComponents,
   AgendaDateProps,
@@ -26,6 +32,7 @@ export type {
   MonthEventProps,
   MonthShowMoreProps,
   MonthWeekdayProps,
+  ShowMoreEvent,
   TimeAllDayEventProps,
   TimeComponents,
   TimeDayHeadingProps,

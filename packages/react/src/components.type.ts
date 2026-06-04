@@ -44,7 +44,17 @@ export interface MonthComponents<TEvent> {
   /** One event segment within a week row. */
   event?: ComponentType<MonthEventProps<TEvent>>
   /** The "+N more" overflow indicator for a week. */
-  showMore?: ComponentType<MonthShowMoreProps>
+  showMore?: ComponentType<MonthShowMoreProps<TEvent>>
+}
+
+/** One overflowed event handed to a show-more slot. */
+export interface ShowMoreEvent<TEvent> {
+  /** Stable React key. */
+  key: string
+  /** The original event object. */
+  event: TEvent
+  /** Resolved event title. */
+  title: string
 }
 
 /** Props for a weekday column heading. */
@@ -80,13 +90,15 @@ export interface MonthEventProps<TEvent> {
 }
 
 /** Props for a week's "+N more" overflow indicator. */
-export interface MonthShowMoreProps {
+export interface MonthShowMoreProps<TEvent> {
   /** How many events overflowed the week's row limit. */
   count: number
   /** Localized overflow label (e.g. "+2 more"). */
   label: string
   /** Day-start string of the week's first day (overflow anchor). */
   day: string
+  /** The overflowed events, for listing in a popover. */
+  events: ReadonlyArray<ShowMoreEvent<TEvent>>
 }
 
 /** Time-grid (day / week / work-week) slot overrides. */
@@ -100,7 +112,7 @@ export interface TimeComponents<TEvent> {
   /** An all-day event segment in the header row. */
   allDayEvent?: ComponentType<TimeAllDayEventProps<TEvent>>
   /** The "+N more" overflow indicator for the all-day row. */
-  showMore?: ComponentType<TimeShowMoreProps>
+  showMore?: ComponentType<TimeShowMoreProps<TEvent>>
 }
 
 /** Props for a day column heading. */
@@ -142,11 +154,13 @@ export interface TimeAllDayEventProps<TEvent> {
 }
 
 /** Props for the all-day row's "+N more" overflow indicator. */
-export interface TimeShowMoreProps {
+export interface TimeShowMoreProps<TEvent> {
   /** How many events overflowed the all-day row limit. */
   count: number
   /** Localized overflow label (e.g. "+2 more"). */
   label: string
+  /** The overflowed events, for listing in a popover. */
+  events: ReadonlyArray<ShowMoreEvent<TEvent>>
 }
 
 /** Agenda-view slot overrides. */

@@ -43,7 +43,7 @@ function TimeGridView<TEvent = unknown>() {
     components.time?.event ?? DefaultTimeEvent
   const AllDayEvent: ComponentType<TimeAllDayEventProps<TEvent>> =
     components.time?.allDayEvent ?? DefaultTimeAllDayEvent
-  const ShowMore: ComponentType<TimeShowMoreProps> =
+  const ShowMore: ComponentType<TimeShowMoreProps<TEvent>> =
     components.time?.showMore ?? DefaultTimeShowMore
 
   return (
@@ -76,6 +76,7 @@ function TimeGridView<TEvent = unknown>() {
             <ShowMore
               count={grid.allDay.extra.count}
               label={messages.showMore(grid.allDay.extra.count)}
+              events={grid.allDay.extra.events}
             />
           )}
         </div>

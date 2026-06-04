@@ -1,5 +1,6 @@
 import { createSlotMetrics, wrapAccessor } from '@big-calendar/core'
 import { useMemo } from 'react'
+import type { ShowMoreEvent } from '../../components.type'
 import { useCalendarContext } from '../../CalendarProvider'
 import { formatEventTime } from '../../internal/formatEventTime.function'
 import { useSignalValue } from '../../internal/useSignalValue'
@@ -95,7 +96,7 @@ export interface TimeAllDayRow<TEvent> {
   /** Events placed into stack levels. */
   segments: TimeAllDaySegment<TEvent>[]
   /** Overflow indicator, or `null` when nothing spilled past the limit. */
-  extra: { count: number } | null
+  extra: { count: number; events: ShowMoreEvent<TEvent>[] } | null
 }
 
 /** The resolved time grid: headings, gutter labels, all-day row, and day columns. */
@@ -211,7 +212,17 @@ export default function useTimeGrid<TEvent>(): TimeGrid<TEvent> | null {
         row: rowIndex + 1,
       })),
     )
-    const extra = allDay.extra.length > 0 ? { count: allDay.extra.length } : null
+    const extra =
+      allDay.extra.length > 0
+        ? {
+            count: allDay.extra.length,
+            events: allDay.extra.map((segment, extraIndex) => ({
+              key: `extra-${extraIndex}-${String(id(segment.event) ?? '')}`,
+              event: segment.event,
+              title: title(segment.event) ?? '',
+            })),
+          }
+        : null
 
     return {
       headings,

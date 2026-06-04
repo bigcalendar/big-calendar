@@ -1,0 +1,23 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import * as TooltipStories from './Tooltip.stories'
+
+<Meta of={TooltipStories} />
+
+# Tooltip
+
+A small **top-layer label** that describes its trigger.
+
+## Renders in the top layer
+
+The tooltip uses the native **Popover API** (`popover="manual"`), so it draws in the
+browser **top layer** above other content. It opens on **hover and focus**, and
+**toggles on tap** — there are no hover-only affordances, so it is reachable on
+coarse-pointer / touch devices (§7.7). The label is associated with the trigger via
+`aria-describedby` and the element carries `role="tooltip"`.
+
+## Positioning & fallback
+
+Placement is computed by **`@floating-ui/core`**, lazily loaded on first open, rather
+than CSS Anchor Positioning (not yet cross-engine — see the Popover docs). When the
+imperative Popover API is unavailable, show/hide become no-ops and the tooltip stays
+inert rather than throwing.
