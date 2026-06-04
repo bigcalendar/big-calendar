@@ -1,6 +1,8 @@
 import { batch, computed, effect, signal } from '@preact/signals-core'
 import { resolveAccessors } from '../accessors/accessors.function'
 import { BUILTIN_VIEWS, Views } from '../constants/views.constant'
+import { createSelection } from '../selection/selection.function'
+import type { SelectionMode, SelectionRange } from '../selection/selection.type'
 import type { EventId, ViewKey } from '../types/calendar.type'
 import type { CalendarConfig } from '../types/config.type'
 import { buildViewModel } from '../views/viewModel.function'
@@ -82,7 +84,67 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     }),
   )
 
+  // ── slot selection ──────────────────────────────────────────────────────
+  // The FSM works in slot-index space; the store captures the anchor day + mode
+  // (set when a drag/click starts) and translates committed indices back to ISO
+  // dates for the public callbacks. `'time'` indices are vertical slots within
+  // the anchor day; `'day'` indices map straight into the visible day list.
+  let anchorContext: { mode: SelectionMode; date: string } | null = null
+
+  const translate = (slotRange: SelectionRange): { start: string; end: string; slots: string[] } => {
+    const ctx = anchorContext
+    if (ctx == null) {
+      // Defensive: an action ran without an anchor; emit a degenerate range.
+      return { start: date.value, end: date.value, slots: [date.value] }
+    }
+    if (ctx.mode === 'time') {
+      const slots: string[] = []
+      for (let i = slotRange.start; i <= slotRange.end; i++) {
+        slots.push(localizer.getSlotDate({ date: ctx.date, minutesFromMidnight: dayStartMin + i * step }))
+      }
+      // Exclusive end: the start of the slot just past the last selected one.
+      const end = localizer.getSlotDate({ date: ctx.date, minutesFromMidnight: dayStartMin + (slotRange.end + 1) * step })
+      return { start: slots[0]!, end, slots }
+    }
+    // 'day' mode: linear day index into the visible grid.
+    const days = range.value.days
+    const slots = days.slice(slotRange.start, slotRange.end + 1)
+    const start = slots[0] ?? date.value
+    const last = slots[slots.length - 1] ?? start
+    return { start, end: localizer.endOf({ value: last, unit: 'day' }), slots }
+  }
+
+  const selectionController = createSelection({
+    selectable: config.selectable ?? false,
+    onSelecting: config.onSelecting
+      ? (slotRange) => {
+          const { start, end } = translate(slotRange)
+          return config.onSelecting!({ start, end })
+        }
+      : undefined,
+    onSelect: (selection) => {
+      const { start, end, slots } = translate(selection)
+      config.onSelectSlot?.({ start, end, slots, action: selection.action })
+    },
+  })
+
   const disposers: Array<() => void> = []
+
+  // Cancel any in-progress drag when the view or focus date changes (navigate,
+  // setDate, drilldown, or a controlled view/date sync) — selection never
+  // straddles a range change. Skips the initial run.
+  let selectionResetInit = false
+  disposers.push(
+    effect(() => {
+      void view.value
+      void date.value
+      if (!selectionResetInit) {
+        selectionResetInit = true
+        return
+      }
+      selectionController.cancel()
+    }),
+  )
 
   // Emit onRangeChange whenever the visible range changes — but not on init,
   // matching v1 (which only fires on navigate / view change).
@@ -101,10 +163,37 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     )
   }
 
+  const selection = {
+    state: selectionController.state,
+    range: selectionController.range,
+    start({ slot, date: anchorDate, mode }: { slot: number; date: string; mode: SelectionMode }) {
+      anchorContext = { mode, date: anchorDate }
+      selectionController.start({ slot })
+    },
+    to({ slot }: { slot: number }) {
+      selectionController.to({ slot })
+    },
+    complete() {
+      selectionController.complete()
+    },
+    click({ slot, date: anchorDate, mode }: { slot: number; date: string; mode: SelectionMode }) {
+      anchorContext = { mode, date: anchorDate }
+      selectionController.click({ slot })
+    },
+    doubleClick({ slot, date: anchorDate, mode }: { slot: number; date: string; mode: SelectionMode }) {
+      anchorContext = { mode, date: anchorDate }
+      selectionController.doubleClick({ slot })
+    },
+    cancel() {
+      selectionController.cancel()
+    },
+  }
+
   return {
     date,
     view,
     selected,
+    selection,
     events,
     backgroundEvents,
     resources,

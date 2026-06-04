@@ -39,9 +39,11 @@ export type { SelectionController } from './selection/selection.function'
 export type {
   SelectableMode,
   SelectAction,
+  SelectionMode,
   SelectionRange,
   SelectionState,
   SlotSelection,
+  SlotSelectionDates,
 } from './selection/selection.type'
 
 export { agendaViewModel } from './views/agenda.function'
@@ -73,5 +75,5 @@ export { navigateDate } from './store/navigateDate.function'
 export { viewRange } from './store/viewRange.function'
 export { viewLabel } from './store/viewLabel.function'
 export type { ViewLabelArgs } from './store/viewLabel.function'
-export type { CalendarStore } from './store/store.type'
+export type { CalendarStore, SelectionApi } from './store/store.type'
 export type { CalendarConfig } from './types/config.type'

@@ -11,7 +11,8 @@ import type { SelectableMode, SelectionState, SelectionRange, SlotSelection } fr
  *
  * - `start` begins a drag at a slot; `to` extends it (pointer move or keyboard
  *   Shift+Arrow); `complete` commits; `cancel` aborts.
- * - `click` commits a single-slot selection without a drag.
+ * - `click` / `doubleClick` commit a single-slot selection without a drag (the
+ *   adapter's timer decides which; both flow through `onSelect`).
  * - `onSelecting` fires on every range change and may **veto** by returning
  *   `false` (the move/start is dropped). `onSelect` fires on commit.
  *
@@ -24,14 +25,15 @@ export interface SelectionController {
   to(args: { slot: number }): void
   complete(): void
   click(args: { slot: number }): void
+  doubleClick(args: { slot: number }): void
   cancel(): void
 }
 
 export function createSelection(
   args: {
-    selectable?: SelectableMode
-    onSelecting?: (range: SelectionRange) => boolean | void
-    onSelect?: (selection: SlotSelection) => void
+    selectable?: SelectableMode | undefined
+    onSelecting?: ((range: SelectionRange) => boolean | void) | undefined
+    onSelect?: ((selection: SlotSelection) => void) | undefined
   } = {},
 ): SelectionController {
   const { selectable = true, onSelecting, onSelect } = args
@@ -78,6 +80,11 @@ export function createSelection(
     click({ slot }) {
       if (!enabled) return
       onSelect?.({ start: slot, end: slot, action: 'click' })
+    },
+
+    doubleClick({ slot }) {
+      if (!enabled) return
+      onSelect?.({ start: slot, end: slot, action: 'doubleClick' })
     },
 
     cancel() {

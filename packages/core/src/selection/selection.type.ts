@@ -6,8 +6,12 @@
  */
 export type SelectableMode = boolean | 'ignoreEvents'
 
-/** How a committed selection was produced: a drag/keyboard range, or a single click. */
-export type SelectAction = 'select' | 'click'
+/**
+ * How a committed selection was produced: a drag/keyboard range, a single click,
+ * or a double-click (pointer dbl-click or the keyboard secondary key — the
+ * adapter disambiguates single vs. double via its 250 ms timer).
+ */
+export type SelectAction = 'select' | 'click' | 'doubleClick'
 
 /** An inclusive range of slot indices (`start <= end`), in slot-index space. */
 export interface SelectionRange {
@@ -24,3 +28,31 @@ export interface SlotSelection extends SelectionRange {
 export type SelectionState =
   | { status: 'idle' }
   | { status: 'selecting'; anchor: number; head: number }
+
+/**
+ * Which index space a selection runs in (set by the adapter when a drag starts):
+ * - `'time'` — a vertical slot index within a single day column (time grid body).
+ * - `'day'` — a linear day index across the visible grid (month grid / all-day row).
+ *
+ * The store uses this to translate committed slot indices back into dates.
+ */
+export type SelectionMode = 'time' | 'day'
+
+/**
+ * A committed slot selection translated to **primitive ISO date strings** — the
+ * public shape emitted to `onSelectSlot`. (`core` never exposes JS `Date`.)
+ */
+export interface SlotSelectionDates {
+  /** Start of the first selected slot/day (ISO). */
+  start: string
+  /**
+   * End of the selection (ISO): the **exclusive** end of the last slot for
+   * `'time'` selections (start of the next slot), or **end-of-day** of the last
+   * day for `'day'` selections.
+   */
+  end: string
+  /** Start of each selected slot (time) or day (day), in order (ISO). */
+  slots: string[]
+  /** How the selection was produced. */
+  action: SelectAction
+}

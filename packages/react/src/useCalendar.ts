@@ -50,6 +50,14 @@ export function useCalendar<TEvent = unknown, TResource = unknown>(
       onView: (args) => propsRef.current.onView?.(args),
       onSelect: (args) => propsRef.current.onSelect?.(args),
       onDrillDown: (args) => propsRef.current.onDrillDown?.(args),
+      // Wrap only when provided so the store doesn't wire selection callbacks
+      // (and their per-move translation) for calendars that never use them.
+      onSelecting: props.onSelecting
+        ? (args) => propsRef.current.onSelecting?.(args)
+        : undefined,
+      onSelectSlot: props.onSelectSlot
+        ? (args) => propsRef.current.onSelectSlot?.(args)
+        : undefined,
       // Wrap only when provided: an always-present handler would force the
       // store's range effect (and a full localizer) even when unused.
       onRangeChange: props.onRangeChange

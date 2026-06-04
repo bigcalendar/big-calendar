@@ -305,4 +305,117 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       expect(store.label.value).toBe(localizer.format({ value: monday, format: 'dayHeader' }))
     })
   })
+
+  describe('createCalendarStore — slot selection', () => {
+    const slot = (min: number) => localizer.getSlotDate({ date: monday, minutesFromMidnight: min })
+
+    it('is disabled by default (no selectable)', () => {
+      const onSelectSlot = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, date: monday, view: Views.DAY, onSelectSlot })
+      store.selection.start({ slot: 2, date: monday, mode: 'time' })
+      store.selection.complete()
+      store.selection.click({ slot: 3, date: monday, mode: 'time' })
+      expect(store.selection.range.value).toBeNull()
+      expect(onSelectSlot).not.toHaveBeenCalled()
+    })
+
+    it('tracks a time-mode drag in slot-index space and commits translated dates', () => {
+      const onSelectSlot = vi.fn()
+      const store = createCalendarStore<Event>({
+        localizer,
+        date: monday,
+        view: Views.DAY,
+        selectable: true,
+        onSelectSlot,
+      })
+      store.selection.start({ slot: 2, date: monday, mode: 'time' })
+      store.selection.to({ slot: 4 })
+      // Live range stays in index space for the overlay.
+      expect(store.selection.range.value).toEqual({ start: 2, end: 4 })
+      store.selection.complete()
+      // step defaults to 30 → slots 2..4 are 01:00 / 01:30 / 02:00; exclusive end 02:30.
+      expect(onSelectSlot).toHaveBeenCalledWith({
+        start: slot(60),
+        end: slot(150),
+        slots: [slot(60), slot(90), slot(120)],
+        action: 'select',
+      })
+      expect(store.selection.range.value).toBeNull()
+    })
+
+    it('vetoes a time-mode start when onSelecting returns false (dates passed through)', () => {
+      const onSelecting = vi.fn(() => false)
+      const store = createCalendarStore<Event>({
+        localizer,
+        date: monday,
+        view: Views.DAY,
+        selectable: true,
+        onSelecting,
+      })
+      store.selection.start({ slot: 2, date: monday, mode: 'time' })
+      expect(onSelecting).toHaveBeenCalledWith({ start: slot(60), end: slot(90) })
+      expect(store.selection.range.value).toBeNull()
+    })
+
+    it('commits a click and a double-click with the right action and a single slot', () => {
+      const onSelectSlot = vi.fn()
+      const store = createCalendarStore<Event>({
+        localizer,
+        date: monday,
+        view: Views.DAY,
+        selectable: true,
+        onSelectSlot,
+      })
+      store.selection.click({ slot: 3, date: monday, mode: 'time' })
+      store.selection.doubleClick({ slot: 3, date: monday, mode: 'time' })
+      expect(onSelectSlot).toHaveBeenNthCalledWith(1, {
+        start: slot(90),
+        end: slot(120),
+        slots: [slot(90)],
+        action: 'click',
+      })
+      expect(onSelectSlot).toHaveBeenNthCalledWith(2, {
+        start: slot(90),
+        end: slot(120),
+        slots: [slot(90)],
+        action: 'doubleClick',
+      })
+    })
+
+    it('translates day-mode indices into visible days, ending at end-of-day', () => {
+      const onSelectSlot = vi.fn()
+      const store = createCalendarStore<Event>({
+        localizer,
+        date: monday,
+        view: Views.MONTH,
+        selectable: true,
+        onSelectSlot,
+      })
+      const days = store.range.value.days
+      store.selection.start({ slot: 0, date: days[0]!, mode: 'day' })
+      store.selection.to({ slot: 2 })
+      store.selection.complete()
+      expect(onSelectSlot).toHaveBeenCalledWith({
+        start: days[0],
+        end: localizer.endOf({ value: days[2]!, unit: 'day' }),
+        slots: [days[0], days[1], days[2]],
+        action: 'select',
+      })
+    })
+
+    it('cancels an in-progress drag on view change', () => {
+      const store = createCalendarStore<Event>({ localizer, date: monday, view: Views.DAY, selectable: true })
+      store.selection.start({ slot: 1, date: monday, mode: 'time' })
+      expect(store.selection.range.value).toEqual({ start: 1, end: 1 })
+      store.setView({ view: Views.WEEK })
+      expect(store.selection.range.value).toBeNull()
+    })
+
+    it('cancels an in-progress drag on navigate', () => {
+      const store = createCalendarStore<Event>({ localizer, date: monday, view: Views.DAY, selectable: true })
+      store.selection.start({ slot: 1, date: monday, mode: 'time' })
+      store.navigate({ direction: Navigate.NEXT })
+      expect(store.selection.range.value).toBeNull()
+    })
+  })
 })

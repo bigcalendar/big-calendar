@@ -3,7 +3,34 @@ import type { ReadonlySignal, Signal } from '@preact/signals-core'
 import type { Accessors } from '../accessors/accessors.type'
 import type { EventId, ViewKey, VisibleRange } from '../types/calendar.type'
 import type { NavigateDirection } from '../constants/views.constant'
+import type { SelectionMode, SelectionRange, SelectionState } from '../selection/selection.type'
 import type { CalendarViewModel } from '../views/viewModel.type'
+
+/**
+ * The store's slot-selection surface: the FSM's live signals (in slot-index
+ * space) plus actions the adapter drives. `start`/`click`/`doubleClick` also
+ * carry the anchor `date` + `mode` so the store can translate committed indices
+ * back to dates for `onSelectSlot`/`onSelecting`. `range` feeds the live
+ * `.bc-selection` highlight overlay.
+ */
+export interface SelectionApi {
+  /** Live FSM state (`idle` / `selecting`), in slot-index space. */
+  readonly state: ReadonlySignal<SelectionState>
+  /** Live normalized range (slot indices) while selecting, else `null`. */
+  readonly range: ReadonlySignal<SelectionRange | null>
+  /** Begin a drag at the anchor slot; `date`+`mode` set the translation context. */
+  start(args: { slot: number; date: string; mode: SelectionMode }): void
+  /** Extend the in-progress drag to a new head slot (pointer move / Shift+Arrow). */
+  to(args: { slot: number }): void
+  /** Commit the in-progress drag (`action: 'select'`). */
+  complete(): void
+  /** Commit a single-slot click (`action: 'click'`). */
+  click(args: { slot: number; date: string; mode: SelectionMode }): void
+  /** Commit a single-slot double-click (`action: 'doubleClick'`). */
+  doubleClick(args: { slot: number; date: string; mode: SelectionMode }): void
+  /** Abort an in-progress drag without committing. */
+  cancel(): void
+}
 
 /**
  * An isolated calendar store: reactive state signals plus the actions that
@@ -18,6 +45,11 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
   readonly view: Signal<ViewKey>
   /** Currently selected event id, or `null`. */
   readonly selected: Signal<EventId | null>
+  /**
+   * Slot-selection surface (drag/click/keyboard). Distinct from event selection
+   * ({@link CalendarStore.selected}); see {@link SelectionApi}.
+   */
+  readonly selection: SelectionApi
   /** Foreground events. */
   readonly events: Signal<TEvent[]>
   /** Background events. */

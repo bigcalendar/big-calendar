@@ -1,7 +1,7 @@
 import type { LocalizerContract } from '@big-calendar/localizer'
 import type { Accessors } from '../accessors/accessors.type'
 import type { DayLayoutAlgorithm, DayLayoutAlgorithmKey } from '../layout/layout.type'
-import type { SelectableMode } from '../selection/selection.type'
+import type { SelectableMode, SlotSelectionDates } from '../selection/selection.type'
 import type { GetDrilldownView } from '../store/drilldown.function'
 import type { EventId, ViewKey, VisibleRange } from './calendar.type'
 
@@ -75,6 +75,18 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
   onView?: ((args: { view: ViewKey }) => void) | undefined
   /** Fired after the selected event changes via `select`. */
   onSelect?: ((args: { id: EventId | null }) => void) | undefined
+  /**
+   * Fired on every slot-selection range change (drag move / keyboard extend),
+   * with the candidate range as ISO date strings. Return `false` to **veto** the
+   * change. The store translates the FSM's slot indices to dates before calling.
+   */
+  onSelecting?: ((args: { start: string; end: string }) => boolean | void) | undefined
+  /**
+   * Fired when a slot selection is committed (drag end / click / double-click /
+   * keyboard). Receives ISO date strings; see {@link SlotSelectionDates} for the
+   * `end` convention (exclusive slot end for time, end-of-day for day).
+   */
+  onSelectSlot?: ((selection: SlotSelectionDates) => void) | undefined
   /** Fired when the visible range changes (date or view change), not on init. */
   onRangeChange?: ((args: { range: VisibleRange; view: ViewKey }) => void) | undefined
   /**

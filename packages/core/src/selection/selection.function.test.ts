@@ -68,6 +68,20 @@ describe('createSelection', () => {
     expect(onSelect).toHaveBeenCalledWith({ start: 7, end: 7, action: 'click' })
   })
 
+  it('commits a single-slot double-click selection', () => {
+    const onSelect = vi.fn()
+    const sel = createSelection({ onSelect })
+    sel.doubleClick({ slot: 4 })
+    expect(onSelect).toHaveBeenCalledWith({ start: 4, end: 4, action: 'doubleClick' })
+  })
+
+  it('disables doubleClick when selectable is false', () => {
+    const onSelect = vi.fn()
+    const sel = createSelection({ selectable: false, onSelect })
+    sel.doubleClick({ slot: 2 })
+    expect(onSelect).not.toHaveBeenCalled()
+  })
+
   it('cancel aborts a drag without firing onSelect', () => {
     const onSelect = vi.fn()
     const sel = createSelection({ onSelect })
