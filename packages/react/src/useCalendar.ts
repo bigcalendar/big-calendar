@@ -23,6 +23,17 @@ export interface CalendarProps<TEvent = unknown, TResource = unknown>
   view?: ViewKey | undefined
   /** Controlled focus date (RFC 3339/9557). */
   date?: string | undefined
+  /**
+   * Event primary action: fired on click / Enter / Space, after the event is
+   * selected. Receives the full event. Defaults to a noop.
+   */
+  onEventClick?: ((event: TEvent) => void) | undefined
+  /**
+   * Event secondary action: fired on double-click / F2. Receives the full event.
+   * Defaults to a noop. (There is no keyboard double-click; F2 is the parity key
+   * per WCAG 2.1.1.)
+   */
+  onEventDoubleClick?: ((event: TEvent) => void) | undefined
 }
 
 /**

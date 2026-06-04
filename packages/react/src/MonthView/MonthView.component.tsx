@@ -6,6 +6,7 @@ import type {
   MonthShowMoreProps,
   MonthWeekdayProps,
 } from '../components.type'
+import EventButton from '../internal/EventButton.component'
 import { monthGridStyle, segmentStyle } from '../internal/geometry.function'
 import DefaultMonthDate from './components/DefaultMonthDate.component'
 import DefaultMonthEvent from './components/DefaultMonthEvent.component'
@@ -58,13 +59,15 @@ function MonthView<TEvent = unknown>() {
             </div>
             <div className="bc-week-events">
               {week.segments.map((segment) => (
-                <div
+                <EventButton
                   key={segment.key}
                   className="bc-segment"
                   style={segmentStyle({ left: segment.left, span: segment.span, row: segment.row })}
+                  event={segment.event}
+                  title={segment.title}
                 >
                   <EventSlot event={segment.event} title={segment.title} />
-                </div>
+                </EventButton>
               ))}
               {week.days.map((cell, dayIndex) =>
                 cell.extra !== null ? (

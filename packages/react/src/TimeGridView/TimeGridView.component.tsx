@@ -7,6 +7,7 @@ import type {
   TimeLabelProps,
   TimeShowMoreProps,
 } from '../components.type'
+import EventButton from '../internal/EventButton.component'
 import {
   dayCountStyle,
   eventBoxStyle,
@@ -70,13 +71,15 @@ function TimeGridView<TEvent = unknown>() {
         <div className="bc-allday-label">{messages.allDay}</div>
         <div className="bc-allday-segments">
           {grid.allDay.segments.map((segment) => (
-            <div
+            <EventButton
               key={segment.key}
               className="bc-segment"
               style={segmentStyle({ left: segment.left, span: segment.span, row: segment.row })}
+              event={segment.event}
+              title={segment.title}
             >
               <AllDayEvent event={segment.event} title={segment.title} />
-            </div>
+            </EventButton>
           ))}
           {grid.allDay.extra !== null && (
             <ShowMore
@@ -120,7 +123,7 @@ function TimeGridView<TEvent = unknown>() {
                 />
               ))}
               {column.events.map((event) => (
-                <div
+                <EventButton
                   key={event.key}
                   className="bc-event"
                   style={eventBoxStyle({
@@ -130,9 +133,12 @@ function TimeGridView<TEvent = unknown>() {
                     width: event.width,
                     zIndex: event.zIndex,
                   })}
+                  event={event.event}
+                  title={event.title}
+                  time={event.time}
                 >
                   <EventSlot event={event.event} title={event.title} time={event.time} />
-                </div>
+                </EventButton>
               ))}
               {column.nowTop !== null && (
                 <div className="bc-now-indicator" style={nowIndicatorStyle(column.nowTop)} />

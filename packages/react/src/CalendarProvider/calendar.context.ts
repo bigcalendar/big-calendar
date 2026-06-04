@@ -17,6 +17,16 @@ export interface CalendarContextValue<TEvent = unknown, TResource = unknown> {
   components: CalendarComponents<TEvent>
   /** Fully-resolved UI strings (defaults merged with any overrides). */
   messages: Messages
+  /**
+   * Event primary action (click / Enter / Space). Stable identity (always
+   * defined; a noop when the app passes none). Receives the full event.
+   */
+  onEventClick: (event: TEvent) => void
+  /**
+   * Event secondary action (double-click / F2). Stable identity (always defined;
+   * a noop when the app passes none). Receives the full event.
+   */
+  onEventDoubleClick: (event: TEvent) => void
 }
 
 /**

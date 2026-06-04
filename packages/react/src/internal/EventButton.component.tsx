@@ -1,0 +1,127 @@
+import { wrapAccessor } from '@big-calendar/core'
+import type { CSSProperties, KeyboardEvent, MouseEvent, PointerEvent, ReactNode } from 'react'
+import { useEffect, useRef } from 'react'
+import { useCalendarContext } from '../CalendarProvider'
+import { useSignalValue } from './useSignalValue'
+
+/** Pointer click/double-click disambiguation window (ms) — see §8.2. */
+const DOUBLE_CLICK_MS = 250
+
+/**
+ * Props for {@link EventButton}: the original event plus its accessible-name
+ * parts, the view's box `className`/`style`, and the (overridable) presentational
+ * content rendered inside the button.
+ */
+export interface EventButtonProps<TEvent> {
+  /** The original event object (passed back to the callbacks). */
+  event: TEvent
+  /** Resolved title, for the accessible name. */
+  title: string
+  /** Formatted time, appended to the accessible name when present. */
+  time?: string | undefined
+  /** The view's box class (`bc-event` or `bc-segment`). */
+  className: string
+  /** Inline geometry custom properties from the view's geometry helper. */
+  style?: CSSProperties | undefined
+  /** Presentational event content (the overridable slot). */
+  children: ReactNode
+}
+
+/**
+ * The one shared interactive wrapper for a calendar event (§8.2). Renders a real
+ * `<button>` carrying `data-bc-event` so slot selection can detect "over an
+ * event", and centralizes event interaction in a single place instead of
+ * duplicating it across Month / TimeGrid / Agenda:
+ *
+ * - **click** (pointer) selects the event (`store.select`) and fires the context
+ *   `onEventClick`; **double-click** fires `onEventDoubleClick`. The two are
+ *   disambiguated by a {@link DOUBLE_CLICK_MS} timer so they never both fire.
+ * - **keyboard**: Enter / Space = primary (select + `onEventClick`); **F2** =
+ *   secondary (`onEventDoubleClick`) — there is no keyboard double-click, so F2
+ *   is the WCAG-2.1.1 parity key. Keys are advertised via `aria-keyshortcuts`.
+ * - selected state is exposed with `aria-selected`.
+ * - `pointerdown` propagation is stopped so an event interaction never also
+ *   starts a slot selection on the surface beneath.
+ *
+ * The overridable event slot is the button's presentational content; button
+ * semantics + a11y live here, once.
+ */
+export default function EventButton<TEvent>({
+  event,
+  title,
+  time,
+  className,
+  style,
+  children,
+}: EventButtonProps<TEvent>) {
+  const { store, onEventClick, onEventDoubleClick } = useCalendarContext<TEvent>()
+  const id = wrapAccessor(store.accessors.id)(event)
+  const selectedId = useSignalValue(store.selected)
+  const isSelected = id != null && selectedId === id
+
+  // A pending single-click timer; a double-click cancels it before it fires.
+  const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(
+    () => () => {
+      if (clickTimer.current !== null) clearTimeout(clickTimer.current)
+    },
+    [],
+  )
+
+  const primary = () => {
+    if (id != null) store.select({ id })
+    onEventClick(event)
+  }
+  const secondary = () => {
+    onEventDoubleClick(event)
+  }
+
+  const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
+    // Keyboard-synthesized clicks (Enter/Space) report detail 0 — handled in
+    // onKeyDown so they're immediate (no double-click delay) and never debounced.
+    if (e.detail === 0) return
+    if (clickTimer.current !== null) return // second click of a double — let dblclick run
+    clickTimer.current = setTimeout(() => {
+      clickTimer.current = null
+      primary()
+    }, DOUBLE_CLICK_MS)
+  }
+
+  const handleDoubleClick = () => {
+    if (clickTimer.current !== null) {
+      clearTimeout(clickTimer.current)
+      clickTimer.current = null
+    }
+    secondary()
+  }
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      primary()
+    } else if (e.key === 'F2') {
+      e.preventDefault()
+      secondary()
+    }
+  }
+
+  const accessibleName = time ? `${title}, ${time}` : title
+
+  return (
+    <button
+      type="button"
+      className={className}
+      style={style}
+      data-bc-event={id == null ? '' : String(id)}
+      aria-selected={isSelected}
+      aria-label={accessibleName || undefined}
+      aria-keyshortcuts="Enter Space F2"
+      onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
+      onKeyDown={handleKeyDown}
+      onPointerDown={(e: PointerEvent<HTMLButtonElement>) => e.stopPropagation()}
+    >
+      {children}
+    </button>
+  )
+}

@@ -1,6 +1,6 @@
 import { resolveMessages } from '@big-calendar/core'
 import type { Messages } from '@big-calendar/core'
-import { useMemo } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import type { ReactNode } from 'react'
 import type { CalendarComponents } from '../components.type'
 import { useCalendar } from '../useCalendar'
@@ -35,13 +35,33 @@ function CalendarProvider<TEvent = unknown, TResource = unknown>({
   children,
   components,
   messages,
+  onEventClick,
+  onEventDoubleClick,
   ...props
 }: CalendarProviderProps<TEvent, TResource>) {
   const store = useCalendar<TEvent, TResource>(props)
   const resolvedMessages = useMemo(() => resolveMessages(messages), [messages])
+
+  // Stable identities over the latest handlers (read via a ref) so the context
+  // value isn't rebuilt — and every consumer re-rendered — when the app passes
+  // fresh inline event callbacks each render. Default to a noop when unset.
+  const handlersRef = useRef({ onEventClick, onEventDoubleClick })
+  handlersRef.current = { onEventClick, onEventDoubleClick }
+  const handleEventClick = useCallback((event: TEvent) => handlersRef.current.onEventClick?.(event), [])
+  const handleEventDoubleClick = useCallback(
+    (event: TEvent) => handlersRef.current.onEventDoubleClick?.(event),
+    [],
+  )
+
   const value = useMemo<CalendarContextValue<TEvent, TResource>>(
-    () => ({ store, components: components ?? {}, messages: resolvedMessages }),
-    [store, components, resolvedMessages],
+    () => ({
+      store,
+      components: components ?? {},
+      messages: resolvedMessages,
+      onEventClick: handleEventClick,
+      onEventDoubleClick: handleEventDoubleClick,
+    }),
+    [store, components, resolvedMessages, handleEventClick, handleEventDoubleClick],
   )
   return <CalendarContext.Provider value={value as CalendarContextValue}>{children}</CalendarContext.Provider>
 }
