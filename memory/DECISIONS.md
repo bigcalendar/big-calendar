@@ -438,3 +438,20 @@ Engineering decisions:
   spans in `week.extra` are sufficient; keeps core's week-level band layout intact for multi-day alignment).
 - **Scoped to month only (Cutter):** the time-grid **all-day row** indicator stays single/row-level for now;
   per-day for the all-day row is a larger TimeGridView change to revisit if wanted.
+
+## 2026-06-04 — Selection wiring plan finalized (Cutter)
+
+**Status: PLANNED** (canonical detail in reference repo `Upgrade_plan_prompt.md` §8.1; implementation next).
+
+Discussed RBC's `Selection.js` vs BC's existing 1-D core FSM (`packages/core/src/selection/`, built + unit-tested, NOT yet store-wired). Locked decisions for the upcoming selection-wiring task:
+
+- **Index space:** time body = 1-D vertical slot index per column; **month + all-day row = 1-D linear day-index across the visible grid** (one FSM, no RBC-style 2-D path; "full rows between" falls out).
+- **Coordinate mapping:** real focusable DOM cells with `data-*` (`data-date`; time body gains **real per-slot cells** with `data-slot-index`), read via `closest('[data-…]')` — no pixel hit-testing. `'ignoreEvents'` enforced adapter-side via `closest('.bc-event')`.
+- **Store surface:** wire one `createSelection` into the store; expose **controller actions + signals** (`start/to/complete/click/doubleClick/cancel`, `state`, `range`). Resets on view change / navigate. Separate from event selection.
+- **Double-click:** core FSM **gains `doubleClick({slot})` + `'doubleClick'` SelectAction**; 250 ms click/dbl timing lives in the **adapter** (disambiguated internally so both never fire — fixes RBC's app-side debounce footgun).
+- **Public callbacks emit dates:** `onSelecting({start,end})` veto; `onSelectSlot({start,end,slots[],action:'select'|'click'|'doubleClick'})`. **No `bounds`/`box`** pixel rects.
+- **Keyboard (new vs RBC, closes a11y gap):** roving tabindex; Arrow=move focus, Shift+Arrow=extend, Enter/Space=commit (complete if selecting else click), Esc=cancel. Home/End/PageUp/Down stay navigation.
+- **Touch:** long-press (`longPressThreshold` 250 ms, adapter-timed) + `touch-action`; core pointer-agnostic (§7.7).
+- **Overlay:** `.bc-selection` grid-placed — time = vertical `--bc-top`/`--bc-height` box per column; month/all-day = one box per week-row touched (`--bc-seg-*`).
+- **Required (Cutter):** a **detailed `.mdx`** in the React Storybook explaining pointer/touch/keyboard selection for manual testing; temporary home in storybook-react, final placement later.
+- **Deferred:** per-resource columns / `resourceId` (no resource grouping in BC core yet).
