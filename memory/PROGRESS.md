@@ -683,6 +683,32 @@ boundaries darker ("black").
 - react **80 tests** green; coverage clears the bar; typecheck/lint/build/build-storybook green; styles dist
   rebuilt.
 
+### Phase 4 — Task 4i-fix6: agenda — periwinkle scoping + grouped table layout (Cutter, 2026-06-04) ✓ (2 commits)
+
+**A — periwinkle scoping (commit daa8d0f):** Cutter: the `.bc-event` background should apply to Month +
+time grid, not Agenda. Moved the temporary periwinkle to the `--bc-color-event-bg` token (was AccentColor)
+so `.bc-event` (time grid) AND `.bc-segment` (month + time-grid all-day) both get it; switched the default
+agenda event off `.bc-event` → `.bc-agenda-event` so the agenda list isn't filled.
+
+**B — agenda layout (this commit):** BC agenda was compacted — `.bc-agenda-day` was a 3-col grid but got
+one date + N event rows as children, so events auto-flowed sideways. No header, no date grouping. Cutter
+chose **CSS grid + subgrid (divs)** over a `<table>` (responsive reflow for small screens is later work).
+- **Shared columns via nested subgrid:** `.bc-agenda` is now the `auto auto 1fr` (date|time|event) grid;
+  `.bc-agenda-header` and `.bc-agenda-body` are `grid-template-columns: subgrid`, so header + body columns
+  line up like a table. Each `.bc-agenda-day` is also a column-subgrid with `grid-template-rows:
+  repeat(var(--bc-agenda-rows), auto)`; the date sits in col 1 spanning `1 / -1` (shows once per day), and
+  each `.bc-agenda-row` spans cols 2/-1 as its own subgrid (time | event).
+- **Adapter:** new `agendaRowsStyle(count)` helper (`--bc-agenda-rows`), set on each `.bc-agenda-day` from
+  `row.events.length`. `AgendaView` now renders a `Date/Time/Event` header (from `messages.date/time/event`)
+  and uses one return (header + empty-or-body). Default agenda event dropped the `.bc-event-title` wrapper
+  (plain text, matches RBC) — `.bc-event-title` still used by month/time-grid events.
+- **Borders (agenda.css):** day boundary heavier (`--bc-border`), intra-day row divider lighter
+  (`--bc-color-slot-border`), column separators on date/time + header headings; removed the old grid/gap
+  from `.bc-agenda-header` (now in layout.css so the components layer doesn't override the subgrid).
+- **Tests** — 2 new AgendaView tests (Date/Time/Event header; `--bc-agenda-rows === '2'` on the focus day).
+  react **82 tests**; coverage clears the per-file bar (agenda 100%); typecheck/lint/build/build-storybook
+  green; styles dist rebuilt.
+
 ## In progress
 
 - (none — Task 4i + per-day follow-up complete. Next: selection wiring (pointer/keyboard → slot coords →

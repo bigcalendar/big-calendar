@@ -48,6 +48,19 @@ describe.each(LOCALIZER_CASES)('AgendaView [$name]', ({ create }) => {
     expect(screen.getByText(`${from} – ${to}`)).toBeTruthy()
   })
 
+  it('renders the Date / Time / Event column header', () => {
+    const { container } = renderAgenda()
+    const headings = container.querySelectorAll('.bc-agenda-heading')
+    expect(Array.from(headings).map((h) => h.textContent)).toEqual(['Date', 'Time', 'Event'])
+  })
+
+  it('sets --bc-agenda-rows on a day group so the date cell can span its events', () => {
+    // Both test events fall on the focus day → that group spans two event rows.
+    const { container } = renderAgenda()
+    const day = container.querySelector('.bc-agenda-day') as HTMLElement
+    expect(day.style.getPropertyValue('--bc-agenda-rows')).toBe('2')
+  })
+
   it('renders the empty state when no events fall in range', () => {
     renderAgenda({ events: [] })
     expect(screen.getByText('There are no events in this range.')).toBeTruthy()

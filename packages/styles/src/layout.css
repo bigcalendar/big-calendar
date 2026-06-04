@@ -222,24 +222,50 @@
   }
 
   /* ── agenda view ─────────────────────────────────────────────────────── */
+  /* One shared column set (date | time | event) drives the header and the
+     scrolling body via subgrid, so the three columns line up like a table. */
   .bc-agenda {
     display: grid;
+    grid-template-columns: auto auto 1fr;
     grid-template-rows: auto 1fr;
     min-block-size: 0;
   }
 
+  .bc-agenda-header {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+  }
+
   .bc-agenda-body {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-auto-rows: min-content;
+    align-content: start;
     overflow-y: auto;
     min-block-size: 0;
   }
 
+  /* A day group re-exposes the columns; its rows are one per event so the date
+     cell can span them and show once per day. */
   .bc-agenda-day {
+    grid-column: 1 / -1;
     display: grid;
-    /* date | time | event */
-    grid-template-columns: auto auto 1fr;
-    gap: var(--bc-space-2);
-    align-items: baseline;
-    padding-block: var(--bc-space-1);
+    grid-template-columns: subgrid;
+    grid-template-rows: repeat(var(--bc-agenda-rows, 1), auto);
+  }
+
+  .bc-agenda-date {
+    grid-column: 1;
+    grid-row: 1 / -1;
+  }
+
+  /* Each event is one row spanning the time + event columns (subgrid again). */
+  .bc-agenda-row {
+    grid-column: 2 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
   }
 
   /* ── responsive collapsing (container, not viewport) ─────────────────── */

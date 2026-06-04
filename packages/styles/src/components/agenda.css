@@ -1,14 +1,18 @@
 /* Agenda: day groups with date / time / event columns. */
 @layer bc.components {
   .bc-agenda-header {
-    display: grid;
-    grid-template-columns: auto auto 1fr;
-    gap: var(--bc-space-2);
-    padding: var(--bc-space-1);
     border-block-end: var(--bc-border);
     font-weight: var(--bc-font-weight-bold);
   }
 
+  .bc-agenda-heading,
+  .bc-agenda-date,
+  .bc-agenda-time,
+  .bc-agenda-event {
+    padding: var(--bc-space-1);
+  }
+
+  /* Day boundary line (heavier); the date cell spans the group so it shows once. */
   .bc-agenda-day {
     border-block-start: var(--bc-border);
   }
@@ -23,7 +27,21 @@
     white-space: nowrap;
   }
 
+  /* Column separators: date | time and time | event, in the header and body. The
+     date cell spans its group, so its border runs the full group height. */
+  .bc-agenda-heading:not(:last-child),
+  .bc-agenda-date,
+  .bc-agenda-time {
+    border-inline-end: var(--bc-border);
+  }
+
+  /* Lighter divider between events within the same day. */
+  .bc-agenda-row + .bc-agenda-row {
+    border-block-start: var(--bc-border-width) solid var(--bc-color-slot-border);
+  }
+
   .bc-agenda-empty {
+    grid-column: 1 / -1;
     padding: var(--bc-space-4);
     text-align: center;
     color: var(--bc-color-muted);
