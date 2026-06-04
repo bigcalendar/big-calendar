@@ -1,0 +1,30 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="React/Introduction" />
+
+# @big-calendar/react
+
+The thin React UI layer over the headless `@big-calendar/core` engine. Every
+component here reads calendar state from a single `CalendarProvider` and renders
+class names from `@big-calendar/styles` — they ship no CSS of their own.
+
+## What's documented so far
+
+This is an early, light Storybook covering the components that already exist:
+
+- **Toolbar** — navigation + view switcher; renders standalone in a provider.
+- **MonthView** — the month grid.
+- **TimeGridView** — the day / week / work-week time grid.
+- **AgendaView** — the chronological agenda list.
+
+Each view component **self-gates**: it renders `null` unless the active view in
+context matches its kind, so the stories wrap it in a provider seeded with the
+matching `defaultView`.
+
+## How the stories are wired
+
+A shared `stories/harness.tsx` resolves a Temporal localizer once (top-level
+await), pins `en-US` / `UTC` and a fixed "now" for deterministic grids, and
+supplies a `CalendarStage` — a sized stand-in for the app container you place
+around the calendar. The toolbar renders as a sibling **outside** `.bc-calendar`,
+mirroring the composition the upcoming `<Calendar>` component will produce.

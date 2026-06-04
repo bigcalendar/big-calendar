@@ -3,4 +3,5 @@ packages:
   - 'apps/*'
   - 'e2e'
 allowBuilds:
+  esbuild: true
   nx: true

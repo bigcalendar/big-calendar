@@ -185,8 +185,8 @@ folded into Phase 4 (per Cutter). See DECISIONS.md (2026-06-02).
    - **All 10 core test files now on the real localizer.** Two production sign bugs found by the
      retrofit; both in the `diff` (`a − b`) convention vs the fakes' inverted `b − a`.
    - **Luxon arm = still deferred** until `localizer-luxon` (currently a scaffold) is implemented (§5.3).
-1. **`<Calendar>`** batteries-included default tree (Toolbar + active view), consuming context.
-   (Localizer retrofit COMPLETE — react 6 + core 10 all on the real `TemporalLocalizer`.)
+1. ✅ **`<Calendar>`** batteries-included default tree (Toolbar + active view), consuming context —
+   **DONE, see Task 4h below.** Light Storybook + the Toolbar/reset CSS fix landed in the same task.
 2. **Top-layer** (§7.5): Popover-API show-more/tooltip + floating-ui positioning.
 3. **Selection wiring** (pointer/keyboard → slot coords → core FSM) **+ Storybook docs** (Cutter's ask).
    Plus **2m view registry**. Plus a **coarse-pointer/touch pass on `@big-calendar/styles`** (§7.7).
@@ -506,9 +506,47 @@ messages). What remains to satisfy the Phase-2 exit (§4.2 store shape + §9 log
 - Tests: +2 (positions bg full-width; defaults to empty). 168 tests; all files clear the bar.
   typecheck/lint/test/build green.
 
+### Phase 4 — Task 4h: `<Calendar>` + Toolbar/reset CSS fix + light Storybook ✓ (this commit)
+
+Executed in the order Cutter set (CSS → Storybook → `<Calendar>`). See the dated DECISIONS.md entry
+"`<Calendar>` shape, Toolbar outside `.bc-calendar`, reset re-scope, Storybook order".
+
+- **CSS fix (`@big-calendar/styles`):** `src/reset.css` — every reset root re-scoped `.bc-calendar`
+  → `:is(.bc-calendar, .bc-toolbar)` (box-sizing group, base-surface block, descendant button/list/
+  form/table/focus rules, reduced-motion block) so a standalone Toolbar gets the reset. `src/layout.css`
+  — `.bc-calendar { grid-template-rows: auto 1fr }` → `1fr` (toolbar moved outside; kept `block-size:
+  100%` + `container: bc / inline-size`). `pnpm nx build styles` green.
+- **Light Storybook (Cutter's layout calls 2026-06-03):** per-package `.storybook/` config, but all
+  stories + `.mdx` docs live in `packages/<pkg>/stories/`. Core stub = **Placeholder/Welcome page**.
+  Stack: `storybook` + `@storybook/react-vite` + `@storybook/addon-docs` `^10.4.2` (root devDeps;
+  SB10 supports Vite 8 + React 18/19). `pnpm-workspace.yaml` `allowBuilds: esbuild: true` (SB's Vite
+  builder needs esbuild's postinstall). `nx.json` production inputs gained `!{projectRoot}/stories/**/*`
+  (the `stories/` folder holds plain `.mdx` docs that the `*.stories.*` glob wouldn't catch).
+  - **react** (`packages/react/.storybook/{main,preview}.ts`, `stories/`): `harness.tsx` (top-level
+    `await createTemporalLocalizer` en-US/UTC, fixed NOW, demo events, `CalendarStage` = sized grid box
+    + provider), `Introduction.mdx`, and stories for Toolbar / MonthView / TimeGridView / AgendaView /
+    Calendar. `preview.ts` imports `@big-calendar/styles/index.css`. Targets `storybook` (dev :6006) +
+    `build-storybook`. `build-storybook` green.
+  - **core** (headless): `packages/core/.storybook/` + `stories/Welcome.mdx` placeholder. Needed
+    react/react-dom as **dev-only** deps for the react-vite renderer. Targets `storybook` (dev :6007) +
+    `build-storybook`. `build-storybook` green. `storybook-static` already gitignored.
+- **`<Calendar>` component:** `src/Calendar/{Calendar.component.tsx,index.ts,Calendar.component.test.tsx}`
+  + `export { Calendar }` in `src/index.ts`. Locked shape: generic `<TEvent,TResource>`, sole prop
+  `toolbar?: boolean | undefined` (default `true`; the explicit `| undefined` is required by
+  `exactOptionalPropertyTypes` so callers can forward `boolean|undefined`). Renders the FRAGMENT
+  `<>{toolbar ? <Toolbar/> : null}<div className="bc-calendar">{view by viewModel.kind}</div></>` —
+  Toolbar is a sibling OUTSIDE `.bc-calendar`; no shell wrapper. View dispatched by `viewModel.kind`
+  (`month`→MonthView, `time`→TimeGridView, `agenda`→AgendaView); each view keeps its own null-guard.
+  - **Naming note:** did NOT add a `CalendarProps` interface — that name is already the public *config*
+    type exported from `useCalendar.ts`. The single prop is inlined to avoid a clashing export.
+- **Gates:** react **53 tests** (7 new Calendar), full-suite coverage 100% stmt/fn/line, 97.65% branch
+  (Calendar.component.tsx 100%; the two pre-existing month/time memo hooks sit at 91.66% branch, >85%
+  bar). typecheck/lint/build green; both Storybooks build.
+
 ## In progress
 
-- (none)
+- (none — Task 4h complete. Next: Top-layer §7.5 popover/floating-ui, then selection wiring + Storybook
+  docs + 2m view registry + coarse-pointer/touch styles.)
 
 ## Phase 2 status
 

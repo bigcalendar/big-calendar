@@ -30,7 +30,8 @@
   /* ── root ────────────────────────────────────────────────────────────── */
   .bc-calendar {
     display: grid;
-    grid-template-rows: auto 1fr;
+    /* Views only — the toolbar renders as a sibling outside `.bc-calendar`. */
+    grid-template-rows: 1fr;
     block-size: 100%;
     min-block-size: 0;
     /* Components respond to the calendar's own size, not the viewport. */

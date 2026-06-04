@@ -20,6 +20,14 @@
     "typecheck": {
       "executor": "nx:run-commands",
       "options": { "command": "tsc --noEmit -p packages/core/tsconfig.json" }
+    },
+    "storybook": {
+      "executor": "nx:run-commands",
+      "options": { "command": "storybook dev -p 6007 --no-open", "cwd": "packages/core" }
+    },
+    "build-storybook": {
+      "executor": "nx:run-commands",
+      "options": { "command": "storybook build", "cwd": "packages/core" }
     }
   }
 }

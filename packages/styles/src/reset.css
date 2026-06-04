@@ -1,20 +1,23 @@
 /*
- * Big Calendar — opt-in modern reset, scoped entirely under `.bc-calendar`
- * (plan §6). It never touches global/host elements: every rule is nested under
- * the calendar root, so importing this can't disturb the surrounding app.
+ * Big Calendar — opt-in modern reset, scoped to the calendar root and the
+ * toolbar root (`:is(.bc-calendar, .bc-toolbar)`). The Toolbar can render either
+ * inside `.bc-calendar` or standalone in the CalendarContext, so the reset must
+ * reach it in both placements. It never touches global/host elements: every
+ * rule is nested under one of those two roots, so importing this can't disturb
+ * the surrounding app.
  *
  * Self-wrapped in the `bc.reset` layer so it sits at the bottom of the cascade
  * whether you import `reset.css` directly or via `index.css`.
  */
 @layer bc.reset {
-  .bc-calendar,
-  .bc-calendar *,
-  .bc-calendar *::before,
-  .bc-calendar *::after {
+  :is(.bc-calendar, .bc-toolbar),
+  :is(.bc-calendar, .bc-toolbar) *,
+  :is(.bc-calendar, .bc-toolbar) *::before,
+  :is(.bc-calendar, .bc-toolbar) *::after {
     box-sizing: border-box;
   }
 
-  .bc-calendar {
+  :is(.bc-calendar, .bc-toolbar) {
     /* Base typographic surface; tokens supply the actual values. */
     font-family: var(--bc-font-family);
     font-size: var(--bc-font-size);
@@ -25,44 +28,44 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  .bc-calendar :is(h1, h2, h3, h4, h5, h6, p, figure) {
+  :is(.bc-calendar, .bc-toolbar) :is(h1, h2, h3, h4, h5, h6, p, figure) {
     margin: 0;
   }
 
-  .bc-calendar :is(ul, ol) {
+  :is(.bc-calendar, .bc-toolbar) :is(ul, ol) {
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  .bc-calendar :is(button, input, select, textarea) {
+  :is(.bc-calendar, .bc-toolbar) :is(button, input, select, textarea) {
     font: inherit;
     color: inherit;
     margin: 0;
   }
 
-  .bc-calendar button {
+  :is(.bc-calendar, .bc-toolbar) button {
     background: none;
     border: 0;
     padding: 0;
     cursor: pointer;
   }
 
-  .bc-calendar table {
+  :is(.bc-calendar, .bc-toolbar) table {
     border-collapse: collapse;
     inline-size: 100%;
   }
 
   /* Consistent, token-driven focus ring; only for keyboard focus. */
-  .bc-calendar :focus-visible {
+  :is(.bc-calendar, .bc-toolbar) :focus-visible {
     outline: var(--bc-focus-ring);
     outline-offset: var(--bc-focus-ring-offset);
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .bc-calendar *,
-    .bc-calendar *::before,
-    .bc-calendar *::after {
+    :is(.bc-calendar, .bc-toolbar) *,
+    :is(.bc-calendar, .bc-toolbar) *::before,
+    :is(.bc-calendar, .bc-toolbar) *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;

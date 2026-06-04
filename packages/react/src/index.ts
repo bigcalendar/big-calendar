@@ -10,6 +10,7 @@ export {
   useCalendarStore,
 } from './CalendarProvider'
 export type { CalendarProviderProps, CalendarContextValue } from './CalendarProvider'
+export { Calendar } from './Calendar'
 export { Toolbar, DefaultToolbar } from './Toolbar'
 export { MonthView } from './MonthView'
 export { TimeGridView } from './TimeGridView'

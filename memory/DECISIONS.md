@@ -314,3 +314,59 @@ pragmatic-DnD's touch path) but never stated it as a requirement. Now it is.
   covering `utc` default (`…Z`), `…Z[Zone]`, offset mode, and mixed-input→same-instant. Base
   `localizer.class.test.ts` asserts the `output` default/override. Retrofitted core/react suites read values
   back from the localizer, so they're format-agnostic and unaffected.
+
+## 2026-06-03 — `<Calendar>` shape, Toolbar outside `.bc-calendar`, reset re-scope, Storybook order
+
+**Status: IMPLEMENTED 2026-06-03** (Phase 4 Task 4h — see PROGRESS.md). Built in the approved order
+(CSS → Storybook → `<Calendar>`); all gates green. The two open Storybook questions below were
+resolved by Cutter before install — see "Storybook layout (resolved)".
+
+- **`<Calendar>` is a context CONSUMER**, not a provider — rendered inside `<CalendarProvider>` (the
+  provider's docstring already commits to this). Generic over `<TEvent, TResource>`. Sole own prop:
+  `toolbar?: boolean`, default `true`.
+- **Render shape (locked):** a fragment, NOT a wrapping element —
+  `<>{toolbar ? <Toolbar/> : null}<div className="bc-calendar">{active view}</div></>`. The Toolbar is a
+  **sibling OUTSIDE** `.bc-calendar`. Active view picked by `viewModel.kind`
+  (`month`→`MonthView`, `time`→`TimeGridView`, `agenda`→`AgendaView`); the views keep their existing
+  internal `kind`-mismatch null-guards as a safety net.
+- **No shell wrapper (Cutter, explicit):** `.bc-calendar` styles/sizes only the calendar (views), filling
+  100% w/h of its parent. `.bc-toolbar` owns its own layout/styling. Any container that stacks toolbar +
+  calendar (e.g. fixed-height `auto 1fr`) is **developer-supplied at app level** — Big Calendar does not
+  emit one. The Toolbar must work both standalone-in-provider and as `<Calendar>`'s sibling.
+- **Why this surfaced a CSS bug:** the existing `@big-calendar/styles` baked the toolbar *into*
+  `.bc-calendar` — `layout.css` had `.bc-calendar { grid-template-rows: auto 1fr }` (row 1 = toolbar,
+  row 2 = view) and `reset.css` scoped the entire reset under `.bc-calendar` only. Moving the toolbar
+  outside breaks both: the view would land in the `auto` row (stops filling) and a standalone toolbar
+  would lose the reset (host box-sizing/fonts/focus leak in).
+- **CSS fix (approved verbatim, do FIRST):**
+  - `reset.css`: reset root `.bc-calendar` → `:is(.bc-calendar, .bc-toolbar)` across all selectors.
+  - `layout.css`: `.bc-calendar` `grid-template-rows: auto 1fr` → `1fr`; keep `block-size:100%` +
+    `container: bc / inline-size`.
+- **Custom-toolbar reset = opt-in (Cutter's choice):** the reset covers the built-in `DefaultToolbar`
+  (root `.bc-toolbar`). A `components.toolbar` override renders its own root with an unknown class and is
+  the dev's responsibility to scope (use `.bc-toolbar`, or render inside `.bc-calendar`) — consistent with
+  how custom slot components already attach the style classes. No DOM wrapper is added by the `Toolbar`
+  wrapper component.
+- **Storybook order (Cutter):** after the CSS fix, stand up a LIGHT Storybook *before* writing
+  `<Calendar>`, so progress is visible as the rest of the plan proceeds. Scope: "API stub of base +
+  React instances, early React stories only" → stories only for the already-built React components
+  (Toolbar, MonthView, TimeGridView, AgendaView). New stack: Vite 8 → `@storybook/react-vite`, pnpm.
+  Structure is already implied by `nx.json` (per-project `.storybook/` + co-located `*.stories.*`, both
+  already excluded from the `production` namedInputs). The legacy `docs-site.md` memory (webpack/yarn/
+  MDX, 150+ prop stories, port 9002) describes the OLD react-big-calendar and is reference only, NOT the
+  new toolchain.
+- **Storybook layout (resolved by Cutter 2026-06-03, the two formerly-open questions):**
+  - (a) **Per-package `.storybook/` config**, but ALL stories and `.mdx` docs live in a
+    `packages/<pkg>/stories/` folder (NOT co-located next to components). `nx.json` production inputs
+    gained `!{projectRoot}/stories/**/*` so plain `.mdx` docs there (not matched by the `*.stories.*`
+    glob) stay out of build/typecheck cache inputs.
+  - (b) **"API stub of base" = a Placeholder/Welcome page** for the headless `@big-calendar/core`
+    (`stories/Welcome.mdx`), not a full API doc — the real core API reference is a later pass.
+- **As-built (Task 4h):** `storybook` + `@storybook/react-vite` + `@storybook/addon-docs` `^10.4.2`
+  (SB10 supports Vite 8 + React 18/19) as root devDeps. `pnpm-workspace.yaml` `allowBuilds: esbuild:
+  true` (pnpm 11 build-script approval; SB's Vite builder needs esbuild's postinstall). Core got
+  react/react-dom as dev-only deps so its docs Storybook renders via react-vite. Stories cover Toolbar,
+  MonthView, TimeGridView, AgendaView, and (added once it existed) Calendar. The `<Calendar>` prop type
+  shipped as `toolbar?: boolean | undefined` (the `| undefined` required by `exactOptionalPropertyTypes`);
+  no `CalendarProps` interface was added for it — that name is already the public config type from
+  `useCalendar.ts`, so the single prop is inlined to avoid a clashing export.

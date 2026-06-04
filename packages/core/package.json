@@ -25,11 +25,12 @@
     "access": "public"
   },
   "dependencies": {
-    "@preact/signals-core": "^1.14.2",
-    "@big-calendar/localizer": "workspace:*"
+    "@big-calendar/localizer": "workspace:*",
+    "@preact/signals-core": "^1.14.2"
   },
-  "peerDependencies": {},
   "devDependencies": {
-    "@big-calendar/localizer-temporal": "workspace:*"
+    "@big-calendar/localizer-temporal": "workspace:*",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   }
 }
