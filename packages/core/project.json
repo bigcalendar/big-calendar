@@ -23,7 +23,7 @@
     },
     "storybook": {
       "executor": "nx:run-commands",
-      "options": { "command": "storybook dev -p 6007 --no-open", "cwd": "packages/core" }
+      "options": { "command": "storybook dev -p 6007", "cwd": "packages/core" }
     },
     "build-storybook": {
       "executor": "nx:run-commands",

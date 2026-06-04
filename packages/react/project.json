@@ -23,7 +23,7 @@
     },
     "storybook": {
       "executor": "nx:run-commands",
-      "options": { "command": "storybook dev -p 6006 --no-open", "cwd": "packages/react" }
+      "options": { "command": "storybook dev -p 6006", "cwd": "packages/react" }
     },
     "build-storybook": {
       "executor": "nx:run-commands",
