@@ -1,5 +1,11 @@
 /* Time grid: day headings, time gutter labels, slot lines, now-indicator. */
 @layer bc.components {
+  /* Closing edge for the whole grid; the 2px outer margin (layout.css) keeps it
+     off the container edge so this final border stays visible. */
+  .bc-time-grid {
+    border-block-end: var(--bc-border);
+  }
+
   .bc-time-header {
     border-block-end: var(--bc-border);
   }
@@ -33,6 +39,9 @@
   .bc-time-label {
     padding-inline-end: var(--bc-space-1);
     text-align: end;
+    /* Top line per labelled group, marking each hour boundary in the gutter so
+       the grouping reads (aligns with the columns' hour lines). */
+    border-block-start: var(--bc-border);
   }
 
   /* Slot boundary lines drawn as a repeating gradient behind each column. */

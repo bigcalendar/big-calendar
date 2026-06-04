@@ -648,10 +648,24 @@ deferred):
 - **styles:** `.bc-time-gutter` grid-auto-rows now group-spanning (layout.css); `.bc-time-label` translate
   removed (timegrid.css). **styles dist rebuilt** (src→dist copy) so Storybook reflects the CSS.
 - **Tests** — three new TimeGridView tests: header leads with `.bc-time-header-gutter` (7 `.bc-day-heading`
-  total), gutter carries `--bc-slots-per-group === '2'`, plus the fix2 day-count test. react **81 tests**;
+  total), gutter carries `--bc-slots-per-group === '2'`, plus the fix2 day-count test. react **80 tests**;
   coverage clears the per-file bar; typecheck/lint/build/build-storybook green.
 - **Note (deferred):** exact gutter-label vertical position (top-of-block vs straddling the boundary line)
   left for the broader component-styling pass; toolbar still unstyled (untouched).
+
+### Phase 4 — Task 4i-fix4: time-grid border/spacing pass (Cutter, 2026-06-04) ✓ (this commit)
+
+Cutter's minor follow-ups after fix3 (still pre-detailed-styling):
+- **Story height 640 → 800** in `harness.tsx` `CalendarStage` default (more vertical room to see the grid).
+- **Gutter grouping borders** — `.bc-time-label` gains `border-block-start: var(--bc-border)` so each
+  labelled hour group shows a top line in the gutter, aligning with the columns' hour lines (denotes the
+  grouping; same `--bc-border` token as the rest, per the rbc reference coloring).
+- **Closing bottom border** — the time grid had no bottom edge (unlike `.bc-month-grid`). Added
+  `border-block-end: var(--bc-border)` to `.bc-time-grid` (timegrid.css) + `margin-block-end: 2px`
+  (layout.css) so the final border sits off the container edge and stays visible. (Cutter asked for the
+  margin; I added the closing border so the margin actually reveals something — flagged for review.)
+- CSS + story-harness only (no component logic); **styles dist rebuilt**. react **80 tests** still green;
+  typecheck/lint/build/build-storybook green. No new unit tests (pure CSS/story changes; not jsdom-testable).
 
 ## In progress
 

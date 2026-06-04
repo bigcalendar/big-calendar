@@ -53,7 +53,7 @@ export type CalendarStageProps = Partial<CalendarProviderProps<DemoEvent>> & {
  * and `getNow`. Stories pass `<Toolbar/>` + a `.bc-calendar` view wrapper as
  * children, mirroring the eventual `<Calendar>` composition.
  */
-export function CalendarStage({ children, height = 640, rows = 'auto 1fr', ...props }: CalendarStageProps) {
+export function CalendarStage({ children, height = 800, rows = 'auto 1fr', ...props }: CalendarStageProps) {
   return (
     <div style={{ display: 'grid', gridTemplateRows: rows, blockSize: height, inlineSize: '100%' }}>
       <CalendarProvider<DemoEvent>
