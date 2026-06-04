@@ -127,6 +127,18 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
     expect(grid.style.getPropertyValue('--bc-slots-per-group')).toBe('2')
   })
 
+  it('renders a real per-slot hit cell per slot, tagged with its day + slot index', () => {
+    // The slot cells are the base layer for pointer/keyboard slot selection.
+    const { container } = renderGrid()
+    const cells = container.querySelectorAll('.bc-day-column .bc-time-slot')
+    // one cell per slot row (full day, 48 thirty-minute slots)
+    expect(cells.length).toBe(48)
+    const firstCell = cells[0] as HTMLElement
+    expect(firstCell.dataset.date).toBe(dayStart)
+    expect(firstCell.dataset.slotIndex).toBe('0')
+    expect((cells[47] as HTMLElement).dataset.slotIndex).toBe('47')
+  })
+
   it('omits the now-line when the column is not today', () => {
     const { container } = renderGrid({ defaultDate: '2026-06-16' })
     const heading16 = localizer.format({

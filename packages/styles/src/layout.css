@@ -179,6 +179,21 @@
     block-size: calc(var(--bc-slot-count) * var(--bc-slot-height));
   }
 
+  /* Transparent grid of real per-slot hit targets covering the column. It's the
+     base layer for slot selection (pointer + keyboard); events paint above it.
+     Visual slot/hour lines stay on the column's gradient (components/timegrid). */
+  .bc-time-slots {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-auto-rows: var(--bc-slot-height);
+  }
+
+  .bc-time-slot {
+    min-inline-size: 0;
+    min-block-size: 0;
+  }
+
   /* Background events sit behind, foreground events above; both use the same
      fraction-based box. */
   .bc-event,

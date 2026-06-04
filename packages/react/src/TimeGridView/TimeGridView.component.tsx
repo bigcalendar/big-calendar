@@ -98,6 +98,20 @@ function TimeGridView<TEvent = unknown>() {
           const className = ['bc-day-column', column.isToday && 'bc-today'].filter(Boolean).join(' ')
           return (
             <div key={column.key} className={className}>
+              {/* Real per-slot cells: the focusable hit targets for slot
+                  selection (pointer + keyboard). Transparent — the column's
+                  gradient still paints the slot/hour lines. Events render above
+                  and own their own pointer interaction. */}
+              <div className="bc-time-slots">
+                {Array.from({ length: grid.slotCount }, (_, slotIndex) => (
+                  <div
+                    key={slotIndex}
+                    className="bc-time-slot"
+                    data-date={column.day}
+                    data-slot-index={slotIndex}
+                  />
+                ))}
+              </div>
               {column.backgroundEvents.map((bg) => (
                 <div
                   key={bg.key}
