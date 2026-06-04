@@ -729,15 +729,28 @@ First implementation step of the §8.1/§8.2 selection plan. **Core only this co
   veto, click+dblclick actions, day-mode translate, cancel on view-change, cancel on navigate). core
   **144 tests**; per-file coverage clears the bar; typecheck/lint/build + react test/build/storybook green.
 
+### Phase 4 — Task 4j: selection wiring — steps 2-3 (Cutter, 2026-06-04) ✓ (commits ecf0711, 58a25c7, pushed)
+
+- **Step 2 — time-body slot cells (ecf0711):** transparent `.bc-time-slots` grid of `.bc-time-slot`
+  (`data-date` + `data-slot-index`) per day column = base hit/focus layer; gradient lines untouched.
+  +1 TimeGridView test (48 cells, indices 0/47, data-date).
+- **Step 3 — EventButton (58a25c7):** internal `<button>` wrapper (`data-bc-event`), wired into Month +
+  TimeGrid (timed + all-day). click→select+`onEventClick`; dblclick→`onEventDoubleClick` (250ms);
+  Enter/Space=primary, F2=secondary; pointerdown stopPropagation. New `onEventClick`/`onEventDoubleClick`
+  props (CalendarProvider→context, stable identities, react-only). Cutter: **minimal button reset** +
+  **aria-selected**. +1 EventButton test file (7 tests). react **90 tests**; all gates + storybook green.
+
 ## In progress
 
-- **Selection wiring — remaining steps** (Task 4j cont.): (2) real per-slot cells `data-date`/
-  `data-slot-index` in the time body + `data-date` on month/all-day cells; (3) `EventButton` react
-  wrapper (`<button>`, `data-bc-event`, 250 ms disambiguation, a11y, F2, `onEventClick`/
-  `onEventDoubleClick` props); (4) React adapter driving the controller from pointer/keyboard +
-  `.bc-selection` overlay; (5) selection `.mdx` in storybook-react.
+- **Selection wiring — step 4 (the big one):** React pointer + keyboard slot-selection adapter driving
+  `store.selection` (pointerdown/move/up on the slot layer → start/to/complete; 250ms click/dblclick;
+  long-press touch); roving-tabindex keyboard (Arrow/Shift+Arrow/Enter-Space/Esc) over slot cells +
+  the events group; **month/all-day `data-date` cells** (resolve the overridable-cell question);
+  `.bc-selection` overlay (time vertical box; month per-week-row box). Then step 5: selection `.mdx`
+  in storybook-react + `aria-describedby` instructions via the messages map.
 - **Open item carried in:** time-grid events fill full column width (`--bc-width:1`) → reserve an
   inline-end gutter so an empty slot strip stays selectable (resolve in step 4).
+- **Also deferred:** Agenda EventButton (entangled `.bc-agenda-row` layout); double-click-also-selects.
 
 ## Phase 2 status
 

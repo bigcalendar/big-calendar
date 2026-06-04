@@ -489,3 +489,12 @@ There is **no keyboard double-click** (`dblclick` never fires from the keyboard;
 - **Store surface:** `store.selection` = `{ state, range }` (FSM signals in slot-index space, for the `.bc-selection` overlay) + `start/to/complete/click/doubleClick/cancel`. New `SelectionApi`, `SelectionMode`, `SlotSelectionDates` exported from core. FSM gained `doubleClick` + `'doubleClick'` SelectAction.
 - **Reset:** an effect cancels any in-progress drag on view **or** date change (covers navigate/setDate/drilldown/controlled sync).
 - **selectable default = false**; captured once at store creation (runtime toggling of `selectable` not yet supported — follow-up if needed for RBC parity).
+
+## 2026-06-04 — EventButton: button reset + aria-selected (Cutter, IMPLEMENTED)
+
+**Status: IMPLEMENTED** (commits ecf0711 slot cells, 58a25c7 EventButton, on feat/initial).
+
+- **Time-body slot cells (ecf0711):** transparent `.bc-time-slots` grid (one `.bc-time-slot` per slot, `data-date` + `data-slot-index`) inside each day column = the base hit/focus layer. Column gradient still paints the lines (Cutter's fix5 styling untouched).
+- **EventButton (58a25c7):** internal react wrapper renders each event as a real `<button>` (`data-bc-event`), used in Month + TimeGrid (timed + all-day segments). Click→select+`onEventClick`; dblclick→`onEventDoubleClick` (250ms disambiguation); Enter/Space=primary, F2=secondary (keyboard, immediate via `detail===0` guard); `pointerdown` stopPropagation. `onEventClick`/`onEventDoubleClick` flow CalendarProvider→context (stable identities)→EventButton; kept **react-only** (not core config — core never invokes them).
+- **Cutter decisions:** (1) **minimal button reset now** — neutralize native button chrome on `button.bc-event`/`button.bc-segment` (appearance/font-family/text-align) + `:focus-visible` ring; box geometry + skin unchanged. (2) **`aria-selected`** for selected state (events as a roving selectable set), not `aria-pressed`.
+- **Deferred:** `aria-describedby` instructions element → step 5 with the messages map + `.mdx`. **Agenda** EventButton not yet wired (its `.bc-agenda-row` layout is more entangled) — flagged for after the slot-selection adapter. Double-click does NOT also select (follows plan's literal primary/secondary split).
