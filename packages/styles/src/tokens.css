@@ -25,7 +25,9 @@
   --bc-color-hover-bg: color-mix(in oklab, CanvasText 8%, Canvas);
 
   /* ── color: events ─────────────────────────────────────────────────── */
-  --bc-color-event-bg: AccentColor;
+  /* Temporary periwinkle event fill (was AccentColor); applies to .bc-event +
+     .bc-segment → Month and time-grid views. Revisit with event-styling pass. */
+  --bc-color-event-bg: #ccccff;
   --bc-color-event-fg: AccentColorText;
   --bc-color-event-border: color-mix(in oklab, AccentColor 80%, CanvasText);
   --bc-color-bg-event-bg: color-mix(in oklab, AccentColor 18%, Canvas);

@@ -15,9 +15,6 @@
   .bc-event {
     line-height: var(--bc-line-height);
     padding-block: var(--bc-space-1);
-    /* Temporary periwinkle fill so multi-slot spans are visible; revisit with
-       the broader event-styling pass (Cutter, 2026-06-04). */
-    background: #ccccff;
   }
 
   .bc-event:hover,
