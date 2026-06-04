@@ -161,10 +161,12 @@
     min-block-size: 0;
   }
 
+  /* Each labelled group spans `--bc-slots-per-group` slot rows, so the gutter is
+     the same height as the body (slot-count rows) and every label covers its block. */
   .bc-time-gutter {
     grid-column: 1;
     display: grid;
-    grid-auto-rows: var(--bc-slot-height);
+    grid-auto-rows: calc(var(--bc-slot-height) * var(--bc-slots-per-group, 1));
   }
 
   /* The stack of day columns; each column is a positioning context for events. */

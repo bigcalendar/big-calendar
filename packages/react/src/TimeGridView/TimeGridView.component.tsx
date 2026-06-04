@@ -13,6 +13,7 @@ import {
   nowIndicatorStyle,
   segmentStyle,
   slotCountStyle,
+  slotGroupStyle,
 } from '../internal/geometry.function'
 import DefaultTimeAllDayEvent from './components/DefaultTimeAllDayEvent.component'
 import DefaultTimeDayHeading from './components/DefaultTimeDayHeading.component'
@@ -49,6 +50,8 @@ function TimeGridView<TEvent = unknown>() {
   return (
     <div className="bc-time-grid" style={dayCountStyle(grid.headings.length)}>
       <div className="bc-time-header">
+        {/* Empty cell over the gutter track so day headings align with the body columns. */}
+        <div className="bc-time-header-gutter" aria-hidden="true" />
         {grid.headings.map((heading) => (
           <DayHeading
             key={heading.day}
@@ -83,7 +86,7 @@ function TimeGridView<TEvent = unknown>() {
       </div>
 
       <div className="bc-time-body" style={slotCountStyle(grid.slotCount)}>
-        <div className="bc-time-gutter">
+        <div className="bc-time-gutter" style={slotGroupStyle(store.timeslots)}>
           {grid.gutter.map((label) => (
             <TimeLabel key={label.key} time={label.time} label={label.label} />
           ))}

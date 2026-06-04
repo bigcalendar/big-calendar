@@ -108,6 +108,25 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
     expect(grid.style.getPropertyValue('--bc-day-count')).toBe('7')
   })
 
+  it('leads the header with a gutter spacer so day headings align with the body columns', () => {
+    // The header grid has a gutter track + day tracks; without a spacer in the gutter
+    // track the auto-flowed headings shift one column left of the body day columns.
+    const { container } = renderGrid({ defaultView: Views.WEEK })
+    const first = container.querySelector('.bc-time-header')?.firstElementChild as HTMLElement
+    expect(first.classList.contains('bc-time-header-gutter')).toBe(true)
+    expect(first.classList.contains('bc-day-heading')).toBe(false)
+    // exactly one heading per day, none consumed by the gutter track
+    expect(container.querySelectorAll('.bc-day-heading').length).toBe(7)
+  })
+
+  it('sets --bc-slots-per-group on the gutter so each label spans its slot group', () => {
+    // Body is slot-count rows tall; the gutter sizes each label row to span the
+    // group (timeslots) so the gutter matches the body height and labels cover blocks.
+    const { container } = renderGrid()
+    const gutter = container.querySelector('.bc-time-gutter') as HTMLElement
+    expect(gutter.style.getPropertyValue('--bc-slots-per-group')).toBe('2')
+  })
+
   it('omits the now-line when the column is not today', () => {
     const { container } = renderGrid({ defaultDate: '2026-06-16' })
     const heading16 = localizer.format({

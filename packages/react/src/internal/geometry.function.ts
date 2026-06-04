@@ -79,6 +79,12 @@ export function slotCountStyle(slotCount: number): CSSProperties {
   return style
 }
 
+/** Inline custom property for the `.bc-time-gutter`: how many slot rows each labelled group spans. */
+export function slotGroupStyle(slotsPerGroup: number): CSSProperties {
+  const style: StyleWithVars = { '--bc-slots-per-group': slotsPerGroup }
+  return style
+}
+
 /** Inline custom property for the `.bc-now-indicator` line, fraction `0..1` down the column. */
 export function nowIndicatorStyle(top: number): CSSProperties {
   const style: StyleWithVars = { '--bc-now-top': top }

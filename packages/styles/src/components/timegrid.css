@@ -26,11 +26,13 @@
     text-align: end;
   }
 
-  /* Gutter time labels sit on the slot boundary line. */
+  /* Gutter time labels sit at the top of their slot group, marking the time
+     the block begins (so the first label, 12 AM, is visible at the very top).
+     NOTE: detailed vertical alignment (e.g. straddling the boundary line) is
+     deferred styling — revisit with the broader component-styling pass. */
   .bc-time-label {
     padding-inline-end: var(--bc-space-1);
     text-align: end;
-    translate: 0 -50%;
   }
 
   /* Slot boundary lines drawn as a repeating gradient behind each column. */

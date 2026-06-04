@@ -628,6 +628,31 @@ is invalid → the whole `grid-template-columns` is dropped → body falls back 
 - **Note (untouched):** the Storybook toolbar in the same screenshot also looked unstyled (view buttons run
   together). Not investigated — out of scope for this fix. Flag if you want it looked at.
 
+### Phase 4 — Task 4i-fix3: time-grid header alignment + gutter group spanning (Cutter, 2026-06-04) ✓ (this commit)
+
+After fix2 the columns rendered but Cutter flagged three structural issues (detailed styling still
+deferred):
+1. **Day headings one column left of the body.** `.bc-time-header` is an 8-track grid (gutter + 7 days)
+   but only rendered the 7 headings, which auto-flowed starting in the gutter track. Fix: render an empty
+   `.bc-time-header-gutter` spacer as the header's first child so headings land in tracks 2–8, aligned with
+   the body day columns (the all-day row already does this via its `All Day` label in track 1).
+2. **Gutter didn't start at 12 AM / labels didn't cover their hour blocks.** Body is `slot-count` (48)
+   rows tall but the gutter gave each hourly label a single `slot-height` row → gutter was half the body
+   height and labels drifted; the first label (12 AM) was also clipped by `translate: 0 -50%`. Fix: gutter
+   rows span the group — new `--bc-slots-per-group` (= `store.timeslots`, default 2) drives
+   `grid-auto-rows: calc(var(--bc-slot-height) * var(--bc-slots-per-group, 1))` in layout.css, so the
+   gutter matches the body height and each label covers its block. Dropped the `-50%` translate so 12 AM
+   sits at the top of its block (label vertical alignment flagged as deferred styling).
+- **Adapter:** new `slotGroupStyle(slotsPerGroup)` geometry helper (`--bc-slots-per-group`); applied to
+  `.bc-time-gutter` via `store.timeslots`. No model change.
+- **styles:** `.bc-time-gutter` grid-auto-rows now group-spanning (layout.css); `.bc-time-label` translate
+  removed (timegrid.css). **styles dist rebuilt** (src→dist copy) so Storybook reflects the CSS.
+- **Tests** — three new TimeGridView tests: header leads with `.bc-time-header-gutter` (7 `.bc-day-heading`
+  total), gutter carries `--bc-slots-per-group === '2'`, plus the fix2 day-count test. react **81 tests**;
+  coverage clears the per-file bar; typecheck/lint/build/build-storybook green.
+- **Note (deferred):** exact gutter-label vertical position (top-of-block vs straddling the boundary line)
+  left for the broader component-styling pass; toolbar still unstyled (untouched).
+
 ## In progress
 
 - (none — Task 4i + per-day follow-up complete. Next: selection wiring (pointer/keyboard → slot coords →
