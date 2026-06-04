@@ -66,13 +66,21 @@ function MonthView<TEvent = unknown>() {
                   <EventSlot event={segment.event} title={segment.title} />
                 </div>
               ))}
-              {week.extra !== null && (
-                <ShowMore
-                  count={week.extra.count}
-                  label={messages.showMore(week.extra.count)}
-                  day={week.extra.day}
-                  events={week.extra.events}
-                />
+              {week.days.map((cell, dayIndex) =>
+                cell.extra !== null ? (
+                  <div
+                    key={`more-${cell.day}`}
+                    className="bc-show-more-cell"
+                    style={segmentStyle({ left: dayIndex + 1, span: 1, row: week.moreRow })}
+                  >
+                    <ShowMore
+                      count={cell.extra.count}
+                      label={messages.showMore(cell.extra.count)}
+                      day={cell.day}
+                      events={cell.extra.events}
+                    />
+                  </div>
+                ) : null,
               )}
             </div>
           </div>

@@ -14,8 +14,8 @@ export interface MonthWeekday {
   short: string
 }
 
-/** One day cell of the grid, with its resolved number and state flags. */
-export interface MonthDayCell {
+/** One day cell of the grid, with its resolved number, state flags, and overflow. */
+export interface MonthDayCell<TEvent> {
   /** Day-start string. */
   day: string
   /** Localized day-of-month number. */
@@ -24,6 +24,8 @@ export interface MonthDayCell {
   isToday: boolean
   /** Whether the day belongs to an adjacent month. */
   isOffRange: boolean
+  /** Per-day overflow indicator, or `null` when nothing spilled past the limit. */
+  extra: { count: number; events: ShowMoreEvent<TEvent>[] } | null
 }
 
 /** One placed event segment within a week row (ready for `segmentStyle`). */
@@ -42,16 +44,16 @@ export interface MonthSegmentCell<TEvent> {
   row: number
 }
 
-/** One week row: its day cells, placed segments, and any overflow. */
+/** One week row: its day cells, placed segments, and the overflow row. */
 export interface MonthWeekCell<TEvent> {
   /** Stable React key. */
   key: string
-  /** The week's seven day cells. */
-  days: MonthDayCell[]
+  /** The week's seven day cells (each carrying its own overflow). */
+  days: MonthDayCell<TEvent>[]
   /** Events placed into stack levels. */
   segments: MonthSegmentCell<TEvent>[]
-  /** Overflow indicator, or `null` when nothing spilled past the limit. */
-  extra: { count: number; day: string; events: ShowMoreEvent<TEvent>[] } | null
+  /** Grid row for the per-day "+N more" indicators (just below the visible levels). */
+  moreRow: number
 }
 
 /** The resolved month grid: weekday headings plus laid-out week rows. */
@@ -87,12 +89,31 @@ export default function useMonthWeeks<TEvent>(): MonthGrid<TEvent> | null {
     }))
 
     const resolvedWeeks: MonthWeekCell<TEvent>[] = weeks.map((week, weekIndex) => {
-      const days: MonthDayCell[] = week.days.map((day) => ({
-        day,
-        label: localizer.format({ value: day, format: 'dayOfMonth' }),
-        isToday: localizer.isSameDate({ a: day, b: now }),
-        isOffRange: localizer.neq({ a: day, b: focus, unit: 'month' }),
-      }))
+      const days: MonthDayCell<TEvent>[] = week.days.map((day, dayIndex) => {
+        // Overflow is week-level in core; attribute it to each day cell by the
+        // overflowed segments that span that day's column (1-based).
+        const column = dayIndex + 1
+        const covering = week.extra.filter(
+          (segment) => segment.left <= column && column <= segment.right,
+        )
+        return {
+          day,
+          label: localizer.format({ value: day, format: 'dayOfMonth' }),
+          isToday: localizer.isSameDate({ a: day, b: now }),
+          isOffRange: localizer.neq({ a: day, b: focus, unit: 'month' }),
+          extra:
+            covering.length > 0
+              ? {
+                  count: covering.length,
+                  events: covering.map((segment, segIndex) => ({
+                    key: `${weekIndex}-more-${dayIndex}-${segIndex}-${String(id(segment.event) ?? '')}`,
+                    event: segment.event,
+                    title: title(segment.event) ?? '',
+                  })),
+                }
+              : null,
+        }
+      })
 
       const segments: MonthSegmentCell<TEvent>[] = week.levels.flatMap((level, rowIndex) =>
         level.map((segment, segIndex) => ({
@@ -105,20 +126,7 @@ export default function useMonthWeeks<TEvent>(): MonthGrid<TEvent> | null {
         })),
       )
 
-      const extra =
-        week.extra.length > 0
-          ? {
-              count: week.extra.length,
-              day: week.days[0] ?? '',
-              events: week.extra.map((segment, extraIndex) => ({
-                key: `${weekIndex}-extra-${extraIndex}-${String(id(segment.event) ?? '')}`,
-                event: segment.event,
-                title: title(segment.event) ?? '',
-              })),
-            }
-          : null
-
-      return { key: String(weekIndex), days, segments, extra }
+      return { key: String(weekIndex), days, segments, moreRow: week.levels.length + 1 }
     })
 
     return { weekdays, weeks: resolvedWeeks }

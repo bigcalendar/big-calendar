@@ -94,6 +94,15 @@ describe.each(LOCALIZER_CASES)('MonthView [$name]', ({ create }) => {
     expect(showMore.textContent).toBe('+2 more')
   })
 
+  it('places the "+N more" indicator in the overflowing day cell, not the week start', () => {
+    const { container } = renderMonth({ weekEventLimit: 1 })
+    const cells = container.querySelectorAll('.bc-show-more-cell')
+    // All three events are on Jun 15 (Monday), so exactly one cell overflows…
+    expect(cells.length).toBe(1)
+    // …in Monday's column (Sunday-first grid → column 2), not Sunday/the week start.
+    expect((cells[0] as HTMLElement).style.getPropertyValue('--bc-seg-left')).toBe('2')
+  })
+
   it('lists the overflowed events in the show-more popover when opened', () => {
     const { container } = renderMonth({ weekEventLimit: 1 })
     const showMore = container.querySelector('.bc-show-more') as HTMLElement

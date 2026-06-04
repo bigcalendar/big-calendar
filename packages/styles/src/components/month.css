@@ -53,6 +53,15 @@
     color: var(--bc-color-muted);
   }
 
+  /* Per-day overflow indicator, placed in its day column below the visible
+     levels (grid placement via the shared --bc-seg-* custom properties). */
+  .bc-show-more-cell {
+    grid-column: var(--bc-seg-left) / span var(--bc-seg-span);
+    grid-row: var(--bc-seg-row);
+    min-inline-size: 0;
+    pointer-events: auto;
+  }
+
   .bc-show-more {
     margin-inline: var(--bc-event-gap);
     font-size: var(--bc-font-size-sm);

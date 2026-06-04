@@ -581,14 +581,37 @@ floating-ui on first open**. See the dated DECISIONS.md entry.
   (clustered events + `weekEventLimit={2}`) — answers Cutter's note that no existing story had enough
   events on one day to surface "+N more". Did NOT mutate the shared `demoEvents` (kept other stories
   intact); the overflow story passes its own `events`.
-- **Gates:** react **89 tests** (13 new), per-file coverage clears the bar (all 100% func; lowest branch
+- **Gates:** react **76 tests** (23 new), per-file coverage clears the bar (all 100% func; lowest branch
   Tooltip 88.88% / Dialog 89.47%, both >85%; floatingPosition + useFloatingAnchor + Popover ≥ bar).
   typecheck/lint/test/build green for react/styles/core; `react:build-storybook` green.
 
+### Phase 4 — Task 4i-follow-up: month "+N more" made PER-DAY (Cutter, 2026-06-03) ✓ (this commit)
+
+Cutter spotted (Storybook `ShowMorePopover`) that the month overflow indicator rendered at the **week
+start** (Sunday col), not the day that overflowed — because core models overflow **per week**
+(`MonthWeek.extra`) and Task 4f anchored the single indicator to `week.days[0]`. Diverges from Google/
+Outlook + v1. **Fix is adapter + CSS only (NO core change)** — confirmed `week.extra` segments carry
+`left`/`right` columns, so the day each overflowed segment touches is derivable.
+
+- **`useMonthWeeks`** — overflow moved off `MonthWeekCell` onto each `MonthDayCell<TEvent>` (now generic):
+  per day column `c` (1-based), `extra = week.extra.filter(seg => seg.left <= c <= seg.right)` → `{count,
+  events}` or null (multi-day overflow shows in each day it spans). `MonthWeekCell` drops `extra`, gains
+  `moreRow = week.levels.length + 1` (grid row just below the visible levels).
+- **`MonthView`** — renders one `<ShowMore>` per overflowing day cell, wrapped in `.bc-show-more-cell`
+  placed via `segmentStyle({left: col, span:1, row: moreRow})` (same `--bc-seg-*` grid mechanism as
+  segments). `MonthShowMoreProps` shape unchanged (its `day` is now the real day, `events`/`count` per-day).
+- **styles** — added `.bc-show-more-cell` (grid placement from `--bc-seg-*`) to `month.css`; the existing
+  `.bc-show-more` text styling unchanged.
+- **Tests** — new MonthView test asserts the indicator lands in Jun 15's column (`--bc-seg-left === '2'`,
+  Sunday-first), not the week start. react **77 tests**; coverage still clears the bar; typecheck/lint/
+  build green; `react:build-storybook` green.
+- **Note (deferred):** the **time-grid all-day row** "+N more" is still single/row-level (Cutter chose
+  month-only for now). Per-day for the all-day row is the larger TimeGridView option if wanted later.
+
 ## In progress
 
-- (none — Task 4i complete. Next: selection wiring (pointer/keyboard → slot coords → core FSM) +
-  Storybook docs, then 2m view registry + coarse-pointer/touch pass on `@big-calendar/styles`.)
+- (none — Task 4i + per-day follow-up complete. Next: selection wiring (pointer/keyboard → slot coords →
+  core FSM) + Storybook docs, then 2m view registry + coarse-pointer/touch pass on `@big-calendar/styles`.)
 
 ## Phase 2 status
 

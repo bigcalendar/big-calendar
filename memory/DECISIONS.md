@@ -417,3 +417,24 @@ Engineering decisions:
 - **No jest-dom:** the suite uses plain matchers (`getAttribute().toBe()`, `toBeTruthy()`); native-API
   branches are covered by mocking `showPopover`/`hidePopover`/`showModal` onto the prototype via a typed
   `as unknown as {…}` cast (the `no-explicit-any` lint bars `as any`).
+
+## 2026-06-03 — Month "+N more" is PER-DAY, not per-week (Cutter)
+
+**Status: IMPLEMENTED 2026-06-03** (Task 4i follow-up — see PROGRESS.md).
+
+- **Decision (Cutter):** the month overflow indicator must appear **inside the specific day cell that
+  overflowed** (Google/Outlook + v1 react-big-calendar behavior), not once at the week's start. Cutter
+  caught this in the Storybook `ShowMorePopover` story — events were on Jun 15 but "+3 more" rendered under
+  Jun 14 (the week's first column).
+- **Root cause (pre-existing, NOT from §7.5):** core models month overflow **per week** (`MonthWeek.extra`
+  is a flat per-week list, from `rowSegments`), and Task 4f's adapter anchored the single indicator to
+  `week.days[0]`. §7.5 only turned that existing indicator into a popover.
+- **Resolution = adapter + CSS only, NO core change.** `week.extra` segments already carry `left`/`right`
+  day-columns, so each overflowed segment's days are derivable. `useMonthWeeks` now computes per-day extra
+  (segments whose column span covers that day) onto each `MonthDayCell`; `MonthView` renders one indicator
+  per overflowing cell, grid-placed in its column at `moreRow = visibleLevels + 1` via the shared
+  `--bc-seg-*` mechanism (`.bc-show-more-cell`). A multi-day overflow shows in each day it spans.
+- **What was rejected:** changing the core month model to track per-day overflow (unnecessary — the column
+  spans in `week.extra` are sufficient; keeps core's week-level band layout intact for multi-day alignment).
+- **Scoped to month only (Cutter):** the time-grid **all-day row** indicator stays single/row-level for now;
+  per-day for the all-day row is a larger TimeGridView change to revisit if wanted.
