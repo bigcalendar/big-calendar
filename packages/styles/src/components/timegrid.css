@@ -44,16 +44,27 @@
     border-block-start: var(--bc-border);
   }
 
-  /* Slot boundary lines drawn as a repeating gradient behind each column. */
+  /* Slot boundary lines drawn as repeating gradients behind each column. The
+     hour lines (one per group of --bc-slots-per-group slots) paint on top in the
+     standard border color; the lighter half-hour slot lines sit beneath, so each
+     30-minute slot shows a faint divider while the hour boundary reads stronger. */
   .bc-day-column {
     border-inline-start: var(--bc-border);
-    background-image: repeating-linear-gradient(
-      to bottom,
-      var(--bc-color-border) 0,
-      var(--bc-color-border) var(--bc-border-width),
-      transparent var(--bc-border-width),
-      transparent var(--bc-slot-height)
-    );
+    background-image:
+      repeating-linear-gradient(
+        to bottom,
+        var(--bc-color-border) 0,
+        var(--bc-color-border) var(--bc-border-width),
+        transparent var(--bc-border-width),
+        transparent calc(var(--bc-slot-height) * var(--bc-slots-per-group, 1))
+      ),
+      repeating-linear-gradient(
+        to bottom,
+        var(--bc-color-slot-border) 0,
+        var(--bc-color-slot-border) var(--bc-border-width),
+        transparent var(--bc-border-width),
+        transparent var(--bc-slot-height)
+      );
   }
 
   .bc-day-column.bc-today {

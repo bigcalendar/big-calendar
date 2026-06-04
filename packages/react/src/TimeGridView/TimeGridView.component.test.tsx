@@ -119,12 +119,12 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
     expect(container.querySelectorAll('.bc-day-heading').length).toBe(7)
   })
 
-  it('sets --bc-slots-per-group on the gutter so each label spans its slot group', () => {
-    // Body is slot-count rows tall; the gutter sizes each label row to span the
-    // group (timeslots) so the gutter matches the body height and labels cover blocks.
+  it('sets --bc-slots-per-group on the grid container so gutter rows and column lines share the group size', () => {
+    // The gutter sizes each label row to span the group, and the day columns draw
+    // the hour line every group; both read the var from the .bc-time-grid container.
     const { container } = renderGrid()
-    const gutter = container.querySelector('.bc-time-gutter') as HTMLElement
-    expect(gutter.style.getPropertyValue('--bc-slots-per-group')).toBe('2')
+    const grid = container.querySelector('.bc-time-grid') as HTMLElement
+    expect(grid.style.getPropertyValue('--bc-slots-per-group')).toBe('2')
   })
 
   it('omits the now-line when the column is not today', () => {

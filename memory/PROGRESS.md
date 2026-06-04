@@ -667,6 +667,22 @@ Cutter's minor follow-ups after fix3 (still pre-detailed-styling):
 - CSS + story-harness only (no component logic); **styles dist rebuilt**. react **80 tests** still green;
   typecheck/lint/build/build-storybook green. No new unit tests (pure CSS/story changes; not jsdom-testable).
 
+### Phase 4 — Task 4i-fix5: hour vs half-hour slot line colors (Cutter, 2026-06-04) ✓ (this commit)
+
+Cutter: within an hour block the divider between the two 30-min slots should be light grey; the hour
+boundaries darker ("black").
+- **Two layered gradients on `.bc-day-column`** (timegrid.css): hour lines (one per group of
+  `--bc-slots-per-group` slots) paint on top in `--bc-color-border`; lighter half-hour lines beneath in the
+  new `--bc-color-slot-border` token (`CanvasText 10%`). At the hour boundary the darker hour line wins;
+  between hours only the light slot line shows.
+- **`--bc-slots-per-group` moved to the `.bc-time-grid` container** (merged with `dayCountStyle` via spread)
+  so BOTH the gutter (row height) and the columns (hour-line period) inherit it; removed the gutter's own
+  inline copy. Test updated to assert the var on `.bc-time-grid`.
+- **Flagged:** hour lines use the standard `--bc-color-border` (medium grey), NOT literal black, to stay
+  consistent with the column/header/outer borders. Offered to add a darker token if Cutter wants true black.
+- react **80 tests** green; coverage clears the bar; typecheck/lint/build/build-storybook green; styles dist
+  rebuilt.
+
 ## In progress
 
 - (none — Task 4i + per-day follow-up complete. Next: selection wiring (pointer/keyboard → slot coords →
