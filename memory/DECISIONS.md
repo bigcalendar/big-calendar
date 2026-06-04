@@ -468,3 +468,14 @@ Event selection is **separate** from slot selection — different DOM layer, sta
 - **Slot-vs-event layering:** two real DOM layers + browser hit-testing; slot handler checks `closest('[data-bc-event]')`. **`selectable: true` and `'ignoreEvents'` BOTH defer to the event** (no drag-select-through-event); simpler than RBC.
 - **Open layout item (Cutter):** time-body events fill full column width (`--bc-width: 1`), leaving no empty strip for slot selection at that time → reserve a small **inline-end gutter** on time-grid events during implementation (fallback: honor `selectable:true` to select through events).
 - **Keyboard = two roving-tabindex groups:** slot grid (one tab stop) + events (one tab stop, Arrow among events, Enter/Space activates). aria-pressed vs aria-selected finalized with the pattern; documented in the selection `.mdx`.
+
+## 2026-06-04 — Keyboard handling of event double-click (Cutter)
+
+**Status: PLANNED** (detail in reference `Upgrade_plan_prompt.md` §8.2).
+
+There is **no keyboard double-click** (`dblclick` never fires from the keyboard; ARIA has no double-click annotation), so per WCAG 2.1.1 the secondary action needs its own key. On a focused `EventButton`:
+- **Enter / Space = primary** → `onEventClick` + select.
+- **F2 = secondary** → `onEventDoubleClick` (standard "open/edit focused item" convention).
+- Pointer **double-click stays a shortcut** to the same action F2 performs.
+- Keys advertised via **`aria-keyshortcuts`**; behavior conveyed via an **`aria-describedby`** visually-hidden instructions element + the selection `.mdx`. (ARIA describes role/state/shortcuts, not gestures.)
+- Selected-state attribute (`aria-pressed` vs `aria-selected`) finalized with the events roving-group role.
