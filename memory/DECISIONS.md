@@ -455,3 +455,16 @@ Discussed RBC's `Selection.js` vs BC's existing 1-D core FSM (`packages/core/src
 - **Overlay:** `.bc-selection` grid-placed — time = vertical `--bc-top`/`--bc-height` box per column; month/all-day = one box per week-row touched (`--bc-seg-*`).
 - **Required (Cutter):** a **detailed `.mdx`** in the React Storybook explaining pointer/touch/keyboard selection for manual testing; temporary home in storybook-react, final placement later.
 - **Deferred:** per-resource columns / `resourceId` (no resource grouping in BC core yet).
+
+## 2026-06-04 — Event interaction & selection plan finalized (Cutter)
+
+**Status: PLANNED** (canonical detail in reference `Upgrade_plan_prompt.md` §8.2; implementation with the selection task).
+
+Event selection is **separate** from slot selection — different DOM layer, state, and callbacks. State already exists in core (`selected`, `select({id})`, `onSelect`). Locked:
+
+- **`EventButton` (shared react wrapper)** replaces the per-view `.bc-event`/`.bc-segment` wrapper in Month/TimeGrid/Agenda: a real `<button type="button">` with `data-bc-event`, 250 ms click/dbl disambiguation, a11y (accessible name, focus, selected state), stopPropagation. The overridable event slot is presentational content *inside* the button.
+- **Click auto-selects + fires callback:** click sets `store.selected = id` AND fires `onEventClick(event)`; double-click fires `onEventDoubleClick(event)`. Both default **noop**, both receive the **full TEvent**. New **store config** callbacks.
+- **New names only** (`onEventClick`/`onEventDoubleClick`) — no `onSelectEvent`/`onDoubleClickEvent` aliases; codemods handle RBC rename.
+- **Slot-vs-event layering:** two real DOM layers + browser hit-testing; slot handler checks `closest('[data-bc-event]')`. **`selectable: true` and `'ignoreEvents'` BOTH defer to the event** (no drag-select-through-event); simpler than RBC.
+- **Open layout item (Cutter):** time-body events fill full column width (`--bc-width: 1`), leaving no empty strip for slot selection at that time → reserve a small **inline-end gutter** on time-grid events during implementation (fallback: honor `selectable:true` to select through events).
+- **Keyboard = two roving-tabindex groups:** slot grid (one tab stop) + events (one tab stop, Arrow among events, Enter/Space activates). aria-pressed vs aria-selected finalized with the pattern; documented in the selection `.mdx`.
