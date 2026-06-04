@@ -479,3 +479,13 @@ There is **no keyboard double-click** (`dblclick` never fires from the keyboard;
 - Pointer **double-click stays a shortcut** to the same action F2 performs.
 - Keys advertised via **`aria-keyshortcuts`**; behavior conveyed via an **`aria-describedby`** visually-hidden instructions element + the selection `.mdx`. (ARIA describes role/state/shortcuts, not gestures.)
 - Selected-state attribute (`aria-pressed` vs `aria-selected`) finalized with the events roving-group role.
+
+## 2026-06-04 — Selection wiring: translation home + primitives (Cutter, IMPLEMENTED)
+
+**Status: IMPLEMENTED** (commit c6d3d15 on feat/initial). Resolves two open points from the §8.1 plan that collided at implementation.
+
+- **Index→date translation lives in core/store** (Cutter chose over adapter-side). The 1-D FSM can't translate alone — a time-body slot index needs the **anchor day**. So the store's `selection` API takes the anchor on `start`/`click`/`doubleClick`: `{ slot, date, mode }` where `mode: 'time' | 'day'`. The store captures `{mode, date}`, and on commit translates: **time** = `getSlotDate(anchorDay, dayStartMin + i*step)` per slot with an **exclusive end** (start of the next slot); **day** = linear index into `range.days`, end = **end-of-day** of the last day. Rationale: one translation impl reused by every future framework adapter (vue/angular/lit), instead of re-implemented per adapter.
+- **Dates are primitive ISO strings, not JS `Date`** (Cutter corrected the plan's `Date` wording). `onSelectSlot({ start: string, end: string, slots: string[], action })`, `onSelecting({ start: string, end: string }) => boolean | void`. Matches the rest of core (`date` signal, `range.days` are strings).
+- **Store surface:** `store.selection` = `{ state, range }` (FSM signals in slot-index space, for the `.bc-selection` overlay) + `start/to/complete/click/doubleClick/cancel`. New `SelectionApi`, `SelectionMode`, `SlotSelectionDates` exported from core. FSM gained `doubleClick` + `'doubleClick'` SelectAction.
+- **Reset:** an effect cancels any in-progress drag on view **or** date change (covers navigate/setDate/drilldown/controlled sync).
+- **selectable default = false**; captured once at store creation (runtime toggling of `selectable` not yet supported — follow-up if needed for RBC parity).

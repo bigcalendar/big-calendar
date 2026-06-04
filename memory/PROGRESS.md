@@ -709,10 +709,35 @@ chose **CSS grid + subgrid (divs)** over a `<table>` (responsive reflow for smal
   react **82 tests**; coverage clears the per-file bar (agenda 100%); typecheck/lint/build/build-storybook
   green; styles dist rebuilt.
 
+### Phase 4 — Task 4j: selection wiring — step 1, FSM → store (Cutter, 2026-06-04) ✓ (commit c6d3d15, pushed)
+
+First implementation step of the §8.1/§8.2 selection plan. **Core only this commit** (no view DOM yet).
+- **FSM:** added `doubleClick({slot})` action + `'doubleClick'` to `SelectAction` (single & double-click
+  both commit through `onSelect`). Widened `createSelection` arg callbacks to `| undefined`
+  (exactOptionalPropertyTypes).
+- **Store `selection` API** (`SelectionApi`): wraps one `createSelection` controller —
+  `{ state, range }` signals (slot-index space, for the overlay) + `start/to/complete/click/doubleClick/
+  cancel`. `start/click/doubleClick` take `{ slot, date, mode }`; the store captures `{mode,date}` and
+  **translates index→ISO-date on commit** (decision: translation in core/store, reused by all adapters).
+  - **time** mode: `getSlotDate(anchorDay, dayStartMin + i*step)` per slot, **exclusive end**.
+  - **day** mode: linear index into `range.days`, **end-of-day** of the last day.
+- **Config callbacks** (ISO strings, not `Date`): `onSelecting({start,end})=>bool|void` (veto),
+  `onSelectSlot({start,end,slots,action})`. Threaded through react `useCalendar` latest-props wrappers
+  (only wired when provided). New exports: `SelectionApi`, `SelectionMode`, `SlotSelectionDates`.
+- **Reset:** effect cancels any in-progress drag on view OR date change. `selectable` default false.
+- **Tests:** +2 FSM (doubleClick + disabled), +7 store (disabled-default, time drag commit, onSelecting
+  veto, click+dblclick actions, day-mode translate, cancel on view-change, cancel on navigate). core
+  **144 tests**; per-file coverage clears the bar; typecheck/lint/build + react test/build/storybook green.
+
 ## In progress
 
-- (none — Task 4i + per-day follow-up complete. Next: selection wiring (pointer/keyboard → slot coords →
-  core FSM) + Storybook docs, then 2m view registry + coarse-pointer/touch pass on `@big-calendar/styles`.)
+- **Selection wiring — remaining steps** (Task 4j cont.): (2) real per-slot cells `data-date`/
+  `data-slot-index` in the time body + `data-date` on month/all-day cells; (3) `EventButton` react
+  wrapper (`<button>`, `data-bc-event`, 250 ms disambiguation, a11y, F2, `onEventClick`/
+  `onEventDoubleClick` props); (4) React adapter driving the controller from pointer/keyboard +
+  `.bc-selection` overlay; (5) selection `.mdx` in storybook-react.
+- **Open item carried in:** time-grid events fill full column width (`--bc-width:1`) → reserve an
+  inline-end gutter so an empty slot strip stays selectable (resolve in step 4).
 
 ## Phase 2 status
 
