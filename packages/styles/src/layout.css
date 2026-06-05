@@ -120,6 +120,8 @@
 
   .bc-month-slot {
     min-inline-size: 0;
+    /* Positioning context for the keyboard focus ring (see "slot focus" below). */
+    position: relative;
   }
 
   .bc-date-cell {
@@ -190,6 +192,7 @@
 
   .bc-allday-slot {
     min-inline-size: 0;
+    position: relative;
   }
 
   /* Selection band overlay: a day-column grid carrying one placed `.bc-selection`. */
@@ -248,6 +251,32 @@
   .bc-time-slot {
     min-inline-size: 0;
     min-block-size: 0;
+    position: relative;
+  }
+
+  /* ── slot focus ──────────────────────────────────────────────────────
+     The slot cells are the bottom layer of their surface — date cells, events,
+     and the selection/now overlays all paint above them — so a plain outline on
+     a focused cell would be hidden. Draw the keyboard focus ring on a high
+     pseudo-element instead (inset so it isn't clipped by the scroll container or
+     neighbouring cells); `pointer-events: none` keeps the cell itself the hit
+     target and leaves events clickable. */
+  .bc-month-slot:focus-visible,
+  .bc-allday-slot:focus-visible,
+  .bc-time-slot:focus-visible {
+    outline: none;
+  }
+
+  .bc-month-slot:focus-visible::after,
+  .bc-allday-slot:focus-visible::after,
+  .bc-time-slot:focus-visible::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    outline: var(--bc-focus-ring);
+    outline-offset: calc(-1 * var(--bc-focus-ring-width));
   }
 
   /* Background events sit behind, foreground events above; both use the same

@@ -1,0 +1,146 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="React/Selection" />
+
+# Slot selection
+
+**Slot selection** is how a user picks an empty time range or a span of days on the
+calendar — the gesture you would use to start creating a new event. It is completely
+separate from **event selection** (clicking an existing event); see the note at the
+bottom.
+
+You can try every gesture below in the **Calendar → Selectable** story (a playground
+with a `selectable` toggle and a live read-out of what each gesture emits), and in the
+**MonthView → Selectable** and **TimeGridView → Selectable** stories.
+
+## Turning it on
+
+Selection is **off by default**. Switch it on with the `selectable` prop:
+
+```tsx
+<Calendar selectable />
+// or, to let event clicks win over starting a selection on top of an event:
+<Calendar selectable="ignoreEvents" />
+```
+
+| value           | meaning                                                                   |
+| --------------- | ------------------------------------------------------------------------- |
+| `false`         | (default) selection disabled.                                             |
+| `true`          | selection enabled. A press that lands **on an event** is left to the event. |
+| `'ignoreEvents'` | enabled; behaves the same here — events always own their own pointer.      |
+
+> Both `true` and `'ignoreEvents'` defer to events: a selection only starts on **empty**
+> area. Dragging a selection _through_ an existing event (a quirk of the old
+> react-big-calendar) is intentionally not supported.
+
+## What your callbacks receive
+
+Two callbacks fire, both with **plain ISO date strings — never `Date` objects**:
+
+```ts
+// Fires repeatedly while a range is being dragged/extended. Return false to veto.
+onSelecting?: (args: { start: string; end: string; allDay: boolean }) => boolean | void
+
+// Fires once, when a selection is committed.
+onSelectSlot?: (args: {
+  start: string            // ISO start
+  end: string              // ISO end
+  slots: string[]          // every slot/day the selection covers, in order
+  action: 'select' | 'click' | 'doubleClick'
+  allDay: boolean
+}) => void
+```
+
+`action` tells you how it was committed: `'select'` (a drag, or a keyboard
+Shift+Arrow range), `'click'` (a single slot/day), or `'doubleClick'`.
+
+### What `allDay` means
+
+`allDay` is `true` whenever the selection represents **whole days** _or_ a span that
+crosses a day boundary:
+
+| selection                                              | `allDay` | notes                                                        |
+| ------------------------------------------------------ | -------- | ----------------------------------------------------------- |
+| a time range **within one day** (e.g. 9:00–10:30)      | `false`  | instant `start`/`end` times.                                |
+| the **whole day** end-to-end in a full-day time grid   | `true`   | `start` = 00:00:00, `end` = 23:59:59 of that day.           |
+| a time drag that **crosses days** (e.g. Mon 9pm→Tue 2am) | `true`  | keeps the instant `start`/`end` times **and** lists each slot. |
+| day(s) picked in the **month** grid or **all-day** row | `true`   | whole days; `end` is the end-of-day of the last day.        |
+
+### End-of-day rule
+
+A selection's `end` is **exclusive** at the slot level (selecting the 9:00 and 9:30
+slots ends at 10:00). The one exception is the **last slot of a full day**: it ends at
+**23:59:59…** (end of day), because the next instant already belongs to the next day —
+not at the following midnight. A partial window (say a 9–5 grid) ends at its window edge.
+
+## Pointer
+
+- **Drag** across slots/days → a range. `onSelecting` fires as it grows; release →
+  `onSelectSlot` with `action: 'select'`.
+- **Click** a single slot/day → `action: 'click'`.
+- **Double-click** → `action: 'doubleClick'`.
+
+Single- and double-click are disambiguated by a **250 ms** timer, so the two never both
+fire for the same gesture. A press that starts **on an event** is ignored (the event
+handles it).
+
+## Keyboard
+
+Selection is fully keyboard-operable — something the original react-big-calendar lacked.
+A view exposes **two bounded tab stops** (so `Tab` stays predictable even on a busy
+calendar):
+
+**1. The slot grid** (one tab stop over the day/time cells):
+
+| key                | action                                                       |
+| ------------------ | ------------------------------------------------------------ |
+| **Arrow**          | move the focused cell (time grid: ↑/↓ a slot, ←/→ a day; month: ←/→ a day, ↑/↓ a week; all-day row: ←/→ a day). |
+| **Shift+Arrow**    | extend the selection (the first one anchors at the focused cell). |
+| **Enter / Space**  | commit — finish a range if one is in progress, otherwise click the focused cell. |
+| **Esc**            | cancel an in-progress selection.                             |
+
+**2. The events** (a second tab stop over the event buttons):
+
+| key               | action                                            |
+| ----------------- | ------------------------------------------------- |
+| **Arrow**         | move among the event buttons.                     |
+| **Enter / Space** | primary action — select the event + `onEventClick`. |
+| **F2**            | secondary action — `onEventDoubleClick`.          |
+
+There is **no keyboard double-click**: per WCAG 2.1.1 the secondary action gets its own
+key (**F2**). Double-click stays a pointer-only shortcut to the same thing F2 does. Keys
+are advertised on each event button via `aria-keyshortcuts`. The keyboard-focused cell
+shows a focus ring (drawn above the other layers so it is always visible).
+
+`Home` / `End` / `PageUp` / `PageDown` are reserved for **navigation** (a later step),
+not selection.
+
+## Touch
+
+Touch long-press to begin a drag is **planned but not yet wired** (it is an adapter +
+styles concern). For now, use pointer (mouse/pen) or the keyboard.
+
+## Under the hood
+
+There is **no pixel hit-testing**. Every cell is a real, focusable DOM node carrying its
+coordinate, and the adapter maps events → coordinates → the core selection state machine:
+
+- Month / all-day cells: `data-date` (ISO day-start) + a linear day index in
+  `data-slot-index`.
+- Time-body cells: `data-date` + a **global** `data-slot-index` (`dayIndex * slotCount +
+  slot`), which is what lets a single drag span day columns.
+- Event buttons carry `data-bc-event`; the slot handlers skip anything inside one.
+
+The core state machine works purely in slot-index space; the store translates the
+committed indices back into the ISO dates described above, so **every framework adapter
+emits the identical payload**.
+
+## Slot selection vs event selection
+
+These are two different things on two different layers:
+
+- **Slot selection** (this page) → empty space → `onSelecting` / `onSelectSlot`.
+- **Event selection** → an existing event → `store.selected` + `onEventClick` /
+  `onEventDoubleClick`.
+
+An event interaction never also triggers a slot selection.

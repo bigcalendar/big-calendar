@@ -836,12 +836,24 @@ First implementation step of the §8.1/§8.2 selection plan. **Core only this co
 **Step 5c (keyboard roving) COMPLETE** — slot grid (5c-1) + events group (5c-2). Two bounded tab stops, full
 Arrow/Shift+Arrow/Enter-Space/Esc + F2 model per §8.1/§8.2.
 
+### Phase 4 — Task 4j: selection wiring — slot focus ring + selection `.mdx` (Cutter, 2026-06-05) ✓ (this commit)
+
+Cutter (Storybook): no visible focus rings on keyboard nav, and no doc explaining selection.
+- **Focus ring (styles/layout.css):** slot cells are the **bottom** layer (date cells / events / overlays
+  paint above), so the reset's `:focus-visible` outline was hidden. Added `position: relative` to
+  `.bc-month-slot`/`.bc-allday-slot`/`.bc-time-slot` + a `:focus-visible::after` ring (`z-index:5`, inset
+  `outline-offset` so it isn't clipped, `pointer-events:none` so the cell stays the hit target and events
+  stay clickable). styles dist rebuilt.
+- **`stories/Selection.mdx`** (`React/Selection`) — the required selection doc: enabling (`selectable`
+  values), the finalized `onSelecting`/`onSelectSlot` contract (ISO-string primitives, `SlotSelectionDates`
+  shape, the **`allDay` table**, end-of-day rule, `action` values), pointer + keyboard (the two roving tab
+  stops, key tables, F2/no-keyboard-dblclick), touch (planned, not wired), and the `data-*` DOM model.
+  Points readers to the **Calendar → Selectable** playground. build-storybook green.
+
 ## In progress — selection wiring remaining
-- **Step 6 — `.mdx`** selection doc in storybook-react + `aria-describedby` instructions via messages map.
-  📝 **Must document the finalized `onSelectSlot`/`onSelecting` API contract** — primitives (ISO strings, no `Date`),
-  the `SlotSelectionDates` shape, and the **`allDay` definition** (within-day timed → false; full-day → midnight-EOD;
-  cross-day → allDay + kept instant times; month/day → whole days) + the end-of-day slot rule. Canonical source:
-  [DECISIONS.md](DECISIONS.md) 2026-06-05 "FINAL" entry and `Upgrade_plan_prompt.md` §8.3. Also belongs in `storybook-core` API docs.
+- **Step 6 remaining — `aria-describedby` instructions** on the slot surfaces + event buttons, sourced from
+  the messages map (the `.mdx` itself is done above). Also mirror the API contract into `storybook-core` API
+  docs. Canonical source: [DECISIONS.md](DECISIONS.md) 2026-06-05 "FINAL" + `Upgrade_plan_prompt.md` §8.3.
 - **Open items carried:** time-grid full-width events (`--bc-width:1`) leave no empty slot strip → reserve
   an inline-end gutter (do with 5b/5c); **touch** long-press + `touch-action` (scrollable body); Agenda
   EventButton (entangled `.bc-agenda-row`); double-click-also-selects.
