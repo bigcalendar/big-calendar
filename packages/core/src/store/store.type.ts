@@ -3,7 +3,12 @@ import type { ReadonlySignal, Signal } from '@preact/signals-core'
 import type { Accessors } from '../accessors/accessors.type'
 import type { EventId, ViewKey, VisibleRange } from '../types/calendar.type'
 import type { NavigateDirection } from '../constants/views.constant'
-import type { SelectionMode, SelectionRange, SelectionState } from '../selection/selection.type'
+import type {
+  SelectableMode,
+  SelectionMode,
+  SelectionRange,
+  SelectionState,
+} from '../selection/selection.type'
 import type { CalendarViewModel } from '../views/viewModel.type'
 
 /**
@@ -18,6 +23,12 @@ export interface SelectionApi {
   readonly state: ReadonlySignal<SelectionState>
   /** Live normalized range (slot indices) while selecting, else `null`. */
   readonly range: ReadonlySignal<SelectionRange | null>
+  /**
+   * The active anchor (the day + index space the live selection runs in), or
+   * `null` when idle. Lets the adapter place the highlight overlay in the right
+   * column/row. Cleared on commit/cancel.
+   */
+  readonly anchor: ReadonlySignal<{ mode: SelectionMode; date: string } | null>
   /** Begin a drag at the anchor slot; `date`+`mode` set the translation context. */
   start(args: { slot: number; date: string; mode: SelectionMode }): void
   /** Extend the in-progress drag to a new head slot (pointer move / Shift+Arrow). */
@@ -89,6 +100,11 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    * {@link CalendarStore.step} when an adapter rebuilds slot metrics.
    */
   readonly timeslots: number
+  /**
+   * Resolved slot-selection mode (`config.selectable`, default `false`). Adapters
+   * read it to decide whether to attach selection handlers at all.
+   */
+  readonly selectable: SelectableMode
 
   // --- actions (named-parameter objects, per Appendix A) ---
   /** Move the focus date: PREV/NEXT step by view; TODAY resets to now; DATE jumps. */

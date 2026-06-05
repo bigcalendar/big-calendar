@@ -139,6 +139,26 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
     expect((cells[47] as HTMLElement).dataset.slotIndex).toBe('47')
   })
 
+  it('shows the selection overlay in the anchored column during a drag, and clears it on release', () => {
+    const { container } = renderGrid({ selectable: true })
+    const cells = container.querySelectorAll('.bc-time-slot')
+    // jsdom has no layout → stub elementFromPoint to resolve to the drag head.
+    document.elementFromPoint = () => cells[5] as Element
+
+    fireEvent.pointerDown(cells[2] as HTMLElement, { button: 0, clientX: 0, clientY: 0 })
+    fireEvent.pointerMove(window, { clientX: 0, clientY: 60 })
+
+    const overlay = container.querySelector('.bc-selection') as HTMLElement
+    expect(overlay).not.toBeNull()
+    // slots 2..5 of 48 → top 2/48, height 4/48
+    expect(overlay.style.getPropertyValue('--bc-top')).toBe(String(2 / 48))
+    expect(overlay.style.getPropertyValue('--bc-height')).toBe(String(4 / 48))
+
+    fireEvent.pointerUp(window)
+    expect(container.querySelector('.bc-selection')).toBeNull()
+    delete (document as { elementFromPoint?: unknown }).elementFromPoint
+  })
+
   it('omits the now-line when the column is not today', () => {
     const { container } = renderGrid({ defaultDate: '2026-06-16' })
     const heading16 = localizer.format({

@@ -1,4 +1,5 @@
 import { batch, computed, effect, signal } from '@preact/signals-core'
+import type { ReadonlySignal } from '@preact/signals-core'
 import { resolveAccessors } from '../accessors/accessors.function'
 import { BUILTIN_VIEWS, Views } from '../constants/views.constant'
 import { createSelection } from '../selection/selection.function'
@@ -37,6 +38,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   // on the store so adapters can rebuild slot metrics for the now-indicator.
   const step = config.step ?? 30
   const timeslots = config.timeslots ?? 2
+  const selectable = config.selectable ?? false
 
   const date = signal<string>(config.date ?? getNow())
   const view = signal<ViewKey>(config.view ?? Views.MONTH)
@@ -88,11 +90,13 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   // The FSM works in slot-index space; the store captures the anchor day + mode
   // (set when a drag/click starts) and translates committed indices back to ISO
   // dates for the public callbacks. `'time'` indices are vertical slots within
-  // the anchor day; `'day'` indices map straight into the visible day list.
-  let anchorContext: { mode: SelectionMode; date: string } | null = null
+  // the anchor day; `'day'` indices map straight into the visible day list. The
+  // anchor is a signal so the adapter can place the highlight overlay in the
+  // right column/row while a drag is live.
+  const selectionAnchor = signal<{ mode: SelectionMode; date: string } | null>(null)
 
   const translate = (slotRange: SelectionRange): { start: string; end: string; slots: string[] } => {
-    const ctx = anchorContext
+    const ctx = selectionAnchor.value
     if (ctx == null) {
       // Defensive: an action ran without an anchor; emit a degenerate range.
       return { start: date.value, end: date.value, slots: [date.value] }
@@ -115,7 +119,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   }
 
   const selectionController = createSelection({
-    selectable: config.selectable ?? false,
+    selectable,
     onSelecting: config.onSelecting
       ? (slotRange) => {
           const { start, end } = translate(slotRange)
@@ -166,8 +170,9 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   const selection = {
     state: selectionController.state,
     range: selectionController.range,
+    anchor: selectionAnchor as ReadonlySignal<{ mode: SelectionMode; date: string } | null>,
     start({ slot, date: anchorDate, mode }: { slot: number; date: string; mode: SelectionMode }) {
-      anchorContext = { mode, date: anchorDate }
+      selectionAnchor.value = { mode, date: anchorDate }
       selectionController.start({ slot })
     },
     to({ slot }: { slot: number }) {
@@ -175,17 +180,19 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     },
     complete() {
       selectionController.complete()
+      selectionAnchor.value = null
     },
     click({ slot, date: anchorDate, mode }: { slot: number; date: string; mode: SelectionMode }) {
-      anchorContext = { mode, date: anchorDate }
+      selectionAnchor.value = { mode, date: anchorDate }
       selectionController.click({ slot })
     },
     doubleClick({ slot, date: anchorDate, mode }: { slot: number; date: string; mode: SelectionMode }) {
-      anchorContext = { mode, date: anchorDate }
+      selectionAnchor.value = { mode, date: anchorDate }
       selectionController.doubleClick({ slot })
     },
     cancel() {
       selectionController.cancel()
+      selectionAnchor.value = null
     },
   }
 
@@ -205,6 +212,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     getNow,
     step,
     timeslots,
+    selectable,
 
     navigate({ direction, date: target }) {
       const next = navigateDate({

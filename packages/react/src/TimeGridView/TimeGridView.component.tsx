@@ -13,9 +13,12 @@ import {
   eventBoxStyle,
   nowIndicatorStyle,
   segmentStyle,
+  selectionStyle,
   slotCountStyle,
   slotGroupStyle,
 } from '../internal/geometry.function'
+import { useSignalValue } from '../internal/useSignalValue'
+import { useSlotSelection } from '../internal/useSlotSelection'
 import DefaultTimeAllDayEvent from './components/DefaultTimeAllDayEvent.component'
 import DefaultTimeDayHeading from './components/DefaultTimeDayHeading.component'
 import DefaultTimeEvent from './components/DefaultTimeEvent.component'
@@ -35,6 +38,9 @@ import { useTimeGrid } from './hooks'
 function TimeGridView<TEvent = unknown>() {
   const { store, components, messages } = useCalendarContext<TEvent>()
   const grid = useTimeGrid<TEvent>()
+  const onSlotPointerDown = useSlotSelection('time')
+  const selRange = useSignalValue(store.selection.range)
+  const selAnchor = useSignalValue(store.selection.anchor)
 
   if (grid === null) return null
 
@@ -91,7 +97,7 @@ function TimeGridView<TEvent = unknown>() {
         </div>
       </div>
 
-      <div className="bc-time-body" style={slotCountStyle(grid.slotCount)}>
+      <div className="bc-time-body" style={slotCountStyle(grid.slotCount)} onPointerDown={onSlotPointerDown}>
         <div className="bc-time-gutter">
           {grid.gutter.map((label) => (
             <TimeLabel key={label.key} time={label.time} label={label.label} />
@@ -142,6 +148,15 @@ function TimeGridView<TEvent = unknown>() {
               ))}
               {column.nowTop !== null && (
                 <div className="bc-now-indicator" style={nowIndicatorStyle(column.nowTop)} />
+              )}
+              {selRange !== null && selAnchor?.mode === 'time' && selAnchor.date === column.day && (
+                <div
+                  className="bc-selection"
+                  style={selectionStyle({
+                    top: selRange.start / grid.slotCount,
+                    height: (selRange.end - selRange.start + 1) / grid.slotCount,
+                  })}
+                />
               )}
             </div>
           )
