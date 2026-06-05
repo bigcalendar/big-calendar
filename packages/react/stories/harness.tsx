@@ -1,5 +1,6 @@
 import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
 import type { ReactNode } from 'react'
+import { useState } from 'react'
 import { CalendarProvider } from '../src'
 import type { CalendarProviderProps } from '../src'
 
@@ -66,5 +67,45 @@ export function CalendarStage({ children, height = 800, rows = 'auto 1fr', ...pr
         {children}
       </CalendarProvider>
     </div>
+  )
+}
+
+/**
+ * A {@link CalendarStage} pre-wired for exercising slot/event selection:
+ * `selectable` is on and the selection callbacks (`onSelectSlot`,
+ * `onEventClick`, `onEventDoubleClick`) feed a live read-out below the view so
+ * you can see what each gesture emits without opening the console. Pass the
+ * `<Toolbar/>` + `.bc-calendar` view as children, like {@link CalendarStage}.
+ * Any prop (e.g. `selectable={false}`) can be overridden.
+ */
+export function SelectionDemo({ children, rows = 'auto 1fr auto', ...props }: CalendarStageProps) {
+  const [log, setLog] = useState(
+    'Drag across slots to select a range · click or double-click a slot · click an event.',
+  )
+  return (
+    <CalendarStage
+      rows={rows}
+      selectable
+      onSelectSlot={(selection) => setLog(`onSelectSlot · ${selection.action}\n${JSON.stringify(selection, null, 2)}`)}
+      onEventClick={(event) => setLog(`onEventClick\n${JSON.stringify(event, null, 2)}`)}
+      onEventDoubleClick={(event) => setLog(`onEventDoubleClick\n${JSON.stringify(event, null, 2)}`)}
+      {...props}
+    >
+      {children}
+      <pre
+        aria-label="Last selection event"
+        style={{
+          margin: 0,
+          padding: '0.5rem 0.75rem',
+          borderBlockStart: '1px solid var(--bc-color-border, #d4d4d8)',
+          fontSize: '0.75rem',
+          lineHeight: 1.4,
+          whiteSpace: 'pre-wrap',
+          overflow: 'auto',
+        }}
+      >
+        {log}
+      </pre>
+    </CalendarStage>
   )
 }

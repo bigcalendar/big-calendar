@@ -99,6 +99,27 @@
 
   .bc-week-backgrounds {
     grid-auto-rows: 1fr;
+    /* Empty cell area falls through to the slot hit layer beneath; only the
+       date number (below) re-enables pointer events to keep drilldown working. */
+    pointer-events: none;
+  }
+
+  .bc-date-number {
+    pointer-events: auto;
+  }
+
+  /* Transparent grid of per-day hit targets, one subgrid row under the date
+     cells. The non-overridable base layer for month day selection (pointer +
+     keyboard); date numbers and event segments paint above and stay clickable. */
+  .bc-month-slots {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    display: grid;
+    grid-template-columns: subgrid;
+  }
+
+  .bc-month-slot {
+    min-inline-size: 0;
   }
 
   .bc-date-cell {
@@ -234,6 +255,17 @@
     inset-inline: 0;
     z-index: 2;
     pointer-events: none;
+  }
+
+  /* Month variant: not an absolute box but a full-height grid item spanning the
+     selected day columns of one week row. Overrides the time-grid placement. */
+  .bc-selection-month {
+    position: relative;
+    inset: auto;
+    grid-row: 1;
+    grid-column: var(--bc-seg-left) / span var(--bc-seg-span);
+    block-size: auto;
+    margin: var(--bc-event-gap);
   }
 
   /* ── agenda view ─────────────────────────────────────────────────────── */

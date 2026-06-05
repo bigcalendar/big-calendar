@@ -137,6 +137,64 @@ describe.each(LOCALIZER_CASES)('MonthView [$name]', ({ create }) => {
     expect(screen.getByTestId('custom-more').textContent).toBe('+2 more')
   })
 
+  it('renders a per-day hit cell per visible day, tagged with its date + linear index', () => {
+    // The slot cells are the base layer for pointer/keyboard day selection;
+    // the index is linear across the whole grid (week * 7 + day), matching the
+    // store's `range.days` order.
+    const { container } = renderMonth()
+    const cells = container.querySelectorAll('.bc-month-week .bc-month-slot')
+    // 5 weeks × 7 days
+    expect(cells.length).toBe(35)
+    const first = cells[0] as HTMLElement
+    const days = localizer.visibleDays(focus)
+    expect(first.dataset.date).toBe(days[0])
+    expect(first.dataset.slotIndex).toBe('0')
+    expect((cells[34] as HTMLElement).dataset.slotIndex).toBe('34')
+  })
+
+  it('shows the day-selection band across the dragged columns and clears it on release', () => {
+    const { container } = renderMonth({ selectable: true })
+    const cells = container.querySelectorAll('.bc-month-slot')
+    // jsdom has no layout → stub elementFromPoint to resolve to the drag head
+    // (slot index 4, same first week as the anchor at index 2).
+    document.elementFromPoint = () => cells[4] as Element
+
+    fireEvent.pointerDown(cells[2] as HTMLElement, { button: 0, clientX: 0, clientY: 0 })
+    fireEvent.pointerMove(window, { clientX: 60, clientY: 0 })
+
+    const overlay = container.querySelector('.bc-selection-month') as HTMLElement
+    expect(overlay).not.toBeNull()
+    // days 2..4 of week 0 → columns 3..5 (1-based): left 3, span 3
+    expect(overlay.style.getPropertyValue('--bc-seg-left')).toBe('3')
+    expect(overlay.style.getPropertyValue('--bc-seg-span')).toBe('3')
+
+    fireEvent.pointerUp(window)
+    expect(container.querySelector('.bc-selection-month')).toBeNull()
+    delete (document as { elementFromPoint?: unknown }).elementFromPoint
+  })
+
+  it('emits ISO day bounds on a day click after the double-click window', () => {
+    vi.useFakeTimers()
+    try {
+      const onSelectSlot = vi.fn()
+      const { container } = renderMonth({ selectable: true, onSelectSlot })
+      const cells = container.querySelectorAll('.bc-month-slot')
+      const days = localizer.visibleDays(focus)
+
+      fireEvent.pointerDown(cells[3] as HTMLElement, { button: 0, clientX: 0, clientY: 0 })
+      fireEvent.pointerUp(window)
+      vi.advanceTimersByTime(250)
+
+      expect(onSelectSlot).toHaveBeenCalledTimes(1)
+      const arg = onSelectSlot.mock.calls[0]![0] as { action: string; start: string; slots: string[] }
+      expect(arg.action).toBe('click')
+      expect(arg.start).toBe(days[3])
+      expect(arg.slots).toEqual([days[3]])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('renders an empty grid without crashing when no days are visible', () => {
     // Not a fake localizer: delegate every call to the real one and force only
     // the structural edge — an empty visibleDays the localizer never produces —

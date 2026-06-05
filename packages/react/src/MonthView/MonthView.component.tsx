@@ -8,6 +8,8 @@ import type {
 } from '../components.type'
 import EventButton from '../internal/EventButton.component'
 import { monthGridStyle, segmentStyle } from '../internal/geometry.function'
+import { useSignalValue } from '../internal/useSignalValue'
+import { useSlotSelection } from '../internal/useSlotSelection'
 import DefaultMonthDate from './components/DefaultMonthDate.component'
 import DefaultMonthEvent from './components/DefaultMonthEvent.component'
 import DefaultMonthShowMore from './components/DefaultMonthShowMore.component'
@@ -25,6 +27,9 @@ import { useMonthWeeks } from './hooks'
 function MonthView<TEvent = unknown>() {
   const { store, components, messages } = useCalendarContext<TEvent>()
   const grid = useMonthWeeks<TEvent>()
+  const onSlotPointerDown = useSlotSelection('day')
+  const selRange = useSignalValue(store.selection.range)
+  const selAnchor = useSignalValue(store.selection.anchor)
 
   if (grid === null) return null
 
@@ -42,10 +47,44 @@ function MonthView<TEvent = unknown>() {
           <Weekday key={weekday.day} day={weekday.day} long={weekday.long} short={weekday.short} />
         ))}
       </div>
-      <div className="bc-month-grid" style={monthGridStyle(grid.weeks.length)}>
-        {grid.weeks.map((week) => (
-          <div key={week.key} className="bc-month-week">
-            <div className="bc-week-backgrounds">
+      <div
+        className="bc-month-grid"
+        style={monthGridStyle(grid.weeks.length)}
+        onPointerDown={onSlotPointerDown}
+      >
+        {grid.weeks.map((week, weekIndex) => {
+          // Day selection works in linear day-index space (matching the store's
+          // `range.days`): week `w`, column `d` → index `w*7 + d`. Clip the live
+          // selection range to this week so a multi-week drag paints one band per row.
+          const base = weekIndex * 7
+          const active = selRange !== null && selAnchor?.mode === 'day'
+          const segStart = active ? Math.max(selRange.start, base) : 0
+          const segEnd = active ? Math.min(selRange.end, base + 6) : -1
+          const hasSelection = active && segStart <= segEnd
+          return (
+            <div key={week.key} className="bc-month-week">
+              {/* Non-overridable per-day hit targets for slot selection. */}
+              <div className="bc-month-slots">
+                {week.days.map((cell, dayIndex) => (
+                  <div
+                    key={cell.day}
+                    className="bc-month-slot"
+                    data-date={cell.day}
+                    data-slot-index={base + dayIndex}
+                  />
+                ))}
+              </div>
+              {hasSelection && (
+                <div
+                  className="bc-selection bc-selection-month"
+                  style={segmentStyle({
+                    left: segStart - base + 1,
+                    span: segEnd - segStart + 1,
+                    row: 1,
+                  })}
+                />
+              )}
+              <div className="bc-week-backgrounds">
               {week.days.map((cell) => (
                 <DateCell
                   key={cell.day}
@@ -86,8 +125,9 @@ function MonthView<TEvent = unknown>() {
                 ) : null,
               )}
             </div>
-          </div>
-        ))}
+            </div>
+          )
+        })}
       </div>
     </div>
   )

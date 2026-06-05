@@ -1,7 +1,7 @@
 import { Views } from '@big-calendar/core'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MonthView, Toolbar } from '../src'
-import { CalendarStage } from './harness'
+import { CalendarStage, SelectionDemo } from './harness'
 
 const meta: Meta<typeof MonthView> = {
   title: 'React/Views/MonthView',
@@ -27,5 +27,22 @@ export const Default: Story = {
         <MonthView />
       </div>
     </CalendarStage>
+  ),
+}
+
+/**
+ * `selectable` on, day mode. Drag across day cells to select a range of days
+ * (the highlight bands per week row), or click / double-click a single day. The
+ * emitted payload (ISO `start`/`end`/`slots` + `action`) shows below the grid;
+ * clicking the date number still drills into that day, and events stay clickable.
+ */
+export const Selectable: Story = {
+  render: () => (
+    <SelectionDemo defaultView={Views.MONTH}>
+      <Toolbar />
+      <div className="bc-calendar">
+        <MonthView />
+      </div>
+    </SelectionDemo>
   ),
 }
