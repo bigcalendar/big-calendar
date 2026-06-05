@@ -740,17 +740,29 @@ First implementation step of the §8.1/§8.2 selection plan. **Core only this co
   props (CalendarProvider→context, stable identities, react-only). Cutter: **minimal button reset** +
   **aria-selected**. +1 EventButton test file (7 tests). react **90 tests**; all gates + storybook green.
 
-## In progress
+### Phase 4 — Task 4j: selection wiring — step 5a, time-grid pointer (Cutter, 2026-06-04) ✓ (commit 39e4688, pushed)
 
-- **Selection wiring — step 4 (the big one):** React pointer + keyboard slot-selection adapter driving
-  `store.selection` (pointerdown/move/up on the slot layer → start/to/complete; 250ms click/dblclick;
-  long-press touch); roving-tabindex keyboard (Arrow/Shift+Arrow/Enter-Space/Esc) over slot cells +
-  the events group; **month/all-day `data-date` cells** (resolve the overridable-cell question);
-  `.bc-selection` overlay (time vertical box; month per-week-row box). Then step 5: selection `.mdx`
-  in storybook-react + `aria-describedby` instructions via the messages map.
-- **Open item carried in:** time-grid events fill full column width (`--bc-width:1`) → reserve an
-  inline-end gutter so an empty slot strip stays selectable (resolve in step 4).
-- **Also deferred:** Agenda EventButton (entangled `.bc-agenda-row` layout); double-click-also-selects.
+- **`useSlotSelection(mode)`** (react internal hook): pointer drag/click/dblclick from `[data-slot-index]`
+  hit cells → `store.selection`; 4px drag threshold, 250ms tap-debounce, defers over `[data-bc-event]`,
+  ignores non-primary / disabled; window-tracked move/up + unmount cleanup; `document.elementFromPoint`
+  for the move target. **TimeGridView** wires it to `.bc-time-body` + renders `.bc-selection` in the
+  anchored column during a drag. Store adds `selection.anchor` signal + `store.selectable`.
+- Tests: new `useSlotSelection.test.tsx` (7: drag/click/dblclick/over-event/miss/right-click/disabled)
+  + TimeGridView overlay test. react **97 tests**, core 144; all gates + storybook green. (`elementFromPoint`
+  is stubbed in tests — jsdom has no layout.)
+
+## In progress — selection wiring remaining
+
+- **Step 5b — month/all-day:** dedicated non-overridable hit layer (`.bc-month-slots` + all-day per-day
+  cells, `data-date` + linear index), day-mode `useSlotSelection('day')`, month per-week-row `.bc-selection`
+  overlay (needs a month overlay CSS variant: `--bc-seg-left/span/row`, currently `.bc-selection` is
+  time-body absolute box only).
+- **Step 5c — keyboard:** two roving-tabindex groups (slot grid: Arrow/Shift+Arrow/Enter-Space/Esc;
+  events: Arrow + Enter/Space + F2). Largest remaining piece.
+- **Step 6 — `.mdx`** selection doc in storybook-react + `aria-describedby` instructions via messages map.
+- **Open items carried:** time-grid full-width events (`--bc-width:1`) leave no empty slot strip → reserve
+  an inline-end gutter (do with 5b/5c); **touch** long-press + `touch-action` (scrollable body); Agenda
+  EventButton (entangled `.bc-agenda-row`); double-click-also-selects.
 
 ## Phase 2 status
 
