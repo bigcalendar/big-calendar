@@ -2,7 +2,7 @@ import { Views } from '@big-calendar/core'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Calendar } from '../src'
 import type { DemoEvent } from './harness'
-import { CalendarStage } from './harness'
+import { CalendarStage, SelectionDemo } from './harness'
 
 /**
  * Five events crammed onto the focus day (Jun 15). With `weekEventLimit={2}` the
@@ -57,6 +57,37 @@ export const Agenda: Story = {
     <CalendarStage defaultView={Views.AGENDA}>
       <Calendar />
     </CalendarStage>
+  ),
+}
+
+/**
+ * Interactive selection playground. Use the **Controls** panel to toggle
+ * `selectable` and switch the active `view`. With `selectable` on: in the time
+ * views drag down a column / click / double-click a slot; in the month view drag
+ * across day cells / click a day; in any view click an event. Each gesture's
+ * payload (`onSelectSlot` with ISO `start`/`end`/`slots` + `action`, or
+ * `onEventClick`/`onEventDoubleClick`) shows in the read-out below the calendar.
+ */
+export const Selectable: StoryObj<{
+  selectable: boolean
+  view: (typeof Views)[keyof typeof Views]
+}> = {
+  args: { selectable: true, view: Views.MONTH },
+  argTypes: {
+    selectable: {
+      control: 'boolean',
+      description: 'Enable slot/day selection (drag, click, double-click).',
+    },
+    view: {
+      control: 'select',
+      options: [Views.MONTH, Views.WEEK, Views.WORK_WEEK, Views.DAY, Views.AGENDA],
+      description: 'Active view to open on.',
+    },
+  },
+  render: ({ selectable, view }) => (
+    <SelectionDemo defaultView={view} selectable={selectable}>
+      <Calendar />
+    </SelectionDemo>
   ),
 }
 
