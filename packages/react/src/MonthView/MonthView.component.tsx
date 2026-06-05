@@ -74,16 +74,6 @@ function MonthView<TEvent = unknown>() {
                   />
                 ))}
               </div>
-              {hasSelection && (
-                <div
-                  className="bc-selection bc-selection-month"
-                  style={segmentStyle({
-                    left: segStart - base + 1,
-                    span: segEnd - segStart + 1,
-                    row: 1,
-                  })}
-                />
-              )}
               <div className="bc-week-backgrounds">
               {week.days.map((cell) => (
                 <DateCell
@@ -96,6 +86,16 @@ function MonthView<TEvent = unknown>() {
                 />
               ))}
             </div>
+            {hasSelection && (
+              <div
+                className="bc-selection bc-selection-month"
+                style={segmentStyle({
+                  left: segStart - base + 1,
+                  span: segEnd - segStart + 1,
+                  row: 1,
+                })}
+              />
+            )}
             <div className="bc-week-events">
               {week.segments.map((segment) => (
                 <EventButton

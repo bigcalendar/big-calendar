@@ -35,8 +35,10 @@
 
   /* ── color: now indicator + selection ──────────────────────────────── */
   --bc-color-now: color-mix(in oklab, red 75%, CanvasText);
-  --bc-color-selection-bg: color-mix(in oklab, AccentColor 25%, Canvas);
-  --bc-color-selection-border: var(--bc-color-accent);
+  /* Periwinkle (matches the event fill) at ~50% opacity so the slot/hour grid
+     shows through the highlight while a selection is being dragged. */
+  --bc-color-selection-bg: color-mix(in srgb, var(--bc-color-event-bg) 50%, transparent);
+  --bc-color-selection-border: color-mix(in srgb, var(--bc-color-event-bg) 70%, CanvasText);
 
   /* ── color: focus ──────────────────────────────────────────────────── */
   --bc-color-focus-ring: AccentColor;
