@@ -9,6 +9,7 @@ import type {
 } from '../components.type'
 import EventButton from '../internal/EventButton.component'
 import { monthGridStyle, segmentStyle } from '../internal/geometry.function'
+import { useEventRoving } from '../internal/useEventRoving'
 import type { Direction } from '../internal/useRovingSelection'
 import { useRovingSelection } from '../internal/useRovingSelection'
 import { useSignalValue } from '../internal/useSignalValue'
@@ -53,6 +54,7 @@ function MonthView<TEvent = unknown>() {
     [cellCount],
   )
   const roving = useRovingSelection({ mode: 'day', count: cellCount, neighbor })
+  const eventRoving = useEventRoving()
 
   if (grid === null) return null
 
@@ -64,7 +66,12 @@ function MonthView<TEvent = unknown>() {
     components.month?.showMore ?? DefaultMonthShowMore
 
   return (
-    <div className="bc-month">
+    <div
+      className="bc-month"
+      ref={eventRoving.containerRef}
+      onKeyDown={eventRoving.onKeyDown}
+      onFocusCapture={eventRoving.onFocusCapture}
+    >
       <div className="bc-month-header">
         {grid.weekdays.map((weekday) => (
           <Weekday key={weekday.day} day={weekday.day} long={weekday.long} short={weekday.short} />

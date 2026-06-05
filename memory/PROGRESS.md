@@ -817,10 +817,26 @@ First implementation step of the §8.1/§8.2 selection plan. **Core only this co
 - **Deferred to 5c-2:** the **events roving group** (event buttons are still individual tab stops; spec wants
   one tab stop with Arrow moving among them). Full ARIA grid roles + Home/End/PageUp-Down nav stay in §7.6.
 
-## In progress — selection wiring remaining
+### Phase 4 — Task 4j: selection wiring — step 5c-2, events roving group (Cutter, 2026-06-05) ✓ (this commit)
 
-- **Step 5c-2 — events roving group:** make the view's event buttons a single tab stop (Arrow moves among
-  them; Enter/Space/F2 already in EventButton). Two bounded tab stops total per §8.2.
+- **`src/internal/useEventRoving.ts`** (new) — the **second** bounded tab stop (§8.2): the view's event
+  buttons (`[data-bc-event]`) become one tab stop, Arrow moves focus among them (Enter/Space/F2 stay on the
+  button). Event buttons are scattered across per-week / per-column / all-day containers, so the hook attaches
+  at the **view root** and owns the buttons' `tabIndex` **imperatively** — after each render it walks the
+  `[data-bc-event]` buttons in DOM order and makes exactly one tabbable (the focused one, else the first).
+  `EventButton` renders no `tabIndex`, so React never fights these writes. Slot-cell arrows/focus bubbling to
+  the root are ignored (no `[data-bc-event]` ancestor); the slot-grid roving's own guards likewise ignore
+  event-button keys, so the two groups never cross-fire.
+- **Wired into MonthView (`.bc-month`) and TimeGridView (`.bc-time-grid`) roots** (ref/onKeyDown/onFocusCapture).
+  Agenda events aren't `EventButton`s yet (deferred), so no group there.
+- **Tests:** new `useEventRoving.test.tsx` (7) + 1 MonthView end-to-end (real event buttons → one tab stop +
+  arrow nav). react **122**, core 146. Coverage: hook 87.5% br / 100% fn; MonthView 100/100, TimeGridView
+  97.18/100. typecheck/lint/build + build-storybook green.
+
+**Step 5c (keyboard roving) COMPLETE** — slot grid (5c-1) + events group (5c-2). Two bounded tab stops, full
+Arrow/Shift+Arrow/Enter-Space/Esc + F2 model per §8.1/§8.2.
+
+## In progress — selection wiring remaining
 - **Step 6 — `.mdx`** selection doc in storybook-react + `aria-describedby` instructions via messages map.
   📝 **Must document the finalized `onSelectSlot`/`onSelecting` API contract** — primitives (ISO strings, no `Date`),
   the `SlotSelectionDates` shape, and the **`allDay` definition** (within-day timed → false; full-day → midnight-EOD;

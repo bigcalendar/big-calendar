@@ -20,6 +20,7 @@ import {
 } from '../internal/geometry.function'
 import type { Direction } from '../internal/useRovingSelection'
 import { useRovingSelection } from '../internal/useRovingSelection'
+import { useEventRoving } from '../internal/useEventRoving'
 import { useSignalValue } from '../internal/useSignalValue'
 import { useSlotSelection } from '../internal/useSlotSelection'
 import DefaultTimeAllDayEvent from './components/DefaultTimeAllDayEvent.component'
@@ -88,6 +89,7 @@ function TimeGridView<TEvent = unknown>() {
     count: dayCountSafe,
     neighbor: allDayNeighbor,
   })
+  const eventRoving = useEventRoving()
 
   if (grid === null) return null
 
@@ -144,6 +146,9 @@ function TimeGridView<TEvent = unknown>() {
     <div
       className="bc-time-grid"
       style={{ ...dayCountStyle(grid.headings.length), ...slotGroupStyle(store.timeslots) }}
+      ref={eventRoving.containerRef}
+      onKeyDown={eventRoving.onKeyDown}
+      onFocusCapture={eventRoving.onFocusCapture}
     >
       <div className="bc-time-header">
         {/* Empty cell over the gutter track so day headings align with the body columns. */}

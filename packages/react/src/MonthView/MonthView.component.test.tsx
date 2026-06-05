@@ -217,6 +217,21 @@ describe.each(LOCALIZER_CASES)('MonthView [$name]', ({ create }) => {
     expect(arg.slots).toHaveLength(2) // days 8..9
   })
 
+  it('makes the event buttons one tab stop with arrow navigation', () => {
+    const { container } = renderMonth() // three events on Jun 15 → three buttons
+    const btns = container.querySelectorAll('[data-bc-event]')
+    expect(btns.length).toBeGreaterThanOrEqual(2)
+    // Exactly one event button is tabbable.
+    expect((btns[0] as HTMLElement).tabIndex).toBe(0)
+    expect((btns[1] as HTMLElement).tabIndex).toBe(-1)
+    // Arrow moves focus + the tab stop to the next event button.
+    act(() => (btns[0] as HTMLElement).focus())
+    fireEvent.keyDown(btns[0] as HTMLElement, { key: 'ArrowRight' })
+    expect(document.activeElement).toBe(btns[1])
+    expect((btns[1] as HTMLElement).tabIndex).toBe(0)
+    expect((btns[0] as HTMLElement).tabIndex).toBe(-1)
+  })
+
   it('emits ISO day bounds on a day click after the double-click window', () => {
     vi.useFakeTimers()
     try {
