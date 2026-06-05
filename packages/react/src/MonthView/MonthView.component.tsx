@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react'
+import { useCallback } from 'react'
 import { useCalendarContext } from '../CalendarProvider'
 import type {
   MonthDateProps,
@@ -8,6 +9,8 @@ import type {
 } from '../components.type'
 import EventButton from '../internal/EventButton.component'
 import { monthGridStyle, segmentStyle } from '../internal/geometry.function'
+import type { Direction } from '../internal/useRovingSelection'
+import { useRovingSelection } from '../internal/useRovingSelection'
 import { useSignalValue } from '../internal/useSignalValue'
 import { useSlotSelection } from '../internal/useSlotSelection'
 import DefaultMonthDate from './components/DefaultMonthDate.component'
@@ -31,6 +34,26 @@ function MonthView<TEvent = unknown>() {
   const selRange = useSignalValue(store.selection.range)
   const selAnchor = useSignalValue(store.selection.anchor)
 
+  // Keyboard roving over the day cells (one tab stop): left/right step a day,
+  // up/down step a week, across the linear day grid (== range.days order).
+  const cellCount = grid ? grid.weeks.length * 7 : 0
+  const neighbor = useCallback(
+    (index: number, dir: Direction): number | null => {
+      switch (dir) {
+        case 'left':
+          return index > 0 ? index - 1 : null
+        case 'right':
+          return index + 1 < cellCount ? index + 1 : null
+        case 'up':
+          return index - 7 >= 0 ? index - 7 : null
+        case 'down':
+          return index + 7 < cellCount ? index + 7 : null
+      }
+    },
+    [cellCount],
+  )
+  const roving = useRovingSelection({ mode: 'day', count: cellCount, neighbor })
+
   if (grid === null) return null
 
   const Weekday: ComponentType<MonthWeekdayProps> = components.month?.weekday ?? DefaultMonthWeekday
@@ -50,7 +73,10 @@ function MonthView<TEvent = unknown>() {
       <div
         className="bc-month-grid"
         style={monthGridStyle(grid.weeks.length)}
+        ref={roving.containerRef}
         onPointerDown={onSlotPointerDown}
+        onKeyDown={roving.onKeyDown}
+        onFocusCapture={roving.onFocusCapture}
       >
         {grid.weeks.map((week, weekIndex) => {
           // Day selection works in linear day-index space (matching the store's
@@ -71,6 +97,7 @@ function MonthView<TEvent = unknown>() {
                     className="bc-month-slot"
                     data-date={cell.day}
                     data-slot-index={base + dayIndex}
+                    tabIndex={roving.cellTabIndex(base + dayIndex)}
                   />
                 ))}
               </div>

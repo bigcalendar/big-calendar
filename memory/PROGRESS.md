@@ -794,10 +794,33 @@ First implementation step of the §8.1/§8.2 selection plan. **Core only this co
   Horizontal across-day dragging is the expected gesture; cross-surface promotion not handled. The all-day row
   "+N more" remains single/row-level (unchanged from 4i-follow-up).
 
+### Phase 4 — Task 4j: selection wiring — step 5c-1, slot-grid keyboard roving (Cutter, 2026-06-05) ✓ (this commit)
+
+- **`src/internal/useRovingSelection.ts`** (new) — keyboard roving-tabindex + selection for one slot
+  surface (§8.1). One tab stop per group: the active cell has `tabIndex={0}`, the rest `-1`; **Arrow**
+  moves focus via a view-supplied `neighbor(index,dir)` map (each view owns its geometry — time columns
+  vertical, month/all-day rows horizontal), **Shift+Arrow** extends (`start()` then `to()`), **Enter/Space**
+  commit (`complete()` while selecting, else `click()`), **Esc** cancels. The **focused cell is the source
+  of truth** (reads `data-slot-index`/`data-date` off the DOM, not lagging React state); selection-active is
+  read from the store each keystroke. Ignores keys from event buttons on the same surface (they own Enter/
+  Space/F2) and no-ops when `selectable === false`.
+- **Wired into all three slot surfaces:** MonthView (`.bc-month-grid`, day grid: ±1 day / ±7 week),
+  TimeGridView time body (`.bc-time-body`, global index: ±1 slot / ±slotCount day) and all-day row
+  (`.bc-allday-row`, day row: ±1 day). Each slot cell gained `tabIndex={roving.cellTabIndex(index)}`; the
+  containers got `ref`/`onKeyDown`/`onFocusCapture` (the tab stop follows pointer/Tab focus). No CSS change
+  (cells inherit the reset `:focus-visible` ring).
+- **Tests:** new `useRovingSelection.test.tsx` (9 — roving tab stop + arrows, edges, Shift+Arrow→Enter
+  commit, Space click, Esc cancel, event-button keys ignored, disabled, unhandled keys, empty grid) + 1
+  MonthView + 2 TimeGridView keyboard tests (nav over every direction incl. edges, keyboard commit). react
+  **114** (all pass), core 146. Coverage: hook 87.5% br / 100% fn, MonthView 100/100, TimeGridView 97.18/100.
+  typecheck/lint/build + build-storybook green.
+- **Deferred to 5c-2:** the **events roving group** (event buttons are still individual tab stops; spec wants
+  one tab stop with Arrow moving among them). Full ARIA grid roles + Home/End/PageUp-Down nav stay in §7.6.
+
 ## In progress — selection wiring remaining
 
-- **Step 5c — keyboard:** two roving-tabindex groups (slot grid: Arrow/Shift+Arrow/Enter-Space/Esc;
-  events: Arrow + Enter/Space + F2). Largest remaining piece.
+- **Step 5c-2 — events roving group:** make the view's event buttons a single tab stop (Arrow moves among
+  them; Enter/Space/F2 already in EventButton). Two bounded tab stops total per §8.2.
 - **Step 6 — `.mdx`** selection doc in storybook-react + `aria-describedby` instructions via messages map.
   📝 **Must document the finalized `onSelectSlot`/`onSelecting` API contract** — primitives (ISO strings, no `Date`),
   the `SlotSelectionDates` shape, and the **`allDay` definition** (within-day timed → false; full-day → midnight-EOD;

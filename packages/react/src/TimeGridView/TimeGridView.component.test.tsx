@@ -1,5 +1,5 @@
 import { Views } from '@big-calendar/core'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { CalendarProvider } from '../CalendarProvider'
 import type { CalendarProviderProps } from '../CalendarProvider'
@@ -217,6 +217,78 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
     expect(arg.allDay).toBe(true)
     expect(arg.slots).toHaveLength(3)
     delete (document as { elementFromPoint?: unknown }).elementFromPoint
+  })
+
+  it('roves time-slot focus with the arrows and extends + commits a timed range with the keyboard', () => {
+    const onSelectSlot = vi.fn()
+    const { container } = renderGrid({ defaultView: Views.WEEK, selectable: true, onSelectSlot })
+    const cells = container.querySelectorAll('.bc-time-slot') // 7 days × 48 slots
+    const focusCell = (el: Element) => act(() => (el as HTMLElement).focus())
+    expect((cells[0] as HTMLElement).tabIndex).toBe(0)
+
+    // Interior: down/up step a slot, right/left step a day column (±48).
+    focusCell(cells[58]!)
+    fireEvent.keyDown(cells[58] as HTMLElement, { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(cells[59])
+    fireEvent.keyDown(cells[59] as HTMLElement, { key: 'ArrowUp' })
+    expect(document.activeElement).toBe(cells[58])
+    fireEvent.keyDown(cells[58] as HTMLElement, { key: 'ArrowRight' })
+    expect(document.activeElement).toBe(cells[106])
+    fireEvent.keyDown(cells[106] as HTMLElement, { key: 'ArrowLeft' })
+    expect(document.activeElement).toBe(cells[58])
+
+    // Edges resolve to no neighbor.
+    focusCell(cells[0]!)
+    fireEvent.keyDown(cells[0] as HTMLElement, { key: 'ArrowUp' }) // top slot
+    fireEvent.keyDown(cells[0] as HTMLElement, { key: 'ArrowLeft' }) // first day
+    expect(document.activeElement).toBe(cells[0])
+    focusCell(cells[47]!)
+    fireEvent.keyDown(cells[47] as HTMLElement, { key: 'ArrowDown' }) // bottom slot
+    expect(document.activeElement).toBe(cells[47])
+    focusCell(cells[335]!)
+    fireEvent.keyDown(cells[335] as HTMLElement, { key: 'ArrowRight' }) // last day
+    expect(document.activeElement).toBe(cells[335])
+
+    // Shift+Arrow extends within the day; Enter commits a timed (not all-day) range.
+    focusCell(cells[58]!)
+    fireEvent.keyDown(cells[58] as HTMLElement, { key: 'ArrowDown', shiftKey: true })
+    fireEvent.keyDown(cells[59] as HTMLElement, { key: 'Enter' })
+    expect(onSelectSlot).toHaveBeenCalledTimes(1)
+    const arg = onSelectSlot.mock.calls[0]![0] as { action: string; allDay: boolean; slots: string[] }
+    expect(arg.action).toBe('select')
+    expect(arg.allDay).toBe(false)
+    expect(arg.slots).toHaveLength(2)
+  })
+
+  it('roves all-day focus with left/right and commits a whole-day range with the keyboard', () => {
+    const onSelectSlot = vi.fn()
+    const { container } = renderGrid({ defaultView: Views.WEEK, selectable: true, onSelectSlot })
+    const cells = container.querySelectorAll('.bc-allday-slot')
+    const focusCell = (el: Element) => act(() => (el as HTMLElement).focus())
+    expect(cells.length).toBe(7)
+
+    focusCell(cells[0]!)
+    fireEvent.keyDown(cells[0] as HTMLElement, { key: 'ArrowRight' })
+    expect(document.activeElement).toBe(cells[1])
+    fireEvent.keyDown(cells[1] as HTMLElement, { key: 'ArrowLeft' })
+    expect(document.activeElement).toBe(cells[0])
+    // No vertical movement in the single-row all-day strip, and the ends have no
+    // horizontal neighbor.
+    fireEvent.keyDown(cells[0] as HTMLElement, { key: 'ArrowDown' })
+    fireEvent.keyDown(cells[0] as HTMLElement, { key: 'ArrowLeft' })
+    expect(document.activeElement).toBe(cells[0])
+    focusCell(cells[6]!)
+    fireEvent.keyDown(cells[6] as HTMLElement, { key: 'ArrowRight' })
+    expect(document.activeElement).toBe(cells[6])
+
+    focusCell(cells[0]!)
+    fireEvent.keyDown(cells[0] as HTMLElement, { key: 'ArrowRight', shiftKey: true })
+    fireEvent.keyDown(cells[1] as HTMLElement, { key: 'Enter' })
+    expect(onSelectSlot).toHaveBeenCalledTimes(1)
+    const arg = onSelectSlot.mock.calls[0]![0] as { action: string; allDay: boolean; slots: string[] }
+    expect(arg.action).toBe('select')
+    expect(arg.allDay).toBe(true)
+    expect(arg.slots).toHaveLength(2)
   })
 
   it('omits the now-line when the column is not today', () => {

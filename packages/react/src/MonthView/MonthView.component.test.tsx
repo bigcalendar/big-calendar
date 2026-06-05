@@ -1,5 +1,5 @@
 import { Views } from '@big-calendar/core'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { CalendarProvider } from '../CalendarProvider'
 import type { CalendarProviderProps } from '../CalendarProvider'
@@ -171,6 +171,50 @@ describe.each(LOCALIZER_CASES)('MonthView [$name]', ({ create }) => {
     fireEvent.pointerUp(window)
     expect(container.querySelector('.bc-selection-month')).toBeNull()
     delete (document as { elementFromPoint?: unknown }).elementFromPoint
+  })
+
+  it('roves day-cell focus with the arrows and extends + commits with the keyboard', () => {
+    const onSelectSlot = vi.fn()
+    const { container } = renderMonth({ selectable: true, onSelectSlot })
+    const cells = container.querySelectorAll('.bc-month-slot')
+    const focusCell = (el: Element) => act(() => (el as HTMLElement).focus())
+    // One tab stop: the first cell is focusable, the rest are -1.
+    expect((cells[0] as HTMLElement).tabIndex).toBe(0)
+    expect((cells[1] as HTMLElement).tabIndex).toBe(-1)
+
+    // Edges return no neighbor (top row has no up, first column no left).
+    focusCell(cells[0]!)
+    fireEvent.keyDown(cells[0] as HTMLElement, { key: 'ArrowUp' })
+    fireEvent.keyDown(cells[0] as HTMLElement, { key: 'ArrowLeft' })
+    expect(document.activeElement).toBe(cells[0])
+    // ...and the last cell has no right/down neighbor.
+    focusCell(cells[34]!)
+    fireEvent.keyDown(cells[34] as HTMLElement, { key: 'ArrowRight' })
+    fireEvent.keyDown(cells[34] as HTMLElement, { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(cells[34])
+
+    // Every interior direction resolves (right/left a day, down/up a week).
+    focusCell(cells[8]!)
+    fireEvent.keyDown(cells[8] as HTMLElement, { key: 'ArrowRight' })
+    expect(document.activeElement).toBe(cells[9])
+    fireEvent.keyDown(cells[9] as HTMLElement, { key: 'ArrowLeft' })
+    expect(document.activeElement).toBe(cells[8])
+    fireEvent.keyDown(cells[8] as HTMLElement, { key: 'ArrowUp' })
+    expect(document.activeElement).toBe(cells[1])
+    fireEvent.keyDown(cells[1] as HTMLElement, { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(cells[8])
+    // The tab stop follows focus.
+    expect((cells[8] as HTMLElement).tabIndex).toBe(0)
+    expect((cells[0] as HTMLElement).tabIndex).toBe(-1)
+
+    // Shift+Arrow extends the selection; Enter commits it as whole days.
+    fireEvent.keyDown(cells[8] as HTMLElement, { key: 'ArrowRight', shiftKey: true })
+    fireEvent.keyDown(cells[9] as HTMLElement, { key: 'Enter' })
+    expect(onSelectSlot).toHaveBeenCalledTimes(1)
+    const arg = onSelectSlot.mock.calls[0]![0] as { action: string; allDay: boolean; slots: string[] }
+    expect(arg.action).toBe('select')
+    expect(arg.allDay).toBe(true)
+    expect(arg.slots).toHaveLength(2) // days 8..9
   })
 
   it('emits ISO day bounds on a day click after the double-click window', () => {

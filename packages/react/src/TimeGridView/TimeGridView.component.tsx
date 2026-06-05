@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react'
+import { useCallback } from 'react'
 import { useCalendarContext } from '../CalendarProvider'
 import type {
   TimeAllDayEventProps,
@@ -17,6 +18,8 @@ import {
   slotCountStyle,
   slotGroupStyle,
 } from '../internal/geometry.function'
+import type { Direction } from '../internal/useRovingSelection'
+import { useRovingSelection } from '../internal/useRovingSelection'
 import { useSignalValue } from '../internal/useSignalValue'
 import { useSlotSelection } from '../internal/useSlotSelection'
 import DefaultTimeAllDayEvent from './components/DefaultTimeAllDayEvent.component'
@@ -42,6 +45,49 @@ function TimeGridView<TEvent = unknown>() {
   const onAllDayPointerDown = useSlotSelection('day')
   const selRange = useSignalValue(store.selection.range)
   const selAnchor = useSignalValue(store.selection.anchor)
+
+  // Keyboard roving over the two slot groups (one tab stop each). Time body:
+  // up/down step a slot within the day, left/right step a day column (global
+  // index = colIndex*slotCount + slot). All-day row: left/right step a day.
+  const slotCountSafe = grid?.slotCount ?? 0
+  const dayCountSafe = grid?.columns.length ?? 0
+  const timeCount = dayCountSafe * slotCountSafe
+  const timeNeighbor = useCallback(
+    (index: number, dir: Direction): number | null => {
+      if (slotCountSafe <= 0) return null
+      const slot = index % slotCountSafe
+      switch (dir) {
+        case 'up':
+          return slot > 0 ? index - 1 : null
+        case 'down':
+          return slot < slotCountSafe - 1 ? index + 1 : null
+        case 'left':
+          return index - slotCountSafe >= 0 ? index - slotCountSafe : null
+        case 'right':
+          return index + slotCountSafe < timeCount ? index + slotCountSafe : null
+      }
+    },
+    [slotCountSafe, timeCount],
+  )
+  const timeRoving = useRovingSelection({
+    mode: 'time',
+    count: timeCount,
+    slotCount: slotCountSafe,
+    neighbor: timeNeighbor,
+  })
+  const allDayNeighbor = useCallback(
+    (index: number, dir: Direction): number | null => {
+      if (dir === 'left') return index > 0 ? index - 1 : null
+      if (dir === 'right') return index + 1 < dayCountSafe ? index + 1 : null
+      return null
+    },
+    [dayCountSafe],
+  )
+  const allDayRoving = useRovingSelection({
+    mode: 'day',
+    count: dayCountSafe,
+    neighbor: allDayNeighbor,
+  })
 
   if (grid === null) return null
 
@@ -113,7 +159,13 @@ function TimeGridView<TEvent = unknown>() {
         ))}
       </div>
 
-      <div className="bc-allday-row" onPointerDown={onAllDayPointerDown}>
+      <div
+        className="bc-allday-row"
+        ref={allDayRoving.containerRef}
+        onPointerDown={onAllDayPointerDown}
+        onKeyDown={allDayRoving.onKeyDown}
+        onFocusCapture={allDayRoving.onFocusCapture}
+      >
         <div className="bc-allday-label">{messages.allDay}</div>
         {/* Non-overridable per-day hit targets for all-day (day-mode) selection,
             one per visible day column. The slot index is the linear day index
@@ -126,6 +178,7 @@ function TimeGridView<TEvent = unknown>() {
               className="bc-allday-slot"
               data-date={column.day}
               data-slot-index={colIndex}
+              tabIndex={allDayRoving.cellTabIndex(colIndex)}
             />
           ))}
         </div>
@@ -159,7 +212,14 @@ function TimeGridView<TEvent = unknown>() {
         </div>
       </div>
 
-      <div className="bc-time-body" style={slotCountStyle(grid.slotCount)} onPointerDown={onSlotPointerDown}>
+      <div
+        className="bc-time-body"
+        style={slotCountStyle(grid.slotCount)}
+        ref={timeRoving.containerRef}
+        onPointerDown={onSlotPointerDown}
+        onKeyDown={timeRoving.onKeyDown}
+        onFocusCapture={timeRoving.onFocusCapture}
+      >
         <div className="bc-time-gutter">
           {grid.gutter.map((label) => (
             <TimeLabel key={label.key} time={label.time} label={label.label} />
@@ -181,6 +241,7 @@ function TimeGridView<TEvent = unknown>() {
                     className="bc-time-slot"
                     data-date={column.day}
                     data-slot-index={colIndex * grid.slotCount + slotIndex}
+                    tabIndex={timeRoving.cellTabIndex(colIndex * grid.slotCount + slotIndex)}
                   />
                 ))}
               </div>
