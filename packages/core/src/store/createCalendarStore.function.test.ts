@@ -372,6 +372,49 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       expect(arg.slots.at(-1)).toBe(localizer.getSlotDate({ date: days[2]!, minutesFromMidnight: 5 * 30 }))
     })
 
+    it('treats an entire-day same-day drag as an all-day selection (midnight → 23:59:59)', () => {
+      const onSelectSlot = vi.fn()
+      const store = createCalendarStore<Event>({
+        localizer,
+        date: monday,
+        view: Views.DAY,
+        selectable: true,
+        onSelectSlot,
+      })
+      const days = store.range.value.days
+      // Full midnight→end-of-day window → 48 slots; select slot 0 through 47.
+      store.selection.start({ slot: 0, date: days[0]!, mode: 'time', slotCount: 48 })
+      store.selection.to({ slot: 47 })
+      store.selection.complete()
+      expect(onSelectSlot).toHaveBeenCalledWith({
+        start: days[0],
+        end: localizer.endOf({ value: days[0]!, unit: 'day' }),
+        slots: [days[0]],
+        action: 'select',
+        allDay: true,
+      })
+    })
+
+    it('ends a drag on the last slot of a full day at end-of-day, not next-day midnight', () => {
+      const onSelectSlot = vi.fn()
+      const store = createCalendarStore<Event>({
+        localizer,
+        date: monday,
+        view: Views.DAY,
+        selectable: true,
+        onSelectSlot,
+      })
+      const days = store.range.value.days
+      // 10:00 → last slot of the day: a timed selection (not the whole day).
+      store.selection.start({ slot: 20, date: days[0]!, mode: 'time', slotCount: 48 })
+      store.selection.to({ slot: 47 })
+      store.selection.complete()
+      const arg = onSelectSlot.mock.calls[0]![0]
+      expect(arg.allDay).toBe(false)
+      expect(arg.start).toBe(localizer.getSlotDate({ date: days[0]!, minutesFromMidnight: 20 * 30 }))
+      expect(arg.end).toBe(localizer.endOf({ value: days[0]!, unit: 'day' }))
+    })
+
     it('vetoes a time-mode start when onSelecting returns false (dates passed through)', () => {
       const onSelecting = vi.fn(() => false)
       const store = createCalendarStore<Event>({

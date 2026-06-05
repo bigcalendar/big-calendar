@@ -128,15 +128,27 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       }
       const startDay = dayOf(slotRange.start)
       const endDay = dayOf(slotRange.end)
+      const startInDay = slotRange.start - startDay * slotCount
+      const endInDay = slotRange.end - endDay * slotCount
+
+      // A same-day drag that covers the whole midnight→end-of-day window is itself
+      // an all-day selection (midnight → 23:59:59), like clicking the day in month.
+      const fullDayWindow = dayStartMin === 0 && dayEndMin === 1440
+      if (startDay === endDay && fullDayWindow && startInDay === 0 && endInDay === slotCount - 1) {
+        return daySpan(startDay, startDay)
+      }
+
       const slots: string[] = []
       for (let i = slotRange.start; i <= slotRange.end; i++) slots.push(slotDate(i))
-      // Exclusive end: the slot just past the last, computed on the end day so a
-      // partial window (e.g. 9–5) ends at its window edge, not the next day.
+      // Exclusive end on the end day. The final slot of a full day ends at
+      // end-of-day (23:59:59…) — its next instant is the next day — not at
+      // next-day midnight; a partial window (e.g. 9–5) ends at its window edge.
       const endDayStr = days[endDay] ?? ctx.date
-      const end = localizer.getSlotDate({
-        date: endDayStr,
-        minutesFromMidnight: dayStartMin + (slotRange.end - endDay * slotCount + 1) * step,
-      })
+      const endMinutes = dayStartMin + (endInDay + 1) * step
+      const end =
+        endMinutes >= 1440
+          ? localizer.endOf({ value: endDayStr, unit: 'day' })
+          : localizer.getSlotDate({ date: endDayStr, minutesFromMidnight: endMinutes })
       // A drag that crosses day columns is an all-day span — but, unlike a
       // month/day selection, it keeps its instant start/end times.
       return { start: slots[0]!, end, slots, allDay: startDay !== endDay }
