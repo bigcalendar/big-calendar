@@ -881,10 +881,25 @@ Closes Step 6. Conveys the keyboard gestures ARIA's role/state/shortcut attribut
 (time/month/all-day), cross-day→all-day, keyboard roving (two tab stops), focus ring, `.mdx` docs, and the
 a11y instructions.
 
+### Phase 4 — Task 4j: selection wiring — time-grid event gutter (Cutter, 2026-06-05) ✓ (this change)
+
+Closes the "full-width event leaves no selectable strip" open item. A timed `.bc-event`/`.bc-bg-event` is
+`--bc-left:0`/`--bc-width:1` when unoverlapped, so it covered the **full** inline width of its day column and
+no `.bc-time-slot` was grabbable at those times (the RBC "drag a new event alongside an existing one"
+affordance was impossible).
+- **styles (CSS-only):** new `--bc-event-gutter: 0.625rem` token (tokens.css, by `--bc-event-gap`). The
+  `.bc-event, .bc-bg-event` rule now squeezes the fractional layout into `100% - var(--bc-event-gutter)`
+  (`inset-inline-start`/`inline-size` both `* (100% - gutter)`), leaving a permanent selectable strip on the
+  trailing edge over a bare `.bc-time-slot`. styles dist rebuilt.
+- **No core/geometry/JS change, no contract change** — the gutter is a presentational affordance, not data
+  (rejected baking it into the core day-layout widths). **No Vitest test:** jsdom has no box model / working
+  `elementFromPoint`, so "the strip is grabbable" is only verifiable visually; verified via `build-storybook`
+  (green). Decision (size 0.625rem, CSS-only approach) logged in DECISIONS.md.
+
 ## In progress — selection wiring remaining
-- **Open items carried:** time-grid full-width events (`--bc-width:1`) leave no empty slot strip → reserve
-  an inline-end gutter; **touch** long-press + `touch-action` (scrollable body); Agenda EventButton (entangled
-  `.bc-agenda-row`); double-click-also-selects. Plus **2m view registry** (still deferred, design input).
+- **Open items carried:** **touch** long-press + `touch-action` (scrollable body); Agenda EventButton
+  (entangled `.bc-agenda-row`); double-click-also-selects. Plus **2m view registry** (model contract decided
+  — Option B; implementation still deferred to the Phase-4 view-component contract).
 
 ## Phase 2 status
 
@@ -895,15 +910,16 @@ background events. 168 Vitest cases, every file ≥85% branch / ≥95% func, bui
 
 ## Next — open design decisions (do NOT guess; confirm with Cutter first)
 
-1. **2m — view registry (custom views, §9)** — DEFERRED pending design input. The 5 built-in views are
-   hardcoded across `viewRange` (range), `navigateDate` (navigate) and `buildViewModel` (model kind).
-   A registry would map a (widened, `string`) `ViewKey` → `{ navigate, range, model-kind/builder }`.
-   The sticking point is the **model shape for a custom view**: `CalendarViewModel` is a closed union
-   (`month|time|agenda`); custom views need either a generic/escape-hatch model kind or a
-   plugin-provided builder. This is coupled to the **framework view-component contract** (Phase 4), so
-   building it now risks the wrong abstraction (CLAUDE.md: simplest-first, no speculative abstractions,
-   ask before architectural changes). **Decision needed:** define the custom-view model contract now,
-   or defer 2m until the React view-component contract exists in Phase 4.
+1. **2m — view registry (custom views, §9)** — MODEL CONTRACT DECIDED (Option B, Cutter 2026-06-05;
+   see DECISIONS.md); **implementation still deferred** to Phase 4 (coupled to the React view-component
+   contract). The 5 built-in views are hardcoded across `viewRange` (range), `navigateDate` (navigate),
+   `viewLabel` (label) and `buildViewModel` (model kind). A registry maps a (widened, `string`) `ViewKey`
+   → `{ range, navigate, label, buildModel }`, each seam falling through to `registry[view]` in a
+   `default` branch. **Resolved sticking point — model shape:** Option B — `CalendarViewModel` gains one
+   additive `{ kind:'custom'; view; model }` arm; the registry entry supplies a pure in-core `buildModel`
+   typed via a generic so the matching view-component reads `model: TModel`. Cost accepted: widening
+   `ViewKey` drops the exhaustive-`switch` safety (each seam needs a runtime default/throw). Build when
+   the React view-component contract is settled.
 2. **Store-level selection wiring** — the selection FSM (2h) is the core logic. Mapping slot indices →
    dates is view/adapter-specific (month = day cells; time-grid = (column, slot) 2D), so the store/
    `beginSlotSelection` wiring is better done alongside the adapter (Phase 4). Confirm this split.

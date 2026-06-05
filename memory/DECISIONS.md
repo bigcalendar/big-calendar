@@ -557,3 +557,21 @@ There is **no keyboard double-click** (`dblclick` never fires from the keyboard;
 - **`.bc-sr-only` is unscoped** (not under `.bc-calendar`) because the provider may render the instruction elements alongside, not inside, the calendar root. clip-path visually-hidden, in `@layer bc.layout`.
 - **Docs:** new `storybook-core` `Core/Selection contract` page mirrors the framework-agnostic callback/`SlotSelectionDates` contract (the §8.3 "mirror into storybook-core" TODO); react `Selection.mdx` notes the instructions + the two message keys.
 - **Minor deferred:** slot cells stay focusable + describedby even when `selectable===false` (selection instructions announced on a non-selectable grid). Low-stakes; gate later if wanted.
+
+## 2026-06-05 — View registry (2m) custom-view model contract = Option B (Cutter, DESIGN ONLY — not yet built)
+
+**Status: DIRECTION DECIDED, IMPLEMENTATION STILL DEFERRED.** Closes the open design question in PROGRESS.md "Next — open design decisions #1". The registry build stays a Phase-4 task (coupled to the React view-component contract); this entry only fixes *which* model contract we build when we do.
+
+- **Decision (Cutter, via AskUserQuestion): Option B — open `custom` arm + plugin builder.** When the registry lands, `CalendarViewModel<TEvent>` gains **one additive arm** `{ kind: 'custom'; view: ViewKey; model: <plugin type> }`; the registry entry supplies a **pure `buildModel` that runs in core** (shared by every adapter, unit-testable like the built-ins), typed via a generic on the registry entry so the matching React view-component reads `model: TModel`.
+- **Rejected:** **A (reuse an existing kind)** — most type-safe + zero union change, but can only express month-/time-/agenda-shaped layouts; a genuinely new view (year, custom timeline) can't be modeled. **D (render-only passthrough)** — simplest, but breaks the architecture promise that the model lives in core so all adapters emit identical output (each adapter would re-implement the custom layout). **Fully-generic threaded `TModel`** — heavy generics through the store signal for little gain over B.
+- **Seams a registry must cover (all currently a closed `switch` over `ViewKey`):** `viewRange` (range), `navigateDate`/`stepFor` (PREV/NEXT step), `viewLabel` (toolbar title), `buildViewModel` (model). Registry maps `ViewKey → { range, navigate, label, buildModel }`; each seam falls through to `registry[view]` in a `default` branch.
+- **Known cost (accepted):** widening `ViewKey` from the closed `BuiltinViewKey` union to admit `string` removes the exhaustive-`switch` type safety each seam currently relies on; every seam needs a runtime `default`/throw. Unavoidable for any registry.
+
+## 2026-06-05 — Time-grid event gutter: selectable trailing strip (Cutter, IMPLEMENTED)
+
+**Status: IMPLEMENTED** (styles, CSS-only). Closes the "full-width timed event leaves no selectable slot strip" open item.
+
+- **Problem:** an unoverlapped timed event is `--bc-left:0`/`--bc-width:1`, so its absolute box covered the full inline width of the day column; no `.bc-time-slot` was grabbable at the event's times → the RBC "start a selection alongside an existing event" affordance was impossible.
+- **Approach (Cutter chose CSS-only over baking into core day-layout widths):** new `--bc-event-gutter` token; the `.bc-event, .bc-bg-event` rule squeezes the fractional layout into `100% - var(--bc-event-gutter)` (both `inset-inline-start` and `inline-size` multiplied by `(100% - gutter)`), reserving a permanent strip on the trailing (inline-end) edge over a bare slot. **Rejected core-math approach:** it would change core's pure output for every adapter and mix a presentational affordance into the data contract.
+- **Size (Cutter): `0.625rem`** (≈10px, rem so it scales with root font-size/zoom; matches the other rem layout tokens). Overridable via the token.
+- **No core/geometry/JS change, no `SlotSelectionDates` change.** **Verification:** jsdom has no box model / working `elementFromPoint`, so there is no meaningful Vitest test for "the strip is grabbable" — verified visually via `build-storybook` (green). Expected, not an omission.

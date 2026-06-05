@@ -304,8 +304,11 @@
     position: absolute;
     inset-block-start: calc(var(--bc-top) * 100%);
     block-size: calc(var(--bc-height) * 100%);
-    inset-inline-start: calc(var(--bc-left) * 100%);
-    inline-size: calc(var(--bc-width) * 100%);
+    /* The fractional layout is squeezed into `100% - gutter`, leaving the
+       `--bc-event-gutter` strip on the trailing edge over a bare `.bc-time-slot`
+       so a slot selection can start even where a full-width event sits. */
+    inset-inline-start: calc(var(--bc-left) * (100% - var(--bc-event-gutter)));
+    inline-size: calc(var(--bc-width) * (100% - var(--bc-event-gutter)));
     min-block-size: 0;
     overflow: hidden;
   }

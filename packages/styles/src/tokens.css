@@ -80,6 +80,10 @@
   --bc-gutter-width: 4rem;
   /* Gap painted between adjacent overlapping events within a column. */
   --bc-event-gap: 1px;
+  /* Selectable strip reserved on the trailing (inline-end) edge of each time-grid
+     day column, so a full-width event never covers the whole column and a slot
+     selection can still be started alongside it. */
+  --bc-event-gutter: 0.625rem;
   /* Thickness of the now-indicator line. */
   --bc-now-width: 2px;
   /* Height of a single stacked event row in the month / all-day grid. */
