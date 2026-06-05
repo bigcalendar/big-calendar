@@ -508,3 +508,13 @@ There is **no keyboard double-click** (`dblclick` never fires from the keyboard;
 - **Store additions:** `selection.anchor` signal (`{mode,date}|null`, set on start/click/dbl, cleared on complete/cancel) so the adapter knows which column/row to highlight; `store.selectable` exposes the resolved mode.
 - **Touch:** the threshold-drag works for touch but competes with time-body scroll; true long-press + `touch-action` deferred (the scrollable body can't just be `touch-action:none`). Noted for a later touch pass.
 - **Cutter decision:** month/all-day hit targets will use a **dedicated non-overridable hit layer** (`.bc-month-slots` / all-day per-day cells), like the time body — selection survives any `dateCell` override.
+
+## 2026-06-05 — Slot-selection adapter, step 5b: month day selection + storybook demo (Cutter, IMPLEMENTED)
+
+**Status: IMPLEMENTED** (commit 85de055 on feat/initial). All-day row + keyboard still pending.
+
+- **MonthView day-mode selection:** dedicated non-overridable `.bc-month-slots` hit layer (per-day `.bc-month-slot`, `data-date` + linear `weekIndex*7+dayIndex`). The index == `store.range.days` order (verified: `month.function` builds weeks via `days.slice(i,i+7)`), so it maps straight into the store's `'day'` translation. `useSlotSelection('day')` attaches to `.bc-month-grid`.
+- **Month overlay:** per-week `.bc-selection.bc-selection-month` band; the live `selection.range` (linear indices) is clipped to each week row (`max(start,base)..min(end,base+6)`) and placed with `segmentStyle({left,span,row:1})`. New CSS `.bc-selection-month` overrides the absolute `.bc-selection` to a grid-placed full-height item.
+- **Hit fall-through (edited 2 existing rules, flagged to Cutter):** `.bc-week-backgrounds` → `pointer-events:none` + new `.bc-date-number { pointer-events:auto }`. Empty cell area falls through to the slot layer; date-number drilldown + event clicks stay live. DOM/paint order in a week: slots → selection → backgrounds → events.
+- **Storybook (fixes "no selectable control"):** new `SelectionDemo` harness (selectable on; `onSelectSlot`/`onEventClick`/`onEventDoubleClick` → on-screen read-out) + **Selectable** stories on TimeGridView (week) and MonthView.
+- Tests: +3 MonthView (hit-cell tags, day-drag band, ISO day-click payload). react **100**, core 144; all gates + storybook green.

@@ -751,12 +751,26 @@ First implementation step of the §8.1/§8.2 selection plan. **Core only this co
   + TimeGridView overlay test. react **97 tests**, core 144; all gates + storybook green. (`elementFromPoint`
   is stubbed in tests — jsdom has no layout.)
 
+### Phase 4 — Task 4j: selection wiring — step 5b, month day selection (Cutter, 2026-06-05) ✓ (commit 85de055, pushed)
+
+- **MonthView** day-mode selection: non-overridable `.bc-month-slots` hit layer (one `.bc-month-slot` per
+  day, `data-date` + linear `weekIndex*7+dayIndex`, == `range.days` order — verified `month.function` chunks
+  `days.slice(i,i+7)`); `useSlotSelection('day')` on `.bc-month-grid`; per-week `.bc-selection.bc-selection-month`
+  band, range clipped to each week row (`max(start,base)..min(end,base+6)` → `segmentStyle({left,span,row:1})`).
+- **CSS (layout.css):** added `.bc-month-slots/.bc-month-slot`, `.bc-selection-month` (grid-placed variant
+  overriding the absolute `.bc-selection`). **Edited two existing rules** (flagged to Cutter): `.bc-week-backgrounds`
+  → `pointer-events:none` + new `.bc-date-number { pointer-events:auto }`, so empty cell area falls through to the
+  hit layer while date-number drilldown + event clicks still work. Stacking by DOM order: slots → selection →
+  backgrounds → events.
+- **Storybook:** new `SelectionDemo` harness (selectable on; `onSelectSlot`/`onEventClick`/`onEventDoubleClick`
+  feed an on-screen read-out) + **Selectable** stories for TimeGridView (week) and MonthView. This was the
+  "no way to test selection" gap Cutter reported.
+- Tests: +3 MonthView (hit-cell tags, day-drag band overlay, ISO day-click payload). react **100 tests**, core 144;
+  all gates + storybook green.
+
 ## In progress — selection wiring remaining
 
-- **Step 5b — month/all-day:** dedicated non-overridable hit layer (`.bc-month-slots` + all-day per-day
-  cells, `data-date` + linear index), day-mode `useSlotSelection('day')`, month per-week-row `.bc-selection`
-  overlay (needs a month overlay CSS variant: `--bc-seg-left/span/row`, currently `.bc-selection` is
-  time-body absolute box only).
+- **Step 5b tail — all-day row:** the time-grid all-day row still has no day-mode hit layer/overlay (month done).
 - **Step 5c — keyboard:** two roving-tabindex groups (slot grid: Arrow/Shift+Arrow/Enter-Space/Esc;
   events: Arrow + Enter/Space + F2). Largest remaining piece.
 - **Step 6 — `.mdx`** selection doc in storybook-react + `aria-describedby` instructions via messages map.
