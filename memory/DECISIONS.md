@@ -530,3 +530,19 @@ There is **no keyboard double-click** (`dblclick` never fires from the keyboard;
 - **Cutter's `allDay` definition (correction, commit c3c9a46):** `allDay` = a whole day (00:00–23:59) **or** a multi-day span that **keeps instant time information**. So a cross-day time drag emits `allDay:true` with its **real instant start/end** + the full per-slot `slots` list across the spanned days — NOT flattened to day bounds. Month/day selections stay whole-day (no times). The per-column overlay (slot extents) matches the kept times.
 - **Full-day + end-of-day (commit e4366ea):** a same-day drag covering the entire midnight→end-of-day window (`dayStartMin===0 && dayEndMin===1440 && startInDay===0 && endInDay===slotCount-1`) commits as an all-day day-span (midnight → 23:59:59, `slots:[day]`), like a month day-click. And the exclusive end of any selection whose last slot is the final slot of a full day is `endOf(day)` (23:59:59…), not next-day midnight — the next instant is the next day. Partial windows (9–5) still end at their window edge (e.g. 17:00).
 - Tests: core cross-day test asserts instant start/end + full slot list; existing time/day payloads carry `allDay`; react TimeGridView cross-day (two overlay boxes + all-day commit, 44 slots). core **146**, react **102**; all gates + storybook green.
+
+## 2026-06-05 — Slot-selection `onSelectSlot`/`onSelecting` contract — FINAL (Cutter) 📝 needs `.mdx`
+
+**Status: LOCKED + IMPLEMENTED** (core store + react TimeGridView/MonthView). Consolidates the 2026-06-04/05 entries above into the authoritative public contract. Mirrored into the plan at `Upgrade_plan_prompt.md` §8.3.
+
+> 📝 **`.mdx` API doc TODO:** this is the canonical selection callback contract — write it into the selection `.mdx` (storybook-react) and the `storybook-core` API docs. Tracked in PROGRESS.md "Step 6 — .mdx".
+
+- **Primitives only:** all selection callbacks emit ISO **strings**, never `Date`.
+- **Payload `SlotSelectionDates`:** `{ start: string; end: string; slots: string[]; action: 'select'|'click'|'doubleClick'; allDay: boolean }`. `onSelecting({start,end,allDay}) => boolean|void` (veto with `false`). `end` is **exclusive**.
+- **`allDay` definition (Cutter):** an entire-day span (`00:00:00→23:59:59`) **or** a multi-day span that **keeps instant time information**. Resolution:
+  - within-day timed drag/click → `allDay:false`, real instants, `slots`=each slot.
+  - full-day drag (full midnight→EOD window + every slot) → `allDay:true`, midnight→`23:59:59`, `slots:[day]`.
+  - cross-day time drag → `allDay:true`, **kept instant** start/end, `slots`=each slot across days (NOT flattened).
+  - month / day-grid → `allDay:true`, day bounds, `slots`=day-starts.
+- **End-of-day rule:** last slot of a **full** day → exclusive end = `endOf(day)` (`23:59:59.999`), not next-day midnight. Partial windows (9–5) end at their edge.
+- **Mechanism:** time cells use a **global** index `dayIndex*slotCount+slot`; `slotCount` flows view→hook→store anchor; store decodes day+slot. Per-column overlay (start-day slot→bottom, full middle, top→end-day slot).

@@ -780,6 +780,10 @@ First implementation step of the §8.1/§8.2 selection plan. **Core only this co
 - **Step 5c — keyboard:** two roving-tabindex groups (slot grid: Arrow/Shift+Arrow/Enter-Space/Esc;
   events: Arrow + Enter/Space + F2). Largest remaining piece.
 - **Step 6 — `.mdx`** selection doc in storybook-react + `aria-describedby` instructions via messages map.
+  📝 **Must document the finalized `onSelectSlot`/`onSelecting` API contract** — primitives (ISO strings, no `Date`),
+  the `SlotSelectionDates` shape, and the **`allDay` definition** (within-day timed → false; full-day → midnight-EOD;
+  cross-day → allDay + kept instant times; month/day → whole days) + the end-of-day slot rule. Canonical source:
+  [DECISIONS.md](DECISIONS.md) 2026-06-05 "FINAL" entry and `Upgrade_plan_prompt.md` §8.3. Also belongs in `storybook-core` API docs.
 - **Open items carried:** time-grid full-width events (`--bc-width:1`) leave no empty slot strip → reserve
   an inline-end gutter (do with 5b/5c); **touch** long-press + `touch-action` (scrollable body); Agenda
   EventButton (entangled `.bc-agenda-row`); double-click-also-selects.
