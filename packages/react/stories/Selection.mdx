@@ -23,11 +23,14 @@ Selection is **off by default**. Switch it on with the `selectable` prop:
 <Calendar selectable="ignoreEvents" />
 ```
 
-| value           | meaning                                                                   |
-| --------------- | ------------------------------------------------------------------------- |
-| `false`         | (default) selection disabled.                                             |
-| `true`          | selection enabled. A press that lands **on an event** is left to the event. |
-| `'ignoreEvents'` | enabled; behaves the same here — events always own their own pointer.      |
+<table>
+  <thead><tr><th>value</th><th>meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>false</code></td><td>(default) selection disabled.</td></tr>
+    <tr><td><code>true</code></td><td>selection enabled. A press that lands <strong>on an event</strong> is left to the event.</td></tr>
+    <tr><td><code>'ignoreEvents'</code></td><td>enabled; behaves the same here — events always own their own pointer.</td></tr>
+  </tbody>
+</table>
 
 > Both `true` and `'ignoreEvents'` defer to events: a selection only starts on **empty**
 > area. Dragging a selection _through_ an existing event (a quirk of the old
@@ -59,12 +62,15 @@ Shift+Arrow range), `'click'` (a single slot/day), or `'doubleClick'`.
 `allDay` is `true` whenever the selection represents **whole days** _or_ a span that
 crosses a day boundary:
 
-| selection                                              | `allDay` | notes                                                        |
-| ------------------------------------------------------ | -------- | ----------------------------------------------------------- |
-| a time range **within one day** (e.g. 9:00–10:30)      | `false`  | instant `start`/`end` times.                                |
-| the **whole day** end-to-end in a full-day time grid   | `true`   | `start` = 00:00:00, `end` = 23:59:59 of that day.           |
-| a time drag that **crosses days** (e.g. Mon 9pm→Tue 2am) | `true`  | keeps the instant `start`/`end` times **and** lists each slot. |
-| day(s) picked in the **month** grid or **all-day** row | `true`   | whole days; `end` is the end-of-day of the last day.        |
+<table>
+  <thead><tr><th>selection</th><th><code>allDay</code></th><th>notes</th></tr></thead>
+  <tbody>
+    <tr><td>a time range <strong>within one day</strong> (e.g. 9:00–10:30)</td><td><code>false</code></td><td>instant <code>start</code>/<code>end</code> times.</td></tr>
+    <tr><td>the <strong>whole day</strong> end-to-end in a full-day time grid</td><td><code>true</code></td><td><code>start</code> = 00:00:00, <code>end</code> = 23:59:59 of that day.</td></tr>
+    <tr><td>a time drag that <strong>crosses days</strong> (e.g. Mon 9pm→Tue 2am)</td><td><code>true</code></td><td>keeps the instant <code>start</code>/<code>end</code> times <strong>and</strong> lists each slot.</td></tr>
+    <tr><td>day(s) picked in the <strong>month</strong> grid or <strong>all-day</strong> row</td><td><code>true</code></td><td>whole days; <code>end</code> is the end-of-day of the last day.</td></tr>
+  </tbody>
+</table>
 
 ### End-of-day rule
 
@@ -92,20 +98,26 @@ calendar):
 
 **1. The slot grid** (one tab stop over the day/time cells):
 
-| key                | action                                                       |
-| ------------------ | ------------------------------------------------------------ |
-| **Arrow**          | move the focused cell (time grid: ↑/↓ a slot, ←/→ a day; month: ←/→ a day, ↑/↓ a week; all-day row: ←/→ a day). |
-| **Shift+Arrow**    | extend the selection (the first one anchors at the focused cell). |
-| **Enter / Space**  | commit — finish a range if one is in progress, otherwise click the focused cell. |
-| **Esc**            | cancel an in-progress selection.                             |
+<table>
+  <thead><tr><th>key</th><th>action</th></tr></thead>
+  <tbody>
+    <tr><td><kbd>Arrow</kbd></td><td>move the focused cell (time grid: ↑/↓ a slot, ←/→ a day; month: ←/→ a day, ↑/↓ a week; all-day row: ←/→ a day).</td></tr>
+    <tr><td><kbd>Shift</kbd>+<kbd>Arrow</kbd></td><td>extend the selection (the first one anchors at the focused cell).</td></tr>
+    <tr><td><kbd>Enter</kbd> / <kbd>Space</kbd></td><td>commit — finish a range if one is in progress, otherwise click the focused cell.</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>cancel an in-progress selection.</td></tr>
+  </tbody>
+</table>
 
 **2. The events** (a second tab stop over the event buttons):
 
-| key               | action                                            |
-| ----------------- | ------------------------------------------------- |
-| **Arrow**         | move among the event buttons.                     |
-| **Enter / Space** | primary action — select the event + `onEventClick`. |
-| **F2**            | secondary action — `onEventDoubleClick`.          |
+<table>
+  <thead><tr><th>key</th><th>action</th></tr></thead>
+  <tbody>
+    <tr><td><kbd>Arrow</kbd></td><td>move among the event buttons.</td></tr>
+    <tr><td><kbd>Enter</kbd> / <kbd>Space</kbd></td><td>primary action — select the event + <code>onEventClick</code>.</td></tr>
+    <tr><td><kbd>F2</kbd></td><td>secondary action — <code>onEventDoubleClick</code>.</td></tr>
+  </tbody>
+</table>
 
 There is **no keyboard double-click**: per WCAG 2.1.1 the secondary action gets its own
 key (**F2**). Double-click stays a pointer-only shortcut to the same thing F2 does. Keys
