@@ -39,6 +39,7 @@ function TimeGridView<TEvent = unknown>() {
   const { store, components, messages } = useCalendarContext<TEvent>()
   const grid = useTimeGrid<TEvent>()
   const onSlotPointerDown = useSlotSelection('time', grid?.slotCount)
+  const onAllDayPointerDown = useSlotSelection('day')
   const selRange = useSignalValue(store.selection.range)
   const selAnchor = useSignalValue(store.selection.anchor)
 
@@ -84,6 +85,15 @@ function TimeGridView<TEvent = unknown>() {
     return { top: top / slotCount, height: (bottom - top) / slotCount }
   }
 
+  // The live all-day (day-mode) selection band: a single-row span across the
+  // selected day columns. Day indices map straight into the visible day list
+  // (== grid.columns / range.days), so clip the range to the visible columns.
+  const dayCount = grid.columns.length
+  const allDayActive = selRange !== null && selAnchor?.mode === 'day'
+  const adStart = allDayActive ? Math.max(selRange.start, 0) : 0
+  const adEnd = allDayActive ? Math.min(selRange.end, dayCount - 1) : -1
+  const allDaySelection = allDayActive && adStart <= adEnd
+
   return (
     <div
       className="bc-time-grid"
@@ -103,8 +113,30 @@ function TimeGridView<TEvent = unknown>() {
         ))}
       </div>
 
-      <div className="bc-allday-row">
+      <div className="bc-allday-row" onPointerDown={onAllDayPointerDown}>
         <div className="bc-allday-label">{messages.allDay}</div>
+        {/* Non-overridable per-day hit targets for all-day (day-mode) selection,
+            one per visible day column. The slot index is the linear day index
+            (== grid.columns / the store's range.days order); segments + show-more
+            paint above and keep their own pointer interaction. */}
+        <div className="bc-allday-slots">
+          {grid.columns.map((column, colIndex) => (
+            <div
+              key={column.key}
+              className="bc-allday-slot"
+              data-date={column.day}
+              data-slot-index={colIndex}
+            />
+          ))}
+        </div>
+        {allDaySelection && (
+          <div className="bc-allday-selection">
+            <div
+              className="bc-selection bc-selection-allday"
+              style={segmentStyle({ left: adStart + 1, span: adEnd - adStart + 1, row: 1 })}
+            />
+          </div>
+        )}
         <div className="bc-allday-segments">
           {grid.allDay.segments.map((segment) => (
             <EventButton

@@ -774,9 +774,28 @@ First implementation step of the §8.1/§8.2 selection plan. **Core only this co
 - Storybook read-out moved outside the calendar container (no reflow on selection); selection highlight retinted to translucent periwinkle (tokens.css); month band painted above cell backgrounds; **Selectable** Controls playground added to Calendar stories.
 - core **146**, react **102**; all gates + storybook green.
 
+### Phase 4 — Task 4j: selection wiring — step 5b tail, all-day row day selection (Cutter, 2026-06-05) ✓ (this commit)
+
+- **TimeGridView all-day row** now selectable in `'day'` mode (whole days), mirroring MonthView. A second
+  `useSlotSelection('day')` is wired to `.bc-allday-row`; a non-overridable `.bc-allday-slots` hit layer
+  renders one `.bc-allday-slot` per visible day (`data-date` + linear `data-slot-index` == `grid.columns`/
+  `range.days` order). A live `.bc-selection.bc-selection-allday` band spans the selected day columns
+  (`segmentStyle({left,span,row:1})`, clipped to the visible columns) while a day-drag is active; commit →
+  `onSelectSlot` whole-day span (`allDay: true`).
+- **styles (layout.css):** added `.bc-allday-slots`/`.bc-allday-slot`, `.bc-allday-selection` overlay
+  subgrid + `.bc-selection-allday` band variant; the all-day row's column-area children all sit at
+  `grid-row:1` so the hit layer / band / segments overlap. `.bc-allday-slots` has a `min-block-size` so an
+  **empty** all-day strip stays selectable. `.bc-allday-segments` set `pointer-events:none` (its `.bc-segment`
+  + `.bc-show-more` children already re-enable) so empty area falls through to the hit layer. styles dist rebuilt.
+- **Tests:** +1 TimeGridView (7 all-day hit cells, day-drag band `--bc-seg-left/span`, whole-day `onSelectSlot`
+  with `allDay:true` + 3 slots). react **102** (all pass), core 146; typecheck/lint/build + build-storybook green.
+- **Note (deferred):** mixed-surface drag — starting a day-drag in the all-day row and dragging down into the
+  time body reads a time-grid global slot index via `elementFromPoint` (interpreted in day space → clamped).
+  Horizontal across-day dragging is the expected gesture; cross-surface promotion not handled. The all-day row
+  "+N more" remains single/row-level (unchanged from 4i-follow-up).
+
 ## In progress — selection wiring remaining
 
-- **Step 5b tail — all-day row:** the time-grid all-day row still has no day-mode hit layer/overlay (month done).
 - **Step 5c — keyboard:** two roving-tabindex groups (slot grid: Arrow/Shift+Arrow/Enter-Space/Esc;
   events: Arrow + Enter/Space + F2). Largest remaining piece.
 - **Step 6 — `.mdx`** selection doc in storybook-react + `aria-describedby` instructions via messages map.

@@ -166,17 +166,52 @@
     grid-template-columns: var(--bc-gutter-width) repeat(var(--bc-day-count), minmax(0, 1fr));
   }
 
-  /* All-day header: segments stack like a month week across the day columns. */
+  /* All-day header: segments stack like a month week across the day columns.
+     The label, hit layer, selection band, and segments all overlap in row 1
+     (each in its own layer), so the day-column area lines up across them. */
   .bc-allday-row {
     align-items: start;
   }
 
+  .bc-allday-label {
+    grid-row: 1;
+  }
+
+  /* Transparent per-day hit targets (the base layer for all-day day-mode
+     selection). A min height keeps an empty all-day strip selectable. */
+  .bc-allday-slots {
+    grid-column: 2 / -1;
+    grid-row: 1;
+    align-self: stretch;
+    display: grid;
+    grid-template-columns: repeat(var(--bc-day-count), minmax(0, 1fr));
+    min-block-size: var(--bc-segment-height);
+  }
+
+  .bc-allday-slot {
+    min-inline-size: 0;
+  }
+
+  /* Selection band overlay: a day-column grid carrying one placed `.bc-selection`. */
+  .bc-allday-selection {
+    grid-column: 2 / -1;
+    grid-row: 1;
+    align-self: stretch;
+    display: grid;
+    grid-template-columns: repeat(var(--bc-day-count), minmax(0, 1fr));
+    pointer-events: none;
+  }
+
   .bc-allday-segments {
     grid-column: 2 / -1;
+    grid-row: 1;
     display: grid;
     grid-template-columns: repeat(var(--bc-day-count), minmax(0, 1fr));
     grid-auto-rows: var(--bc-segment-height);
     gap: var(--bc-event-gap);
+    /* Empty cell area falls through to the hit layer beneath; segments and the
+       show-more re-enable pointer events themselves. */
+    pointer-events: none;
   }
 
   /* Scrollable slot body. */
@@ -260,6 +295,17 @@
   /* Month variant: not an absolute box but a full-height grid item spanning the
      selected day columns of one week row. Overrides the time-grid placement. */
   .bc-selection-month {
+    position: relative;
+    inset: auto;
+    grid-row: 1;
+    grid-column: var(--bc-seg-left) / span var(--bc-seg-span);
+    block-size: auto;
+    margin: var(--bc-event-gap);
+  }
+
+  /* All-day variant: a full-height grid item spanning the selected day columns of
+     the time-grid all-day row. Like the month variant, grid-placed not absolute. */
+  .bc-selection-allday {
     position: relative;
     inset: auto;
     grid-row: 1;

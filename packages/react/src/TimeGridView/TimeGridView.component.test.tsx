@@ -189,6 +189,36 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
     delete (document as { elementFromPoint?: unknown }).elementFromPoint
   })
 
+  it('selects whole days from the all-day row, painting a band and committing an all-day range', () => {
+    const onSelectSlot = vi.fn()
+    const { container } = renderGrid({ defaultView: Views.WEEK, selectable: true, onSelectSlot })
+    // One hit cell per visible day, linear day-indexed (== range.days order).
+    const cells = container.querySelectorAll('.bc-allday-slot')
+    expect(cells.length).toBe(7)
+    expect((cells[0] as HTMLElement).dataset.slotIndex).toBe('0')
+    expect((cells[2] as HTMLElement).dataset.slotIndex).toBe('2')
+    // jsdom has no layout → resolve the drag head to day 2's all-day cell.
+    document.elementFromPoint = () => cells[2] as Element
+
+    fireEvent.pointerDown(cells[0] as HTMLElement, { button: 0, clientX: 0, clientY: 0 })
+    fireEvent.pointerMove(window, { clientX: 60, clientY: 0 })
+
+    // Band spans the selected day columns (days 0..2 → 1-based left 1, span 3).
+    const band = container.querySelector('.bc-selection-allday') as HTMLElement
+    expect(band).not.toBeNull()
+    expect(band.style.getPropertyValue('--bc-seg-left')).toBe('1')
+    expect(band.style.getPropertyValue('--bc-seg-span')).toBe('3')
+
+    fireEvent.pointerUp(window)
+    expect(container.querySelector('.bc-selection-allday')).toBeNull()
+    expect(onSelectSlot).toHaveBeenCalledTimes(1)
+    const arg = onSelectSlot.mock.calls[0]![0] as { allDay: boolean; slots: string[] }
+    // Whole-day selection over 3 days.
+    expect(arg.allDay).toBe(true)
+    expect(arg.slots).toHaveLength(3)
+    delete (document as { elementFromPoint?: unknown }).elementFromPoint
+  })
+
   it('omits the now-line when the column is not today', () => {
     const { container } = renderGrid({ defaultDate: '2026-06-16' })
     const heading16 = localizer.format({
