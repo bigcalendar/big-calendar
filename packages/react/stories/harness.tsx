@@ -78,34 +78,40 @@ export function CalendarStage({ children, height = 800, rows = 'auto 1fr', ...pr
  * `<Toolbar/>` + `.bc-calendar` view as children, like {@link CalendarStage}.
  * Any prop (e.g. `selectable={false}`) can be overridden.
  */
-export function SelectionDemo({ children, rows = 'auto 1fr auto', ...props }: CalendarStageProps) {
+export function SelectionDemo({ children, ...props }: CalendarStageProps) {
   const [log, setLog] = useState(
     'Drag across slots to select a range · click or double-click a slot · click an event.',
   )
   return (
-    <CalendarStage
-      rows={rows}
-      selectable
-      onSelectSlot={(selection) => setLog(`onSelectSlot · ${selection.action}\n${JSON.stringify(selection, null, 2)}`)}
-      onEventClick={(event) => setLog(`onEventClick\n${JSON.stringify(event, null, 2)}`)}
-      onEventDoubleClick={(event) => setLog(`onEventDoubleClick\n${JSON.stringify(event, null, 2)}`)}
-      {...props}
-    >
-      {children}
+    // The calendar and the read-out are separate siblings, so a growing payload
+    // never steals height from the calendar (which keeps its own fixed size).
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      <CalendarStage
+        selectable
+        onSelectSlot={(selection) => setLog(`onSelectSlot · ${selection.action}\n${JSON.stringify(selection, null, 2)}`)}
+        onEventClick={(event) => setLog(`onEventClick\n${JSON.stringify(event, null, 2)}`)}
+        onEventDoubleClick={(event) => setLog(`onEventDoubleClick\n${JSON.stringify(event, null, 2)}`)}
+        {...props}
+      >
+        {children}
+      </CalendarStage>
       <pre
         aria-label="Last selection event"
         style={{
           margin: 0,
           padding: '0.5rem 0.75rem',
-          borderBlockStart: '1px solid var(--bc-color-border, #d4d4d8)',
+          border: '1px solid var(--bc-color-border, #d4d4d8)',
+          borderRadius: '4px',
           fontSize: '0.75rem',
           lineHeight: 1.4,
           whiteSpace: 'pre-wrap',
+          // Fixed height with its own scroll: the read-out never reflows the page.
+          blockSize: '9rem',
           overflow: 'auto',
         }}
       >
         {log}
       </pre>
-    </CalendarStage>
+    </div>
   )
 }
