@@ -115,6 +115,12 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    * read it to decide whether to attach selection handlers at all.
    */
   readonly selectable: SelectableMode
+  /**
+   * Resolved touch long-press duration in ms (`config.longPressThreshold`,
+   * default `500`). Adapters read it to time the hold that starts a touch
+   * selection; mouse/pen selection is immediate and ignores it.
+   */
+  readonly longPressThreshold: number
 
   // --- actions (named-parameter objects, per Appendix A) ---
   /** Move the focus date: PREV/NEXT step by view; TODAY resets to now; DATE jumps. */

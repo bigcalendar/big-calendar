@@ -110,6 +110,26 @@ describe('useSlotSelection', () => {
     expect((onSelectSlot.mock.calls[0]![0] as { action: string }).action).toBe('doubleClick')
   })
 
+  it('a second tap on a different slot supersedes the first pending click', () => {
+    vi.useFakeTimers()
+    const onSelectSlot = vi.fn()
+    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    fireEvent.pointerDown(getByTestId('slot1'), { button: 0, clientX: 0, clientY: 0 })
+    fireEvent.pointerUp(window)
+    act(() => {
+      vi.advanceTimersByTime(100) // within the double-click window, but a different slot next
+    })
+    fireEvent.pointerDown(getByTestId('slot2'), { button: 0, clientX: 0, clientY: 0 })
+    fireEvent.pointerUp(window)
+    act(() => {
+      vi.advanceTimersByTime(DOUBLE_CLICK_MS)
+    })
+    // Only the second slot clicks; the first pending click was discarded.
+    expect(onSelectSlot).toHaveBeenCalledTimes(1)
+    const arg = onSelectSlot.mock.calls[0]![0] as { action: string; start: string }
+    expect(arg.action).toBe('click')
+  })
+
   it('ignores presses over an event (events own their interaction)', () => {
     vi.useFakeTimers()
     const onSelectSlot = vi.fn()
@@ -141,5 +161,139 @@ describe('useSlotSelection', () => {
       vi.advanceTimersByTime(DOUBLE_CLICK_MS)
     })
     expect(onSelectSlot).not.toHaveBeenCalled()
+  })
+
+  // --- touch: selection is gated behind a long-press so a finger can still scroll ---
+  const LONG_PRESS_MS = 500 // default longPressThreshold
+
+  it('starts a touch selection only after the long-press, then drag-commits a range', () => {
+    vi.useFakeTimers()
+    const onSelectSlot = vi.fn()
+    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    stubPoint(getByTestId('slot3'))
+
+    fireEvent.pointerDown(getByTestId('slot1'), { button: 0, clientX: 0, clientY: 0, pointerType: 'touch', pointerId: 1 })
+    // Before the hold elapses there is no selection yet (a quick finger lift = tap).
+    act(() => {
+      vi.advanceTimersByTime(LONG_PRESS_MS - 1)
+    })
+    fireEvent.pointerMove(window, { clientX: 0, clientY: 60 })
+    expect(onSelectSlot).not.toHaveBeenCalled()
+
+    // Hold elapses → selection engages; a move now extends it.
+    fireEvent.pointerDown(getByTestId('slot1'), { button: 0, clientX: 0, clientY: 0, pointerType: 'touch', pointerId: 2 })
+    act(() => {
+      vi.advanceTimersByTime(LONG_PRESS_MS)
+    })
+    fireEvent.pointerMove(window, { clientX: 0, clientY: 60 })
+    fireEvent.pointerUp(window)
+
+    expect(onSelectSlot).toHaveBeenCalledTimes(1)
+    const arg = onSelectSlot.mock.calls[0]![0] as { action: string; slots: string[] }
+    expect(arg.action).toBe('select')
+    expect(arg.slots).toHaveLength(3) // slots 1, 2, 3
+  })
+
+  it('abandons a touch gesture (no selection, no click) when the finger moves before the hold', () => {
+    vi.useFakeTimers()
+    const onSelectSlot = vi.fn()
+    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    fireEvent.pointerDown(getByTestId('slot1'), { button: 0, clientX: 0, clientY: 0, pointerType: 'touch', pointerId: 1 })
+    // A scroll: the finger moves past the threshold before the long-press fires.
+    fireEvent.pointerMove(window, { clientX: 0, clientY: 60 })
+    act(() => {
+      vi.advanceTimersByTime(LONG_PRESS_MS + DOUBLE_CLICK_MS)
+    })
+    fireEvent.pointerUp(window)
+    act(() => {
+      vi.advanceTimersByTime(DOUBLE_CLICK_MS)
+    })
+    expect(onSelectSlot).not.toHaveBeenCalled()
+  })
+
+  it('treats a quick touch tap (lift before the hold) as a click', () => {
+    vi.useFakeTimers()
+    const onSelectSlot = vi.fn()
+    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    fireEvent.pointerDown(getByTestId('slot2'), { button: 0, clientX: 0, clientY: 0, pointerType: 'touch', pointerId: 1 })
+    fireEvent.pointerUp(window)
+    act(() => {
+      vi.advanceTimersByTime(DOUBLE_CLICK_MS)
+    })
+    expect(onSelectSlot).toHaveBeenCalledTimes(1)
+    expect((onSelectSlot.mock.calls[0]![0] as { action: string }).action).toBe('click')
+  })
+
+  it('suppresses native scroll while an engaged touch drag is in progress', () => {
+    vi.useFakeTimers()
+    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot: vi.fn() })
+    fireEvent.pointerDown(getByTestId('slot2'), { button: 0, clientX: 0, clientY: 0, pointerType: 'touch', pointerId: 1 })
+    act(() => {
+      vi.advanceTimersByTime(LONG_PRESS_MS) // engage → non-passive touchmove guard attaches
+    })
+    const ev = new Event('touchmove', { bubbles: true, cancelable: true })
+    window.dispatchEvent(ev)
+    expect(ev.defaultPrevented).toBe(true)
+    fireEvent.pointerUp(window)
+  })
+
+  it('aborts an engaged touch selection on pointercancel (no commit, no stale range)', () => {
+    vi.useFakeTimers()
+    const onSelectSlot = vi.fn()
+    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    fireEvent.pointerDown(getByTestId('slot2'), { button: 0, clientX: 0, clientY: 0, pointerType: 'touch', pointerId: 1 })
+    act(() => {
+      vi.advanceTimersByTime(LONG_PRESS_MS) // engage
+    })
+    fireEvent.pointerCancel(window)
+    fireEvent.pointerUp(window) // listeners already detached → no-op
+    act(() => {
+      vi.advanceTimersByTime(DOUBLE_CLICK_MS)
+    })
+    expect(onSelectSlot).not.toHaveBeenCalled()
+  })
+
+  it('captures and releases the pointer when the platform supports it', () => {
+    vi.useFakeTimers()
+    const proto = HTMLDivElement.prototype as unknown as {
+      setPointerCapture?: (id: number) => void
+      releasePointerCapture?: (id: number) => void
+    }
+    const origSet = proto.setPointerCapture
+    const origRel = proto.releasePointerCapture
+    const setCap = vi.fn()
+    const relCap = vi.fn()
+    proto.setPointerCapture = setCap
+    proto.releasePointerCapture = relCap
+    try {
+      const onSelectSlot = vi.fn()
+      const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+      stubPoint(getByTestId('slot3'))
+      fireEvent.pointerDown(getByTestId('slot1'), { button: 0, clientX: 0, clientY: 0, pointerType: 'touch', pointerId: 7 })
+      act(() => {
+        vi.advanceTimersByTime(LONG_PRESS_MS) // engage → captures pointer 7
+      })
+      expect(setCap).toHaveBeenCalledWith(7)
+      fireEvent.pointerMove(window, { clientX: 0, clientY: 60 })
+      fireEvent.pointerUp(window) // complete → releases the captured pointer
+      expect(relCap).toHaveBeenCalledWith(7)
+      expect(onSelectSlot).toHaveBeenCalledTimes(1)
+    } finally {
+      proto.setPointerCapture = origSet
+      proto.releasePointerCapture = origRel
+    }
+  })
+
+  it('honours a custom longPressThreshold', () => {
+    vi.useFakeTimers()
+    const onSelectSlot = vi.fn()
+    const { getByTestId } = renderSurface({ selectable: true, longPressThreshold: 100, onSelectSlot })
+    fireEvent.pointerDown(getByTestId('slot2'), { button: 0, clientX: 0, clientY: 0, pointerType: 'touch', pointerId: 1 })
+    act(() => {
+      vi.advanceTimersByTime(100)
+    })
+    fireEvent.pointerUp(window) // engaged → completes as a (single-slot) range, not a click
+    expect(onSelectSlot).toHaveBeenCalledTimes(1)
+    expect((onSelectSlot.mock.calls[0]![0] as { action: string }).action).toBe('select')
   })
 })

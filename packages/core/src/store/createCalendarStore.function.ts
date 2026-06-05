@@ -39,6 +39,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   const step = config.step ?? 30
   const timeslots = config.timeslots ?? 2
   const selectable = config.selectable ?? false
+  const longPressThreshold = config.longPressThreshold ?? 500
 
   const date = signal<string>(config.date ?? getNow())
   const view = signal<ViewKey>(config.view ?? Views.MONTH)
@@ -252,6 +253,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     step,
     timeslots,
     selectable,
+    longPressThreshold,
 
     navigate({ direction, date: target }) {
       const next = navigateDate({

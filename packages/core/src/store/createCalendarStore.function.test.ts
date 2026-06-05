@@ -309,6 +309,13 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
   describe('createCalendarStore — slot selection', () => {
     const slot = (min: number) => localizer.getSlotDate({ date: monday, minutesFromMidnight: min })
 
+    it('exposes longPressThreshold (default 500, overridable)', () => {
+      const base = createCalendarStore<Event>({ localizer, date: monday, view: Views.DAY })
+      expect(base.longPressThreshold).toBe(500)
+      const custom = createCalendarStore<Event>({ localizer, date: monday, view: Views.DAY, longPressThreshold: 800 })
+      expect(custom.longPressThreshold).toBe(800)
+    })
+
     it('is disabled by default (no selectable)', () => {
       const onSelectSlot = vi.fn()
       const store = createCalendarStore<Event>({ localizer, date: monday, view: Views.DAY, onSelectSlot })

@@ -235,10 +235,13 @@
     pointer-events: none;
   }
 
-  /* Scrollable slot body. */
+  /* Scrollable slot body. `pan-y` lets a finger scroll it vertically as normal;
+     a slot selection starts only after a touch long-press, which then captures
+     the pointer and suppresses scroll for the rest of the drag (useSlotSelection). */
   .bc-time-body {
     overflow-y: auto;
     min-block-size: 0;
+    touch-action: pan-y;
   }
 
   /* Each labelled group spans `--bc-slots-per-group` slot rows, so the gutter is

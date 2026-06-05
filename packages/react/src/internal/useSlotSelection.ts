@@ -42,6 +42,15 @@ function isOverEvent(el: EventTarget | null): boolean {
  * - presses **over an event** are ignored (the event handles them); both
  *   `selectable: true` and `'ignoreEvents'` defer to events (§8.2).
  *
+ * **Mouse / pen** start a drag immediately (movement past the threshold). **Touch**
+ * is gated behind a long-press so a finger can still scroll the calendar body:
+ * the selection only begins once the finger is held still for
+ * `store.longPressThreshold` ms; movement before then is read as a scroll and the
+ * gesture is abandoned. Once a touch selection engages, the pointer is captured and
+ * a non-passive `touchmove` `preventDefault` suppresses native scroll for the rest
+ * of the drag (`touch-action: pan-y` on the scroll body keeps normal scrolling
+ * before the hold).
+ *
  * Non-primary buttons and disabled selection are ignored. Move/up are tracked on
  * `window` so a drag that leaves the surface still completes.
  *
@@ -56,65 +65,18 @@ export function useSlotSelection(
 ): (e: ReactPointerEvent) => void {
   const { store } = useCalendarContext()
 
-  const drag = useRef<{ anchor: SlotCoord; startX: number; startY: number; started: boolean } | null>(null)
+  // Pending single-vs-double-click timer; persists across gestures so a second
+  // tap can upgrade the first. The live gesture's teardown is stored separately
+  // so an unmount mid-drag can detach its window listeners.
   const tap = useRef<{ slot: number; date: string; at: number; timer: ReturnType<typeof setTimeout> } | null>(null)
+  const activeTeardown = useRef<(() => void) | null>(null)
 
-  const onPointerMove = useCallback(
-    (e: PointerEvent) => {
-      const state = drag.current
-      if (state == null) return
-      if (!state.started) {
-        const moved =
-          Math.abs(e.clientX - state.startX) > DRAG_THRESHOLD_PX ||
-          Math.abs(e.clientY - state.startY) > DRAG_THRESHOLD_PX
-        if (!moved) return
-        state.started = true
-        store.selection.start({ slot: state.anchor.slot, date: state.anchor.date, mode, slotCount })
-      }
-      const coord = slotFromElement(document.elementFromPoint(e.clientX, e.clientY))
-      if (coord != null) store.selection.to({ slot: coord.slot })
-    },
-    [store, mode, slotCount],
-  )
-
-  const onPointerUp = useCallback(() => {
-    const state = drag.current
-    if (state == null) return
-    drag.current = null
-    window.removeEventListener('pointermove', onPointerMove)
-    window.removeEventListener('pointerup', onPointerUp)
-
-    if (state.started) {
-      store.selection.complete()
-      return
-    }
-
-    // No drag → a tap. Debounce single vs double on the same slot.
-    const { slot, date } = state.anchor
-    const now = Date.now()
-    const prev = tap.current
-    if (prev != null && prev.slot === slot && prev.date === date && now - prev.at < DOUBLE_CLICK_MS) {
-      clearTimeout(prev.timer)
-      tap.current = null
-      store.selection.doubleClick({ slot, date, mode, slotCount })
-      return
-    }
-    if (prev != null) clearTimeout(prev.timer)
-    const timer = setTimeout(() => {
-      tap.current = null
-      store.selection.click({ slot, date, mode, slotCount })
-    }, DOUBLE_CLICK_MS)
-    tap.current = { slot, date, at: now, timer }
-  }, [store, mode, slotCount, onPointerMove])
-
-  // Drop a pending tap timer and any live drag listeners if we unmount mid-gesture.
   useEffect(
     () => () => {
       if (tap.current !== null) clearTimeout(tap.current.timer)
-      window.removeEventListener('pointermove', onPointerMove)
-      window.removeEventListener('pointerup', onPointerUp)
+      activeTeardown.current?.()
     },
-    [onPointerMove, onPointerUp],
+    [],
   )
 
   return useCallback(
@@ -124,10 +86,121 @@ export function useSlotSelection(
       if (isOverEvent(e.target)) return // events own their pointer interaction
       const anchor = slotFromElement(e.target)
       if (anchor == null) return
-      drag.current = { anchor, startX: e.clientX, startY: e.clientY, started: false }
-      window.addEventListener('pointermove', onPointerMove)
-      window.addEventListener('pointerup', onPointerUp)
+
+      // Tear down any previous in-flight gesture before starting a new one.
+      activeTeardown.current?.()
+
+      const touch = e.pointerType === 'touch'
+      const pointerId = e.pointerId
+      const surface = e.currentTarget
+      const startX = e.clientX
+      const startY = e.clientY
+      let started = false
+      let captured = false
+      let longPress: ReturnType<typeof setTimeout> | null = null
+
+      const begin = () => {
+        started = true
+        store.selection.start({ slot: anchor.slot, date: anchor.date, mode, slotCount })
+      }
+      const extendTo = (clientX: number, clientY: number) => {
+        const coord = slotFromElement(document.elementFromPoint(clientX, clientY))
+        if (coord != null) store.selection.to({ slot: coord.slot })
+      }
+      // Non-passive so it can cancel native scroll while an engaged touch drags.
+      const preventScroll = (ev: TouchEvent) => {
+        if (started) ev.preventDefault()
+      }
+
+      const teardown = () => {
+        if (longPress != null) clearTimeout(longPress)
+        window.removeEventListener('pointermove', onMove)
+        window.removeEventListener('pointerup', onUp)
+        window.removeEventListener('pointercancel', onCancel)
+        window.removeEventListener('touchmove', preventScroll)
+        if (captured) {
+          try {
+            surface.releasePointerCapture(pointerId)
+          } catch {
+            // pointer already released (e.g. capture never took) — nothing to do.
+          }
+        }
+        activeTeardown.current = null
+      }
+
+      const onMove = (ev: PointerEvent) => {
+        const moved =
+          Math.abs(ev.clientX - startX) > DRAG_THRESHOLD_PX ||
+          Math.abs(ev.clientY - startY) > DRAG_THRESHOLD_PX
+        if (!started) {
+          if (touch) {
+            // Movement before the long-press fires = the user is scrolling, not
+            // selecting. Abandon silently and let the browser scroll.
+            if (moved) teardown()
+            return
+          }
+          // Mouse / pen: a drag past the threshold promotes the press to a range.
+          if (!moved) return
+          begin()
+        }
+        extendTo(ev.clientX, ev.clientY)
+      }
+
+      const onUp = () => {
+        const wasDrag = started
+        teardown()
+        if (wasDrag) {
+          store.selection.complete()
+          return
+        }
+        // No drag → a tap. Debounce single vs double on the same slot.
+        const { slot, date } = anchor
+        const now = Date.now()
+        const prev = tap.current
+        if (prev != null && prev.slot === slot && prev.date === date && now - prev.at < DOUBLE_CLICK_MS) {
+          clearTimeout(prev.timer)
+          tap.current = null
+          store.selection.doubleClick({ slot, date, mode, slotCount })
+          return
+        }
+        if (prev != null) clearTimeout(prev.timer)
+        const timer = setTimeout(() => {
+          tap.current = null
+          store.selection.click({ slot, date, mode, slotCount })
+        }, DOUBLE_CLICK_MS)
+        tap.current = { slot, date, at: now, timer }
+      }
+
+      // The browser revoked the pointer (e.g. it took over to scroll). Detach and
+      // abort any in-progress range so no stale highlight or commit is left behind.
+      const onCancel = () => {
+        const wasDrag = started
+        teardown()
+        if (wasDrag) store.selection.cancel()
+      }
+
+      window.addEventListener('pointermove', onMove)
+      window.addEventListener('pointerup', onUp)
+      window.addEventListener('pointercancel', onCancel)
+
+      if (touch) {
+        // Defer the selection until the finger has been held still long enough.
+        longPress = setTimeout(() => {
+          longPress = null
+          if (started) return
+          begin()
+          try {
+            surface.setPointerCapture(pointerId)
+            captured = true
+          } catch {
+            // Capture unsupported/unavailable — extend still works via window moves.
+          }
+          window.addEventListener('touchmove', preventScroll, { passive: false })
+        }, store.longPressThreshold)
+      }
+
+      activeTeardown.current = teardown
     },
-    [store, onPointerMove, onPointerUp],
+    [store, mode, slotCount],
   )
 }

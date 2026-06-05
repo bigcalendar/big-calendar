@@ -896,10 +896,29 @@ affordance was impossible).
   `elementFromPoint`, so "the strip is grabbable" is only verifiable visually; verified via `build-storybook`
   (green). Decision (size 0.625rem, CSS-only approach) logged in DECISIONS.md.
 
+### Phase 4 — Task 4j: selection wiring — touch long-press + scroll suppression (Cutter, 2026-06-05) ✓ (this change)
+
+Closes the carried "touch long-press + `touch-action` (scrollable body)" open item. The pointer adapter started a
+drag immediately on press; on touch that fights native scroll (`pointercancel` instead of `pointermove`), so
+drag-select on a finger was broken and you couldn't scroll the time body without a stray selection.
+- **core:** new `longPressThreshold` config (`config.type.ts`) → resolved on the store (`store.type.ts`,
+  `createCalendarStore`, **default 500**) → exposed as a React prop automatically (`CalendarProps extends Omit<CalendarConfig>`).
+- **react adapter (`useSlotSelection`):** on `pointerType === 'touch'`, a press arms a long-press timer; selection
+  begins only after the hold. Movement past the 4px threshold before it fires = scroll → gesture abandoned (no
+  select/click). On engage: `setPointerCapture` + a **non-passive `touchmove` preventDefault** suppresses native
+  scroll for the rest of the drag. `pointercancel` now aborts the in-progress range (`selection.cancel()`).
+  Mouse/pen unchanged (immediate drag). Restructured to **gesture-local closures** (per-pointerdown) to add the
+  timer + `pointercancel` without circular `useCallback` deps; all prior mouse tests pass unchanged.
+- **styles:** `touch-action: pan-y` on `.bc-time-body` (normal finger scroll until a long-press engages). dist rebuilt.
+- **tests/docs:** touch timing/abandon/tap/custom-threshold/pointercancel/pointer-capture unit-tested with fake
+  timers; per-file 85.2% branch / 100% func. Selection.mdx Touch section rewritten (was "planned, not wired").
+  Decision (configurable 500ms + robust suppression) logged in DECISIONS.md. Scroll-suppression *effect* itself is
+  visual-only (jsdom has no box model) — `build-storybook` green.
+
 ## In progress — selection wiring remaining
-- **Open items carried:** **touch** long-press + `touch-action` (scrollable body); Agenda EventButton
-  (entangled `.bc-agenda-row`); double-click-also-selects. Plus **2m view registry** (model contract decided
-  — Option B; implementation still deferred to the Phase-4 view-component contract).
+- **Open items carried:** Agenda EventButton (entangled `.bc-agenda-row`); double-click-also-selects (needs a UX
+  decision first). Plus **2m view registry** (model contract decided — Option B; implementation still deferred to
+  the Phase-4 view-component contract).
 
 ## Phase 2 status
 

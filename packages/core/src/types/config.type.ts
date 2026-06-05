@@ -63,6 +63,12 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
   /** Whether slot selection is enabled (`true`/`false`/`'ignoreEvents'`). Defaults to false. */
   selectable?: SelectableMode | undefined
   /**
+   * Touch long-press duration (ms) a finger must be held before a slot selection
+   * begins on touch input; a shorter press is a tap, and movement before it
+   * elapses is treated as a scroll. Mouse/pen are unaffected. Defaults to 500.
+   */
+  longPressThreshold?: number | undefined
+  /**
    * View a drilldown lands on by default. Defaults to `day`; pass `null` to
    * disable drilldown. Ignored when `getDrilldownView` is supplied.
    */

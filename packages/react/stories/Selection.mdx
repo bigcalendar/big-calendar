@@ -135,8 +135,25 @@ not selection.
 
 ## Touch
 
-Touch long-press to begin a drag is **planned but not yet wired** (it is an adapter +
-styles concern). For now, use pointer (mouse/pen) or the keyboard.
+Touch needs to coexist with scrolling, so selection is gated behind a **long-press**:
+
+- **Tap** a slot/day → `action: 'click'` (or `'doubleClick'` on a quick second tap),
+  exactly like a mouse tap.
+- **Press and hold** (default **500 ms**) → a selection begins at that slot; keep the
+  finger down and drag to extend the range, then lift to commit (`action: 'select'`).
+- **Move before the hold elapses** → read as a scroll: the gesture is abandoned and the
+  calendar body scrolls normally (no selection, no click).
+
+Tune the hold with the `longPressThreshold` prop (milliseconds):
+
+```tsx
+<Calendar selectable longPressThreshold={400} />
+```
+
+Under the hood the scrollable time body sets `touch-action: pan-y`, so a finger scrolls
+it as usual until a long-press engages; once it does, the pointer is captured and native
+scroll is suppressed for the rest of the drag. Mouse and pen are unaffected — they start
+a drag immediately (see **Pointer** above).
 
 ## Under the hood
 
