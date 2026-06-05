@@ -26,19 +26,29 @@ export interface SelectionApi {
   /**
    * The active anchor (the day + index space the live selection runs in), or
    * `null` when idle. Lets the adapter place the highlight overlay in the right
-   * column/row. Cleared on commit/cancel.
+   * column/row. Cleared on commit/cancel. `slotCount` (time mode only) is the
+   * number of slot rows per day column, so the store can decode a global
+   * `dayIndex*slotCount + slot` index back into a day + slot (cross-day spans).
    */
-  readonly anchor: ReadonlySignal<{ mode: SelectionMode; date: string } | null>
-  /** Begin a drag at the anchor slot; `date`+`mode` set the translation context. */
-  start(args: { slot: number; date: string; mode: SelectionMode }): void
+  readonly anchor: ReadonlySignal<{
+    mode: SelectionMode
+    date: string
+    slotCount?: number | undefined
+  } | null>
+  /**
+   * Begin a drag at the anchor slot; `date`+`mode` set the translation context.
+   * For `'time'` mode the slot index is **global** (`dayIndex*slotCount + slot`)
+   * and `slotCount` must be supplied so the store can decode cross-day spans.
+   */
+  start(args: { slot: number; date: string; mode: SelectionMode; slotCount?: number | undefined }): void
   /** Extend the in-progress drag to a new head slot (pointer move / Shift+Arrow). */
   to(args: { slot: number }): void
   /** Commit the in-progress drag (`action: 'select'`). */
   complete(): void
   /** Commit a single-slot click (`action: 'click'`). */
-  click(args: { slot: number; date: string; mode: SelectionMode }): void
+  click(args: { slot: number; date: string; mode: SelectionMode; slotCount?: number | undefined }): void
   /** Commit a single-slot double-click (`action: 'doubleClick'`). */
-  doubleClick(args: { slot: number; date: string; mode: SelectionMode }): void
+  doubleClick(args: { slot: number; date: string; mode: SelectionMode; slotCount?: number | undefined }): void
   /** Abort an in-progress drag without committing. */
   cancel(): void
 }

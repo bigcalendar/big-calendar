@@ -44,8 +44,16 @@ function isOverEvent(el: EventTarget | null): boolean {
  *
  * Non-primary buttons and disabled selection are ignored. Move/up are tracked on
  * `window` so a drag that leaves the surface still completes.
+ *
+ * `slotCount` (time mode only) is the number of slot rows per day column; it lets
+ * the store decode the **global** slot index (`dayIndex*slotCount + slot`) carried
+ * by the time-grid hit cells, so a drag can span day columns (a cross-day drag
+ * promotes to a whole-day / all-day selection). Omit it for `'day'` mode.
  */
-export function useSlotSelection(mode: SelectionMode): (e: ReactPointerEvent) => void {
+export function useSlotSelection(
+  mode: SelectionMode,
+  slotCount?: number,
+): (e: ReactPointerEvent) => void {
   const { store } = useCalendarContext()
 
   const drag = useRef<{ anchor: SlotCoord; startX: number; startY: number; started: boolean } | null>(null)
@@ -61,12 +69,12 @@ export function useSlotSelection(mode: SelectionMode): (e: ReactPointerEvent) =>
           Math.abs(e.clientY - state.startY) > DRAG_THRESHOLD_PX
         if (!moved) return
         state.started = true
-        store.selection.start({ slot: state.anchor.slot, date: state.anchor.date, mode })
+        store.selection.start({ slot: state.anchor.slot, date: state.anchor.date, mode, slotCount })
       }
       const coord = slotFromElement(document.elementFromPoint(e.clientX, e.clientY))
       if (coord != null) store.selection.to({ slot: coord.slot })
     },
-    [store, mode],
+    [store, mode, slotCount],
   )
 
   const onPointerUp = useCallback(() => {
@@ -88,16 +96,16 @@ export function useSlotSelection(mode: SelectionMode): (e: ReactPointerEvent) =>
     if (prev != null && prev.slot === slot && prev.date === date && now - prev.at < DOUBLE_CLICK_MS) {
       clearTimeout(prev.timer)
       tap.current = null
-      store.selection.doubleClick({ slot, date, mode })
+      store.selection.doubleClick({ slot, date, mode, slotCount })
       return
     }
     if (prev != null) clearTimeout(prev.timer)
     const timer = setTimeout(() => {
       tap.current = null
-      store.selection.click({ slot, date, mode })
+      store.selection.click({ slot, date, mode, slotCount })
     }, DOUBLE_CLICK_MS)
     tap.current = { slot, date, at: now, timer }
-  }, [store, mode, onPointerMove])
+  }, [store, mode, slotCount, onPointerMove])
 
   // Drop a pending tap timer and any live drag listeners if we unmount mid-gesture.
   useEffect(

@@ -77,10 +77,13 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
   onSelect?: ((args: { id: EventId | null }) => void) | undefined
   /**
    * Fired on every slot-selection range change (drag move / keyboard extend),
-   * with the candidate range as ISO date strings. Return `false` to **veto** the
-   * change. The store translates the FSM's slot indices to dates before calling.
+   * with the candidate range as ISO date strings (`allDay` flags a whole-day /
+   * cross-day span). Return `false` to **veto** the change. The store translates
+   * the FSM's slot indices to dates before calling.
    */
-  onSelecting?: ((args: { start: string; end: string }) => boolean | void) | undefined
+  onSelecting?:
+    | ((args: { start: string; end: string; allDay: boolean }) => boolean | void)
+    | undefined
   /**
    * Fired when a slot selection is committed (drag end / click / double-click /
    * keyboard). Receives ISO date strings; see {@link SlotSelectionDates} for the

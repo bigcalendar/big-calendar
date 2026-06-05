@@ -159,6 +159,36 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
     delete (document as { elementFromPoint?: unknown }).elementFromPoint
   })
 
+  it('spans columns and commits an all-day range when a drag crosses days', () => {
+    const onSelectSlot = vi.fn()
+    const { container } = renderGrid({ defaultView: Views.WEEK, selectable: true, onSelectSlot })
+    // Cells are global-indexed (col*48 + row). Anchor on day 0 (row 10), drag to
+    // day 1 (row 5): jsdom has no layout, so resolve the move to day 1's cell.
+    const cells = container.querySelectorAll('.bc-time-slot')
+    document.elementFromPoint = () => cells[48 + 5] as Element
+
+    fireEvent.pointerDown(cells[10] as HTMLElement, { button: 0, clientX: 0, clientY: 0 })
+    fireEvent.pointerMove(window, { clientX: 200, clientY: 60 })
+
+    // Two overlay boxes: day 0 fills from its slot to the bottom, day 1 from the top.
+    const overlays = container.querySelectorAll('.bc-selection')
+    expect(overlays.length).toBe(2)
+    expect((overlays[0] as HTMLElement).style.getPropertyValue('--bc-top')).toBe(String(10 / 48))
+    expect((overlays[0] as HTMLElement).style.getPropertyValue('--bc-height')).toBe(String(38 / 48))
+    expect((overlays[1] as HTMLElement).style.getPropertyValue('--bc-top')).toBe('0')
+    expect((overlays[1] as HTMLElement).style.getPropertyValue('--bc-height')).toBe(String(6 / 48))
+
+    fireEvent.pointerUp(window)
+    expect(onSelectSlot).toHaveBeenCalledTimes(1)
+    const arg = onSelectSlot.mock.calls[0]![0] as { allDay: boolean; slots: string[]; start: string; end: string }
+    // Cross-day → a whole-day (all-day) span over two consecutive days.
+    expect(arg.allDay).toBe(true)
+    expect(arg.slots).toHaveLength(2)
+    expect(arg.start).toBe(arg.slots[0])
+    expect(arg.end).toBe(localizer.endOf({ value: arg.slots[1]!, unit: 'day' }))
+    delete (document as { elementFromPoint?: unknown }).elementFromPoint
+  })
+
   it('omits the now-line when the column is not today', () => {
     const { container } = renderGrid({ defaultDate: '2026-06-16' })
     const heading16 = localizer.format({

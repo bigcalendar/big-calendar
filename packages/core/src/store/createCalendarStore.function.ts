@@ -89,46 +89,69 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   // ── slot selection ──────────────────────────────────────────────────────
   // The FSM works in slot-index space; the store captures the anchor day + mode
   // (set when a drag/click starts) and translates committed indices back to ISO
-  // dates for the public callbacks. `'time'` indices are vertical slots within
-  // the anchor day; `'day'` indices map straight into the visible day list. The
-  // anchor is a signal so the adapter can place the highlight overlay in the
-  // right column/row while a drag is live.
-  const selectionAnchor = signal<{ mode: SelectionMode; date: string } | null>(null)
+  // dates for the public callbacks. `'day'` indices map straight into the visible
+  // day list. `'time'` indices are **global** (`dayIndex*slotCount + slot`) so a
+  // drag can span day columns: same-day → a timed selection; cross-day → a
+  // promoted whole-day (all-day) span. The anchor is a signal so the adapter can
+  // place the highlight overlay in the right column(s)/row while a drag is live.
+  const selectionAnchor = signal<{ mode: SelectionMode; date: string; slotCount?: number | undefined } | null>(null)
 
-  const translate = (slotRange: SelectionRange): { start: string; end: string; slots: string[] } => {
+  // Shape returned to the public callbacks: ISO dates + the whole-day flag.
+  type Translated = { start: string; end: string; slots: string[]; allDay: boolean }
+
+  // A whole-day span over the visible days `[from..to]` (inclusive day indices).
+  const daySpan = (from: number, to: number): Translated => {
+    const days = range.value.days
+    const slots = days.slice(from, to + 1)
+    const start = slots[0] ?? date.value
+    const last = slots[slots.length - 1] ?? start
+    return { start, end: localizer.endOf({ value: last, unit: 'day' }), slots, allDay: true }
+  }
+
+  const translate = (slotRange: SelectionRange): Translated => {
     const ctx = selectionAnchor.value
     if (ctx == null) {
       // Defensive: an action ran without an anchor; emit a degenerate range.
-      return { start: date.value, end: date.value, slots: [date.value] }
+      return { start: date.value, end: date.value, slots: [date.value], allDay: false }
     }
     if (ctx.mode === 'time') {
+      // Decode the global index into day + in-day slot. Without a slotCount the
+      // selection can't cross days, so treat it all as the anchor day (slot 0+).
+      const hasCount = ctx.slotCount != null && ctx.slotCount > 0
+      const slotCount = hasCount ? ctx.slotCount! : 0
+      const startDay = hasCount ? Math.floor(slotRange.start / slotCount) : 0
+      const endDay = hasCount ? Math.floor(slotRange.end / slotCount) : 0
+      if (startDay !== endDay) {
+        // Cross-day drag → promote to a whole-day span (the "all-day slot").
+        return daySpan(startDay, endDay)
+      }
+      const days = range.value.days
+      const day = days[startDay] ?? ctx.date
+      const startSlot = slotRange.start - startDay * slotCount
+      const endSlot = slotRange.end - startDay * slotCount
       const slots: string[] = []
-      for (let i = slotRange.start; i <= slotRange.end; i++) {
-        slots.push(localizer.getSlotDate({ date: ctx.date, minutesFromMidnight: dayStartMin + i * step }))
+      for (let i = startSlot; i <= endSlot; i++) {
+        slots.push(localizer.getSlotDate({ date: day, minutesFromMidnight: dayStartMin + i * step }))
       }
       // Exclusive end: the start of the slot just past the last selected one.
-      const end = localizer.getSlotDate({ date: ctx.date, minutesFromMidnight: dayStartMin + (slotRange.end + 1) * step })
-      return { start: slots[0]!, end, slots }
+      const end = localizer.getSlotDate({ date: day, minutesFromMidnight: dayStartMin + (endSlot + 1) * step })
+      return { start: slots[0]!, end, slots, allDay: false }
     }
-    // 'day' mode: linear day index into the visible grid.
-    const days = range.value.days
-    const slots = days.slice(slotRange.start, slotRange.end + 1)
-    const start = slots[0] ?? date.value
-    const last = slots[slots.length - 1] ?? start
-    return { start, end: localizer.endOf({ value: last, unit: 'day' }), slots }
+    // 'day' mode: linear day index into the visible grid (always whole days).
+    return daySpan(slotRange.start, slotRange.end)
   }
 
   const selectionController = createSelection({
     selectable,
     onSelecting: config.onSelecting
       ? (slotRange) => {
-          const { start, end } = translate(slotRange)
-          return config.onSelecting!({ start, end })
+          const { start, end, allDay } = translate(slotRange)
+          return config.onSelecting!({ start, end, allDay })
         }
       : undefined,
     onSelect: (selection) => {
-      const { start, end, slots } = translate(selection)
-      config.onSelectSlot?.({ start, end, slots, action: selection.action })
+      const { start, end, slots, allDay } = translate(selection)
+      config.onSelectSlot?.({ start, end, slots, action: selection.action, allDay })
     },
   })
 
@@ -170,9 +193,9 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   const selection = {
     state: selectionController.state,
     range: selectionController.range,
-    anchor: selectionAnchor as ReadonlySignal<{ mode: SelectionMode; date: string } | null>,
-    start({ slot, date: anchorDate, mode }: { slot: number; date: string; mode: SelectionMode }) {
-      selectionAnchor.value = { mode, date: anchorDate }
+    anchor: selectionAnchor as ReadonlySignal<{ mode: SelectionMode; date: string; slotCount?: number | undefined } | null>,
+    start({ slot, date: anchorDate, mode, slotCount }: { slot: number; date: string; mode: SelectionMode; slotCount?: number | undefined }) {
+      selectionAnchor.value = { mode, date: anchorDate, slotCount }
       selectionController.start({ slot })
     },
     to({ slot }: { slot: number }) {
@@ -182,12 +205,12 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       selectionController.complete()
       selectionAnchor.value = null
     },
-    click({ slot, date: anchorDate, mode }: { slot: number; date: string; mode: SelectionMode }) {
-      selectionAnchor.value = { mode, date: anchorDate }
+    click({ slot, date: anchorDate, mode, slotCount }: { slot: number; date: string; mode: SelectionMode; slotCount?: number | undefined }) {
+      selectionAnchor.value = { mode, date: anchorDate, slotCount }
       selectionController.click({ slot })
     },
-    doubleClick({ slot, date: anchorDate, mode }: { slot: number; date: string; mode: SelectionMode }) {
-      selectionAnchor.value = { mode, date: anchorDate }
+    doubleClick({ slot, date: anchorDate, mode, slotCount }: { slot: number; date: string; mode: SelectionMode; slotCount?: number | undefined }) {
+      selectionAnchor.value = { mode, date: anchorDate, slotCount }
       selectionController.doubleClick({ slot })
     },
     cancel() {

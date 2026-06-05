@@ -55,4 +55,12 @@ export interface SlotSelectionDates {
   slots: string[]
   /** How the selection was produced. */
   action: SelectAction
+  /**
+   * Whether the selection spans whole days rather than times. `true` for
+   * month/day selections **and** for time-grid drags that cross from one day
+   * into another (which promote to an all-day span); `false` for a within-day
+   * timed selection. When `true`, `start`/`end` are day bounds and `slots` are
+   * day-starts.
+   */
+  allDay: boolean
 }

@@ -38,7 +38,7 @@ import { useTimeGrid } from './hooks'
 function TimeGridView<TEvent = unknown>() {
   const { store, components, messages } = useCalendarContext<TEvent>()
   const grid = useTimeGrid<TEvent>()
-  const onSlotPointerDown = useSlotSelection('time')
+  const onSlotPointerDown = useSlotSelection('time', grid?.slotCount)
   const selRange = useSignalValue(store.selection.range)
   const selAnchor = useSignalValue(store.selection.anchor)
 
@@ -53,6 +53,36 @@ function TimeGridView<TEvent = unknown>() {
     components.time?.allDayEvent ?? DefaultTimeAllDayEvent
   const ShowMore: ComponentType<TimeShowMoreProps<TEvent>> =
     components.time?.showMore ?? DefaultTimeShowMore
+
+  // The live selection highlight for one day column (colIndex). Selection runs
+  // in global slot space (dayIndex*slotCount + slot), so a drag can span days:
+  // the start day fills from its slot to the bottom, whole middle days fill, and
+  // the end day fills from the top to its slot (a same-day drag is just a box).
+  const slotCount = grid.slotCount
+  const timeSelectionBox = (colIndex: number): { top: number; height: number } | null => {
+    if (selRange === null || selAnchor?.mode !== 'time' || slotCount <= 0) return null
+    const startDay = Math.floor(selRange.start / slotCount)
+    const endDay = Math.floor(selRange.end / slotCount)
+    if (colIndex < startDay || colIndex > endDay) return null
+    const startSlot = selRange.start - startDay * slotCount
+    const endSlot = selRange.end - endDay * slotCount
+    let top: number
+    let bottom: number // exclusive slot bound
+    if (startDay === endDay) {
+      top = startSlot
+      bottom = endSlot + 1
+    } else if (colIndex === startDay) {
+      top = startSlot
+      bottom = slotCount
+    } else if (colIndex === endDay) {
+      top = 0
+      bottom = endSlot + 1
+    } else {
+      top = 0
+      bottom = slotCount
+    }
+    return { top: top / slotCount, height: (bottom - top) / slotCount }
+  }
 
   return (
     <div
@@ -103,21 +133,22 @@ function TimeGridView<TEvent = unknown>() {
             <TimeLabel key={label.key} time={label.time} label={label.label} />
           ))}
         </div>
-        {grid.columns.map((column) => {
+        {grid.columns.map((column, colIndex) => {
           const className = ['bc-day-column', column.isToday && 'bc-today'].filter(Boolean).join(' ')
           return (
             <div key={column.key} className={className}>
               {/* Real per-slot cells: the focusable hit targets for slot
                   selection (pointer + keyboard). Transparent — the column's
                   gradient still paints the slot/hour lines. Events render above
-                  and own their own pointer interaction. */}
+                  and own their own pointer interaction. The slot index is global
+                  (colIndex*slotCount + row) so a drag can span day columns. */}
               <div className="bc-time-slots">
                 {Array.from({ length: grid.slotCount }, (_, slotIndex) => (
                   <div
                     key={slotIndex}
                     className="bc-time-slot"
                     data-date={column.day}
-                    data-slot-index={slotIndex}
+                    data-slot-index={colIndex * grid.slotCount + slotIndex}
                   />
                 ))}
               </div>
@@ -149,15 +180,12 @@ function TimeGridView<TEvent = unknown>() {
               {column.nowTop !== null && (
                 <div className="bc-now-indicator" style={nowIndicatorStyle(column.nowTop)} />
               )}
-              {selRange !== null && selAnchor?.mode === 'time' && selAnchor.date === column.day && (
-                <div
-                  className="bc-selection"
-                  style={selectionStyle({
-                    top: selRange.start / grid.slotCount,
-                    height: (selRange.end - selRange.start + 1) / grid.slotCount,
-                  })}
-                />
-              )}
+              {(() => {
+                const box = timeSelectionBox(colIndex)
+                return box === null ? null : (
+                  <div className="bc-selection" style={selectionStyle(box)} />
+                )
+              })()}
             </div>
           )
         })}

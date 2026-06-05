@@ -339,8 +339,33 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
         end: slot(150),
         slots: [slot(60), slot(90), slot(120)],
         action: 'select',
+        allDay: false,
       })
       expect(store.selection.range.value).toBeNull()
+    })
+
+    it('promotes a cross-day time drag to a whole-day (all-day) span', () => {
+      const onSelectSlot = vi.fn()
+      const store = createCalendarStore<Event>({
+        localizer,
+        date: monday,
+        view: Views.WEEK,
+        selectable: true,
+        onSelectSlot,
+      })
+      const days = store.range.value.days
+      // Full-day window → 48 slots/column. Anchor on day 0, drag into day 2.
+      const slotCount = 48
+      store.selection.start({ slot: 0 * slotCount + 10, date: days[0]!, mode: 'time', slotCount })
+      store.selection.to({ slot: 2 * slotCount + 5 })
+      store.selection.complete()
+      expect(onSelectSlot).toHaveBeenCalledWith({
+        start: days[0],
+        end: localizer.endOf({ value: days[2]!, unit: 'day' }),
+        slots: [days[0], days[1], days[2]],
+        action: 'select',
+        allDay: true,
+      })
     })
 
     it('vetoes a time-mode start when onSelecting returns false (dates passed through)', () => {
@@ -353,7 +378,7 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
         onSelecting,
       })
       store.selection.start({ slot: 2, date: monday, mode: 'time' })
-      expect(onSelecting).toHaveBeenCalledWith({ start: slot(60), end: slot(90) })
+      expect(onSelecting).toHaveBeenCalledWith({ start: slot(60), end: slot(90), allDay: false })
       expect(store.selection.range.value).toBeNull()
     })
 
@@ -373,12 +398,14 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
         end: slot(120),
         slots: [slot(90)],
         action: 'click',
+        allDay: false,
       })
       expect(onSelectSlot).toHaveBeenNthCalledWith(2, {
         start: slot(90),
         end: slot(120),
         slots: [slot(90)],
         action: 'doubleClick',
+        allDay: false,
       })
     })
 
@@ -400,6 +427,7 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
         end: localizer.endOf({ value: days[2]!, unit: 'day' }),
         slots: [days[0], days[1], days[2]],
         action: 'select',
+        allDay: true,
       })
     })
 
