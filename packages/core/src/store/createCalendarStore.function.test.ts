@@ -344,7 +344,7 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       expect(store.selection.range.value).toBeNull()
     })
 
-    it('promotes a cross-day time drag to a whole-day (all-day) span', () => {
+    it('marks a cross-day time drag allDay while keeping its instant start/end times', () => {
       const onSelectSlot = vi.fn()
       const store = createCalendarStore<Event>({
         localizer,
@@ -354,18 +354,22 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
         onSelectSlot,
       })
       const days = store.range.value.days
-      // Full-day window → 48 slots/column. Anchor on day 0, drag into day 2.
+      // Full-day window → 48 slots/column. Anchor day 0 slot 10, drag to day 2 slot 5.
       const slotCount = 48
       store.selection.start({ slot: 0 * slotCount + 10, date: days[0]!, mode: 'time', slotCount })
       store.selection.to({ slot: 2 * slotCount + 5 })
       store.selection.complete()
-      expect(onSelectSlot).toHaveBeenCalledWith({
-        start: days[0],
-        end: localizer.endOf({ value: days[2]!, unit: 'day' }),
-        slots: [days[0], days[1], days[2]],
-        action: 'select',
-        allDay: true,
-      })
+      const arg = onSelectSlot.mock.calls[0]![0]
+      // All-day span, but with real instant times (step 30: slot 10 = 05:00).
+      expect(arg.allDay).toBe(true)
+      expect(arg.action).toBe('select')
+      expect(arg.start).toBe(localizer.getSlotDate({ date: days[0]!, minutesFromMidnight: 10 * 30 }))
+      // Exclusive end on day 2: the slot just past slot 5 → 03:00.
+      expect(arg.end).toBe(localizer.getSlotDate({ date: days[2]!, minutesFromMidnight: 6 * 30 }))
+      // Every slot from day0/10 through day2/5 inclusive (38 + 48 + 6).
+      expect(arg.slots).toHaveLength(2 * 48 + 5 - 10 + 1)
+      expect(arg.slots[0]).toBe(arg.start)
+      expect(arg.slots.at(-1)).toBe(localizer.getSlotDate({ date: days[2]!, minutesFromMidnight: 5 * 30 }))
     })
 
     it('vetoes a time-mode start when onSelecting returns false (dates passed through)', () => {

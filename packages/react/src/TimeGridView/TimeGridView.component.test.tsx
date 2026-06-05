@@ -180,12 +180,12 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
 
     fireEvent.pointerUp(window)
     expect(onSelectSlot).toHaveBeenCalledTimes(1)
-    const arg = onSelectSlot.mock.calls[0]![0] as { allDay: boolean; slots: string[]; start: string; end: string }
-    // Cross-day → a whole-day (all-day) span over two consecutive days.
+    const arg = onSelectSlot.mock.calls[0]![0] as { allDay: boolean; slots: string[]; start: string }
+    // Cross-day → an all-day span that keeps instant times + per-slot list:
+    // day 0 rows 10..47 (38) + day 1 rows 0..5 (6) = 44 slots.
     expect(arg.allDay).toBe(true)
-    expect(arg.slots).toHaveLength(2)
+    expect(arg.slots).toHaveLength(44)
     expect(arg.start).toBe(arg.slots[0])
-    expect(arg.end).toBe(localizer.endOf({ value: arg.slots[1]!, unit: 'day' }))
     delete (document as { elementFromPoint?: unknown }).elementFromPoint
   })
 

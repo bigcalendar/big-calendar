@@ -115,27 +115,31 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       return { start: date.value, end: date.value, slots: [date.value], allDay: false }
     }
     if (ctx.mode === 'time') {
-      // Decode the global index into day + in-day slot. Without a slotCount the
+      // Decode each global index into day + in-day slot. Without a slotCount the
       // selection can't cross days, so treat it all as the anchor day (slot 0+).
       const hasCount = ctx.slotCount != null && ctx.slotCount > 0
       const slotCount = hasCount ? ctx.slotCount! : 0
-      const startDay = hasCount ? Math.floor(slotRange.start / slotCount) : 0
-      const endDay = hasCount ? Math.floor(slotRange.end / slotCount) : 0
-      if (startDay !== endDay) {
-        // Cross-day drag → promote to a whole-day span (the "all-day slot").
-        return daySpan(startDay, endDay)
-      }
       const days = range.value.days
-      const day = days[startDay] ?? ctx.date
-      const startSlot = slotRange.start - startDay * slotCount
-      const endSlot = slotRange.end - startDay * slotCount
-      const slots: string[] = []
-      for (let i = startSlot; i <= endSlot; i++) {
-        slots.push(localizer.getSlotDate({ date: day, minutesFromMidnight: dayStartMin + i * step }))
+      const dayOf = (index: number): number => (hasCount ? Math.floor(index / slotCount) : 0)
+      const slotDate = (index: number): string => {
+        const dayIdx = dayOf(index)
+        const day = days[dayIdx] ?? ctx.date
+        return localizer.getSlotDate({ date: day, minutesFromMidnight: dayStartMin + (index - dayIdx * slotCount) * step })
       }
-      // Exclusive end: the start of the slot just past the last selected one.
-      const end = localizer.getSlotDate({ date: day, minutesFromMidnight: dayStartMin + (endSlot + 1) * step })
-      return { start: slots[0]!, end, slots, allDay: false }
+      const startDay = dayOf(slotRange.start)
+      const endDay = dayOf(slotRange.end)
+      const slots: string[] = []
+      for (let i = slotRange.start; i <= slotRange.end; i++) slots.push(slotDate(i))
+      // Exclusive end: the slot just past the last, computed on the end day so a
+      // partial window (e.g. 9–5) ends at its window edge, not the next day.
+      const endDayStr = days[endDay] ?? ctx.date
+      const end = localizer.getSlotDate({
+        date: endDayStr,
+        minutesFromMidnight: dayStartMin + (slotRange.end - endDay * slotCount + 1) * step,
+      })
+      // A drag that crosses day columns is an all-day span — but, unlike a
+      // month/day selection, it keeps its instant start/end times.
+      return { start: slots[0]!, end, slots, allDay: startDay !== endDay }
     }
     // 'day' mode: linear day index into the visible grid (always whole days).
     return daySpan(slotRange.start, slotRange.end)
