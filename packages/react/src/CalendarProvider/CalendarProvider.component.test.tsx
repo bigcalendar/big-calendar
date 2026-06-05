@@ -56,6 +56,24 @@ describe.each(LOCALIZER_CASES)('CalendarProvider [$name]', ({ create }) => {
     expect(screen.getByText(`view: ${Views.MONTH}`)).toBeTruthy()
   })
 
+  it('renders visually-hidden instruction elements that match the context description ids', () => {
+    let ids: { selection: string; event: string } | undefined
+    function Probe() {
+      ids = useCalendarContext<Event>().descriptionIds
+      return null
+    }
+    render(
+      <CalendarProvider<Event> localizer={localizer} defaultView={Views.WEEK}>
+        <Probe />
+      </CalendarProvider>,
+    )
+    const selection = document.getElementById(ids!.selection)
+    const event = document.getElementById(ids!.event)
+    expect(selection?.className).toBe('bc-sr-only')
+    expect(selection?.textContent).toContain('arrow keys')
+    expect(event?.textContent).toContain('F2')
+  })
+
   it('throws when context hooks are used outside a provider', () => {
     expect(() => renderHook(() => useCalendarContext())).toThrow(/within a <CalendarProvider>/)
   })

@@ -29,7 +29,7 @@ import { useMonthWeeks } from './hooks'
  * `components.month`. Must render inside a {@link CalendarProvider}.
  */
 function MonthView<TEvent = unknown>() {
-  const { store, components, messages } = useCalendarContext<TEvent>()
+  const { store, components, messages, descriptionIds } = useCalendarContext<TEvent>()
   const grid = useMonthWeeks<TEvent>()
   const onSlotPointerDown = useSlotSelection('day')
   const selRange = useSignalValue(store.selection.range)
@@ -105,6 +105,7 @@ function MonthView<TEvent = unknown>() {
                     data-date={cell.day}
                     data-slot-index={base + dayIndex}
                     tabIndex={roving.cellTabIndex(base + dayIndex)}
+                    aria-describedby={descriptionIds.selection}
                   />
                 ))}
               </div>

@@ -40,7 +40,7 @@ import { useTimeGrid } from './hooks'
  * Must render inside a {@link CalendarProvider}.
  */
 function TimeGridView<TEvent = unknown>() {
-  const { store, components, messages } = useCalendarContext<TEvent>()
+  const { store, components, messages, descriptionIds } = useCalendarContext<TEvent>()
   const grid = useTimeGrid<TEvent>()
   const onSlotPointerDown = useSlotSelection('time', grid?.slotCount)
   const onAllDayPointerDown = useSlotSelection('day')
@@ -184,6 +184,7 @@ function TimeGridView<TEvent = unknown>() {
               data-date={column.day}
               data-slot-index={colIndex}
               tabIndex={allDayRoving.cellTabIndex(colIndex)}
+              aria-describedby={descriptionIds.selection}
             />
           ))}
         </div>
@@ -247,6 +248,7 @@ function TimeGridView<TEvent = unknown>() {
                     data-date={column.day}
                     data-slot-index={colIndex * grid.slotCount + slotIndex}
                     tabIndex={timeRoving.cellTabIndex(colIndex * grid.slotCount + slotIndex)}
+                    aria-describedby={descriptionIds.selection}
                   />
                 ))}
               </div>

@@ -55,6 +55,14 @@ describe('EventButton', () => {
     expect(button.getAttribute('aria-selected')).toBe('false')
   })
 
+  it('describes the keyboard model via aria-describedby', () => {
+    const { button } = renderButton()
+    const id = button.getAttribute('aria-describedby')
+    expect(id).toBeTruthy()
+    const description = document.getElementById(id!)
+    expect(description?.textContent).toContain('F2')
+  })
+
   it('selects the event and fires onEventClick after the double-click window on a single click', () => {
     vi.useFakeTimers()
     const onEventClick = vi.fn()

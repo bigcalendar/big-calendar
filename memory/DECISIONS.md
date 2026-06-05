@@ -546,3 +546,14 @@ There is **no keyboard double-click** (`dblclick` never fires from the keyboard;
   - month / day-grid → `allDay:true`, day bounds, `slots`=day-starts.
 - **End-of-day rule:** last slot of a **full** day → exclusive end = `endOf(day)` (`23:59:59.999`), not next-day midnight. Partial windows (9–5) end at their edge.
 - **Mechanism:** time cells use a **global** index `dayIndex*slotCount+slot`; `slotCount` flows view→hook→store anchor; store decodes day+slot. Per-column overlay (start-day slot→bottom, full middle, top→end-day slot).
+
+## 2026-06-05 — Selection a11y: `aria-describedby` instructions + string home (Cutter, IMPLEMENTED)
+
+**Status: IMPLEMENTED** (feat/initial). Closes Step 6 of the §8.1/§8.2 selection plan; resolves the deferred "aria-describedby instructions element" from the 2026-06-04 keyboard entries.
+
+- **String home (Cutter chose via AskUserQuestion): the CORE `Messages` map**, not a react-only constant. Two new overridable keys: `selectionInstructions` (slot grid) and `eventInstructions` (event buttons). Rationale: a11y gesture text localizes alongside every other string and every future adapter inherits it. English defaults describe Arrow / Shift+Arrow / Enter–Space / Esc, and Enter–Space / F2.
+- **Single shared text per kind:** `CalendarProvider` renders two visually-hidden `<p class="bc-sr-only">` elements (ids from `useId()`) and publishes `descriptionIds: { selection, event }` on the context. Every slot cell + every `EventButton` points `aria-describedby` at the **same** element — one source of truth, no per-cell duplication of the string.
+- **On the focusable nodes, not the container:** describedby sits on the roving slot cells (`.bc-month-slot`/`.bc-allday-slot`/`.bc-time-slot`) and on each `EventButton`, so a screen reader announces it on focus. Putting it on the grid container would need ARIA grid roles to be announced — those stay deferred to §7.6.
+- **`.bc-sr-only` is unscoped** (not under `.bc-calendar`) because the provider may render the instruction elements alongside, not inside, the calendar root. clip-path visually-hidden, in `@layer bc.layout`.
+- **Docs:** new `storybook-core` `Core/Selection contract` page mirrors the framework-agnostic callback/`SlotSelectionDates` contract (the §8.3 "mirror into storybook-core" TODO); react `Selection.mdx` notes the instructions + the two message keys.
+- **Minor deferred:** slot cells stay focusable + describedby even when `selectable===false` (selection instructions announced on a non-selectable grid). Low-stakes; gate later if wanted.

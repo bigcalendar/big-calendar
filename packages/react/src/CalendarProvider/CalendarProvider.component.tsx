@@ -1,6 +1,6 @@
 import { resolveMessages } from '@big-calendar/core'
 import type { Messages } from '@big-calendar/core'
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useId, useMemo, useRef } from 'react'
 import type { ReactNode } from 'react'
 import type { CalendarComponents } from '../components.type'
 import { useCalendar } from '../useCalendar'
@@ -42,6 +42,14 @@ function CalendarProvider<TEvent = unknown, TResource = unknown>({
   const store = useCalendar<TEvent, TResource>(props)
   const resolvedMessages = useMemo(() => resolveMessages(messages), [messages])
 
+  // Stable ids for the two visually-hidden instruction elements rendered below;
+  // slot cells and event buttons reference these via `aria-describedby`.
+  const baseId = useId()
+  const descriptionIds = useMemo(
+    () => ({ selection: `${baseId}selection`, event: `${baseId}event` }),
+    [baseId],
+  )
+
   // Stable identities over the latest handlers (read via a ref) so the context
   // value isn't rebuilt — and every consumer re-rendered — when the app passes
   // fresh inline event callbacks each render. Default to a noop when unset.
@@ -60,10 +68,21 @@ function CalendarProvider<TEvent = unknown, TResource = unknown>({
       messages: resolvedMessages,
       onEventClick: handleEventClick,
       onEventDoubleClick: handleEventDoubleClick,
+      descriptionIds,
     }),
-    [store, components, resolvedMessages, handleEventClick, handleEventDoubleClick],
+    [store, components, resolvedMessages, handleEventClick, handleEventDoubleClick, descriptionIds],
   )
-  return <CalendarContext.Provider value={value as CalendarContextValue}>{children}</CalendarContext.Provider>
+  return (
+    <CalendarContext.Provider value={value as CalendarContextValue}>
+      <p id={descriptionIds.selection} className="bc-sr-only">
+        {resolvedMessages.selectionInstructions}
+      </p>
+      <p id={descriptionIds.event} className="bc-sr-only">
+        {resolvedMessages.eventInstructions}
+      </p>
+      {children}
+    </CalendarContext.Provider>
+  )
 }
 
 export default CalendarProvider

@@ -850,13 +850,41 @@ Cutter (Storybook): no visible focus rings on keyboard nav, and no doc explainin
   stops, key tables, F2/no-keyboard-dblclick), touch (planned, not wired), and the `data-*` DOM model.
   Points readers to the **Calendar → Selectable** playground. build-storybook green.
 
+### Phase 4 — Task 4j: selection wiring — step 6, `aria-describedby` instructions + core API doc (Cutter, 2026-06-05) ✓ (this commit)
+
+Closes Step 6. Conveys the keyboard gestures ARIA's role/state/shortcut attributes can't (DECISIONS.md
+2026-06-04 "aria-describedby instructions element").
+- **Core messages (Cutter chose "Core Messages map" over react-only):** added two overridable keys to the
+  `Messages` interface + `DEFAULT_MESSAGES` — `selectionInstructions` (slot grid) and `eventInstructions`
+  (event buttons). English defaults describe Arrow / Shift+Arrow / Enter-Space / Esc and Enter-Space / F2.
+- **Provider (react):** `CalendarProvider` renders two visually-hidden `<p class="bc-sr-only">` instruction
+  elements (ids from `useId()`) and exposes `descriptionIds: { selection, event }` on the context, so all
+  slot cells + every `EventButton` reference the **same** shared text via `aria-describedby`.
+- **Wiring:** `aria-describedby={descriptionIds.selection}` on every focusable slot cell (`.bc-month-slot`,
+  `.bc-allday-slot`, `.bc-time-slot` — the roving cells); `aria-describedby={descriptionIds.event}` on each
+  `EventButton` (alongside its existing `aria-keyshortcuts`). On the focusable cells/buttons, not the
+  container, so SRs announce on focus (full ARIA grid roles stay deferred to §7.6).
+- **styles:** new unscoped `.bc-sr-only` utility (clip-path visually-hidden) in `layout.css` (`@layer
+  bc.layout`) — unscoped because the provider may render the elements alongside, not inside, `.bc-calendar`.
+  styles dist rebuilt.
+- **Docs:** new `storybook-core` page `Core/Selection contract` (`stories/SelectionContract.mdx`) mirrors the
+  framework-agnostic `onSelecting`/`onSelectSlot` + `SlotSelectionDates` contract (ISO strings, the `allDay`
+  table, end-of-day rule, why translation lives in core). React `Selection.mdx` gained a note on the
+  `aria-describedby` instructions + the two new message keys. HTML tables (Storybook MDX has no remark-gfm).
+- **Tests:** +1 core (defaults carry the two new keys), +1 CalendarProvider (hidden elements render + match
+  context ids), +1 EventButton (`aria-describedby` resolves to the F2 text). core **147**, react **124**;
+  per-file coverage clears the bar; typecheck/lint/build + both build-storybook green.
+- **Note (minor, deferred):** the slot cells stay focusable + describedby even when `selectable===false`, so
+  the selection instructions can be announced on a non-selectable grid. Low-stakes; gate later if wanted.
+
+**Step 6 COMPLETE.** Selection wiring (steps 1–6) done: FSM→store, slot cells + EventButton, pointer
+(time/month/all-day), cross-day→all-day, keyboard roving (two tab stops), focus ring, `.mdx` docs, and the
+a11y instructions.
+
 ## In progress — selection wiring remaining
-- **Step 6 remaining — `aria-describedby` instructions** on the slot surfaces + event buttons, sourced from
-  the messages map (the `.mdx` itself is done above). Also mirror the API contract into `storybook-core` API
-  docs. Canonical source: [DECISIONS.md](DECISIONS.md) 2026-06-05 "FINAL" + `Upgrade_plan_prompt.md` §8.3.
 - **Open items carried:** time-grid full-width events (`--bc-width:1`) leave no empty slot strip → reserve
-  an inline-end gutter (do with 5b/5c); **touch** long-press + `touch-action` (scrollable body); Agenda
-  EventButton (entangled `.bc-agenda-row`); double-click-also-selects.
+  an inline-end gutter; **touch** long-press + `touch-action` (scrollable body); Agenda EventButton (entangled
+  `.bc-agenda-row`); double-click-also-selects. Plus **2m view registry** (still deferred, design input).
 
 ## Phase 2 status
 

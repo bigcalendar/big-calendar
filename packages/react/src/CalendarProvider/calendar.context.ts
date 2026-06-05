@@ -27,6 +27,13 @@ export interface CalendarContextValue<TEvent = unknown, TResource = unknown> {
    * a noop when the app passes none). Receives the full event.
    */
   onEventDoubleClick: (event: TEvent) => void
+  /**
+   * Ids of the visually-hidden instruction elements the provider renders, so
+   * slot cells and event buttons can point `aria-describedby` at the same shared
+   * text. `selection` describes the slot-grid keyboard model; `event` the event
+   * buttons. (See {@link Messages.selectionInstructions} / `eventInstructions`.)
+   */
+  descriptionIds: { selection: string; event: string }
 }
 
 /**

@@ -54,7 +54,7 @@ export default function EventButton<TEvent>({
   style,
   children,
 }: EventButtonProps<TEvent>) {
-  const { store, onEventClick, onEventDoubleClick } = useCalendarContext<TEvent>()
+  const { store, onEventClick, onEventDoubleClick, descriptionIds } = useCalendarContext<TEvent>()
   const id = wrapAccessor(store.accessors.id)(event)
   const selectedId = useSignalValue(store.selected)
   const isSelected = id != null && selectedId === id
@@ -116,6 +116,7 @@ export default function EventButton<TEvent>({
       aria-selected={isSelected}
       aria-label={accessibleName || undefined}
       aria-keyshortcuts="Enter Space F2"
+      aria-describedby={descriptionIds.event}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
       onKeyDown={handleKeyDown}

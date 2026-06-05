@@ -8,6 +8,8 @@ describe('resolveMessages', () => {
     expect(messages.work_week).toBe('Work Week')
     expect(messages.noEventsInRange).toBe('There are no events in this range.')
     expect(messages.showMore(3)).toBe('+3 more')
+    expect(messages.selectionInstructions).toContain('arrow keys')
+    expect(messages.eventInstructions).toContain('F2')
   })
 
   it('overrides only the keys provided, keeping the rest', () => {

@@ -18,6 +18,10 @@ export const DEFAULT_MESSAGES: Messages = {
   agenda: 'Agenda',
   noEventsInRange: 'There are no events in this range.',
   showMore: (total) => `+${total} more`,
+  selectionInstructions:
+    'Use the arrow keys to move between slots. Hold Shift and an arrow key to select a range. Press Enter or Space to confirm, or Escape to cancel.',
+  eventInstructions:
+    'Use the arrow keys to move between events. Press Enter or Space to open the event, or F2 for its secondary action.',
 }
 
 /** Merge caller overrides over {@link DEFAULT_MESSAGES}, yielding a complete set. */
