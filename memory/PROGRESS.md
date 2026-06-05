@@ -768,6 +768,12 @@ First implementation step of the §8.1/§8.2 selection plan. **Core only this co
 - Tests: +3 MonthView (hit-cell tags, day-drag band overlay, ISO day-click payload). react **100 tests**, core 144;
   all gates + storybook green.
 
+### Phase 4 — Task 4j: selection wiring — cross-day time → all-day (Cutter, 2026-06-05) ✓ (commit 0fb17d1, pushed)
+
+- Time-grid drags can cross days: hit cells use a **global** slot index (`dayIndex*slotCount + slot`); the store decodes same-day → timed selection, cross-day → whole-day span over `range.days[startDay..endDay]`. `SlotSelectionDates` + `onSelecting` gain `allDay: boolean` (true for all whole-day selections: month/day + cross-day time). `slotCount` flows view→hook→store anchor (optional, single-day fallback). Per-column overlay (start-day slot→bottom, full middle, top→end-day slot). See [DECISIONS.md](DECISIONS.md) 2026-06-05.
+- Storybook read-out moved outside the calendar container (no reflow on selection); selection highlight retinted to translucent periwinkle (tokens.css); month band painted above cell backgrounds; **Selectable** Controls playground added to Calendar stories.
+- core **146**, react **102**; all gates + storybook green.
+
 ## In progress — selection wiring remaining
 
 - **Step 5b tail — all-day row:** the time-grid all-day row still has no day-mode hit layer/overlay (month done).

@@ -518,3 +518,14 @@ There is **no keyboard double-click** (`dblclick` never fires from the keyboard;
 - **Hit fall-through (edited 2 existing rules, flagged to Cutter):** `.bc-week-backgrounds` → `pointer-events:none` + new `.bc-date-number { pointer-events:auto }`. Empty cell area falls through to the slot layer; date-number drilldown + event clicks stay live. DOM/paint order in a week: slots → selection → backgrounds → events.
 - **Storybook (fixes "no selectable control"):** new `SelectionDemo` harness (selectable on; `onSelectSlot`/`onEventClick`/`onEventDoubleClick` → on-screen read-out) + **Selectable** stories on TimeGridView (week) and MonthView.
 - Tests: +3 MonthView (hit-cell tags, day-drag band, ISO day-click payload). react **100**, core 144; all gates + storybook green.
+
+## 2026-06-05 — Cross-day time selection → all-day span + `allDay` flag (Cutter, IMPLEMENTED)
+
+**Status: IMPLEMENTED** (commit 0fb17d1 on feat/initial).
+
+- **Capability:** a time-grid drag can start in a timeslot on one day and end on another. Implemented by encoding time-grid hit cells in a **global slot index** (`dayIndex*slotCount + slot`) so the 1-D FSM spans days unchanged. The store decodes both ends: same day → timed selection (as before); different days → a promoted **whole-day span** over `range.days[startDay..endDay]`.
+- **`allDay` flag (Cutter decision: all whole-day selections):** `SlotSelectionDates` and `onSelecting` args gain `allDay: boolean` — `true` for month/day selections AND cross-day time drags; `false` for within-day timed selections.
+- **`slotCount` plumbing:** flows view → `useSlotSelection('time', grid.slotCount)` → `store.selection.start/click/doubleClick` → anchor, so the store decode matches the grid exactly (no recompute/DST drift). Optional everywhere (`?: number | undefined`); when absent the decode degenerates to single-day (back-compat). Guard: `0 * Infinity = NaN`, so the no-count fallback uses `slotCount = 0` + `startDay/endDay = 0`, not Infinity.
+- **Overlay (Cutter decision):** computed per column — start day fills from its slot to the bottom, whole middle days fill, end day fills top→its slot; same-day drag stays a single box. Reuses the existing absolute `.bc-selection`; no new CSS.
+- **Note:** the committed cross-day result is whole-day bounds (start-of-first-day … end-of-last-day, `allDay:true`); the in-progress overlay shows the slot extents (preview ≠ exact commit, by design).
+- Tests: core +1 (cross-day → all-day), existing time/day payloads updated with `allDay`; react +1 (TimeGridView cross-day: two overlay boxes + all-day commit). core **146**, react **102**; all gates + storybook green.
