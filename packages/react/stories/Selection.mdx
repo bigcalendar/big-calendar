@@ -179,3 +179,39 @@ These are two different things on two different layers:
   `onEventDoubleClick`.
 
 An event interaction never also triggers a slot selection.
+
+### Event interaction callbacks
+
+Every event (in any view) responds to four optional callbacks:
+
+<table>
+  <thead><tr><th>callback</th><th>fires on</th><th>receives</th></tr></thead>
+  <tbody>
+    <tr><td><code>onEventClick</code></td><td>click · Enter · Space</td><td><code>(event)</code></td></tr>
+    <tr><td><code>onEventDoubleClick</code></td><td>double-click · <kbd>F2</kbd></td><td><code>(event)</code></td></tr>
+    <tr><td><code>onEventRightClick</code></td><td>right-click · the keyboard Menu key · touch long-press</td><td><code>(event, domEvent)</code></td></tr>
+    <tr><td><code>onEventMiddleClick</code></td><td>middle ("scroll wheel") click — pointer only</td><td><code>(event, domEvent)</code></td></tr>
+  </tbody>
+</table>
+
+The right- and middle-click handlers also receive the **DOM mouse event**, so you
+can read `clientX`/`clientY` to position a custom context menu and call
+`preventDefault()` to suppress the native one:
+
+```tsx
+<Calendar
+  onEventRightClick={(event, e) => {
+    e.preventDefault()
+    openMenu(event, e.clientX, e.clientY)
+  }}
+/>
+```
+
+#### Agenda is the exception
+
+The agenda is a list, not a geometric grid — no drag, no resize, no selection. So
+its event **title** is the interactive target, and it only becomes a real
+`<button>` (styled as a link) when you wire at least one of the callbacks above;
+with none wired it stays a plain, non-interactive `<span>`. Unlike the grid views'
+single arrow-roving tab stop, agenda buttons are an ordinary tab order — `Tab`
+walks them, Enter activates, F2 is the double-click equivalent.

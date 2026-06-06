@@ -256,8 +256,8 @@ describe('useSlotSelection', () => {
   it('captures and releases the pointer when the platform supports it', () => {
     vi.useFakeTimers()
     const proto = HTMLDivElement.prototype as unknown as {
-      setPointerCapture?: (id: number) => void
-      releasePointerCapture?: (id: number) => void
+      setPointerCapture: (id: number) => void
+      releasePointerCapture: (id: number) => void
     }
     const origSet = proto.setPointerCapture
     const origRel = proto.releasePointerCapture

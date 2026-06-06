@@ -108,6 +108,60 @@ describe('EventButton', () => {
     expect(onEventDoubleClick).toHaveBeenCalledWith(event)
   })
 
+  it('ignores keyboard-synthesized clicks (detail 0) and guards a duplicate click', () => {
+    vi.useFakeTimers()
+    const onEventClick = vi.fn()
+    const { button } = renderButton({ onEventClick })
+    fireEvent.click(button, { detail: 0 }) // keyboard-synthesized — ignored here
+    fireEvent.click(button, { detail: 1 }) // arms the single-click timer
+    fireEvent.click(button, { detail: 1 }) // second press while pending — ignored
+    act(() => {
+      vi.advanceTimersByTime(DOUBLE_CLICK_MS)
+    })
+    expect(onEventClick).toHaveBeenCalledTimes(1)
+  })
+
+  it('ignores keys other than Enter / Space / F2', () => {
+    const onEventClick = vi.fn()
+    const onEventDoubleClick = vi.fn()
+    const { button } = renderButton({ onEventClick, onEventDoubleClick })
+    fireEvent.keyDown(button, { key: 'a' })
+    expect(onEventClick).not.toHaveBeenCalled()
+    expect(onEventDoubleClick).not.toHaveBeenCalled()
+  })
+
+  it('clears a pending single-click timer on unmount (no late fire)', () => {
+    vi.useFakeTimers()
+    const onEventClick = vi.fn()
+    const { button, unmount } = renderButton({ onEventClick })
+    fireEvent.click(button, { detail: 1 }) // arms the timer
+    unmount()
+    act(() => {
+      vi.advanceTimersByTime(DOUBLE_CLICK_MS)
+    })
+    expect(onEventClick).not.toHaveBeenCalled()
+  })
+
+  it('fires onEventRightClick with the event and DOM event on contextmenu', () => {
+    const onEventRightClick = vi.fn()
+    const { button } = renderButton({ onEventRightClick })
+    fireEvent.contextMenu(button)
+    expect(onEventRightClick).toHaveBeenCalledTimes(1)
+    expect(onEventRightClick.mock.calls[0]![0]).toBe(event)
+    expect(typeof onEventRightClick.mock.calls[0]![1].preventDefault).toBe('function')
+  })
+
+  it('fires onEventMiddleClick only for the middle button (auxclick button 1)', () => {
+    const onEventMiddleClick = vi.fn()
+    const { button } = renderButton({ onEventMiddleClick })
+    fireEvent(button, new MouseEvent('auxclick', { bubbles: true, button: 2 })) // right-button — ignored
+    expect(onEventMiddleClick).not.toHaveBeenCalled()
+    fireEvent(button, new MouseEvent('auxclick', { bubbles: true, button: 1 }))
+    expect(onEventMiddleClick).toHaveBeenCalledTimes(1)
+    expect(onEventMiddleClick.mock.calls[0]![0]).toBe(event)
+    expect(typeof onEventMiddleClick.mock.calls[0]![1].preventDefault).toBe('function')
+  })
+
   it('stops pointerdown from reaching the surface beneath (no slot selection)', () => {
     const onPointerDown = vi.fn()
     const { container } = render(

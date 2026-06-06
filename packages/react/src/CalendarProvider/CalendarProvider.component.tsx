@@ -1,7 +1,7 @@
 import { resolveMessages } from '@big-calendar/core'
 import type { Messages } from '@big-calendar/core'
 import { useCallback, useId, useMemo, useRef } from 'react'
-import type { ReactNode } from 'react'
+import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react'
 import type { CalendarComponents } from '../components.type'
 import { useCalendar } from '../useCalendar'
 import type { CalendarProps } from '../useCalendar'
@@ -37,6 +37,8 @@ function CalendarProvider<TEvent = unknown, TResource = unknown>({
   messages,
   onEventClick,
   onEventDoubleClick,
+  onEventRightClick,
+  onEventMiddleClick,
   ...props
 }: CalendarProviderProps<TEvent, TResource>) {
   const store = useCalendar<TEvent, TResource>(props)
@@ -53,13 +55,33 @@ function CalendarProvider<TEvent = unknown, TResource = unknown>({
   // Stable identities over the latest handlers (read via a ref) so the context
   // value isn't rebuilt — and every consumer re-rendered — when the app passes
   // fresh inline event callbacks each render. Default to a noop when unset.
-  const handlersRef = useRef({ onEventClick, onEventDoubleClick })
-  handlersRef.current = { onEventClick, onEventDoubleClick }
+  const handlersRef = useRef({
+    onEventClick,
+    onEventDoubleClick,
+    onEventRightClick,
+    onEventMiddleClick,
+  })
+  handlersRef.current = { onEventClick, onEventDoubleClick, onEventRightClick, onEventMiddleClick }
   const handleEventClick = useCallback((event: TEvent) => handlersRef.current.onEventClick?.(event), [])
   const handleEventDoubleClick = useCallback(
     (event: TEvent) => handlersRef.current.onEventDoubleClick?.(event),
     [],
   )
+  const handleEventRightClick = useCallback(
+    (event: TEvent, domEvent: ReactMouseEvent) => handlersRef.current.onEventRightClick?.(event, domEvent),
+    [],
+  )
+  const handleEventMiddleClick = useCallback(
+    (event: TEvent, domEvent: ReactMouseEvent) => handlersRef.current.onEventMiddleClick?.(event, domEvent),
+    [],
+  )
+  // The agenda renders its event title as a real button only when something is
+  // wired; presence (not identity) is what matters, so this is fine to recompute.
+  const hasEventHandler =
+    onEventClick != null ||
+    onEventDoubleClick != null ||
+    onEventRightClick != null ||
+    onEventMiddleClick != null
 
   const value = useMemo<CalendarContextValue<TEvent, TResource>>(
     () => ({
@@ -68,9 +90,22 @@ function CalendarProvider<TEvent = unknown, TResource = unknown>({
       messages: resolvedMessages,
       onEventClick: handleEventClick,
       onEventDoubleClick: handleEventDoubleClick,
+      onEventRightClick: handleEventRightClick,
+      onEventMiddleClick: handleEventMiddleClick,
+      hasEventHandler,
       descriptionIds,
     }),
-    [store, components, resolvedMessages, handleEventClick, handleEventDoubleClick, descriptionIds],
+    [
+      store,
+      components,
+      resolvedMessages,
+      handleEventClick,
+      handleEventDoubleClick,
+      handleEventRightClick,
+      handleEventMiddleClick,
+      hasEventHandler,
+      descriptionIds,
+    ],
   )
   return (
     <CalendarContext.Provider value={value as CalendarContextValue}>

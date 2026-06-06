@@ -73,8 +73,10 @@ export function CalendarStage({ children, height = 800, rows = 'auto 1fr', ...pr
 /**
  * A {@link CalendarStage} pre-wired for exercising slot/event selection:
  * `selectable` is on and the selection callbacks (`onSelectSlot`,
- * `onEventClick`, `onEventDoubleClick`) feed a live read-out below the view so
- * you can see what each gesture emits without opening the console. Pass the
+ * `onEventClick`, `onEventDoubleClick`, plus `onEventRightClick` /
+ * `onEventMiddleClick`) feed a live read-out below the view so you can see what
+ * each gesture emits without opening the console. Switch `view` to **Agenda** to
+ * see the same event handlers drive its link-styled title buttons. Pass the
  * `<Toolbar/>` + `.bc-calendar` view as children, like {@link CalendarStage}.
  * Any prop (e.g. `selectable={false}`) can be overridden.
  */
@@ -91,6 +93,11 @@ export function SelectionDemo({ children, ...props }: CalendarStageProps) {
         onSelectSlot={(selection) => setLog(`onSelectSlot · ${selection.action}\n${JSON.stringify(selection, null, 2)}`)}
         onEventClick={(event) => setLog(`onEventClick\n${JSON.stringify(event, null, 2)}`)}
         onEventDoubleClick={(event) => setLog(`onEventDoubleClick\n${JSON.stringify(event, null, 2)}`)}
+        onEventRightClick={(event, e) => {
+          e.preventDefault() // replace the native context menu with our read-out
+          setLog(`onEventRightClick\n${JSON.stringify(event, null, 2)}`)
+        }}
+        onEventMiddleClick={(event) => setLog(`onEventMiddleClick\n${JSON.stringify(event, null, 2)}`)}
         {...props}
       >
         {children}

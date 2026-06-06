@@ -1,4 +1,5 @@
 import { createContext } from 'react'
+import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { CalendarStore, Messages } from '@big-calendar/core'
 import type { CalendarComponents } from '../components.type'
 
@@ -27,6 +28,23 @@ export interface CalendarContextValue<TEvent = unknown, TResource = unknown> {
    * a noop when the app passes none). Receives the full event.
    */
   onEventDoubleClick: (event: TEvent) => void
+  /**
+   * Event context-menu action (right-click / Menu key). Stable identity (always
+   * defined; a noop when the app passes none). Receives the event + DOM event.
+   */
+  onEventRightClick: (event: TEvent, domEvent: ReactMouseEvent) => void
+  /**
+   * Event middle-button ("scroll wheel") action. Stable identity (always defined;
+   * a noop when the app passes none). Receives the event + DOM event.
+   */
+  onEventMiddleClick: (event: TEvent, domEvent: ReactMouseEvent) => void
+  /**
+   * Whether the app supplied **any** event interaction handler (click /
+   * double-click / right / middle). The agenda reads it to render its event title
+   * as a real `<button>` only when a press will actually do something — otherwise
+   * a plain, non-interactive `<span>`.
+   */
+  hasEventHandler: boolean
   /**
    * Ids of the visually-hidden instruction elements the provider renders, so
    * slot cells and event buttons can point `aria-describedby` at the same shared

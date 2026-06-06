@@ -915,10 +915,38 @@ drag-select on a finger was broken and you couldn't scroll the time body without
   Decision (configurable 500ms + robust suppression) logged in DECISIONS.md. Scroll-suppression *effect* itself is
   visual-only (jsdom has no box model) — `build-storybook` green.
 
+### Phase 4 — Task 4j: selection wiring — agenda event interaction + right/middle click (Cutter, 2026-06-05) ✓ (this change)
+
+Closes the carried "Agenda EventButton" open item — but **not** by reusing the shared `EventButton` (Cutter's call).
+The agenda is a list (no drag/resize/selection), so wrapping the row in a button would have broken its `.bc-agenda-row`
+subgrid table. Instead the agenda keeps its DOM and makes only the **title** (`.bc-agenda-event`) interactive.
+- **New bespoke element `AgendaView/components/AgendaEventButton.component.tsx`:** renders the title as a real
+  `<button>` (link-styled) **only when `hasEventHandler`** (any of click/dblclick/right/middle wired), else a plain
+  `<span>`. Wires click→`onEventClick`, dblclick→`onEventDoubleClick` (250ms debounce), Enter/Space→primary,
+  **F2**→secondary (the keyboard dblclick equiv Cutter wanted). **No** `aria-selected`/store selection (agenda
+  selects nothing) and **no** `aria-describedby` — the shared `eventInstructions` describe arrow-roving, which the
+  agenda does NOT use (it's **natural tab order**, Cutter's choice — each title its own tab stop, no roving hook).
+  `DefaultAgendaEvent` now renders `.bc-agenda-row` > `.bc-agenda-time` + `<AgendaEventButton>` (row structure kept;
+  no override-contract change).
+- **NEW public handlers `onEventRightClick` / `onEventMiddleClick`** (Cutter named; signature `(event, domEvent)`)
+  added to `CalendarProps` (useCalendar.ts) and wired on **both** the shared `EventButton` (Month/TimeGrid) **and**
+  the agenda element. Right = `onContextMenu` (also keyboard Menu key / touch long-press); middle = `onAuxClick` +
+  `e.button === 1` (modern browsers don't fire `click` for non-primary buttons). App owns `preventDefault` (lib does
+  NOT auto-suppress the native menu). Both fold into `hasEventHandler`.
+- **Provider/context:** `CalendarProvider` gains stable noop-safe wrappers for the two new handlers + computes
+  `hasEventHandler`; `CalendarContextValue` exposes `onEventRightClick`, `onEventMiddleClick`, `hasEventHandler`.
+- **styles:** `button.bc-agenda-event` link styling in `components/agenda.css` (appearance/font/text-align reset +
+  accent color + underline + `justify-self:start`); dist rebuilt.
+- **tests/docs:** EventButton + AgendaView tests for right/middle/contextmenu/keyboard/span-vs-button/natural-tab;
+  per-file AgendaEventButton 100%/100%, EventButton 96.2%/100%, CalendarProvider 100%/100%. Selection.mdx event-
+  interaction table + agenda note added; `SelectionDemo` read-out wired for all four handlers. Decision logged.
+- **⚠ Pre-existing unrelated typecheck failure** (NOT this change): `useSlotSelection.test.tsx:282-283` — the touch
+  pointer-capture stub restore violates `exactOptionalPropertyTypes` (optional `proto.setPointerCapture` ← possibly
+  `undefined`). All files in THIS change typecheck clean. Awaiting Cutter's OK to fix the 2-line stub.
+
 ## In progress — selection wiring remaining
-- **Open items carried:** Agenda EventButton (entangled `.bc-agenda-row`); double-click-also-selects (needs a UX
-  decision first). Plus **2m view registry** (model contract decided — Option B; implementation still deferred to
-  the Phase-4 view-component contract).
+- **Open items carried:** double-click-also-selects (needs a UX decision first). Plus **2m view registry** (model
+  contract decided — Option B; implementation still deferred to the Phase-4 view-component contract).
 
 ## Phase 2 status
 

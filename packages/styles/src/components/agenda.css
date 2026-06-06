@@ -40,6 +40,23 @@
     border-block-start: var(--bc-border-width) solid var(--bc-color-slot-border);
   }
 
+  /* The default event title becomes a real <button> when the app wires an event
+     handler (click / double-click / right / middle). reset.css already strips the
+     native button chrome; style it to read as a link (an action, not a box), and
+     shrink the hit target to the text via justify-self. */
+  button.bc-agenda-event {
+    appearance: none;
+    font: inherit;
+    text-align: start;
+    justify-self: start;
+    color: var(--bc-color-accent);
+    text-decoration: underline;
+  }
+
+  button.bc-agenda-event:hover {
+    text-decoration: none;
+  }
+
   .bc-agenda-empty {
     grid-column: 1 / -1;
     padding: var(--bc-space-4);

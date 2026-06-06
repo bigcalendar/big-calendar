@@ -36,6 +36,10 @@ export interface EventButtonProps<TEvent> {
  * - **click** (pointer) selects the event (`store.select`) and fires the context
  *   `onEventClick`; **double-click** fires `onEventDoubleClick`. The two are
  *   disambiguated by a {@link DOUBLE_CLICK_MS} timer so they never both fire.
+ * - **right-click** (`contextmenu`, also the keyboard Menu key) fires
+ *   `onEventRightClick`; **middle-click** (`auxclick`, button 1) fires
+ *   `onEventMiddleClick`. Both receive the DOM event; the app decides whether to
+ *   `preventDefault` (e.g. to replace the native context menu).
  * - **keyboard**: Enter / Space = primary (select + `onEventClick`); **F2** =
  *   secondary (`onEventDoubleClick`) — there is no keyboard double-click, so F2
  *   is the WCAG-2.1.1 parity key. Keys are advertised via `aria-keyshortcuts`.
@@ -54,7 +58,8 @@ export default function EventButton<TEvent>({
   style,
   children,
 }: EventButtonProps<TEvent>) {
-  const { store, onEventClick, onEventDoubleClick, descriptionIds } = useCalendarContext<TEvent>()
+  const { store, onEventClick, onEventDoubleClick, onEventRightClick, onEventMiddleClick, descriptionIds } =
+    useCalendarContext<TEvent>()
   const id = wrapAccessor(store.accessors.id)(event)
   const selectedId = useSignalValue(store.selected)
   const isSelected = id != null && selectedId === id
@@ -120,6 +125,10 @@ export default function EventButton<TEvent>({
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
       onKeyDown={handleKeyDown}
+      onContextMenu={(e: MouseEvent<HTMLButtonElement>) => onEventRightClick(event, e)}
+      onAuxClick={(e: MouseEvent<HTMLButtonElement>) => {
+        if (e.button === 1) onEventMiddleClick(event, e)
+      }}
       onPointerDown={(e: PointerEvent<HTMLButtonElement>) => e.stopPropagation()}
     >
       {children}
