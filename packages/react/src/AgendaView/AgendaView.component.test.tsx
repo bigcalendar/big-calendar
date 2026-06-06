@@ -203,6 +203,15 @@ describe.each(LOCALIZER_CASES)('AgendaView [$name]', ({ create }) => {
     expect(typeof onEventRightClick.mock.calls[0]![1].preventDefault).toBe('function')
   })
 
+  it('leaves the native context menu untouched on a button with no right-click handler', () => {
+    // A button (onEventClick wired) but no onEventRightClick → no contextmenu listener.
+    renderAgenda({ onEventClick: () => {} })
+    const button = screen.getByRole('button', { name: 'Standup' })
+    const e = new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
+    button.dispatchEvent(e)
+    expect(e.defaultPrevented).toBe(false)
+  })
+
   it('fires onEventMiddleClick only for the middle button (auxclick button 1)', () => {
     const onEventMiddleClick = vi.fn()
     renderAgenda({ onEventMiddleClick })

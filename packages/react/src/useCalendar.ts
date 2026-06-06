@@ -39,13 +39,15 @@ export interface CalendarProps<TEvent = unknown, TResource = unknown>
    * Event context-menu action: fired on right-click (and the keyboard Menu key /
    * Shift+F10, and touch long-press). Receives the full event **and** the DOM
    * mouse event, so you can read `clientX`/`clientY` to position a custom menu
-   * and call `preventDefault()` to replace the native one. Defaults to a noop.
+   * and call `preventDefault()` to replace the native one. Omit it to leave the
+   * browser's native context menu untouched — no `contextmenu` listener is wired.
    */
   onEventRightClick?: ((event: TEvent, domEvent: ReactMouseEvent) => void) | undefined
   /**
    * Event tertiary action: fired on a middle-button ("scroll wheel") click.
    * Receives the full event **and** the DOM mouse event. Pointer-only — there is
-   * no keyboard equivalent (like middle-click everywhere). Defaults to a noop.
+   * no keyboard equivalent (like middle-click everywhere). Omit it and no
+   * `auxclick` listener is wired.
    */
   onEventMiddleClick?: ((event: TEvent, domEvent: ReactMouseEvent) => void) | undefined
 }

@@ -29,15 +29,18 @@ export interface CalendarContextValue<TEvent = unknown, TResource = unknown> {
    */
   onEventDoubleClick: (event: TEvent) => void
   /**
-   * Event context-menu action (right-click / Menu key). Stable identity (always
-   * defined; a noop when the app passes none). Receives the event + DOM event.
+   * Event context-menu action (right-click / Menu key), or `undefined` when the
+   * app passed none. Stable identity when present (so consumers can attach
+   * `onContextMenu` only when wired and otherwise leave the browser's native menu
+   * untouched — no listener at all). Receives the event + DOM event.
    */
-  onEventRightClick: (event: TEvent, domEvent: ReactMouseEvent) => void
+  onEventRightClick: ((event: TEvent, domEvent: ReactMouseEvent) => void) | undefined
   /**
-   * Event middle-button ("scroll wheel") action. Stable identity (always defined;
-   * a noop when the app passes none). Receives the event + DOM event.
+   * Event middle-button ("scroll wheel") action, or `undefined` when the app
+   * passed none. Stable identity when present, so consumers attach `onAuxClick`
+   * only when wired. Receives the event + DOM event.
    */
-  onEventMiddleClick: (event: TEvent, domEvent: ReactMouseEvent) => void
+  onEventMiddleClick: ((event: TEvent, domEvent: ReactMouseEvent) => void) | undefined
   /**
    * Whether the app supplied **any** event interaction handler (click /
    * double-click / right / middle). The agenda reads it to render its event title

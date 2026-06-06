@@ -151,6 +151,13 @@ describe('EventButton', () => {
     expect(typeof onEventRightClick.mock.calls[0]![1].preventDefault).toBe('function')
   })
 
+  it('leaves the native context menu untouched when no right-click handler is wired', () => {
+    const { button } = renderButton() // no handlers
+    const e = new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
+    button.dispatchEvent(e)
+    expect(e.defaultPrevented).toBe(false)
+  })
+
   it('fires onEventMiddleClick only for the middle button (auxclick button 1)', () => {
     const onEventMiddleClick = vi.fn()
     const { button } = renderButton({ onEventMiddleClick })

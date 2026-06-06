@@ -207,6 +207,10 @@ can read `clientX`/`clientY` to position a custom context menu and call
 />
 ```
 
+Each listener is wired **only when you provide its handler**. Omit
+`onEventRightClick` and no `contextmenu` listener is attached at all, so the
+browser's native context menu is left completely untouched.
+
 #### Agenda is the exception
 
 The agenda is a list, not a geometric grid — no drag, no resize, no selection. So

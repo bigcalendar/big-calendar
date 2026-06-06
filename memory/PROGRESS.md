@@ -933,8 +933,13 @@ subgrid table. Instead the agenda keeps its DOM and makes only the **title** (`.
   the agenda element. Right = `onContextMenu` (also keyboard Menu key / touch long-press); middle = `onAuxClick` +
   `e.button === 1` (modern browsers don't fire `click` for non-primary buttons). App owns `preventDefault` (lib does
   NOT auto-suppress the native menu). Both fold into `hasEventHandler`.
-- **Provider/context:** `CalendarProvider` gains stable noop-safe wrappers for the two new handlers + computes
-  `hasEventHandler`; `CalendarContextValue` exposes `onEventRightClick`, `onEventMiddleClick`, `hasEventHandler`.
+- **Provider/context:** `CalendarProvider` exposes the right/middle wrappers **only when the app actually passed
+  them** (else `undefined`) + computes `hasEventHandler`; `CalendarContextValue.onEventRightClick`/`onEventMiddleClick`
+  are `((event, domEvent) => void) | undefined`. Consumers attach `onContextMenu`/`onAuxClick` only when present, so
+  an omitted right-click handler leaves the browser's **native context menu untouched** (no listener) — Cutter's
+  refinement (the prior always-attached noop didn't call `preventDefault` so it didn't actually suppress the menu,
+  but gating is cleaner + removes the needless listener). Left-click/double-click keep their always-defined noop-safe
+  wrappers (left-click still drives `store.select`).
 - **styles:** `button.bc-agenda-event` link styling in `components/agenda.css` (appearance/font/text-align reset +
   accent color + underline + `justify-self:start`); dist rebuilt.
 - **tests/docs:** EventButton + AgendaView tests for right/middle/contextmenu/keyboard/span-vs-button/natural-tab;

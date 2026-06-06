@@ -39,7 +39,9 @@ export interface EventButtonProps<TEvent> {
  * - **right-click** (`contextmenu`, also the keyboard Menu key) fires
  *   `onEventRightClick`; **middle-click** (`auxclick`, button 1) fires
  *   `onEventMiddleClick`. Both receive the DOM event; the app decides whether to
- *   `preventDefault` (e.g. to replace the native context menu).
+ *   `preventDefault` (e.g. to replace the native context menu). Each listener is
+ *   attached **only when its handler is provided** — omit the right-click handler
+ *   and the browser's native context menu is left untouched.
  * - **keyboard**: Enter / Space = primary (select + `onEventClick`); **F2** =
  *   secondary (`onEventDoubleClick`) — there is no keyboard double-click, so F2
  *   is the WCAG-2.1.1 parity key. Keys are advertised via `aria-keyshortcuts`.
@@ -125,10 +127,16 @@ export default function EventButton<TEvent>({
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
       onKeyDown={handleKeyDown}
-      onContextMenu={(e: MouseEvent<HTMLButtonElement>) => onEventRightClick(event, e)}
-      onAuxClick={(e: MouseEvent<HTMLButtonElement>) => {
-        if (e.button === 1) onEventMiddleClick(event, e)
-      }}
+      onContextMenu={
+        onEventRightClick ? (e: MouseEvent<HTMLButtonElement>) => onEventRightClick(event, e) : undefined
+      }
+      onAuxClick={
+        onEventMiddleClick
+          ? (e: MouseEvent<HTMLButtonElement>) => {
+              if (e.button === 1) onEventMiddleClick(event, e)
+            }
+          : undefined
+      }
       onPointerDown={(e: PointerEvent<HTMLButtonElement>) => e.stopPropagation()}
     >
       {children}

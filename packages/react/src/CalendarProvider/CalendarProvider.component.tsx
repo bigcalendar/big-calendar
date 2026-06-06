@@ -75,13 +75,15 @@ function CalendarProvider<TEvent = unknown, TResource = unknown>({
     (event: TEvent, domEvent: ReactMouseEvent) => handlersRef.current.onEventMiddleClick?.(event, domEvent),
     [],
   )
-  // The agenda renders its event title as a real button only when something is
-  // wired; presence (not identity) is what matters, so this is fine to recompute.
+  // Presence (not identity) gates what gets wired. The right/middle wrappers are
+  // exposed only when the app actually passed a handler, so consumers attach
+  // `onContextMenu`/`onAuxClick` only then — an omitted right-click handler leaves
+  // the browser's native context menu untouched (no listener at all).
+  const hasRightClick = onEventRightClick != null
+  const hasMiddleClick = onEventMiddleClick != null
+  // The agenda renders its event title as a real button only when something is wired.
   const hasEventHandler =
-    onEventClick != null ||
-    onEventDoubleClick != null ||
-    onEventRightClick != null ||
-    onEventMiddleClick != null
+    onEventClick != null || onEventDoubleClick != null || hasRightClick || hasMiddleClick
 
   const value = useMemo<CalendarContextValue<TEvent, TResource>>(
     () => ({
@@ -90,8 +92,8 @@ function CalendarProvider<TEvent = unknown, TResource = unknown>({
       messages: resolvedMessages,
       onEventClick: handleEventClick,
       onEventDoubleClick: handleEventDoubleClick,
-      onEventRightClick: handleEventRightClick,
-      onEventMiddleClick: handleEventMiddleClick,
+      onEventRightClick: hasRightClick ? handleEventRightClick : undefined,
+      onEventMiddleClick: hasMiddleClick ? handleEventMiddleClick : undefined,
       hasEventHandler,
       descriptionIds,
     }),
@@ -103,6 +105,8 @@ function CalendarProvider<TEvent = unknown, TResource = unknown>({
       handleEventDoubleClick,
       handleEventRightClick,
       handleEventMiddleClick,
+      hasRightClick,
+      hasMiddleClick,
       hasEventHandler,
       descriptionIds,
     ],

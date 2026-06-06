@@ -30,7 +30,8 @@ interface AgendaEventButtonProps<TEvent> {
  * - **right-click** (`contextmenu`, also the keyboard Menu key) →
  *   `onEventRightClick`; **middle-click** (`auxclick`, button 1) →
  *   `onEventMiddleClick`. Both receive the DOM event so the app can position a
- *   menu / `preventDefault`.
+ *   menu / `preventDefault`, and each is attached only when its handler is
+ *   provided (an omitted right-click handler leaves the native menu untouched).
  *
  * There is no `aria-selected` (the agenda selects nothing) and no
  * `aria-describedby`: the shared event instructions describe the grids'
@@ -92,10 +93,16 @@ function AgendaEventButton<TEvent>({ event, title }: AgendaEventButtonProps<TEve
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
       onKeyDown={handleKeyDown}
-      onContextMenu={(e: MouseEvent<HTMLButtonElement>) => onEventRightClick(event, e)}
-      onAuxClick={(e: MouseEvent<HTMLButtonElement>) => {
-        if (e.button === 1) onEventMiddleClick(event, e)
-      }}
+      onContextMenu={
+        onEventRightClick ? (e: MouseEvent<HTMLButtonElement>) => onEventRightClick(event, e) : undefined
+      }
+      onAuxClick={
+        onEventMiddleClick
+          ? (e: MouseEvent<HTMLButtonElement>) => {
+              if (e.button === 1) onEventMiddleClick(event, e)
+            }
+          : undefined
+      }
     >
       {title}
     </button>
