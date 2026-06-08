@@ -86,6 +86,26 @@ describe.each(LOCALIZER_CASES)('useCalendar [$name]', ({ create }) => {
     expect(onRangeChange).toHaveBeenCalled()
   })
 
+  it('calls the LATEST onEventDrop, not the one captured at store creation', () => {
+    // Regression: a stale onEventDrop closes over the app's initial `events`, so
+    // an optimistic-update + rollback handler would revert against the wrong
+    // snapshot (every failure undoing every prior move).
+    const events: Event[] = [
+      { id: 1, title: 'A', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' },
+    ]
+    const first = vi.fn()
+    const second = vi.fn()
+    const { result, rerender } = renderHook(
+      (p: { onEventDrop: (args: unknown) => void }) =>
+        useCalendar<Event>({ localizer, events, onEventDrop: p.onEventDrop }),
+      { initialProps: { onEventDrop: first } },
+    )
+    rerender({ onEventDrop: second })
+    act(() => result.current.moveEvent({ id: 1, target: '2026-06-18T00:00:00.000Z', mode: 'day' }))
+    expect(first).not.toHaveBeenCalled()
+    expect(second).toHaveBeenCalledTimes(1)
+  })
+
   it('keeps a single store instance across rerenders and tears down on unmount', () => {
     const { result, rerender, unmount } = renderHook(() => useCalendar<Event>({ localizer }))
     const first = result.current
