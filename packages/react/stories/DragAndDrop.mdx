@@ -203,6 +203,27 @@ import { EVENT_MIME } from '@big-calendar/dnd'
 status line or to highlight valid drop zones. See the **Drag and drop →
 DragOutToUnschedule** story.
 
+## Keyboard drag and drop
+
+Everything above works **without a mouse**, so the calendar stays usable for
+keyboard and screen-reader users. Tab to a timed event and:
+
+| Key | Action |
+| --- | --- |
+| **Space** | pick the event up (and again to drop) |
+| **↑ / ↓** | move it one slot earlier / later |
+| **← / →** | move it to the previous / next day |
+| **Shift + ↓ / ↑** | grow / shrink the end edge by one slot |
+| **Enter** | drop it (commit) |
+| **Escape** | cancel and put it back |
+
+While the event is "in hand" it dims and a dashed box previews where it will
+land — the same box a mouse resize shows — and every step is announced through a
+polite live region (e.g. _"Standup, Tue 16 9:30 AM to 10:30 AM"_). Dropping fires
+the **same** `onEventDrop` / `onEventResize` you already wired for the mouse, so
+there's nothing extra to handle. (Enter still **opens** an event; Space is what
+picks it up.) Keyboard drag is wired on the **time-grid** views this slice.
+
 ## Locking individual events
 
 Use `draggableAccessor` to decide which events may be **dragged**, and
@@ -215,5 +236,6 @@ function. An event that returns `false` can't be picked up (or shows no resize h
 
 ## Not built yet
 
-**Keyboard-driven** drag is a planned follow-up, along with **month** drop-from-outside
-and month multi-day resize.
+**Month** drop-from-outside and **month** multi-day resize are the remaining
+follow-ups; everything else (move, resize, drop-from-outside, drag-out, and
+keyboard drag) is wired for the time-grid views today.

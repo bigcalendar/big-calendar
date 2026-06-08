@@ -46,6 +46,14 @@
     outline-offset: -1px;
   }
 
+  /* An event held in a keyboard grab: lifted and dimmed so it reads as "in hand"
+     while the dashed .bc-drag-preview box shows where it will land. */
+  .bc-event-grabbed {
+    opacity: 0.6;
+    box-shadow: var(--bc-shadow-md, 0 4px 12px rgb(0 0 0 / 0.25));
+    z-index: 5;
+  }
+
   .bc-event-title {
     overflow: hidden;
     text-overflow: ellipsis;

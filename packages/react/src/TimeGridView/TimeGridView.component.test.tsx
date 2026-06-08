@@ -413,3 +413,95 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
     expect(screen.getByTestId('custom-more').textContent).toBe('+1 more')
   })
 })
+
+describe.each(LOCALIZER_CASES)('TimeGridView keyboard DnD [$name]', ({ create }) => {
+  let localizer: Awaited<ReturnType<typeof create>>
+  beforeAll(async () => {
+    localizer = await create()
+  })
+
+  const timed: Event[] = [
+    { id: 1, title: 'Standup', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' },
+    { id: 3, title: 'Holiday', allDay: true, ...allDayBounds },
+  ]
+
+  function renderGrid(extra?: Partial<CalendarProviderProps<Event>>) {
+    return render(
+      <CalendarProvider<Event>
+        localizer={localizer}
+        defaultDate={focus}
+        defaultView={Views.DAY}
+        events={timed}
+        getNow={() => NOW}
+        {...extra}
+      >
+        <TimeGridView />
+      </CalendarProvider>,
+    )
+  }
+
+  const grab = (btn: HTMLElement) => act(() => void fireEvent.keyDown(btn, { key: ' ' }))
+  const press = (btn: HTMLElement, key: string, shiftKey = false) =>
+    act(() => void fireEvent.keyDown(btn, { key, shiftKey }))
+
+  it('Space picks a timed event up (aria-grabbed + announcement) without opening it', () => {
+    const onEventClick = vi.fn()
+    renderGrid({ onEventClick })
+    const btn = screen.getByRole('button', { name: /Standup/ })
+    grab(btn)
+    expect(btn.getAttribute('aria-grabbed')).toBe('true')
+    expect(screen.getByRole('status').textContent).toMatch(/Picked up/)
+    expect(onEventClick).not.toHaveBeenCalled() // Space grabbed, did not open
+  })
+
+  it('ArrowDown then Enter commits a move via onEventDrop', () => {
+    const onEventDrop = vi.fn()
+    renderGrid({ onEventDrop, step: 30 })
+    const btn = screen.getByRole('button', { name: /Standup/ })
+    grab(btn)
+    press(btn, 'ArrowDown') // one slot later
+    press(btn, 'Enter')
+    expect(onEventDrop).toHaveBeenCalledTimes(1)
+    expect(onEventDrop.mock.calls[0]![0]).toMatchObject({
+      start: localizer.add({ value: timed[0]!.start, amount: 30, unit: 'minute' }),
+      end: localizer.add({ value: timed[0]!.end, amount: 30, unit: 'minute' }),
+    })
+  })
+
+  it('Shift+ArrowDown then Enter resizes the end via onEventResize', () => {
+    const onEventResize = vi.fn()
+    renderGrid({ onEventResize, step: 30 })
+    const btn = screen.getByRole('button', { name: /Standup/ })
+    grab(btn)
+    press(btn, 'ArrowDown', true) // grow the end edge one slot
+    press(btn, 'Enter')
+    expect(onEventResize).toHaveBeenCalledTimes(1)
+    expect(onEventResize.mock.calls[0]![0]).toMatchObject({
+      start: timed[0]!.start,
+      end: localizer.add({ value: timed[0]!.end, amount: 30, unit: 'minute' }),
+    })
+  })
+
+  it('Escape cancels the grab and fires nothing', () => {
+    const onEventDrop = vi.fn()
+    renderGrid({ onEventDrop, step: 30 })
+    const btn = screen.getByRole('button', { name: /Standup/ })
+    grab(btn)
+    press(btn, 'ArrowDown')
+    press(btn, 'Escape')
+    expect(onEventDrop).not.toHaveBeenCalled()
+    expect(btn.getAttribute('aria-grabbed')).toBeNull()
+    expect(screen.getByRole('status').textContent).toMatch(/cancelled/i)
+  })
+
+  it('the all-day row is not grabbable', () => {
+    const onEventDrop = vi.fn()
+    renderGrid({ onEventDrop, step: 30 })
+    const btn = screen.getByRole('button', { name: /Holiday/ })
+    grab(btn)
+    expect(btn.getAttribute('aria-grabbed')).toBeNull()
+    press(btn, 'ArrowDown')
+    press(btn, 'Enter')
+    expect(onEventDrop).not.toHaveBeenCalled()
+  })
+})

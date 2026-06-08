@@ -785,6 +785,116 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
     })
   })
 
+  describe('keyboard drag (grab / move / resize / commit / cancel)', () => {
+    const events: Event[] = [
+      { id: 1, title: 'A', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' },
+    ]
+
+    it('grabEvent seeds the grab + preview from the event bounds', () => {
+      const store = createCalendarStore<Event>({ localizer, events })
+      expect(store.grabEvent({ id: 1 })).toBe(true)
+      expect(store.keyboardDrag.value).toEqual({
+        id: 1,
+        start: events[0]!.start,
+        end: events[0]!.end,
+        allDay: false,
+      })
+      expect(store.dragPreview.value).toEqual({ start: events[0]!.start, end: events[0]!.end })
+    })
+
+    it('grabEvent returns false for an unknown id and starts nothing', () => {
+      const store = createCalendarStore<Event>({ localizer, events })
+      expect(store.grabEvent({ id: 999 })).toBe(false)
+      expect(store.keyboardDrag.value).toBeNull()
+    })
+
+    it('grabMove shifts both ends, preserving duration', () => {
+      const store = createCalendarStore<Event>({ localizer, events, step: 30 })
+      store.grabEvent({ id: 1 })
+      store.grabMove({ minutes: 30 }) // one slot later
+      store.grabMove({ days: 1 }) // next day
+      const expectedStart = localizer.add({
+        value: localizer.add({ value: events[0]!.start, amount: 30, unit: 'minute' }),
+        amount: 1,
+        unit: 'day',
+      })
+      expect(store.keyboardDrag.value!.start).toBe(expectedStart)
+      expect(localizer.diff({ a: store.keyboardDrag.value!.end, b: store.keyboardDrag.value!.start, unit: 'minute' })).toBe(60)
+      expect(store.dragPreview.value!.start).toBe(expectedStart)
+    })
+
+    it('grabResize moves the end edge and clamps to a one-slot minimum', () => {
+      const store = createCalendarStore<Event>({ localizer, events, step: 30 })
+      store.grabEvent({ id: 1 })
+      store.grabResize({ minutes: 30 }) // grow end by a slot → 90 min
+      expect(localizer.diff({ a: store.keyboardDrag.value!.end, b: store.keyboardDrag.value!.start, unit: 'minute' })).toBe(90)
+      // Shrink well past the start → clamps to exactly one slot.
+      store.grabResize({ minutes: -1000 })
+      expect(localizer.diff({ a: store.keyboardDrag.value!.end, b: store.keyboardDrag.value!.start, unit: 'minute' })).toBe(30)
+    })
+
+    it('grabCommit after a move fires onEventDrop with the proposed bounds', () => {
+      const onEventDrop = vi.fn()
+      const onEventResize = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventDrop, onEventResize, step: 30 })
+      store.grabEvent({ id: 1 })
+      store.grabMove({ minutes: 30 })
+      const bounds = store.keyboardDrag.value!
+      store.grabCommit()
+      expect(onEventDrop).toHaveBeenCalledWith({ event: events[0], start: bounds.start, end: bounds.end, allDay: false })
+      expect(onEventResize).not.toHaveBeenCalled()
+      expect(store.keyboardDrag.value).toBeNull()
+      expect(store.dragPreview.value).toBeNull()
+    })
+
+    it('grabCommit after a pure resize fires onEventResize', () => {
+      const onEventDrop = vi.fn()
+      const onEventResize = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventDrop, onEventResize, step: 30 })
+      store.grabEvent({ id: 1 })
+      store.grabResize({ minutes: 30 })
+      const bounds = store.keyboardDrag.value!
+      store.grabCommit()
+      expect(onEventResize).toHaveBeenCalledWith({ event: events[0], start: bounds.start, end: bounds.end, allDay: false })
+      expect(onEventDrop).not.toHaveBeenCalled()
+    })
+
+    it('a move-then-resize commit reports once through onEventDrop (carries both ends)', () => {
+      const onEventDrop = vi.fn()
+      const onEventResize = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventDrop, onEventResize, step: 30 })
+      store.grabEvent({ id: 1 })
+      store.grabMove({ minutes: 30 })
+      store.grabResize({ minutes: 30 })
+      store.grabCommit()
+      expect(onEventDrop).toHaveBeenCalledTimes(1)
+      expect(onEventResize).not.toHaveBeenCalled()
+    })
+
+    it('grabCancel clears the grab + preview without firing a callback', () => {
+      const onEventDrop = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventDrop, step: 30 })
+      store.grabEvent({ id: 1 })
+      store.grabMove({ minutes: 30 })
+      store.grabCancel()
+      expect(store.keyboardDrag.value).toBeNull()
+      expect(store.dragPreview.value).toBeNull()
+      expect(onEventDrop).not.toHaveBeenCalled()
+    })
+
+    it('grabMove / grabResize / grabCommit are no-ops when nothing is grabbed', () => {
+      const onEventDrop = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventDrop })
+      expect(() => {
+        store.grabMove({ minutes: 30 })
+        store.grabResize({ minutes: 30 })
+        store.grabCommit()
+      }).not.toThrow()
+      expect(store.keyboardDrag.value).toBeNull()
+      expect(onEventDrop).not.toHaveBeenCalled()
+    })
+  })
+
   describe('isResizable', () => {
     interface ResizableEvent extends Event {
       resizable?: boolean

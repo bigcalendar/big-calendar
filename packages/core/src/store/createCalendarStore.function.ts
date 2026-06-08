@@ -13,7 +13,7 @@ import type { CalendarConfig } from '../types/config.type'
 import { buildViewModel } from '../views/viewModel.function'
 import { resolveDrilldownView } from './drilldown.function'
 import { navigateDate } from './navigateDate.function'
-import type { CalendarStore } from './store.type'
+import type { CalendarStore, KeyboardDragState } from './store.type'
 import { viewLabel } from './viewLabel.function'
 import { viewRange } from './viewRange.function'
 
@@ -101,6 +101,14 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   // in flight (set by `previewResize`, cleared on drop/commit). Purely visual —
   // no callback fires — so the view can render the resulting extent before commit.
   const dragPreview = signal<{ start: string; end: string } | null>(null)
+  // Live keyboard-drag ("grab") state: the grabbed event + its proposed bounds as
+  // the user steps it with the arrow keys, or `null` when idle. The view marks the
+  // grabbed event and the adapter announces each step; the proposed-extent box is
+  // rendered from `dragPreview`, which these actions set in lockstep. `moved` /
+  // `resized` (internal) decide which callback `grabCommit` fires.
+  const keyboardDrag = signal<KeyboardDragState | null>(null)
+  let grabMoved = false
+  let grabResized = false
 
   const { drilldownView = Views.DAY, views: registry } = config
   const range = computed(() =>
@@ -344,6 +352,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     label,
     viewModel,
     dragPreview: dragPreview as ReadonlySignal<{ start: string; end: string } | null>,
+    keyboardDrag: keyboardDrag as ReadonlySignal<KeyboardDragState | null>,
     localizer,
     accessors,
     getNow,
@@ -460,6 +469,72 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       const event = findEvent(id)
       if (event == null) return
       report({ event })
+    },
+
+    grabEvent({ id }) {
+      const event = findEvent(id)
+      if (event == null) return false
+      const start = getEventStart(event)
+      const end = getEventEnd(event)
+      if (start == null || end == null) return false
+      grabMoved = false
+      grabResized = false
+      const allDay = getEventAllDay(event) ?? false
+      // Store the event's canonical accessor id (not the raw id passed in, which
+      // an adapter may read as a string from the DOM) so consumers comparing it to
+      // the event's own id — e.g. the grabbed-event marking — match.
+      keyboardDrag.value = { id: getEventId(event) ?? id, start, end, allDay }
+      dragPreview.value = { start, end }
+      return true
+    },
+
+    grabMove({ days = 0, minutes = 0 }) {
+      const grab = keyboardDrag.value
+      if (grab == null) return
+      const shift = (value: string): string =>
+        localizer.add({
+          value: localizer.add({ value, amount: days, unit: 'day' }),
+          amount: minutes,
+          unit: 'minute',
+        })
+      grabMoved = true
+      const start = shift(grab.start)
+      const end = shift(grab.end)
+      keyboardDrag.value = { ...grab, start, end }
+      dragPreview.value = { start, end }
+    },
+
+    grabResize({ minutes }) {
+      const grab = keyboardDrag.value
+      if (grab == null) return
+      grabResized = true
+      const candidate = localizer.add({ value: grab.end, amount: minutes, unit: 'minute' })
+      // Never let the end cross within one slot of the start.
+      const end =
+        localizer.diff({ a: candidate, b: grab.start, unit: 'minute' }) < step
+          ? localizer.add({ value: grab.start, amount: step, unit: 'minute' })
+          : candidate
+      keyboardDrag.value = { ...grab, end }
+      dragPreview.value = { start: grab.start, end }
+    },
+
+    grabCommit() {
+      const grab = keyboardDrag.value
+      keyboardDrag.value = null
+      dragPreview.value = null
+      if (grab == null) return
+      const event = findEvent(grab.id)
+      if (event == null) return
+      const payload = { event, start: grab.start, end: grab.end, allDay: grab.allDay }
+      // A move carries both ends (so a move-then-resize is fully expressed by
+      // onEventDrop); a pure resize reports through onEventResize.
+      if (grabMoved) config.onEventDrop?.(payload)
+      else if (grabResized) config.onEventResize?.(payload)
+    },
+
+    grabCancel() {
+      keyboardDrag.value = null
+      dragPreview.value = null
     },
 
     eventHandlers,

@@ -304,3 +304,16 @@ export const DropFromOutside: Story = {
 export const DragOutToUnschedule: Story = {
   render: () => <DragOutDemo />,
 }
+
+/**
+ * Keyboard drag (no mouse): Tab to a timed event, then **Space** to pick it up.
+ * **↑/↓** move it a slot earlier/later, **←/→** move it a day, **Shift+↓ / Shift+↑**
+ * grow / shrink its end edge, **Enter** drops it, **Escape** cancels. A dashed box
+ * previews where it will land and each step is announced to screen readers. This
+ * is the same demo as WeekEventMove — keyboard support is built into the time grid,
+ * so no extra wiring beyond `onEventDrop` / `onEventResize`. (`useCalendarDnd` here
+ * only adds the *pointer* drag; the keyboard path works without it.)
+ */
+export const KeyboardDrag: Story = {
+  render: () => <DragDemo view={Views.WEEK} />,
+}

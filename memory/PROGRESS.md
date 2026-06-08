@@ -161,6 +161,32 @@ as four sub-slices in one push (Cutter: "all four slices before push"). Two flag
 - **Gates:** all 8 projects typecheck/test/lint/build ✓ (core 212, dnd 26, react 168); build-storybook react ✓.
   **No browser run here** (jsdom can't fire native drag) — verify drop-from-outside + drag-out visually in
   Storybook (`DropFromOutside`, `DragOutToUnschedule`).
+  - **Fix pushed (`1678f6a`):** the native drop-into snapped back; replaced the Pragmatic external adapter with
+    delegated HTML5 listeners (above). Cutter confirmed scope: same-page palette outside the grid, no OS/files,
+    + wanted a slot highlight on hover (the single-slot `previewExternal` box supplies it).
+
+### Phase 5 — Task 5e: keyboard-accessible DnD (Cutter, 2026-06-08) ✓ (uncommitted — awaiting push confirm)
+Cutter scoped 5e via AskUserQuestion: **modal grab** (not direct-nudge), **move + resize**, **time-grid first**.
+Flagged + kept: pickup key = **Space** (Enter stays "open"), since a focused event already uses Enter/Space.
+- **core (5e-1)** — keyboard-grab controller in the store: `keyboardDrag` signal (`{id,start,end,allDay}|null`)
+  + `grabEvent({id})→boolean` (seeds from event bounds, stores the **canonical accessor id**, primes
+  `dragPreview`), `grabMove({days?,minutes?})` (shift both ends, preserve duration), `grabResize({minutes})`
+  (end edge, clamped to one slot), `grabCommit()` (fires `onEventDrop` if it moved, else `onEventResize` —
+  onEventDrop carries both ends so a move-then-resize reports once), `grabCancel()`. Delta-based math (not the
+  target-instant path the pointer uses); reuses `onEventDrop`/`onEventResize`. `KeyboardDragState` exported.
+- **react (5e-2)** — `useKeyboardDnd` (internal) on the time-grid root via **`onKeyDownCapture`** so it claims
+  keys before `EventButton` (Enter=open) and the roving hooks. Space picks up a **timed** event (gated to
+  `.bc-time-body`, so the all-day row/other views are inert), ↑↓ move a slot, ←→ move a day, Shift+↑↓ resize the
+  end, Enter drops, Esc cancels. Polite **live region** in `TimeGridView` announces each step. `EventButton`
+  marks the grabbed event (`aria-grabbed` + `.bc-event-grabbed` lifted/dimmed style; String-compared id). The
+  proposed extent reuses the existing `.bc-drag-preview` dashed box (grab actions set `dragPreview`). Shared
+  `eventInstructions` message updated (Space = pick up). `messages` F2 test still green.
+- **stories/docs (5e-3)** — `KeyboardDrag` story (same week demo; keyboard needs no wiring beyond
+  onEventDrop/onEventResize). `DragAndDrop.mdx` gained a key-table section; "Not built yet" now just month
+  drop-from-outside + month resize.
+- **Gates:** all 8 projects typecheck/test/lint/build ✓ (core 221, dnd 27, react 173); build-storybook react ✓.
+  Keyboard path tested in jsdom (real key events via Testing Library) — but **Cutter should still confirm the
+  feel + announcements in Storybook** (`KeyboardDrag`).
 
 ### Phase 4 — Slot/event handler separation + move-to-core (Cutter, 2026-06-07) ✓ (uncommitted at time of writing)
 Cutter's separation-of-concerns refactor. **Slot** and **event** interaction are now two distinct,
@@ -489,9 +515,13 @@ See [[bigcal-selection-storybook-phase4]] (obligation satisfied).
   (drop instant is absolute). **Month multi-day resize deferred** (Cutter, 2026-06-08).
 - ✅ **5d — drop-from-outside / drag-out** — DONE (Task 5d entry up top). Both directions; native HTML5 **and**
   Pragmatic sources; payload carried on the source; **time-grid only** (month deferred). `onDropFromOutside`
-  + `onEventDragStart` + `placeExternalEvent` core math; external adapter in the binder; public MIME constants
-  exported. **NEXT slice = 5e.**
-- **5e — keyboard-accessible DnD** (a11y upgrade over v1).
+  + `onEventDragStart` + `placeExternalEvent` core math; **delegated HTML5 listeners** in the binder (NOT the
+  Pragmatic external adapter — see the 5d correction); public MIME constants exported.
+- ✅ **5e — keyboard-accessible DnD** — DONE (Task 5e entry up top). Modal grab (Space pick up, arrows move,
+  Shift+↑↓ resize end, Enter drop, Esc cancel); core `keyboardDrag` controller; `useKeyboardDnd` capture handler;
+  live-region announcements; `aria-grabbed` marking. Time-grid only. **NEXT: Phase 5 exit review + deferred
+  follow-ups** (month drop-from-outside, month multi-day resize, pointer move live-preview, resourceId in payload,
+  timed↔all-day promotion, dedicated `@big-calendar/react/dnd` entry).
 - Packaging follow-ups: resource-aware drop (`resourceId` in `onEventDrop`), cross-surface
   timed↔all-day promotion, a dedicated `@big-calendar/react/dnd` entry, a DnD `.mdx` guide.
 

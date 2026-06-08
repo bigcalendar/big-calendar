@@ -77,6 +77,12 @@ export default function EventButton<TEvent>({
   const id = wrapAccessor(store.accessors.id)(event)
   const selectedId = useSignalValue(store.selected)
   const isSelected = id != null && selectedId === id
+  // Marked while this event is held in a keyboard grab (drives the lifted style +
+  // `aria-grabbed`). `keyboardDrag` stays `null` outside a grab, so this subscription
+  // only re-renders event buttons while a grab is actually in flight.
+  const grab = useSignalValue(store.keyboardDrag)
+  // String-compare so a numeric accessor id and a DOM-sourced id still match.
+  const isGrabbed = id != null && grab != null && String(grab.id) === String(id)
   // Resize handles render only when asked (time-grid) and the event allows it.
   const showResizeHandles = withResizeHandles === true && store.isResizable(event)
 
@@ -138,10 +144,11 @@ export default function EventButton<TEvent>({
   return (
     <button
       type="button"
-      className={className}
+      className={isGrabbed ? `${className} bc-event-grabbed` : className}
       style={style}
       data-bc-event={id == null ? '' : String(id)}
       aria-selected={isSelected}
+      aria-grabbed={isGrabbed || undefined}
       aria-label={accessibleName || undefined}
       aria-keyshortcuts="Enter Space F2"
       aria-describedby={descriptionIds.event}

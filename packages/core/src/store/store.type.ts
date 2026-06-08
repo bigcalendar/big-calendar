@@ -90,6 +90,21 @@ export interface EventHandlerApi<TEvent> {
 }
 
 /**
+ * The live state of a **keyboard** drag ("grab"): the grabbed event id plus the
+ * proposed bounds as the user steps it with the arrow keys, or `null` when no
+ * grab is in progress. The view reads it to mark the grabbed event and the
+ * adapter reads the bounds to announce each step; the proposed-extent box itself
+ * is rendered from {@link CalendarStore.dragPreview} (set in lockstep). Dates are
+ * ISO strings.
+ */
+export interface KeyboardDragState {
+  id: EventId
+  start: string
+  end: string
+  allDay: boolean
+}
+
+/**
  * An event serialized for a **drag-out** transfer. The DnD layer writes it onto
  * the native drag's `dataTransfer` (as JSON + a `text/plain` title) so a drop
  * target *outside* the calendar can identify the dragged event. Dates are ISO
@@ -150,6 +165,13 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    * — no callback fires until the drop is committed via `resizeEvent`.
    */
   readonly dragPreview: ReadonlySignal<{ start: string; end: string } | null>
+  /**
+   * Live keyboard-drag ("grab") state, or `null` when no grab is in progress. Set
+   * by {@link CalendarStore.grabEvent} and updated by `grabMove`/`grabResize`;
+   * cleared on `grabCommit`/`grabCancel`. The adapter reads it to mark the grabbed
+   * event and to announce each step via a live region.
+   */
+  readonly keyboardDrag: ReadonlySignal<KeyboardDragState | null>
 
   // --- resolved config (stable for the store's lifetime) ---
   /** The localizer instance, reused everywhere. */
@@ -263,6 +285,40 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    * `onEventDragStart` is configured.
    */
   eventDragStart(args: { id: EventId }): void
+
+  // --- keyboard drag ("grab"): an accessible, pointer-free move/resize ---
+  // A modal grab the adapter drives from key events on a focused event: pick up
+  // (grabEvent) → step (grabMove / grabResize) → drop (grabCommit) or abort
+  // (grabCancel). Core owns the bounds math + clamping and fires the same
+  // `onEventDrop` / `onEventResize` callbacks as a pointer drag, so a keyboard
+  // reposition is reported identically. Time-grid events only this slice.
+  /**
+   * Pick up an event for a keyboard drag. Looks it up by id and seeds the grab
+   * from its current bounds (also priming {@link CalendarStore.dragPreview}).
+   * Returns `true` when a grab started, `false` when the id matches no event or it
+   * has no bounds. No callback fires yet.
+   */
+  grabEvent(args: { id: EventId }): boolean
+  /**
+   * Step a grabbed event by whole `days` and/or `minutes`, shifting both ends
+   * (duration preserved) and updating the preview. A no-op when nothing is
+   * grabbed. Negative values step earlier / to previous days.
+   */
+  grabMove(args: { days?: number | undefined; minutes?: number | undefined }): void
+  /**
+   * Resize a grabbed event's **end** edge by `minutes`, clamped to a one-slot
+   * minimum, and update the preview. A no-op when nothing is grabbed.
+   */
+  grabResize(args: { minutes: number }): void
+  /**
+   * Drop a grabbed event: fire `onEventDrop` (if it moved) or `onEventResize` (if
+   * it only resized) with the proposed bounds, then clear the grab + preview. A
+   * no-op when nothing is grabbed or the relevant callback is unconfigured. The
+   * store never mutates `events`.
+   */
+  grabCommit(): void
+  /** Abort a keyboard grab without committing; clears the grab + preview. */
+  grabCancel(): void
   /**
    * Drill into a clicked date: resolve the target view (per `drilldownView` /
    * `getDrilldownView`) and either delegate to `onDrillDown` or switch view +

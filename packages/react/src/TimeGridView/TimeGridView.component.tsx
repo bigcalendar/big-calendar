@@ -22,6 +22,7 @@ import {
 import type { Direction } from '../internal/useRovingSelection'
 import { useRovingSelection } from '../internal/useRovingSelection'
 import { useEventRoving } from '../internal/useEventRoving'
+import { useKeyboardDnd } from '../internal/useKeyboardDnd'
 import { useSignalValue } from '../internal/useSignalValue'
 import { useSlotSelection } from '../internal/useSlotSelection'
 import DefaultTimeAllDayEvent from './components/DefaultTimeAllDayEvent.component'
@@ -92,6 +93,7 @@ function TimeGridView<TEvent = unknown>() {
     neighbor: allDayNeighbor,
   })
   const eventRoving = useEventRoving()
+  const keyboardDnd = useKeyboardDnd<TEvent>()
 
   if (grid === null) return null
 
@@ -166,9 +168,15 @@ function TimeGridView<TEvent = unknown>() {
       className="bc-time-grid"
       style={{ ...dayCountStyle(grid.headings.length), ...slotGroupStyle(store.timeslots) }}
       ref={eventRoving.containerRef}
+      onKeyDownCapture={keyboardDnd.onKeyDownCapture}
       onKeyDown={eventRoving.onKeyDown}
       onFocusCapture={eventRoving.onFocusCapture}
     >
+      {/* Polite live region: announces each keyboard-grab step (pick up / move /
+          resize / drop / cancel) to assistive tech. */}
+      <div className="bc-sr-only" role="status" aria-live="polite">
+        {keyboardDnd.announcement}
+      </div>
       <div className="bc-time-header">
         {/* Empty cell over the gutter track so day headings align with the body columns. */}
         <div className="bc-time-header-gutter" aria-hidden="true" />
