@@ -108,6 +108,26 @@ day column resizes across midnight.
   Per-file bar enforced green. **No browser run here** (jsdom can't fire native drag) — verify the actual
   edge-drag visually in Storybook (`WeekEventResize`).
 
+### Phase 5 — Task 5c-preview: live resize-preview overlay (Cutter, 2026-06-08) ✓ (uncommitted at time of writing)
+Cutter asked to **see slot highlights during a resize** (feedback beyond pointer position). Chosen via
+AskUserQuestion: **live extent preview** (translucent box of the whole proposed event, reusing the
+selection-overlay rendering), **resize only** (move preview deferred).
+- **core** — new read-only `dragPreview` signal (`{start,end}|null`); `previewResize({id,edge,target})`
+  sets it to the bounds a resize *would* produce (via the shared `computeResize` helper — same math as the
+  commit, no callback); `clearDragPreview()`; committing `resizeEvent` clears it. Refactored the 5c resize
+  action onto `computeResize` (hoisted `getEventStart/End/AllDay` wrappers).
+- **dnd** — `monitorForElements` gained `onDropTargetChange` → `store.previewResize` for resize sources
+  (move drags carry no edge → skipped); clears the preview when the edge leaves every slot, when a resize
+  is dropped outside a slot, and on binder teardown. `DndStore` widened (+`previewResize`/`clearDragPreview`).
+- **react** — `TimeGridView` reads `store.dragPreview` and renders a per-column `.bc-drag-preview` box via
+  the same `selectionStyle` geometry, computed inline with `createSlotMetrics().getRange` (clamps to each
+  column window → spans columns for a cross-day resize, zero-height columns render nothing). `useTimeGrid`
+  now exposes each column's `min`/`max`.
+- **styles** — `.bc-drag-preview` shares the `.bc-selection` absolute placement (layout.css) with a dashed
+  translucent skin (selection.css) to read as "proposed, not committed".
+- **Gates:** all 8 projects typecheck/test/lint/build ✓ (core 196, dnd 15, react 166); build-storybook react ✓.
+  **No browser run here** — verify the live preview visually in Storybook (`WeekEventResize`).
+
 ### Phase 4 — Slot/event handler separation + move-to-core (Cutter, 2026-06-07) ✓ (uncommitted at time of writing)
 Cutter's separation-of-concerns refactor. **Slot** and **event** interaction are now two distinct,
 focused concerns, both **core-owned** (framework-agnostic), with the React layer reduced to a dumb

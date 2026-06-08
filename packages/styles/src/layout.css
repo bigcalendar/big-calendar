@@ -343,7 +343,8 @@
   }
 
   /* Drag-to-select overlay: a grid-placed box (time grid or day cells). */
-  .bc-selection {
+  .bc-selection,
+  .bc-drag-preview {
     position: absolute;
     inset-block-start: calc(var(--bc-top) * 100%);
     block-size: calc(var(--bc-height) * 100%);

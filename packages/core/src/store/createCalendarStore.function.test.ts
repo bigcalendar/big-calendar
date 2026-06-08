@@ -643,6 +643,42 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       const store = createCalendarStore<Event>({ localizer, events })
       expect(() => store.resizeEvent({ id: 1, edge: 'end', target: '2026-06-15T11:00:00.000Z' })).not.toThrow()
     })
+
+    it('previewResize sets dragPreview to the proposed bounds without firing the callback', () => {
+      const onEventResize = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventResize, step: 30 })
+      const target = '2026-06-15T11:00:00.000Z'
+      store.previewResize({ id: 1, edge: 'end', target })
+      expect(store.dragPreview.value).toEqual({
+        start: events[0]!.start,
+        end: localizer.add({ value: target, amount: 30, unit: 'minute' }),
+      })
+      expect(onEventResize).not.toHaveBeenCalled()
+    })
+
+    it('previewResize clears the preview when the id matches no event', () => {
+      const store = createCalendarStore<Event>({ localizer, events, onEventResize: vi.fn() })
+      store.previewResize({ id: 1, edge: 'end', target: '2026-06-15T11:00:00.000Z' })
+      expect(store.dragPreview.value).not.toBeNull()
+      store.previewResize({ id: 999, edge: 'end', target: '2026-06-15T11:00:00.000Z' })
+      expect(store.dragPreview.value).toBeNull()
+    })
+
+    it('committing a resize clears the preview', () => {
+      const store = createCalendarStore<Event>({ localizer, events, onEventResize: vi.fn() })
+      store.previewResize({ id: 1, edge: 'end', target: '2026-06-15T11:00:00.000Z' })
+      expect(store.dragPreview.value).not.toBeNull()
+      store.resizeEvent({ id: 1, edge: 'end', target: '2026-06-15T11:00:00.000Z' })
+      expect(store.dragPreview.value).toBeNull()
+    })
+
+    it('clearDragPreview resets the preview', () => {
+      const store = createCalendarStore<Event>({ localizer, events, onEventResize: vi.fn() })
+      store.previewResize({ id: 1, edge: 'start', target: '2026-06-15T08:30:00.000Z' })
+      expect(store.dragPreview.value).not.toBeNull()
+      store.clearDragPreview()
+      expect(store.dragPreview.value).toBeNull()
+    })
   })
 
   describe('isResizable', () => {

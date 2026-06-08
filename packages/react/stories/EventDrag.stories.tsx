@@ -147,11 +147,13 @@ export const WeekEventMove: Story = {
 
 /**
  * Time-grid (week) resize: hover a timed event to reveal a grab bar on its top
- * and bottom edge, then drag an edge to a different slot. The dragged edge snaps
- * to the slot (the other edge stays); drag past a day boundary to grow an event
- * across midnight, the same cross-day behaviour as a slot selection. The event
- * is clamped to a one-slot minimum so it can't collapse. (Same demo as the move
- * story — `onEventDrop` and `onEventResize` both feed the one `apply`.)
+ * and bottom edge, then drag an edge to a different slot. A dashed **live preview**
+ * box follows the drag so you can see the proposed new size before releasing. The
+ * dragged edge snaps to the slot (the other edge stays); drag past a day boundary
+ * to grow an event across midnight, the same cross-day behaviour as a slot
+ * selection. The event is clamped to a one-slot minimum so it can't collapse.
+ * (Same demo as the move story — `onEventDrop` and `onEventResize` both feed the
+ * one `apply`.)
  */
 export const WeekEventResize: Story = {
   render: () => <DragDemo view={Views.WEEK} />,

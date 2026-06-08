@@ -65,6 +65,10 @@ export interface TimeColumn<TEvent> {
   key: string
   /** Day-start string. */
   day: string
+  /** Column window start instant (for positioning overlays like the drag preview). */
+  min: string
+  /** Column window end instant. */
+  max: string
   /** Whether the day is the current date. */
   isToday: boolean
   /** Foreground timed events, packed by the day-layout algorithm. */
@@ -200,7 +204,17 @@ export default function useTimeGrid<TEvent>(): TimeGrid<TEvent> | null {
         if (top >= 0 && top <= 1) nowTop = top
       }
 
-      return { key: String(colIndex), day: column.date, isToday, events, backgroundEvents, nowTop, slots }
+      return {
+        key: String(colIndex),
+        day: column.date,
+        min: column.min,
+        max: column.max,
+        isToday,
+        events,
+        backgroundEvents,
+        nowTop,
+        slots,
+      }
     })
 
     const segments: TimeAllDaySegment<TEvent>[] = allDay.levels.flatMap((level, rowIndex) =>

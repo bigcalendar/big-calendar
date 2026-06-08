@@ -1,7 +1,8 @@
 import { Views } from '@big-calendar/core'
+import type { CalendarStore } from '@big-calendar/core'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
-import { CalendarProvider } from '../CalendarProvider'
+import { CalendarProvider, useCalendarContext } from '../CalendarProvider'
 import type { CalendarProviderProps } from '../CalendarProvider'
 import type { TimeEventProps } from '../components.type'
 import { LOCALIZER_CASES } from '../testing/localizers'
@@ -172,6 +173,39 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
     fireEvent.pointerUp(window)
     expect(container.querySelector('.bc-selection')).toBeNull()
     delete (document as { elementFromPoint?: unknown }).elementFromPoint
+  })
+
+  it('renders a dashed resize-preview box from store.dragPreview and clears it', () => {
+    let store!: CalendarStore<Event>
+    function Capture() {
+      store = useCalendarContext<Event>().store
+      return null
+    }
+    const { container } = render(
+      <CalendarProvider<Event>
+        localizer={localizer}
+        defaultDate={focus}
+        defaultView={Views.DAY}
+        events={events}
+        getNow={() => NOW}
+        onEventResize={() => {}}
+      >
+        <TimeGridView />
+        <Capture />
+      </CalendarProvider>,
+    )
+    expect(container.querySelector('.bc-drag-preview')).toBeNull()
+
+    // Resize event 1's end down to 11:00 (slot end → 11:30): preview spans 9:00–11:30.
+    act(() => store.previewResize({ id: 1, edge: 'end', target: '2026-06-15T11:00:00.000Z' }))
+    const box = container.querySelector('.bc-drag-preview') as HTMLElement
+    expect(box).not.toBeNull()
+    expect(box.style.getPropertyValue('--bc-top')).toBe(String(9 / 24)) // 09:00 of a 24h column
+    // 9:00 → 11:30 = 2.5h of a 24h column (subtraction → compare with tolerance).
+    expect(Number(box.style.getPropertyValue('--bc-height'))).toBeCloseTo(2.5 / 24, 10)
+
+    act(() => store.clearDragPreview())
+    expect(container.querySelector('.bc-drag-preview')).toBeNull()
   })
 
   it('spans columns and commits an all-day range when a drag crosses days', () => {

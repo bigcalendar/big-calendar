@@ -119,7 +119,8 @@ In the **time-grid** views, hovering a timed event reveals a grab bar on its top
 bottom edge. Dragging an edge to another slot resizes the event: the dragged edge snaps
 to the slot, the other edge stays put, and (like move) you can drag past a day boundary
 to grow the event across midnight. The event is clamped to a one-slot minimum so it can
-never collapse.
+never collapse. While you drag, a dashed **live preview** box shows the proposed new
+size so you're not guessing from the pointer alone.
 
 Resize reports through `onEventResize`, which has the **exact same shape** as
 `onEventDrop` — so apply (and roll back) it the same way:

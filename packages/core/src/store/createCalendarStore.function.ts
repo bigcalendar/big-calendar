@@ -3,6 +3,7 @@ import type { ReadonlySignal } from '@preact/signals-core'
 import { resolveAccessors, wrapAccessor } from '../accessors/accessors.function'
 import { moveEvent } from '../dnd/moveEvent.function'
 import { resizeEvent } from '../dnd/resizeEvent.function'
+import type { ResizeEdge } from '../dnd/resizeEvent.function'
 import { BUILTIN_VIEWS, Views } from '../constants/views.constant'
 import { createSelection } from '../selection/selection.function'
 import type { SelectionMode, SelectionRange } from '../selection/selection.type'
@@ -57,12 +58,47 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       return candidateId != null && String(candidateId) === String(id)
     })
 
+  // Bound-accessor wrappers reused by the resize math (look-up + compute).
+  const getEventStart = wrapAccessor(accessors.start)
+  const getEventEnd = wrapAccessor(accessors.end)
+  const getEventAllDay = wrapAccessor(accessors.allDay)
+  /**
+   * Resolve an event by id and run the resize math, or `null` when the id matches
+   * no event or the event lacks bounds. Shared by `resizeEvent` (commit) and
+   * `previewResize` (live overlay) so both compute identical bounds.
+   */
+  const computeResize = (
+    id: EventId,
+    edge: ResizeEdge,
+    target: string,
+  ): { event: TEvent; start: string; end: string; allDay: boolean } | null => {
+    const event = findEvent(id)
+    if (event == null) return null
+    const start = getEventStart(event)
+    const end = getEventEnd(event)
+    if (start == null || end == null) return null
+    const resized = resizeEvent({
+      localizer,
+      start,
+      end,
+      allDay: getEventAllDay(event) ?? false,
+      edge,
+      target,
+      step,
+    })
+    return { event, ...resized }
+  }
+
   const date = signal<string>(config.date ?? getNow())
   const view = signal<ViewKey>(config.view ?? Views.MONTH)
   const selected = signal<EventId | null>(null)
   const events = signal<TEvent[]>(config.events ?? [])
   const backgroundEvents = signal<TEvent[]>(config.backgroundEvents ?? [])
   const resources = signal<TResource[] | undefined>(config.resources)
+  // Live drag-preview bounds: the proposed start/end shown while a resize drag is
+  // in flight (set by `previewResize`, cleared on drop/commit). Purely visual —
+  // no callback fires — so the view can render the resulting extent before commit.
+  const dragPreview = signal<{ start: string; end: string } | null>(null)
 
   const { drilldownView = Views.DAY, views: registry } = config
   const range = computed(() =>
@@ -305,6 +341,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     range,
     label,
     viewModel,
+    dragPreview: dragPreview as ReadonlySignal<{ start: string; end: string } | null>,
     localizer,
     accessors,
     getNow,
@@ -370,26 +407,22 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     },
 
     resizeEvent({ id, edge, target }) {
+      // The drag is over: clear the live preview regardless of the outcome.
+      dragPreview.value = null
       const report = config.onEventResize
       if (report == null) return
-      const getStart = wrapAccessor(accessors.start)
-      const getEnd = wrapAccessor(accessors.end)
-      const getAllDay = wrapAccessor(accessors.allDay)
-      const event = findEvent(id)
-      if (event == null) return
-      const start = getStart(event)
-      const end = getEnd(event)
-      if (start == null || end == null) return
-      const resized = resizeEvent({
-        localizer,
-        start,
-        end,
-        allDay: getAllDay(event) ?? false,
-        edge,
-        target,
-        step,
-      })
-      report({ event, ...resized })
+      const resized = computeResize(id, edge, target)
+      if (resized == null) return
+      report({ event: resized.event, start: resized.start, end: resized.end, allDay: resized.allDay })
+    },
+
+    previewResize({ id, edge, target }) {
+      const resized = computeResize(id, edge, target)
+      dragPreview.value = resized == null ? null : { start: resized.start, end: resized.end }
+    },
+
+    clearDragPreview() {
+      dragPreview.value = null
     },
 
     eventHandlers,

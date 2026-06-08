@@ -722,3 +722,13 @@ Cutter scoped resize via AskUserQuestion: **time-grid only this slice, month mul
 - **Rejected — folding resize into the move source** (one draggable, infer intent from grab position): brittle hit-testing; explicit edge handles are clearer, accessible to gate per-edge, and let `touch-action` be scoped to just the handle.
 - **Deferred:** month multi-day resize (segment-edge handles + day-mode resize math), drag/drop-from-outside, keyboard resize.
 - **Gates:** core 192 + dnd 12 + react 164 tests; typecheck/test/lint/build ✓ for all 8 projects; build-storybook react ✓. New `WeekEventResize` story. **No browser run here** (jsdom can't fire native drag) — verify the edge-drag visually in Storybook.
+
+## 2026-06-08 — Phase 5 task 5c-preview: live resize feedback = extent preview signal (Cutter)
+
+Cutter asked to see where a resize will land during the drag, not just from pointer position. Chosen via AskUserQuestion: **live extent preview** (over a single target-slot highlight) and **resize only** (move preview deferred).
+
+- **Decision — core holds a live `dragPreview` bounds signal; the view renders the proposed extent.** `previewResize({id,edge,target})` runs the *same* `resizeEvent` math as the commit (shared `computeResize` helper) but sets `dragPreview` instead of firing `onEventResize`; `clearDragPreview()` and committing both clear it. The DnD layer drives it from Pragmatic's `monitorForElements.onDropTargetChange` (per-slot during the drag). The time grid renders a `.bc-drag-preview` box from `dragPreview` using the **same `selectionStyle` + `createSlotMetrics().getRange`** path events/selection use, so cross-day previews span columns for free. **Why:** mirrors the existing selection-overlay pattern (interaction state in core, geometry in the view), and the preview is guaranteed identical to what will commit because it shares the math.
+- **Rejected — single target-slot highlight (pure dnd + CSS class):** lighter, but shows only the snap point, not the resulting size; weak feedback for "where am I". Rejected per Cutter's choice.
+- **Rejected — preview during move too (this slice):** Cutter scoped it resize-only; `onDropTargetChange` early-returns for move sources (no edge). Move preview is a trivial later add on the same signal.
+- **Lifecycle:** preview cleared on commit, on drop outside any slot, when the edge leaves every slot, and on binder teardown — no lingering overlay.
+- **Gates:** core 196 + dnd 15 + react 166 tests; typecheck/test/lint/build ✓ all 8 projects; build-storybook react ✓. **No browser run here** (jsdom can't fire native drag) — verify visually in Storybook (`WeekEventResize`).

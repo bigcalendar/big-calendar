@@ -1,3 +1,4 @@
+import { createSlotMetrics } from '@big-calendar/core'
 import type { ComponentType } from 'react'
 import { useCallback } from 'react'
 import { useCalendarContext } from '../CalendarProvider'
@@ -46,6 +47,7 @@ function TimeGridView<TEvent = unknown>() {
   const onAllDayPointerDown = useSlotSelection('day')
   const selRange = useSignalValue(store.selection.range)
   const selAnchor = useSignalValue(store.selection.anchor)
+  const dragPreview = useSignalValue(store.dragPreview)
 
   // Keyboard roving over the two slot groups (one tab stop each). Time body:
   // up/down step a slot within the day, left/right step a day column (global
@@ -131,6 +133,23 @@ function TimeGridView<TEvent = unknown>() {
       bottom = slotCount
     }
     return { top: top / slotCount, height: (bottom - top) / slotCount }
+  }
+
+  // The live resize-preview box for one day column: the proposed event extent,
+  // clipped to the column window. `getRange` clamps the bounds into [min,max], so a
+  // column the preview doesn't reach yields zero height and renders nothing. This
+  // also spans columns for a cross-day resize.
+  const previewBox = (column: { min: string; max: string }): { top: number; height: number } | null => {
+    if (dragPreview === null) return null
+    const metrics = createSlotMetrics({
+      localizer: store.localizer,
+      min: column.min,
+      max: column.max,
+      step: store.step,
+      timeslots: store.timeslots,
+    })
+    const range = metrics.getRange({ start: dragPreview.start, end: dragPreview.end })
+    return range.height > 0 ? { top: range.top, height: range.height } : null
   }
 
   // The live all-day (day-mode) selection band: a single-row span across the
@@ -286,6 +305,12 @@ function TimeGridView<TEvent = unknown>() {
                 const box = timeSelectionBox(colIndex)
                 return box === null ? null : (
                   <div className="bc-selection" style={selectionStyle(box)} />
+                )
+              })()}
+              {(() => {
+                const box = previewBox(column)
+                return box === null ? null : (
+                  <div className="bc-drag-preview" style={selectionStyle(box)} />
                 )
               })()}
             </div>

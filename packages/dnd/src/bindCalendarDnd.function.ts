@@ -21,6 +21,10 @@ export interface DndStore<TEvent> {
   moveEvent(args: { id: EventId; target: string; mode: MoveMode }): void
   /** Commit a resize drop: core recomputes the bounds and fires `onEventResize`. */
   resizeEvent(args: { id: EventId; edge: ResizeEdge; target: string }): void
+  /** Update the live resize preview as the dragged edge moves over slots. */
+  previewResize(args: { id: EventId; edge: ResizeEdge; target: string }): void
+  /** Clear the live resize preview (drag left every slot, or ended). */
+  clearDragPreview(): void
 }
 
 /**
@@ -157,14 +161,32 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
   observer.observe(root, { childList: true, subtree: true })
 
   const stopMonitor = monitorForElements({
+    // Live resize preview: as the dragged edge crosses into a new slot, recompute
+    // the proposed bounds so the view can render the resulting extent. Resize only
+    // (move preview is a later slice); a move drag carries no edge, so it's skipped.
+    onDropTargetChange({ source, location }) {
+      const edge = source.data.bcResizeEdge
+      if (edge !== 'start' && edge !== 'end') return
+      const id = source.data.bcEventId
+      const target = location.current.dropTargets[0]?.data.bcDropTarget
+      if (typeof id !== 'string' || typeof target !== 'string') {
+        store.clearDragPreview()
+        return
+      }
+      store.previewResize({ id, edge, target })
+    },
     onDrop({ source, location }) {
       const id = source.data.bcEventId
       const target = location.current.dropTargets[0]?.data.bcDropTarget
-      if (typeof id !== 'string' || typeof target !== 'string') return
       // A resize handle carries its edge; the event body does not — branch on it.
       const edge = source.data.bcResizeEdge
+      if (typeof id !== 'string' || typeof target !== 'string') {
+        // Dropped outside every slot — abandon any in-flight resize preview.
+        if (edge === 'start' || edge === 'end') store.clearDragPreview()
+        return
+      }
       if (edge === 'start' || edge === 'end') {
-        store.resizeEvent({ id, edge, target })
+        store.resizeEvent({ id, edge, target }) // clears the preview itself
         return
       }
       store.moveEvent({ id, target, mode })
@@ -174,6 +196,7 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
   return () => {
     observer.disconnect()
     stopMonitor()
+    store.clearDragPreview()
     for (const release of bindings.values()) release()
     bindings.clear()
   }

@@ -24,6 +24,8 @@ const makeStore = (overrides: Partial<DndStore<{ id: number }>> = {}): DndStore<
   isResizable: vi.fn(() => true),
   moveEvent: vi.fn(),
   resizeEvent: vi.fn(),
+  previewResize: vi.fn(),
+  clearDragPreview: vi.fn(),
   ...overrides,
 })
 
@@ -141,6 +143,48 @@ describe('bindCalendarDnd', () => {
     })
     expect(store.resizeEvent).toHaveBeenCalledWith({ id: '1', edge: 'end', target: instant })
     expect(store.moveEvent).not.toHaveBeenCalled()
+  })
+
+  it('updates the live resize preview as the dragged edge changes slot', () => {
+    const instant = '2026-06-16T09:30:00.000Z'
+    const store = makeStore()
+    bindCalendarDnd({ root, store, mode: 'time' })
+    const { onDropTargetChange } = monitorSpy.mock.calls[0]![0]
+    onDropTargetChange({
+      source: { data: { bcEventId: '1', bcResizeEdge: 'end' } },
+      location: { current: { dropTargets: [{ data: { bcDropTarget: instant } }] } },
+    })
+    expect(store.previewResize).toHaveBeenCalledWith({ id: '1', edge: 'end', target: instant })
+  })
+
+  it('clears the preview when the edge leaves every slot, and ignores move drags', () => {
+    const store = makeStore()
+    bindCalendarDnd({ root, store, mode: 'time' })
+    const { onDropTargetChange } = monitorSpy.mock.calls[0]![0]
+    // Resize edge over no target → clear.
+    onDropTargetChange({
+      source: { data: { bcEventId: '1', bcResizeEdge: 'start' } },
+      location: { current: { dropTargets: [] } },
+    })
+    expect(store.clearDragPreview).toHaveBeenCalledTimes(1)
+    // A move drag (no edge) never previews this slice.
+    onDropTargetChange({
+      source: { data: { bcEventId: '1' } },
+      location: { current: { dropTargets: [{ data: { bcDropTarget: '2026-06-16T09:30:00.000Z' } }] } },
+    })
+    expect(store.previewResize).not.toHaveBeenCalled()
+  })
+
+  it('clears the preview when a resize is dropped outside every slot', () => {
+    const store = makeStore()
+    bindCalendarDnd({ root, store, mode: 'time' })
+    const { onDrop } = monitorSpy.mock.calls[0]![0]
+    onDrop({
+      source: { data: { bcEventId: '1', bcResizeEdge: 'end' } },
+      location: { current: { dropTargets: [] } },
+    })
+    expect(store.clearDragPreview).toHaveBeenCalledTimes(1)
+    expect(store.resizeEvent).not.toHaveBeenCalled()
   })
 
   it('ignores a drop with no target or a non-string id', () => {

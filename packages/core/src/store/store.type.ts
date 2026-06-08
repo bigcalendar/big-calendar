@@ -129,6 +129,13 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    * recomputed from the view, range, events and config. Discriminated by `kind`.
    */
   readonly viewModel: ReadonlySignal<CalendarViewModel<TEvent>>
+  /**
+   * Live drag-preview bounds, or `null` when no drag is in flight. Set by
+   * `previewResize` while a resize drag moves over slots and cleared on
+   * drop/commit; the time grid renders the proposed extent from it. Purely visual
+   * — no callback fires until the drop is committed via `resizeEvent`.
+   */
+  readonly dragPreview: ReadonlySignal<{ start: string; end: string } | null>
 
   // --- resolved config (stable for the store's lifetime) ---
   /** The localizer instance, reused everywhere. */
@@ -206,6 +213,15 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    * or no `onEventResize` is configured. The store does not mutate `events`.
    */
   resizeEvent(args: { id: EventId; edge: ResizeEdge; target: string }): void
+  /**
+   * Update the live resize preview ({@link CalendarStore.dragPreview}) to the
+   * bounds a resize would produce, without firing `onEventResize`. Called by the
+   * DnD layer as the dragged edge moves over slots. A no-op-to-`null` when the id
+   * matches no event.
+   */
+  previewResize(args: { id: EventId; edge: ResizeEdge; target: string }): void
+  /** Clear the live drag preview (drag ended outside a slot, or was cancelled). */
+  clearDragPreview(): void
   /**
    * Drill into a clicked date: resolve the target view (per `drilldownView` /
    * `getDrilldownView`) and either delegate to `onDrillDown` or switch view +
