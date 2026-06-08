@@ -48,15 +48,15 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   const backgroundEvents = signal<TEvent[]>(config.backgroundEvents ?? [])
   const resources = signal<TResource[] | undefined>(config.resources)
 
-  const { drilldownView = Views.DAY } = config
+  const { drilldownView = Views.DAY, views: registry } = config
   const range = computed(() =>
-    viewRange({ localizer, date: date.value, view: view.value, length: config.length }),
+    viewRange({ localizer, date: date.value, view: view.value, length: config.length, registry }),
   )
 
   // Localized toolbar title for the active view + focus date. Computed here so
   // every framework adapter renders the identical label.
   const label = computed(() =>
-    viewLabel({ localizer, view: view.value, date: date.value, range: range.value }),
+    viewLabel({ localizer, view: view.value, date: date.value, range: range.value, registry }),
   )
 
   // Resolve the time-grid window once (config is stable). A midnight `max`
@@ -74,6 +74,9 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       days: range.value.days,
       events: events.value,
       backgroundEvents: backgroundEvents.value,
+      date: date.value,
+      resources: resources.value,
+      registry,
       options: {
         step,
         timeslots,
@@ -303,6 +306,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
         getNow,
         target,
         length: config.length,
+        registry,
       })
       date.value = next
       config.onNavigate?.({ date: next, view: view.value })

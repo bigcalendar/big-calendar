@@ -1,6 +1,7 @@
 import type { LocalizerContract } from '@big-calendar/localizer'
 import { Views } from '../constants/views.constant'
 import type { ViewKey, VisibleRange } from '../types/calendar.type'
+import type { ViewRegistrySeams } from '../views/viewRegistry.type'
 
 /** ISO-8601 weekday numbers for the weekend (Saturday, Sunday). */
 const WEEKEND = new Set([6, 7])
@@ -24,8 +25,10 @@ export function viewRange(args: {
   view: ViewKey
   /** Agenda page size in days; may be passed through as `undefined` (defaults to 30). */
   length?: number | undefined
+  /** Custom view registry; consulted only for a non-built-in `view`. */
+  registry?: ViewRegistrySeams | undefined
 }): VisibleRange {
-  const { localizer, date, view, length = 30 } = args
+  const { localizer, date, view, length = 30, registry } = args
 
   switch (view) {
     case Views.MONTH: {
@@ -68,6 +71,12 @@ export function viewRange(args: {
         lastVisibleDay: last,
         days: localizer.range({ start, end: last, unit: 'day' }),
       }
+    }
+
+    default: {
+      const definition = registry?.[view]
+      if (definition) return definition.range({ localizer, date, length })
+      throw new Error(`viewRange: unknown view "${view}". Register it via the \`views\` config.`)
     }
   }
 }

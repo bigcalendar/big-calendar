@@ -1,9 +1,13 @@
 import type { DateTimeUnit, LocalizerContract } from '@big-calendar/localizer'
 import { Navigate, Views, type NavigateDirection } from '../constants/views.constant'
 import type { ViewKey } from '../types/calendar.type'
+import type { ViewRegistrySeams } from '../views/viewRegistry.type'
 
-/** How far one PREV/NEXT step moves, per view. */
-function stepFor(args: { view: ViewKey; length: number }): { unit: DateTimeUnit; amount: number } {
+/**
+ * How far one PREV/NEXT step moves, per built-in view. Returns `undefined` for a
+ * non-built-in view (the caller then defers to the registry definition).
+ */
+function stepFor(args: { view: ViewKey; length: number }): { unit: DateTimeUnit; amount: number } | undefined {
   const { view, length } = args
   switch (view) {
     case Views.MONTH:
@@ -15,6 +19,8 @@ function stepFor(args: { view: ViewKey; length: number }): { unit: DateTimeUnit;
       return { unit: 'day', amount: 1 }
     case Views.AGENDA:
       return { unit: 'day', amount: length }
+    default:
+      return undefined
   }
 }
 
@@ -39,8 +45,10 @@ export function navigateDate(args: {
   target?: string | undefined
   /** Agenda page size in days; may be passed through as `undefined` (defaults to 30). */
   length?: number | undefined
+  /** Custom view registry; consulted only for a non-built-in `view`'s step. */
+  registry?: ViewRegistrySeams | undefined
 }): string {
-  const { localizer, date, direction, view, getNow, target, length = 30 } = args
+  const { localizer, date, direction, view, getNow, target, length = 30, registry } = args
 
   switch (direction) {
     case Navigate.TODAY:
@@ -50,8 +58,12 @@ export function navigateDate(args: {
     case Navigate.PREVIOUS:
     case Navigate.NEXT: {
       const sign = direction === Navigate.NEXT ? 1 : -1
-      const { unit, amount } = stepFor({ view, length })
-      return localizer.add({ value: date, amount: sign * amount, unit })
+      const step = stepFor({ view, length })
+      if (step) return localizer.add({ value: date, amount: sign * step.amount, unit: step.unit })
+      // Custom view: defer the step to its registered definition.
+      const definition = registry?.[view]
+      if (definition) return definition.navigate({ localizer, date, direction, length })
+      throw new Error(`navigateDate: unknown view "${view}". Register it via the \`views\` config.`)
     }
   }
 }

@@ -1,5 +1,13 @@
-import { Navigate } from '@big-calendar/core'
+import { BUILTIN_VIEWS, Navigate } from '@big-calendar/core'
+import type { BuiltinViewKey, Messages, ViewKey } from '@big-calendar/core'
 import type { ToolbarProps } from '../../../components.type'
+
+const BUILTIN = new Set<string>(BUILTIN_VIEWS)
+
+/** A view's switcher label: the localized message for a built-in, else the raw key. */
+function viewButtonLabel(messages: Messages, view: ViewKey): string {
+  return BUILTIN.has(view) ? messages[view as BuiltinViewKey] : view
+}
 
 /**
  * Default navigation toolbar: a today / prev / next group, the localized view
@@ -29,7 +37,7 @@ function DefaultToolbar({ label, view, views, messages, onNavigate, onView }: To
             aria-pressed={option === view}
             onClick={() => onView(option)}
           >
-            {messages[option]}
+            {viewButtonLabel(messages, option)}
           </button>
         ))}
       </div>

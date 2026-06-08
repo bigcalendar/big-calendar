@@ -3,6 +3,7 @@ import type { Accessors } from '../accessors/accessors.type'
 import type { DayLayoutAlgorithm, DayLayoutAlgorithmKey } from '../layout/layout.type'
 import type { SelectableMode, SlotSelectionDates } from '../selection/selection.type'
 import type { GetDrilldownView } from '../store/drilldown.function'
+import type { ViewRegistry } from '../views/viewRegistry.type'
 import type { EventId, ViewKey, VisibleRange } from './calendar.type'
 
 /**
@@ -26,6 +27,14 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
   resources?: TResource[] | undefined
   /** Initial view. Defaults to `month`. */
   view?: ViewKey | undefined
+  /**
+   * Custom view registry (the §9 escape hatch). Maps a non-built-in view key to
+   * a {@link ViewDefinition} of pure, core-run functions (range / navigate /
+   * label / buildModel) so every adapter renders it identically. Keys that
+   * collide with a built-in (`month`/`week`/`work_week`/`day`/`agenda`) are
+   * ignored — the built-in wins.
+   */
+  views?: ViewRegistry<TEvent, TResource> | undefined
   /** Initial focus date (RFC 3339/9557). Defaults to `getNow()`. */
   date?: string | undefined
   /** Accessor overrides merged over the v1-parity defaults. */

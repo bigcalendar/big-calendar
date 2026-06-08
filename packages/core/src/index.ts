@@ -55,6 +55,16 @@ export { monthViewModel } from './views/month.function'
 export type { MonthSegment, MonthViewModel, MonthWeek } from './views/month.type'
 export { buildViewModel } from './views/viewModel.function'
 export type { CalendarViewModel, ViewModelOptions } from './views/viewModel.type'
+export { defineView } from './views/viewRegistry.function'
+export type {
+  ViewBuildModelArgs,
+  ViewDefinition,
+  ViewLabelArgs as ViewDefinitionLabelArgs,
+  ViewNavigateArgs,
+  ViewRangeArgs,
+  ViewRegistry,
+  ViewRegistrySeams,
+} from './views/viewRegistry.type'
 export { datedEvents, rowSegments } from './views/segments.function'
 export type { DatedEvent } from './views/segments.function'
 export type { EventSegment, SegmentRows } from './views/segments.type'

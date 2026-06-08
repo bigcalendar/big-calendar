@@ -48,6 +48,42 @@ Resolves the carried "double-click-also-selects" open item (Cutter: "Double clic
   row + a new note document that both grid gestures select (agenda excepted).
 - **Gates:** typecheck core+react ✓; core 151 + react 151 ✓; lint ✓; react build-storybook ✓.
 
+### Phase 4 — Task 2m: view registry (custom views, §9) — CORE ✓ (Cutter, 2026-06-07) (uncommitted at time of writing)
+Implements the locked **Option B** contract (DECISIONS.md 2026-06-05). Custom views are now a first-class
+**core** escape hatch; the 5 built-ins stay hardcoded and the registry is consulted **only** in each seam's
+`default` branch. **React rendering of a custom view is intentionally NOT in this change** — that needs the
+React view-component contract decision (surfaced to Cutter; see "open design decisions" below).
+- **`ViewKey` widened** `BuiltinViewKey → BuiltinViewKey | (string & {})` ([calendar.type.ts](packages/core/src/types/calendar.type.ts)) —
+  keeps built-in literal autocomplete while admitting custom keys. Cost (accepted): each seam loses
+  exhaustive-`switch` safety → every seam gained a runtime `default` (registry lookup or throw).
+- **`CalendarViewModel` gained one additive arm** `{ kind: 'custom'; view: ViewKey; model: unknown }`
+  ([viewModel.type.ts](packages/core/src/views/viewModel.type.ts)). `model` is `unknown` in the union; the
+  matching view-component re-asserts its `TModel`.
+- **New registry types** ([viewRegistry.type.ts](packages/core/src/views/viewRegistry.type.ts)):
+  `ViewDefinition<TEvent,TResource,TModel>` (4 pure fns `range`/`navigate`/`label`/`buildModel`),
+  `ViewRegistry<TEvent,TResource>` (`Record<string, ViewDefinition>`), arg types, and `ViewRegistrySeams`
+  (the `range`/`navigate`/`label` slice — no `TEvent` — so the non-generic seam fns accept a registry without
+  dragging `TEvent` through their signatures). **`defineView<TEvent,TResource>()(def)`**
+  ([viewRegistry.function.ts](packages/core/src/views/viewRegistry.function.ts)) — identity helper that infers
+  `TModel` from `buildModel`.
+- **Four seams threaded** (each: `registry?` param + `default` branch → `registry[view].<fn>(...)` or throw):
+  `viewRange`, `navigateDate` (`stepFor` now returns `undefined` for non-built-ins → defers PREV/NEXT to
+  the definition; TODAY/DATE stay universal), `viewLabel`, `buildViewModel` (also gained `date`/`resources`
+  params forwarded to a custom `buildModel`).
+- **Config + store:** `CalendarConfig.views?` ([config.type.ts](packages/core/src/types/config.type.ts));
+  `createCalendarStore` threads `config.views` into all four seam calls (+ `date`/`resources` into the
+  viewModel computed). Barrel exports `defineView` + the registry types (`ViewLabelArgs` aliased to
+  `ViewDefinitionLabelArgs` to avoid clashing with the store's existing `ViewLabelArgs`).
+- **React fallout fixed (caused by the widening):** `DefaultToolbar` indexed `messages[option]` with a now-
+  `string` `ViewKey` → added `viewButtonLabel(messages, view)` = localized message for a built-in, else the raw
+  view key. `<Calendar>` uses boolean `kind ===` checks so the new `custom` kind didn't break it (it renders
+  nothing for a custom view — the React render path is the pending decision).
+- **Tests:** new [viewRegistry.function.test.ts](packages/core/src/views/viewRegistry.function.test.ts) — a
+  demo "3-day" custom view exercises all four seam custom branches + every unknown-view throw + `defineView`
+  + a store integration (range/label/viewModel/navigate). core **163 tests**.
+- **Gates:** typecheck/test/lint/build core ✓; typecheck/test 151/lint/build react ✓; build-storybook
+  core+react ✓. Per-file bar enforced by the test target (green).
+
 ### Phase 4 — Task 4a: React test infra + signals→React bridge ✓ (commit f7929a4, pushed)
 
 - **Test infra:** installed `jsdom` + `@testing-library/react` + `@testing-library/dom` (Cutter
@@ -991,9 +1027,10 @@ subgrid table. Instead the agenda keeps its DOM and makes only the **title** (`.
   `undefined`). All files in THIS change typecheck clean. Awaiting Cutter's OK to fix the 2-line stub.
 
 ## In progress — selection wiring remaining
-- **Open items carried:** **2m view registry** (model contract decided — Option B; implementation still
-  deferred to the Phase-4 view-component contract). ✅ *double-click-also-selects RESOLVED 2026-06-07 — see
-  the task entry just below.*
+- **Open items carried:** ✅ *double-click-also-selects RESOLVED 2026-06-07.* ✅ *2m view-registry CORE
+  RESOLVED 2026-06-07 (Option B implemented — see the Task 2m entry above).* **Remaining for 2m:** the
+  **React rendering path** for a `kind:'custom'` view — needs the React view-component contract decision
+  (surfaced to Cutter; see "open design decisions #1" below).
 
 ## Phase 2 status
 
@@ -1004,16 +1041,15 @@ background events. 168 Vitest cases, every file ≥85% branch / ≥95% func, bui
 
 ## Next — open design decisions (do NOT guess; confirm with Cutter first)
 
-1. **2m — view registry (custom views, §9)** — MODEL CONTRACT DECIDED (Option B, Cutter 2026-06-05;
-   see DECISIONS.md); **implementation still deferred** to Phase 4 (coupled to the React view-component
-   contract). The 5 built-in views are hardcoded across `viewRange` (range), `navigateDate` (navigate),
-   `viewLabel` (label) and `buildViewModel` (model kind). A registry maps a (widened, `string`) `ViewKey`
-   → `{ range, navigate, label, buildModel }`, each seam falling through to `registry[view]` in a
-   `default` branch. **Resolved sticking point — model shape:** Option B — `CalendarViewModel` gains one
-   additive `{ kind:'custom'; view; model }` arm; the registry entry supplies a pure in-core `buildModel`
-   typed via a generic so the matching view-component reads `model: TModel`. Cost accepted: widening
-   `ViewKey` drops the exhaustive-`switch` safety (each seam needs a runtime default/throw). Build when
-   the React view-component contract is settled.
+1. **2m — view registry (custom views, §9)** — ✅ **CORE IMPLEMENTED 2026-06-07** (Option B; see the
+   Task 2m entry above + DECISIONS.md 2026-06-07). All four core seams now fall through to the registry;
+   `CalendarViewModel` has the `custom` arm; `defineView` ships. **REMAINING (needs a Cutter decision):
+   the React rendering path** for a `kind:'custom'` view model — i.e. how a custom view-component is
+   registered/looked up on the React side and how it reads back its `TModel` from `viewModel.model`
+   (`unknown`). Candidate shapes to pick from: (a) a `components.views: Record<string, ComponentType<{...}>>`
+   slot consumed by `<Calendar>`'s dispatch; (b) a render-prop / `children`-as-function on `<Calendar>`;
+   (c) pair the core `ViewDefinition` with its component in one registration object. **Surfaced to Cutter
+   — do not guess.**
 2. **Store-level selection wiring** — the selection FSM (2h) is the core logic. Mapping slot indices →
    dates is view/adapter-specific (month = day cells; time-grid = (column, slot) 2D), so the store/
    `beginSlotSelection` wiring is better done alongside the adapter (Phase 4). Confirm this split.

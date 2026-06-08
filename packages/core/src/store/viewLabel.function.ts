@@ -1,6 +1,7 @@
 import type { LocalizerContract } from '@big-calendar/localizer'
 import { Views } from '../constants/views.constant'
 import type { ViewKey, VisibleRange } from '../types/calendar.type'
+import type { ViewRegistrySeams } from '../views/viewRegistry.type'
 
 /** Arguments for {@link viewLabel}. */
 export interface ViewLabelArgs {
@@ -11,6 +12,8 @@ export interface ViewLabelArgs {
   date: string
   /** The visible range (used by spanning titles: week / work_week / agenda). */
   range: VisibleRange
+  /** Custom view registry; consulted only for a non-built-in `view`. */
+  registry?: ViewRegistrySeams | undefined
 }
 
 /** "Jun 1 – Jun 7"-style label for a date span (both ends inclusive). */
@@ -29,7 +32,7 @@ function spanLabel(localizer: LocalizerContract, start: string, end: string): st
  * - day → "Monday, June 1" (focus day)
  * - week / work_week / agenda → the visible span ("Jun 1 – Jun 7")
  */
-export function viewLabel({ localizer, view, date, range }: ViewLabelArgs): string {
+export function viewLabel({ localizer, view, date, range, registry }: ViewLabelArgs): string {
   switch (view) {
     case Views.MONTH:
       return localizer.format({ value: date, format: 'monthHeader' })
@@ -39,5 +42,10 @@ export function viewLabel({ localizer, view, date, range }: ViewLabelArgs): stri
     case Views.WORK_WEEK:
     case Views.AGENDA:
       return spanLabel(localizer, range.firstVisibleDay, range.lastVisibleDay)
+    default: {
+      const definition = registry?.[view]
+      if (definition) return definition.label({ localizer, date, range })
+      throw new Error(`viewLabel: unknown view "${view}". Register it via the \`views\` config.`)
+    }
   }
 }

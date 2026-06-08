@@ -25,11 +25,15 @@ export interface ViewModelOptions {
  * - `month` → a {@link MonthViewModel}
  * - `time` → a {@link TimeGridViewModel} (day / week / work_week)
  * - `agenda` → an {@link AgendaViewModel}
+ * - `custom` → a registered view's model (its shape is `unknown` here; the
+ *   matching view-component re-asserts it from the definition it registered)
  *
  * `view` carries the exact {@link ViewKey} so consumers can distinguish week
- * from work_week from day within the `time` kind.
+ * from work_week from day within the `time` kind — and which custom view it is
+ * within the `custom` kind.
  */
 export type CalendarViewModel<TEvent> =
   | { kind: 'month'; view: ViewKey; month: MonthViewModel<TEvent> }
   | { kind: 'time'; view: ViewKey; timeGrid: TimeGridViewModel<TEvent> }
   | { kind: 'agenda'; view: ViewKey; agenda: AgendaViewModel<TEvent> }
+  | { kind: 'custom'; view: ViewKey; model: unknown }
