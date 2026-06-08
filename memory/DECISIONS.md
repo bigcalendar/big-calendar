@@ -624,3 +624,13 @@ Cutter's separation-of-concerns refactor, superseding the 2026-06-06 React-layer
 - **Presence resolved once at store creation** (handlers are config, fixed for the store's lifetime). Trade-off: an app that conditionally *adds* a handler after mount won't flip the agenda span→button or wire a late `contextmenu` listener. Accepted — matches how the slot callbacks already behave (wrap-when-provided in `useCalendar`); flagged to Cutter. Revisit with reactive-presence signals only if dynamic toggling is needed.
 - **Adapter is now a dumb translator:** `CalendarProvider` no longer wraps/tracks event handlers (flow through `...props` → `useCalendar` → core config, identity kept stable by `useCalendar`'s existing ref). Context dropped its `onEvent*`/`hasEventHandler` fields; `EventButton`/`AgendaEventButton` read `store.eventHandlers`. `CalendarProps` inherits the handler types from `CalendarConfig`.
 - **Gates:** typecheck core+react ✓; core 151 + react 151 tests ✓; per-file coverage all touched files clear the 85/95 bar; lint ✓; build-storybook core+react ✓. Split-callback tests use a `slotSpy()` helper that fans the three into one spy and re-injects `action`, preserving the gesture assertions.
+
+## 2026-06-07 — Event double-click also selects (Cutter)
+
+Resolves the long-carried "double-click-also-selects (needs a UX decision first)" open item.
+
+- **Decision (Cutter):** in the grid views, a **double-click / F2** on an event now **selects** it (updates `store.selected`, fires `onEventSelect`) in addition to firing `onEventDoubleClick` — matching the single-click/Enter/Space primary path. Previously only the primary gesture selected.
+- **Scope:** grid views only. The **agenda stays the exception** (no selection at all) — confirmed still correct; `AgendaEventButton` continues to call `eventHandlers.doubleClick(event)` alone, with no `selectEvent`.
+- **Mechanism:** `EventButton` factors a shared `select()` (the `if (id != null) store.selectEvent({ id })` step) called by **both** `primary()` and `secondary()`. `eventHandlers.click`/`doubleClick` still do NOT select (core stays selection-agnostic per the 2026-06-07 separation decision); selection remains a per-view side-effect composed by the adapter.
+- **Tests/docs:** EventButton double-click + F2 tests now assert `aria-selected === 'true'`; `Selection.mdx` keyboard table (F2 row) + a new note state both grid gestures select (agenda excepted).
+- **Gates:** typecheck core+react ✓; core 151 + react 151 ✓; lint ✓; react build-storybook ✓.

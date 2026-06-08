@@ -36,6 +36,18 @@ DOM→core translator. No noop handlers anywhere — core fires a callback only 
 - Tests: split-callback tests use a `slotSpy()` helper (fans `onSlotClick`/`onSlotDoubleClick`/
   `onSlotSelect` into one spy, re-injecting `action`) so the existing gesture assertions stay expressive.
 
+### Phase 4 — Event double-click also selects (Cutter, 2026-06-07) ✓ (uncommitted at time of writing)
+Resolves the carried "double-click-also-selects" open item (Cutter: "Double click of an event does 'select'").
+- **`EventButton`** — factored a shared `select()` (the `selectEvent({id})` step); now called by **both**
+  `primary()` (click · Enter · Space) and `secondary()` (double-click · F2). Grid views select on either
+  gesture; `eventHandlers.click`/`doubleClick` still don't select (core stays selection-agnostic). **Agenda
+  unchanged** — still the no-selection exception (`AgendaEventButton` calls `eventHandlers.doubleClick` alone).
+- **Also reconfirmed:** the previously-flagged `useSlotSelection.test.tsx:282-283` typecheck failure is GONE
+  (resolved when the separation refactor edited that file) — `nx typecheck core react` clean, no fix needed.
+- **Tests/docs:** EventButton double-click + F2 tests assert `aria-selected === 'true'`; `Selection.mdx` F2
+  row + a new note document that both grid gestures select (agenda excepted).
+- **Gates:** typecheck core+react ✓; core 151 + react 151 ✓; lint ✓; react build-storybook ✓.
+
 ### Phase 4 — Task 4a: React test infra + signals→React bridge ✓ (commit f7929a4, pushed)
 
 - **Test infra:** installed `jsdom` + `@testing-library/react` + `@testing-library/dom` (Cutter
@@ -979,8 +991,9 @@ subgrid table. Instead the agenda keeps its DOM and makes only the **title** (`.
   `undefined`). All files in THIS change typecheck clean. Awaiting Cutter's OK to fix the 2-line stub.
 
 ## In progress — selection wiring remaining
-- **Open items carried:** double-click-also-selects (needs a UX decision first). Plus **2m view registry** (model
-  contract decided — Option B; implementation still deferred to the Phase-4 view-component contract).
+- **Open items carried:** **2m view registry** (model contract decided — Option B; implementation still
+  deferred to the Phase-4 view-component contract). ✅ *double-click-also-selects RESOLVED 2026-06-07 — see
+  the task entry just below.*
 
 ## Phase 2 status
 

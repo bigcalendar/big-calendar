@@ -122,7 +122,7 @@ calendar):
   <tbody>
     <tr><td><kbd>Arrow</kbd></td><td>move among the event buttons.</td></tr>
     <tr><td><kbd>Enter</kbd> / <kbd>Space</kbd></td><td>primary action — select the event + <code>onEventClick</code>.</td></tr>
-    <tr><td><kbd>F2</kbd></td><td>secondary action — <code>onEventDoubleClick</code>.</td></tr>
+    <tr><td><kbd>F2</kbd></td><td>secondary action — select the event + <code>onEventDoubleClick</code>.</td></tr>
   </tbody>
 </table>
 
@@ -201,6 +201,12 @@ Every event (in any view) responds to four optional callbacks:
     <tr><td><code>onEventMiddleClick</code></td><td>middle ("scroll wheel") click — pointer only</td><td><code>(event, domEvent)</code></td></tr>
   </tbody>
 </table>
+
+In the grid views (month / time grid) both the **primary** (click · Enter · Space)
+and **secondary** (double-click · <kbd>F2</kbd>) gestures **select** the event
+(`store.selected` updates, `onEventSelect` fires) in addition to firing their
+callback. The agenda is the exception — it has no selection, so it only fires the
+callbacks (see below).
 
 The right- and middle-click handlers also receive the **native DOM `MouseEvent`**
 (the same web-standard event in every framework adapter — not React's synthetic

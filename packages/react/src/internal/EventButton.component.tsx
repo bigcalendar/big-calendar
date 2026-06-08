@@ -34,8 +34,9 @@ export interface EventButtonProps<TEvent> {
  * duplicating it across Month / TimeGrid / Agenda:
  *
  * - **click** (pointer) selects the event (`store.selectEvent`) and fires
- *   `onEventClick`; **double-click** fires `onEventDoubleClick`. The two are
- *   disambiguated by a {@link DOUBLE_CLICK_MS} timer so they never both fire.
+ *   `onEventClick`; **double-click** also selects and fires
+ *   `onEventDoubleClick`. The two are disambiguated by a
+ *   {@link DOUBLE_CLICK_MS} timer so they never both fire.
  *   Behaviour is core-owned via `store.eventHandlers`; this component only routes
  *   DOM events and composes the selection side-effect (grid views select).
  * - **right-click** (`contextmenu`, also the keyboard Menu key) fires
@@ -46,8 +47,9 @@ export interface EventButtonProps<TEvent> {
  *   (`store.eventHandlers.hasRightClick` / `hasMiddleClick`) — omit the
  *   right-click handler and the browser's native context menu is left untouched.
  * - **keyboard**: Enter / Space = primary (select + `onEventClick`); **F2** =
- *   secondary (`onEventDoubleClick`) — there is no keyboard double-click, so F2
- *   is the WCAG-2.1.1 parity key. Keys are advertised via `aria-keyshortcuts`.
+ *   secondary (select + `onEventDoubleClick`) — there is no keyboard
+ *   double-click, so F2 is the WCAG-2.1.1 parity key. Keys are advertised via
+ *   `aria-keyshortcuts`.
  * - selected state is exposed with `aria-selected`.
  * - `pointerdown` propagation is stopped so an event interaction never also
  *   starts a slot selection on the surface beneath.
@@ -78,12 +80,18 @@ export default function EventButton<TEvent>({
     [],
   )
 
-  const primary = () => {
-    // Grid views select on click; core fires onEventClick (if configured).
+  // Grid views select the event on either gesture; core fires its callback (if
+  // configured). The agenda composes neither (it has no selection) — see
+  // AgendaEventButton.
+  const select = () => {
     if (id != null) store.selectEvent({ id })
+  }
+  const primary = () => {
+    select()
     eventHandlers.click(event)
   }
   const secondary = () => {
+    select()
     eventHandlers.doubleClick(event)
   }
 

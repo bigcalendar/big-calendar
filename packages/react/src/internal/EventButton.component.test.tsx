@@ -77,7 +77,7 @@ describe('EventButton', () => {
     expect(button.getAttribute('aria-selected')).toBe('true')
   })
 
-  it('fires onEventDoubleClick and cancels the pending single on a double click', () => {
+  it('selects the event, fires onEventDoubleClick, and cancels the pending single on a double click', () => {
     vi.useFakeTimers()
     const onEventClick = vi.fn()
     const onEventDoubleClick = vi.fn()
@@ -89,6 +89,7 @@ describe('EventButton', () => {
     })
     expect(onEventDoubleClick).toHaveBeenCalledWith(event)
     expect(onEventClick).not.toHaveBeenCalled()
+    expect(button.getAttribute('aria-selected')).toBe('true')
   })
 
   it('activates the primary action immediately on Enter and Space (keyboard)', () => {
@@ -101,11 +102,12 @@ describe('EventButton', () => {
     expect(onEventClick).toHaveBeenCalledTimes(2)
   })
 
-  it('activates the secondary action on F2', () => {
+  it('activates the secondary action and selects on F2', () => {
     const onEventDoubleClick = vi.fn()
     const { button } = renderButton({ onEventDoubleClick })
     fireEvent.keyDown(button, { key: 'F2' })
     expect(onEventDoubleClick).toHaveBeenCalledWith(event)
+    expect(button.getAttribute('aria-selected')).toBe('true')
   })
 
   it('ignores keyboard-synthesized clicks (detail 0) and guards a duplicate click', () => {
