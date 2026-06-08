@@ -80,6 +80,15 @@ export function useCalendar<TEvent = unknown, TResource = unknown>(
       onEventResize: props.onEventResize
         ? (args) => propsRef.current.onEventResize?.(args)
         : undefined,
+      // Drop-from-outside / drag-out (5d). Same latest-ref reasoning: a
+      // drop-from-outside handler closes over the app's current `events` to append
+      // the new event, so a stale closure would add against the wrong snapshot.
+      onDropFromOutside: props.onDropFromOutside
+        ? (args) => propsRef.current.onDropFromOutside?.(args)
+        : undefined,
+      onEventDragStart: props.onEventDragStart
+        ? (args) => propsRef.current.onEventDragStart?.(args)
+        : undefined,
       // Slot selection. Wrap only when provided so the store doesn't wire the
       // callbacks (and their per-move translation) for calendars that never use them.
       onSlotSelecting: props.onSlotSelecting

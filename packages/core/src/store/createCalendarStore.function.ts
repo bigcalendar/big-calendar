@@ -2,6 +2,7 @@ import { batch, computed, effect, signal } from '@preact/signals-core'
 import type { ReadonlySignal } from '@preact/signals-core'
 import { resolveAccessors, wrapAccessor } from '../accessors/accessors.function'
 import { moveEvent } from '../dnd/moveEvent.function'
+import { placeExternalEvent } from '../dnd/placeExternalEvent.function'
 import { resizeEvent } from '../dnd/resizeEvent.function'
 import type { ResizeEdge } from '../dnd/resizeEvent.function'
 import { BUILTIN_VIEWS, Views } from '../constants/views.constant'
@@ -62,6 +63,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   const getEventStart = wrapAccessor(accessors.start)
   const getEventEnd = wrapAccessor(accessors.end)
   const getEventAllDay = wrapAccessor(accessors.allDay)
+  const getEventTitle = wrapAccessor(accessors.title)
   /**
    * Resolve an event by id and run the resize math, or `null` when the id matches
    * no event or the event lacks bounds. Shared by `resizeEvent` (commit) and
@@ -423,6 +425,41 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
 
     clearDragPreview() {
       dragPreview.value = null
+    },
+
+    dropExternal({ target, durationMinutes, allDay }) {
+      // The drag is over: clear the live preview regardless of the outcome.
+      dragPreview.value = null
+      const report = config.onDropFromOutside
+      if (report == null) return
+      report(placeExternalEvent({ localizer, target, durationMinutes, allDay, step }))
+    },
+
+    previewExternal({ target, durationMinutes }) {
+      // No event lookup: the outside item isn't in `events` yet. A missing
+      // duration (native drag) previews a single slot via the placement default.
+      const placed = placeExternalEvent({ localizer, target, durationMinutes, step })
+      dragPreview.value = { start: placed.start, end: placed.end }
+    },
+
+    getEventTransfer({ id }) {
+      const event = findEvent(id)
+      if (event == null) return null
+      return {
+        id: String(id),
+        title: getEventTitle(event) ?? '',
+        start: getEventStart(event) ?? '',
+        end: getEventEnd(event) ?? '',
+        allDay: getEventAllDay(event) ?? false,
+      }
+    },
+
+    eventDragStart({ id }) {
+      const report = config.onEventDragStart
+      if (report == null) return
+      const event = findEvent(id)
+      if (event == null) return
+      report({ event })
     },
 
     eventHandlers,

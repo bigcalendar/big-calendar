@@ -135,6 +135,74 @@ const apply = ({ event, start, end, allDay }) =>
 
 See the **Drag and drop → WeekEventResize** story for a runnable version.
 
+## Dropping items from outside the calendar
+
+You can drag something from **outside** the calendar — a palette of "event
+templates", an unscheduled-task list — onto a time-grid slot to create a new
+event there. A drop is a **create**, so it reports through a new callback,
+`onDropFromOutside`, and (like every other report) *you* add the event:
+
+```tsx
+const [events, setEvents] = useState(initialEvents)
+
+<CalendarProvider events={events}
+  onDropFromOutside={({ start, end, allDay }) =>
+    setEvents(prev => [...prev, { id: crypto.randomUUID(), title: 'New event', start, end, allDay }])
+  }
+>
+```
+
+The dropped item describes itself with a small **payload** — its
+`durationMinutes` (and optionally `allDay`) — which core turns into the new
+event's `start`/`end` at the dropped slot. There are two ways to carry it,
+depending on what your drag source is:
+
+- **A native `draggable="true"` element.** Set the payload as JSON on the
+  `EXTERNAL_MIME` data type in `onDragStart`:
+
+  ```tsx
+  import { EXTERNAL_MIME } from '@big-calendar/dnd'
+
+  <div draggable
+    onDragStart={(e) => e.dataTransfer.setData(EXTERNAL_MIME, JSON.stringify({ durationMinutes: 60 }))}
+  >1-hour focus block</div>
+  ```
+
+- **A [Pragmatic](https://atlassian.design/components/pragmatic-drag-and-drop/about)
+  `draggable`.** Put the payload under the `EXTERNAL_DATA_KEY` key in
+  `getInitialData` (`{ bcExternal: { durationMinutes: 60 } }`).
+
+One difference between them matters for feedback: a **native** drag keeps its
+payload hidden until the drop (a browser security rule), so the live preview can
+only show a **single landing slot** while you drag — the real duration appears
+when you release. A **Pragmatic** drag exposes its payload throughout, so the
+preview shows the event's full proposed size as you move. Either way, the drop
+itself is exact. Drop-from-outside is wired on the **time-grid** views; the month
+grid is a later slice. See the **Drag and drop → DropFromOutside** story.
+
+## Dragging events out of the calendar
+
+The reverse also works: drag an event **out** to a dropzone you own (an
+"unschedule" bin, a different list). Every event automatically exposes its data
+on the native `dataTransfer` under the `EVENT_MIME` type, so a plain HTML5
+dropzone can read it — no calendar code on the receiving side:
+
+```tsx
+import { EVENT_MIME } from '@big-calendar/dnd'
+
+<div
+  onDragOver={(e) => e.preventDefault()}
+  onDrop={(e) => {
+    const { id, title } = JSON.parse(e.dataTransfer.getData(EVENT_MIME))
+    setEvents(prev => prev.filter(ev => String(ev.id) !== id))
+  }}
+>🗑 Unschedule</div>
+```
+
+`onEventDragStart` fires as the drag begins (it receives the event), handy for a
+status line or to highlight valid drop zones. See the **Drag and drop →
+DragOutToUnschedule** story.
+
 ## Locking individual events
 
 Use `draggableAccessor` to decide which events may be **dragged**, and
@@ -147,5 +215,5 @@ function. An event that returns `false` can't be picked up (or shows no resize h
 
 ## Not built yet
 
-**Drag-from-outside** and **keyboard-driven** drag are planned follow-ups, along with
-month multi-day resize.
+**Keyboard-driven** drag is a planned follow-up, along with **month** drop-from-outside
+and month multi-day resize.

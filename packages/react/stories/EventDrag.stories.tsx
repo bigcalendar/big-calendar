@@ -1,5 +1,6 @@
 import { Views } from '@big-calendar/core'
 import type { ViewKey } from '@big-calendar/core'
+import { EVENT_MIME, EXTERNAL_MIME } from '@big-calendar/dnd'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useRef, useState } from 'react'
 import { Calendar, useCalendarDnd } from '../src'
@@ -116,13 +117,123 @@ function AsyncMoveDemo() {
   )
 }
 
+/**
+ * Drop-from-outside: a palette of plain native `draggable="true"` chips beside a
+ * week calendar. Each chip writes its duration onto the drag's `dataTransfer`
+ * under the `EXTERNAL_MIME` type; dropping on a slot fires `onDropFromOutside`
+ * with the proposed bounds and we append a brand-new event. Because a native
+ * drag's payload is hidden until the drop, the live preview is a single landing
+ * slot (the real duration applies on release).
+ */
+function DropFromOutsideDemo() {
+  const palette = [
+    { label: '30-min meeting', durationMinutes: 30 },
+    { label: '1-hour focus block', durationMinutes: 60 },
+    { label: '90-min workshop', durationMinutes: 90 },
+  ]
+  const [events, setEvents] = useState<DemoEvent[]>(demoEvents)
+  const nextId = useRef(1000)
+
+  return (
+    <div style={{ display: 'flex', gap: '1rem', blockSize: '100%' }}>
+      <aside style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: '0 0 12rem' }}>
+        <strong style={{ fontSize: '0.8rem' }}>Drag onto the grid →</strong>
+        {palette.map((item) => (
+          <div
+            key={item.label}
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.effectAllowed = 'copy'
+              e.dataTransfer.setData(EXTERNAL_MIME, JSON.stringify({ durationMinutes: item.durationMinutes }))
+            }}
+            style={{
+              padding: '0.5rem 0.6rem',
+              border: '1px solid var(--bc-color-border, #d4d4d8)',
+              borderRadius: '6px',
+              background: 'var(--bc-color-surface, #fff)',
+              cursor: 'grab',
+              fontSize: '0.8rem',
+            }}
+          >
+            {item.label}
+          </div>
+        ))}
+      </aside>
+      <div style={{ flex: 1, minInlineSize: 0 }}>
+        <CalendarStage
+          defaultView={Views.WEEK}
+          events={events}
+          onDropFromOutside={({ start, end, allDay }) =>
+            setEvents((prev) => [...prev, { id: nextId.current++, title: 'New event', start, end, allDay }])
+          }
+        >
+          <DraggableCalendar />
+        </CalendarStage>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Drag-out: the reverse direction. Each calendar event exposes its data on the
+ * native `dataTransfer` (under `EVENT_MIME`), so a plain HTML5 dropzone outside
+ * the calendar can receive it. Drag an event onto the "Unschedule" bin and we
+ * read the event id off the drop and remove it from `events`. `onEventDragStart`
+ * fires as the drag begins (used here just to update the read-out).
+ */
+function DragOutDemo() {
+  const [events, setEvents] = useState<DemoEvent[]>(demoEvents)
+  const [status, setStatus] = useState('Drag an event onto the bin to unschedule it.')
+  const [over, setOver] = useState(false)
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      <CalendarStage
+        defaultView={Views.WEEK}
+        events={events}
+        onEventDragStart={({ event }) => setStatus(`Dragging "${event.title}" — drop it on the bin to remove it.`)}
+      >
+        <DraggableCalendar />
+      </CalendarStage>
+      <div
+        onDragOver={(e) => {
+          e.preventDefault()
+          e.dataTransfer.dropEffect = 'move'
+          setOver(true)
+        }}
+        onDragLeave={() => setOver(false)}
+        onDrop={(e) => {
+          e.preventDefault()
+          setOver(false)
+          const raw = e.dataTransfer.getData(EVENT_MIME)
+          if (!raw) return
+          const data = JSON.parse(raw) as { id: string; title: string }
+          setEvents((prev) => prev.filter((ev) => String(ev.id) !== data.id))
+          setStatus(`Unscheduled "${data.title}".`)
+        }}
+        style={{
+          padding: '1rem',
+          border: `2px dashed ${over ? 'var(--bc-color-primary, #2563eb)' : 'var(--bc-color-border, #d4d4d8)'}`,
+          borderRadius: '8px',
+          textAlign: 'center',
+          fontSize: '0.85rem',
+          background: over ? 'var(--bc-color-selection-bg, #eff6ff)' : 'transparent',
+        }}
+      >
+        🗑 Unschedule bin — drop an event here to remove it
+      </div>
+      <output style={{ fontSize: '0.8rem' }}>{status}</output>
+    </div>
+  )
+}
+
 const meta: Meta = {
   title: 'React/Drag and drop',
   parameters: {
     docs: {
       description: {
         component:
-          'Drag an event to move it (to another day in the month grid, or onto another slot in the time-grid week/day views), or drag a timed event’s top/bottom edge to resize it. Powered by the optional `@big-calendar/dnd` package, wired with the `useCalendarDnd` hook. Core does the date-math (month move = a whole-day shift that keeps the time of day; time-grid move = snap the start to the dropped slot, keep the duration; resize = snap the dragged edge, keep the other) and reports the result through `onEventDrop` / `onEventResize`; your code applies it to the event data. Drop-from-outside and keyboard DnD are later slices.',
+          'Drag an event to move it (to another day in the month grid, or onto another slot in the time-grid week/day views), or drag a timed event’s top/bottom edge to resize it. Powered by the optional `@big-calendar/dnd` package, wired with the `useCalendarDnd` hook. Core does the date-math (month move = a whole-day shift that keeps the time of day; time-grid move = snap the start to the dropped slot, keep the duration; resize = snap the dragged edge, keep the other) and reports the result through `onEventDrop` / `onEventResize`; your code applies it to the event data. You can also drag items in from outside (`onDropFromOutside`) and drag events out to your own dropzone (`onEventDragStart`); keyboard DnD is a later slice.',
       },
     },
   },
@@ -173,4 +284,23 @@ export const LockedEvent: Story = {
  */
 export const AsyncSaveWithRollback: Story = {
   render: () => <AsyncMoveDemo />,
+}
+
+/**
+ * Drop-from-outside: drag a chip from the palette onto a week slot to create a
+ * new event of that duration. The drop reports `{ start, end, allDay }`; your
+ * code appends the event (the calendar never creates it). Native drag, so the
+ * live preview is a single landing slot until you release.
+ */
+export const DropFromOutside: Story = {
+  render: () => <DropFromOutsideDemo />,
+}
+
+/**
+ * Drag-out: drag any event onto the "Unschedule" bin below the grid to remove it.
+ * The event carries its data on the native `dataTransfer`, so a plain HTML5
+ * dropzone reads it on drop — no calendar wiring on the bin side.
+ */
+export const DragOutToUnschedule: Story = {
+  render: () => <DragOutDemo />,
 }

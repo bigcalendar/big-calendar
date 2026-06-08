@@ -128,6 +128,36 @@ selection-overlay rendering), **resize only** (move preview deferred).
 - **Gates:** all 8 projects typecheck/test/lint/build ✓ (core 196, dnd 15, react 166); build-storybook react ✓.
   **No browser run here** — verify the live preview visually in Storybook (`WeekEventResize`).
 
+### Phase 5 — Task 5d: drag/drop across the calendar boundary (Cutter, 2026-06-08) ✓ (uncommitted at time of writing)
+Cutter scoped 5d via AskUserQuestion: **both directions** (drop-into + drag-out), **native HTML5 sources too**
+(not only Pragmatic draggables), **payload on the drag source**, **time-grid first** (month deferred). Built
+as four sub-slices in one push (Cutter: "all four slices before push"). Two flagged calls confirmed:
+**single-slot preview for native sources** (OK) and **drag-out to native targets** (yes, not just Pragmatic).
+- **core (5d-1)** — pure [placeExternalEvent](packages/core/src/dnd/placeExternalEvent.function.ts)
+  (`target` instant + `durationMinutes?`→ `{start,end,allDay}`; missing/≤0 duration ⇒ one slot; cross-day free
+  via the absolute instant). `CalendarConfig` gained `onDropFromOutside({start,end,allDay})` + `onEventDragStart({event})`.
+  Store gained `dropExternal({target,durationMinutes?,allDay?})` (computes → fires `onDropFromOutside`, clears
+  preview), `previewExternal({target,durationMinutes?})` (sets `dragPreview`; no duration ⇒ single slot),
+  `getEventTransfer({id})` → `EventTransfer|null` (serialize for native drag-out), `eventDragStart({id})`
+  (fires `onEventDragStart`). Barrel + `EventTransfer` type exported.
+- **dnd (5d-2 drop-into)** — binder now also listens on Pragmatic's **external adapter**. Each time-grid slot
+  gets a second `dropTargetForExternal` (gated `canDrop` to our MIME); a `monitorForExternal` handles native
+  sources (single-slot `previewExternal` mid-drag — HTML5 protected mode hides the payload until drop — and
+  reads the JSON payload via `getStringData` on drop). `monitorForElements` gained an external branch for a
+  **Pragmatic** palette item (carries `bcExternal` payload ⇒ true-extent preview). External wiring is
+  `mode==='time'` only.
+- **dnd (5d-3 drag-out)** — the event `draggable` gained `getInitialDataForExternal` (writes `text/plain` +
+  `EVENT_MIME` JSON so a **native** external dropzone can read the event) and `onDragStart`→`store.eventDragStart`.
+  Works in every mode. Public MIME constants exported (`EXTERNAL_MIME`, `EVENT_MIME`, `EXTERNAL_DATA_KEY`) so
+  apps can wire native sources/targets; `ExternalDragPayload` type exported.
+- **react (5d-4)** — wired `onDropFromOutside` + `onEventDragStart` through `useCalendar` (latest-ref, per the
+  ERRORS.md rule). New stories: `DropFromOutside` (native draggable palette → create) and `DragOutToUnschedule`
+  (native bin reads `EVENT_MIME` → remove). `DragAndDrop.mdx` documents both transports + the native-vs-Pragmatic
+  preview difference; "Not built yet" trimmed to keyboard DnD + month drop-from-outside + month resize.
+- **Gates:** all 8 projects typecheck/test/lint/build ✓ (core 212, dnd 26, react 168); build-storybook react ✓.
+  **No browser run here** (jsdom can't fire native drag) — verify drop-from-outside + drag-out visually in
+  Storybook (`DropFromOutside`, `DragOutToUnschedule`).
+
 ### Phase 4 — Slot/event handler separation + move-to-core (Cutter, 2026-06-07) ✓ (uncommitted at time of writing)
 Cutter's separation-of-concerns refactor. **Slot** and **event** interaction are now two distinct,
 focused concerns, both **core-owned** (framework-agnostic), with the React layer reduced to a dumb
@@ -452,9 +482,11 @@ See [[bigcal-selection-storybook-phase4]] (obligation satisfied).
   `data-bc-instant`; `moveModeForView` → `'time'` for week/day/work_week.
 - ✅ **5c — event RESIZE (time-grid)** — DONE (Task 5c entry up top). `onEventResize` + `resizeEvent` core
   math + `resizableAccessor` + `data-bc-resize` edge handles + `touch-action:none`. Cross-day supported
-  (drop instant is absolute). **Month multi-day resize deferred** (Cutter, 2026-06-08). **NEXT slice = 5d.**
-- **5d — drop-from-outside / drag-from-outside** — `onDropFromOutside`, `dragFromOutsideItem`,
-  `onDragOver`, `onDragStart`.
+  (drop instant is absolute). **Month multi-day resize deferred** (Cutter, 2026-06-08).
+- ✅ **5d — drop-from-outside / drag-out** — DONE (Task 5d entry up top). Both directions; native HTML5 **and**
+  Pragmatic sources; payload carried on the source; **time-grid only** (month deferred). `onDropFromOutside`
+  + `onEventDragStart` + `placeExternalEvent` core math; external adapter in the binder; public MIME constants
+  exported. **NEXT slice = 5e.**
 - **5e — keyboard-accessible DnD** (a11y upgrade over v1).
 - Packaging follow-ups: resource-aware drop (`resourceId` in `onEventDrop`), cross-surface
   timed↔all-day promotion, a dedicated `@big-calendar/react/dnd` entry, a DnD `.mdx` guide.

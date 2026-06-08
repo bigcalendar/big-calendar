@@ -90,6 +90,20 @@ export interface EventHandlerApi<TEvent> {
 }
 
 /**
+ * An event serialized for a **drag-out** transfer. The DnD layer writes it onto
+ * the native drag's `dataTransfer` (as JSON + a `text/plain` title) so a drop
+ * target *outside* the calendar can identify the dragged event. Dates are ISO
+ * strings; `id` is stringified.
+ */
+export interface EventTransfer {
+  id: string
+  title: string
+  start: string
+  end: string
+  allDay: boolean
+}
+
+/**
  * An isolated calendar store: reactive state signals plus the actions that
  * mutate them. Created by {@link createCalendarStore}; there are no global
  * singletons, so multiple calendars on one page stay independent.
@@ -222,6 +236,33 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
   previewResize(args: { id: EventId; edge: ResizeEdge; target: string }): void
   /** Clear the live drag preview (drag ended outside a slot, or was cancelled). */
   clearDragPreview(): void
+  /**
+   * Drop an item dragged from **outside** the calendar onto a time-grid slot.
+   * Recomputes the new event's bounds via {@link placeExternalEvent} (`target` is
+   * the dropped slot; `durationMinutes` from the drag payload, defaulting to one
+   * slot) and fires `onDropFromOutside`. Clears the live preview. A no-op when no
+   * `onDropFromOutside` is configured. The store does not add the event — you do.
+   */
+  dropExternal(args: { target: string; durationMinutes?: number | undefined; allDay?: boolean | undefined }): void
+  /**
+   * Update the live preview ({@link CalendarStore.dragPreview}) to where an
+   * outside item would land, without firing `onDropFromOutside`. Called by the DnD
+   * layer as the outside drag moves over slots. With no `durationMinutes` (a
+   * native drag, whose payload is unreadable mid-drag) it previews a single slot.
+   */
+  previewExternal(args: { target: string; durationMinutes?: number | undefined }): void
+  /**
+   * Serialize an event for a **drag-out** transfer: the DnD layer writes this onto
+   * the native drag's `dataTransfer` so a plain HTML5 drop target outside the
+   * calendar can read it. Returns `null` when the id matches no event.
+   */
+  getEventTransfer(args: { id: EventId }): EventTransfer | null
+  /**
+   * Fire `onEventDragStart` for the event whose drag just began (body drags only;
+   * resize handles don't report). A no-op when the id matches no event or no
+   * `onEventDragStart` is configured.
+   */
+  eventDragStart(args: { id: EventId }): void
   /**
    * Drill into a clicked date: resolve the target view (per `drilldownView` /
    * `getDrilldownView`) and either delegate to `onDrillDown` or switch view +

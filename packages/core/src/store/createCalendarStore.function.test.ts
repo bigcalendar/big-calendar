@@ -681,6 +681,110 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
     })
   })
 
+  describe('drop-from-outside (dropExternal / previewExternal)', () => {
+    const target = '2026-06-15T09:00:00.000Z'
+
+    it('fires onDropFromOutside with the payload duration', () => {
+      const onDropFromOutside = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, onDropFromOutside, step: 30 })
+      store.dropExternal({ target, durationMinutes: 90 })
+      expect(onDropFromOutside).toHaveBeenCalledWith({
+        start: target,
+        end: localizer.add({ value: target, amount: 90, unit: 'minute' }),
+        allDay: false,
+      })
+    })
+
+    it('defaults to a one-slot event when the payload omits a duration (native drag)', () => {
+      const onDropFromOutside = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, onDropFromOutside, step: 30 })
+      store.dropExternal({ target })
+      expect(onDropFromOutside).toHaveBeenCalledWith({
+        start: target,
+        end: localizer.add({ value: target, amount: 30, unit: 'minute' }),
+        allDay: false,
+      })
+    })
+
+    it('carries the allDay flag through', () => {
+      const onDropFromOutside = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, onDropFromOutside, step: 30 })
+      store.dropExternal({ target, durationMinutes: 60, allDay: true })
+      expect(onDropFromOutside.mock.calls[0]![0].allDay).toBe(true)
+    })
+
+    it('is a no-op (no throw) when no onDropFromOutside is configured', () => {
+      const store = createCalendarStore<Event>({ localizer })
+      expect(() => store.dropExternal({ target, durationMinutes: 60 })).not.toThrow()
+    })
+
+    it('previewExternal sets dragPreview without firing the callback', () => {
+      const onDropFromOutside = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, onDropFromOutside, step: 30 })
+      store.previewExternal({ target, durationMinutes: 90 })
+      expect(store.dragPreview.value).toEqual({
+        start: target,
+        end: localizer.add({ value: target, amount: 90, unit: 'minute' }),
+      })
+      expect(onDropFromOutside).not.toHaveBeenCalled()
+    })
+
+    it('previewExternal falls back to a single slot without a duration', () => {
+      const store = createCalendarStore<Event>({ localizer, step: 30 })
+      store.previewExternal({ target })
+      expect(store.dragPreview.value).toEqual({
+        start: target,
+        end: localizer.add({ value: target, amount: 30, unit: 'minute' }),
+      })
+    })
+
+    it('dropExternal clears any live preview', () => {
+      const store = createCalendarStore<Event>({ localizer, onDropFromOutside: vi.fn(), step: 30 })
+      store.previewExternal({ target, durationMinutes: 90 })
+      expect(store.dragPreview.value).not.toBeNull()
+      store.dropExternal({ target, durationMinutes: 90 })
+      expect(store.dragPreview.value).toBeNull()
+    })
+  })
+
+  describe('drag-out (getEventTransfer / eventDragStart)', () => {
+    const events: Event[] = [
+      { id: 1, title: 'A', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' },
+    ]
+
+    it('getEventTransfer serializes the event for a native transfer', () => {
+      const store = createCalendarStore<Event>({ localizer, events })
+      expect(store.getEventTransfer({ id: 1 })).toEqual({
+        id: '1',
+        title: 'A',
+        start: events[0]!.start,
+        end: events[0]!.end,
+        allDay: false,
+      })
+    })
+
+    it('getEventTransfer returns null when the id matches no event', () => {
+      const store = createCalendarStore<Event>({ localizer, events })
+      expect(store.getEventTransfer({ id: 999 })).toBeNull()
+    })
+
+    it('eventDragStart fires onEventDragStart with the dragged event', () => {
+      const onEventDragStart = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventDragStart })
+      store.eventDragStart({ id: 1 })
+      expect(onEventDragStart).toHaveBeenCalledWith({ event: events[0] })
+    })
+
+    it('eventDragStart is a no-op for an unknown id or with no handler', () => {
+      const onEventDragStart = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventDragStart })
+      store.eventDragStart({ id: 999 })
+      expect(onEventDragStart).not.toHaveBeenCalled()
+      const bare = createCalendarStore<Event>({ localizer, events })
+      expect(() => bare.eventDragStart({ id: 1 })).not.toThrow()
+    })
+  })
+
   describe('isResizable', () => {
     interface ResizableEvent extends Event {
       resizable?: boolean

@@ -125,6 +125,39 @@ describe.each(LOCALIZER_CASES)('useCalendar [$name]', ({ create }) => {
     expect(second).toHaveBeenCalledTimes(1)
   })
 
+  it('calls the LATEST onDropFromOutside, not the one captured at store creation', () => {
+    // Same stale-closure regression: a drop-from-outside handler appends the new
+    // event to the app's current `events`, so a stale closure adds to a stale list.
+    const first = vi.fn()
+    const second = vi.fn()
+    const { result, rerender } = renderHook(
+      (p: { onDropFromOutside: (args: unknown) => void }) =>
+        useCalendar<Event>({ localizer, onDropFromOutside: p.onDropFromOutside }),
+      { initialProps: { onDropFromOutside: first } },
+    )
+    rerender({ onDropFromOutside: second })
+    act(() => result.current.dropExternal({ target: '2026-06-15T09:00:00.000Z', durationMinutes: 60 }))
+    expect(first).not.toHaveBeenCalled()
+    expect(second).toHaveBeenCalledTimes(1)
+  })
+
+  it('calls the LATEST onEventDragStart, not the one captured at store creation', () => {
+    const events: Event[] = [
+      { id: 1, title: 'A', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' },
+    ]
+    const first = vi.fn()
+    const second = vi.fn()
+    const { result, rerender } = renderHook(
+      (p: { onEventDragStart: (args: unknown) => void }) =>
+        useCalendar<Event>({ localizer, events, onEventDragStart: p.onEventDragStart }),
+      { initialProps: { onEventDragStart: first } },
+    )
+    rerender({ onEventDragStart: second })
+    act(() => result.current.eventDragStart({ id: 1 }))
+    expect(first).not.toHaveBeenCalled()
+    expect(second).toHaveBeenCalledTimes(1)
+  })
+
   it('keeps a single store instance across rerenders and tears down on unmount', () => {
     const { result, rerender, unmount } = renderHook(() => useCalendar<Event>({ localizer }))
     const first = result.current

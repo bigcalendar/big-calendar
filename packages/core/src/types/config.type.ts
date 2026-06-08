@@ -172,6 +172,34 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
     | ((args: { event: TEvent; start: string; end: string; allDay: boolean }) => void)
     | undefined
 
+  // --- drag/drop across the calendar boundary (5d) ---
+  // The drag source is *outside* the calendar (a palette / unscheduled-list item),
+  // so the calendar has no event for it yet — a drop here means **create**, not
+  // edit. The optional `@big-calendar/dnd` package listens on Pragmatic's element
+  // *and* external adapters, so the outside item may be either a Pragmatic
+  // `draggable` (full payload during the drag → true-extent live preview) or a
+  // plain native `draggable="true"` element (payload only readable on drop → the
+  // live preview falls back to a single landing slot). Time-grid only this slice.
+  /**
+   * Fired when an item dragged from **outside** the calendar is dropped on a
+   * time-grid slot. Receives the **proposed** new event bounds as ISO date
+   * strings — `start` is the dropped slot, `end` is `start + duration` (the
+   * dragged item's `durationMinutes` payload, or one slot when absent). Like
+   * {@link onEventDrop} this is a *report*: the calendar never creates the event
+   * itself — you add it to your own `events`. Fires only when defined.
+   */
+  onDropFromOutside?:
+    | ((args: { start: string; end: string; allDay: boolean }) => void)
+    | undefined
+  /**
+   * Fired when the user begins dragging an existing event (the body, not a resize
+   * handle). Receives the event being dragged. Mirrors v1's `onDragStart`; pair it
+   * with a native or Pragmatic drop target of your own to drag events **out** of
+   * the calendar (e.g. an "unschedule" bin). The event element also exposes its
+   * data to native external drop targets, so a plain HTML5 dropzone can read it.
+   */
+  onEventDragStart?: ((args: { event: TEvent }) => void) | undefined
+
   // --- slot selection (picking empty time/days to create an event) ---
   // Distinct from event interaction above. Mirrors the event callbacks' shape:
   // a per-gesture callback rather than one callback + an `action` discriminator.

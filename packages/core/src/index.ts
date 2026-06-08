@@ -40,6 +40,8 @@ export { moveEvent } from './dnd/moveEvent.function'
 export type { MoveEventArgs, MovedEvent, MoveMode } from './dnd/moveEvent.function'
 export { resizeEvent } from './dnd/resizeEvent.function'
 export type { ResizeEdge, ResizeEventArgs, ResizedEvent } from './dnd/resizeEvent.function'
+export { placeExternalEvent } from './dnd/placeExternalEvent.function'
+export type { PlaceExternalEventArgs, PlacedEvent } from './dnd/placeExternalEvent.function'
 export type {
   SelectableMode,
   SelectAction,
@@ -89,5 +91,5 @@ export { navigateDate } from './store/navigateDate.function'
 export { viewRange } from './store/viewRange.function'
 export { viewLabel } from './store/viewLabel.function'
 export type { ViewLabelArgs } from './store/viewLabel.function'
-export type { CalendarStore, EventHandlerApi, SelectionApi } from './store/store.type'
+export type { CalendarStore, EventHandlerApi, EventTransfer, SelectionApi } from './store/store.type'
 export type { CalendarConfig } from './types/config.type'
