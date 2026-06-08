@@ -160,17 +160,56 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
 
   const selectionController = createSelection({
     selectable,
-    onSelecting: config.onSelecting
+    onSelecting: config.onSlotSelecting
       ? (slotRange) => {
           const { start, end, allDay } = translate(slotRange)
-          return config.onSelecting!({ start, end, allDay })
+          return config.onSlotSelecting!({ start, end, allDay })
         }
       : undefined,
+    // Route the committed slot selection to the per-gesture callback. The
+    // internal FSM keeps an `action` to disambiguate; the public payload doesn't.
     onSelect: (selection) => {
       const { start, end, slots, allDay } = translate(selection)
-      config.onSelectSlot?.({ start, end, slots, action: selection.action, allDay })
+      const payload = { start, end, slots, allDay }
+      if (selection.action === 'click') config.onSlotClick?.(payload)
+      else if (selection.action === 'doubleClick') config.onSlotDoubleClick?.(payload)
+      else config.onSlotSelect?.(payload)
     },
   })
+
+  // ── event interaction ───────────────────────────────────────────────────
+  // Core owns the behaviour so every adapter behaves identically: each callback
+  // fires only when defined (core never fabricates a noop). Selection is a
+  // separate action (`selectEvent`) the grid views compose with `click`; the
+  // agenda — which has no selection — calls `click` alone. Adapters stay dumb
+  // translators that route DOM events here. Presence is resolved once.
+  const selectEventById = (id: EventId | null): void => {
+    selected.value = id
+    config.onEventSelect?.({ id })
+  }
+  const hasRightClick = config.onEventRightClick != null
+  const hasMiddleClick = config.onEventMiddleClick != null
+  const eventHandlers = {
+    has:
+      config.onEventClick != null ||
+      config.onEventDoubleClick != null ||
+      hasRightClick ||
+      hasMiddleClick,
+    hasRightClick,
+    hasMiddleClick,
+    click(event: TEvent) {
+      config.onEventClick?.(event)
+    },
+    doubleClick(event: TEvent) {
+      config.onEventDoubleClick?.(event)
+    },
+    rightClick(event: TEvent, domEvent: MouseEvent) {
+      config.onEventRightClick?.(event, domEvent)
+    },
+    middleClick(event: TEvent, domEvent: MouseEvent) {
+      config.onEventMiddleClick?.(event, domEvent)
+    },
+  }
 
   const disposers: Array<() => void> = []
 
@@ -278,10 +317,11 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       date.value = nextDate
     },
 
-    select({ id }) {
-      selected.value = id
-      config.onSelect?.({ id })
+    selectEvent({ id }) {
+      selectEventById(id)
     },
+
+    eventHandlers,
 
     drilldown({ date: target }) {
       const resolved = resolveDrilldownView({

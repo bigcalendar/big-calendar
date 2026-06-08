@@ -15,8 +15,8 @@ import type { CalendarViewModel } from '../views/viewModel.type'
  * The store's slot-selection surface: the FSM's live signals (in slot-index
  * space) plus actions the adapter drives. `start`/`click`/`doubleClick` also
  * carry the anchor `date` + `mode` so the store can translate committed indices
- * back to dates for `onSelectSlot`/`onSelecting`. `range` feeds the live
- * `.bc-selection` highlight overlay.
+ * back to dates for `onSlotClick`/`onSlotDoubleClick`/`onSlotSelect`/
+ * `onSlotSelecting`. `range` feeds the live `.bc-selection` highlight overlay.
  */
 export interface SelectionApi {
   /** Live FSM state (`idle` / `selecting`), in slot-index space. */
@@ -54,6 +54,40 @@ export interface SelectionApi {
 }
 
 /**
+ * The store's **event-interaction** surface: behaviour for clicking an existing
+ * event, owned by core so every adapter behaves identically. Adapters are dumb
+ * translators — they route DOM events to these methods and read the presence
+ * flags to decide what to render / wire. Distinct from **slot** selection
+ * ({@link SelectionApi}) and from the event-**selection** action
+ * ({@link CalendarStore.selectEvent}); see {@link SelectionApi}.
+ *
+ * Each method fires its configured callback only when defined — core never
+ * fabricates a noop. Selection is *not* folded into `click`: grid views compose
+ * `selectEvent` + `click`, while the agenda (no selection) calls `click` alone.
+ */
+export interface EventHandlerApi<TEvent> {
+  /**
+   * Whether **any** event-interaction callback is configured. The agenda reads
+   * it to render its event title as a real `<button>` only when a press will do
+   * something — otherwise a plain, non-interactive `<span>`. Resolved at store
+   * creation (handlers are config, fixed for the store's lifetime).
+   */
+  readonly has: boolean
+  /** Whether a right-click handler is configured (adapter attaches `contextmenu` only then). */
+  readonly hasRightClick: boolean
+  /** Whether a middle-click handler is configured (adapter attaches `auxclick` only then). */
+  readonly hasMiddleClick: boolean
+  /** Primary action: fire `onEventClick` (selection is composed separately via `selectEvent`). */
+  click(event: TEvent): void
+  /** Secondary action: fire `onEventDoubleClick`. */
+  doubleClick(event: TEvent): void
+  /** Context-menu action: fire `onEventRightClick` with the native DOM event. */
+  rightClick(event: TEvent, domEvent: MouseEvent): void
+  /** Tertiary (middle-button) action: fire `onEventMiddleClick` with the native DOM event. */
+  middleClick(event: TEvent, domEvent: MouseEvent): void
+}
+
+/**
  * An isolated calendar store: reactive state signals plus the actions that
  * mutate them. Created by {@link createCalendarStore}; there are no global
  * singletons, so multiple calendars on one page stay independent.
@@ -71,6 +105,11 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    * ({@link CalendarStore.selected}); see {@link SelectionApi}.
    */
   readonly selection: SelectionApi
+  /**
+   * Event-interaction surface (click / double / right / middle). Core-owned
+   * behaviour the adapters route DOM events to; see {@link EventHandlerApi}.
+   */
+  readonly eventHandlers: EventHandlerApi<TEvent>
   /** Foreground events. */
   readonly events: Signal<TEvent[]>
   /** Background events. */
@@ -129,8 +168,8 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
   setView(args: { view: ViewKey }): void
   /** Set the focus date explicitly (no direction semantics). */
   setDate(args: { date: string }): void
-  /** Select an event by id, or clear with `null`. */
-  select(args: { id: EventId | null }): void
+  /** Select an event by id, or clear with `null`. Fires `onEventSelect`. */
+  selectEvent(args: { id: EventId | null }): void
   /**
    * Drill into a clicked date: resolve the target view (per `drilldownView` /
    * `getDrilldownView`) and either delegate to `onDrillDown` or switch view +

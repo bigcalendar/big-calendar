@@ -65,8 +65,9 @@ export const Agenda: Story = {
  * `selectable` and switch the active `view`. With `selectable` on: in the time
  * views drag down a column / click / double-click a slot; in the month view drag
  * across day cells / click a day; in any view click an event. Each gesture's
- * payload (`onSelectSlot` with ISO `start`/`end`/`slots` + `action`, or
- * `onEventClick`/`onEventDoubleClick`) shows in the read-out below the calendar.
+ * payload (a slot callback — `onSlotClick` / `onSlotDoubleClick` / `onSlotSelect`
+ * — with ISO `start`/`end`/`slots`, or `onEventClick`/`onEventDoubleClick`) shows
+ * in the read-out below the calendar.
  */
 export const Selectable: StoryObj<{
   selectable: boolean

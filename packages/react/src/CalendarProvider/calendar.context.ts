@@ -1,5 +1,4 @@
 import { createContext } from 'react'
-import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { CalendarStore, Messages } from '@big-calendar/core'
 import type { CalendarComponents } from '../components.type'
 
@@ -19,36 +18,11 @@ export interface CalendarContextValue<TEvent = unknown, TResource = unknown> {
   /** Fully-resolved UI strings (defaults merged with any overrides). */
   messages: Messages
   /**
-   * Event primary action (click / Enter / Space). Stable identity (always
-   * defined; a noop when the app passes none). Receives the full event.
-   */
-  onEventClick: (event: TEvent) => void
-  /**
-   * Event secondary action (double-click / F2). Stable identity (always defined;
-   * a noop when the app passes none). Receives the full event.
-   */
-  onEventDoubleClick: (event: TEvent) => void
-  /**
-   * Event context-menu action (right-click / Menu key), or `undefined` when the
-   * app passed none. Stable identity when present (so consumers can attach
-   * `onContextMenu` only when wired and otherwise leave the browser's native menu
-   * untouched — no listener at all). Receives the event + DOM event.
-   */
-  onEventRightClick: ((event: TEvent, domEvent: ReactMouseEvent) => void) | undefined
-  /**
-   * Event middle-button ("scroll wheel") action, or `undefined` when the app
-   * passed none. Stable identity when present, so consumers attach `onAuxClick`
-   * only when wired. Receives the event + DOM event.
-   */
-  onEventMiddleClick: ((event: TEvent, domEvent: ReactMouseEvent) => void) | undefined
-  /**
-   * Whether the app supplied **any** event interaction handler (click /
-   * double-click / right / middle). The agenda reads it to render its event title
-   * as a real `<button>` only when a press will actually do something — otherwise
-   * a plain, non-interactive `<span>`.
-   */
-  hasEventHandler: boolean
-  /**
+   * Event interaction (click / double / right / middle) now lives on the store as
+   * the core-owned {@link CalendarStore.eventHandlers} — read it from `store`
+   * rather than context. Adapters route DOM events there and read its presence
+   * flags (`has` / `hasRightClick` / `hasMiddleClick`) to decide what to wire.
+   *
    * Ids of the visually-hidden instruction elements the provider renders, so
    * slot cells and event buttons can point `aria-describedby` at the same shared
    * text. `selection` describes the slot-grid keyboard model; `event` the event

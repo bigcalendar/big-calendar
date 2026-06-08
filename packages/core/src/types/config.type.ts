@@ -79,23 +79,65 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
   onNavigate?: ((args: { date: string; view: ViewKey }) => void) | undefined
   /** Fired after the view changes via `setView`. */
   onView?: ((args: { view: ViewKey }) => void) | undefined
-  /** Fired after the selected event changes via `select`. */
-  onSelect?: ((args: { id: EventId | null }) => void) | undefined
+
+  // --- event interaction (what a click on an existing event does) ---
+  // Separate, focused concern from slot selection below. Core owns the behaviour
+  // (selection side-effect + firing the configured callback); adapters are dumb
+  // translators that route DOM events to `store.eventHandlers`. Each callback is
+  // optional and invoked only when defined — core never fabricates a noop.
+  /**
+   * Event primary action: fired on click / Enter / Space, after the event is
+   * selected (by its accessor id). Receives the full event.
+   */
+  onEventClick?: ((event: TEvent) => void) | undefined
+  /**
+   * Event secondary action: fired on double-click / F2. Receives the full event.
+   * (There is no keyboard double-click; F2 is the WCAG 2.1.1 parity key.)
+   */
+  onEventDoubleClick?: ((event: TEvent) => void) | undefined
+  /**
+   * Event context-menu action: fired on right-click (and the keyboard Menu key /
+   * Shift+F10, and touch long-press). Receives the event **and** the native DOM
+   * `MouseEvent` — read `clientX`/`clientY` to position a custom menu and call
+   * `preventDefault()` to replace the native one. Omit it to leave the browser's
+   * native context menu untouched (the adapter wires no `contextmenu` listener).
+   */
+  onEventRightClick?: ((event: TEvent, domEvent: MouseEvent) => void) | undefined
+  /**
+   * Event tertiary action: fired on a middle-button ("scroll wheel") click.
+   * Receives the event **and** the native DOM `MouseEvent`. Pointer-only — there
+   * is no keyboard equivalent. Omit it and the adapter wires no `auxclick` listener.
+   */
+  onEventMiddleClick?: ((event: TEvent, domEvent: MouseEvent) => void) | undefined
+  /** Fired after the selected event changes via `selectEvent`. */
+  onEventSelect?: ((args: { id: EventId | null }) => void) | undefined
+
+  // --- slot selection (picking empty time/days to create an event) ---
+  // Distinct from event interaction above. Mirrors the event callbacks' shape:
+  // a per-gesture callback rather than one callback + an `action` discriminator.
   /**
    * Fired on every slot-selection range change (drag move / keyboard extend),
    * with the candidate range as ISO date strings (`allDay` flags a whole-day /
    * cross-day span). Return `false` to **veto** the change. The store translates
    * the FSM's slot indices to dates before calling.
    */
-  onSelecting?:
+  onSlotSelecting?:
     | ((args: { start: string; end: string; allDay: boolean }) => boolean | void)
     | undefined
   /**
-   * Fired when a slot selection is committed (drag end / click / double-click /
-   * keyboard). Receives ISO date strings; see {@link SlotSelectionDates} for the
-   * `end` convention (exclusive slot end for time, end-of-day for day).
+   * Fired when a single slot/day is clicked. Receives ISO date strings; see
+   * {@link SlotSelectionDates} for the `end` convention.
    */
-  onSelectSlot?: ((selection: SlotSelectionDates) => void) | undefined
+  onSlotClick?: ((selection: SlotSelectionDates) => void) | undefined
+  /**
+   * Fired when a single slot/day is double-clicked. Receives ISO date strings.
+   */
+  onSlotDoubleClick?: ((selection: SlotSelectionDates) => void) | undefined
+  /**
+   * Fired when a multi-slot range is committed (a pointer drag, or a keyboard
+   * Shift+Arrow range). Receives ISO date strings; see {@link SlotSelectionDates}.
+   */
+  onSlotSelect?: ((selection: SlotSelectionDates) => void) | undefined
   /** Fired when the visible range changes (date or view change), not on init. */
   onRangeChange?: ((args: { range: VisibleRange; view: ViewKey }) => void) | undefined
   /**

@@ -64,6 +64,21 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
     )
   }
 
+  /**
+   * Committed slot callbacks are split per gesture (`onSlotClick` /
+   * `onSlotDoubleClick` / `onSlotSelect`); the payload no longer carries
+   * `action`. Fan the three into one spy and re-inject `action`.
+   */
+  function slotSpy() {
+    const fn = vi.fn()
+    const props: Partial<CalendarProviderProps<Event>> = {
+      onSlotClick: (s) => fn({ action: 'click', ...s }),
+      onSlotDoubleClick: (s) => fn({ action: 'doubleClick', ...s }),
+      onSlotSelect: (s) => fn({ action: 'select', ...s }),
+    }
+    return { fn, props }
+  }
+
   it('renders headings, gutter, positioned events, all-day segments, and the now-line', () => {
     const { container } = renderGrid()
 
@@ -160,8 +175,8 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
   })
 
   it('spans columns and commits an all-day range when a drag crosses days', () => {
-    const onSelectSlot = vi.fn()
-    const { container } = renderGrid({ defaultView: Views.WEEK, selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { container } = renderGrid({ defaultView: Views.WEEK, selectable: true, ...slotProps })
     // Cells are global-indexed (col*48 + row). Anchor on day 0 (row 10), drag to
     // day 1 (row 5): jsdom has no layout, so resolve the move to day 1's cell.
     const cells = container.querySelectorAll('.bc-time-slot')
@@ -190,8 +205,8 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
   })
 
   it('selects whole days from the all-day row, painting a band and committing an all-day range', () => {
-    const onSelectSlot = vi.fn()
-    const { container } = renderGrid({ defaultView: Views.WEEK, selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { container } = renderGrid({ defaultView: Views.WEEK, selectable: true, ...slotProps })
     // One hit cell per visible day, linear day-indexed (== range.days order).
     const cells = container.querySelectorAll('.bc-allday-slot')
     expect(cells.length).toBe(7)
@@ -220,8 +235,8 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
   })
 
   it('roves time-slot focus with the arrows and extends + commits a timed range with the keyboard', () => {
-    const onSelectSlot = vi.fn()
-    const { container } = renderGrid({ defaultView: Views.WEEK, selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { container } = renderGrid({ defaultView: Views.WEEK, selectable: true, ...slotProps })
     const cells = container.querySelectorAll('.bc-time-slot') // 7 days × 48 slots
     const focusCell = (el: Element) => act(() => (el as HTMLElement).focus())
     expect((cells[0] as HTMLElement).tabIndex).toBe(0)
@@ -261,8 +276,8 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
   })
 
   it('roves all-day focus with left/right and commits a whole-day range with the keyboard', () => {
-    const onSelectSlot = vi.fn()
-    const { container } = renderGrid({ defaultView: Views.WEEK, selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { container } = renderGrid({ defaultView: Views.WEEK, selectable: true, ...slotProps })
     const cells = container.querySelectorAll('.bc-allday-slot')
     const focusCell = (el: Element) => act(() => (el as HTMLElement).focus())
     expect(cells.length).toBe(7)

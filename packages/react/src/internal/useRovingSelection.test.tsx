@@ -77,6 +77,22 @@ describe('useRovingSelection', () => {
     )
   }
 
+  /**
+   * Committed slot callbacks are split per gesture (`onSlotClick` /
+   * `onSlotDoubleClick` / `onSlotSelect`); the payload no longer carries
+   * `action`. Fan the three into one spy and re-inject `action` so the gesture
+   * assertions stay expressive.
+   */
+  function slotSpy() {
+    const fn = vi.fn()
+    const props: Partial<CalendarProviderProps<Event>> = {
+      onSlotClick: (s) => fn({ action: 'click', ...s }),
+      onSlotDoubleClick: (s) => fn({ action: 'doubleClick', ...s }),
+      onSlotSelect: (s) => fn({ action: 'select', ...s }),
+    }
+    return { fn, props }
+  }
+
   it('keeps one tab stop and moves focus + the tab stop with the arrows', () => {
     const { getByTestId } = renderSurface({ selectable: true })
     expect(getByTestId('cell0').tabIndex).toBe(0)
@@ -107,8 +123,8 @@ describe('useRovingSelection', () => {
   })
 
   it('extends a selection with Shift+Arrow and commits it with Enter', () => {
-    const onSelectSlot = vi.fn()
-    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { getByTestId } = renderSurface({ selectable: true, ...slotProps })
     getByTestId('cell0').focus()
     fireEvent.keyDown(getByTestId('cell0'), { key: 'ArrowRight', shiftKey: true })
     fireEvent.keyDown(getByTestId('cell1'), { key: 'ArrowRight', shiftKey: true })
@@ -123,8 +139,8 @@ describe('useRovingSelection', () => {
   })
 
   it('clicks the focused cell with Space when not selecting', () => {
-    const onSelectSlot = vi.fn()
-    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { getByTestId } = renderSurface({ selectable: true, ...slotProps })
     getByTestId('cell2').focus() // onFocusCapture syncs the active cell
     fireEvent.keyDown(getByTestId('cell2'), { key: ' ' })
     expect(onSelectSlot).toHaveBeenCalledTimes(1)
@@ -132,8 +148,8 @@ describe('useRovingSelection', () => {
   })
 
   it('cancels an in-progress selection with Esc (no commit)', () => {
-    const onSelectSlot = vi.fn()
-    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { getByTestId } = renderSurface({ selectable: true, ...slotProps })
     getByTestId('cell0').focus()
     fireEvent.keyDown(getByTestId('cell0'), { key: 'ArrowRight', shiftKey: true })
     fireEvent.keyDown(getByTestId('cell1'), { key: 'Escape' })
@@ -144,8 +160,8 @@ describe('useRovingSelection', () => {
   })
 
   it('ignores keys from an event button on the surface', () => {
-    const onSelectSlot = vi.fn()
-    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { getByTestId } = renderSurface({ selectable: true, ...slotProps })
     getByTestId('eventbtn').focus()
     fireEvent.keyDown(getByTestId('eventbtn'), { key: 'Enter' })
     fireEvent.keyDown(getByTestId('eventbtn'), { key: 'ArrowRight' })
@@ -153,8 +169,8 @@ describe('useRovingSelection', () => {
   })
 
   it('does nothing when selection is disabled', () => {
-    const onSelectSlot = vi.fn()
-    const { getByTestId } = renderSurface({ onSelectSlot }) // selectable defaults to false
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { getByTestId } = renderSurface({ ...slotProps }) // selectable defaults to false
     getByTestId('cell0').focus()
     fireEvent.keyDown(getByTestId('cell0'), { key: 'Enter' })
     fireEvent.keyDown(getByTestId('cell0'), { key: 'ArrowRight' })
@@ -162,8 +178,8 @@ describe('useRovingSelection', () => {
   })
 
   it('ignores keys it does not handle', () => {
-    const onSelectSlot = vi.fn()
-    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { getByTestId } = renderSurface({ selectable: true, ...slotProps })
     getByTestId('cell0').focus()
     fireEvent.keyDown(getByTestId('cell0'), { key: 'Tab' })
     fireEvent.keyDown(getByTestId('cell0'), { key: 'a' })

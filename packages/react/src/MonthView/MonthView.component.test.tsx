@@ -45,6 +45,21 @@ describe.each(LOCALIZER_CASES)('MonthView [$name]', ({ create }) => {
     )
   }
 
+  /**
+   * Committed slot callbacks are split per gesture (`onSlotClick` /
+   * `onSlotDoubleClick` / `onSlotSelect`); the payload no longer carries
+   * `action`. Fan the three into one spy and re-inject `action`.
+   */
+  function slotSpy() {
+    const fn = vi.fn()
+    const props: Partial<CalendarProviderProps<Event>> = {
+      onSlotClick: (s) => fn({ action: 'click', ...s }),
+      onSlotDoubleClick: (s) => fn({ action: 'doubleClick', ...s }),
+      onSlotSelect: (s) => fn({ action: 'select', ...s }),
+    }
+    return { fn, props }
+  }
+
   it('renders weekday headings, date cells with today / off-range state, and placed segments', () => {
     const { container } = renderMonth()
 
@@ -174,8 +189,8 @@ describe.each(LOCALIZER_CASES)('MonthView [$name]', ({ create }) => {
   })
 
   it('roves day-cell focus with the arrows and extends + commits with the keyboard', () => {
-    const onSelectSlot = vi.fn()
-    const { container } = renderMonth({ selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { container } = renderMonth({ selectable: true, ...slotProps })
     const cells = container.querySelectorAll('.bc-month-slot')
     const focusCell = (el: Element) => act(() => (el as HTMLElement).focus())
     // One tab stop: the first cell is focusable, the rest are -1.
@@ -235,8 +250,8 @@ describe.each(LOCALIZER_CASES)('MonthView [$name]', ({ create }) => {
   it('emits ISO day bounds on a day click after the double-click window', () => {
     vi.useFakeTimers()
     try {
-      const onSelectSlot = vi.fn()
-      const { container } = renderMonth({ selectable: true, onSelectSlot })
+      const { fn: onSelectSlot, props: slotProps } = slotSpy()
+      const { container } = renderMonth({ selectable: true, ...slotProps })
       const cells = container.querySelectorAll('.bc-month-slot')
       const days = localizer.visibleDays(focus)
 

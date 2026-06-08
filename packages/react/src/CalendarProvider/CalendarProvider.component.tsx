@@ -1,7 +1,7 @@
 import { resolveMessages } from '@big-calendar/core'
 import type { Messages } from '@big-calendar/core'
-import { useCallback, useId, useMemo, useRef } from 'react'
-import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react'
+import { useId, useMemo } from 'react'
+import type { ReactNode } from 'react'
 import type { CalendarComponents } from '../components.type'
 import { useCalendar } from '../useCalendar'
 import type { CalendarProps } from '../useCalendar'
@@ -35,12 +35,12 @@ function CalendarProvider<TEvent = unknown, TResource = unknown>({
   children,
   components,
   messages,
-  onEventClick,
-  onEventDoubleClick,
-  onEventRightClick,
-  onEventMiddleClick,
   ...props
 }: CalendarProviderProps<TEvent, TResource>) {
+  // Event-interaction callbacks flow straight through `...props` into the store
+  // (core owns the behaviour now — see `store.eventHandlers`); the provider no
+  // longer wraps or tracks them. `useCalendar` keeps their identity stable via
+  // its own ref, so fresh inline callbacks each render don't churn consumers.
   const store = useCalendar<TEvent, TResource>(props)
   const resolvedMessages = useMemo(() => resolveMessages(messages), [messages])
 
@@ -52,64 +52,14 @@ function CalendarProvider<TEvent = unknown, TResource = unknown>({
     [baseId],
   )
 
-  // Stable identities over the latest handlers (read via a ref) so the context
-  // value isn't rebuilt — and every consumer re-rendered — when the app passes
-  // fresh inline event callbacks each render. Default to a noop when unset.
-  const handlersRef = useRef({
-    onEventClick,
-    onEventDoubleClick,
-    onEventRightClick,
-    onEventMiddleClick,
-  })
-  handlersRef.current = { onEventClick, onEventDoubleClick, onEventRightClick, onEventMiddleClick }
-  const handleEventClick = useCallback((event: TEvent) => handlersRef.current.onEventClick?.(event), [])
-  const handleEventDoubleClick = useCallback(
-    (event: TEvent) => handlersRef.current.onEventDoubleClick?.(event),
-    [],
-  )
-  const handleEventRightClick = useCallback(
-    (event: TEvent, domEvent: ReactMouseEvent) => handlersRef.current.onEventRightClick?.(event, domEvent),
-    [],
-  )
-  const handleEventMiddleClick = useCallback(
-    (event: TEvent, domEvent: ReactMouseEvent) => handlersRef.current.onEventMiddleClick?.(event, domEvent),
-    [],
-  )
-  // Presence (not identity) gates what gets wired. The right/middle wrappers are
-  // exposed only when the app actually passed a handler, so consumers attach
-  // `onContextMenu`/`onAuxClick` only then — an omitted right-click handler leaves
-  // the browser's native context menu untouched (no listener at all).
-  const hasRightClick = onEventRightClick != null
-  const hasMiddleClick = onEventMiddleClick != null
-  // The agenda renders its event title as a real button only when something is wired.
-  const hasEventHandler =
-    onEventClick != null || onEventDoubleClick != null || hasRightClick || hasMiddleClick
-
   const value = useMemo<CalendarContextValue<TEvent, TResource>>(
     () => ({
       store,
       components: components ?? {},
       messages: resolvedMessages,
-      onEventClick: handleEventClick,
-      onEventDoubleClick: handleEventDoubleClick,
-      onEventRightClick: hasRightClick ? handleEventRightClick : undefined,
-      onEventMiddleClick: hasMiddleClick ? handleEventMiddleClick : undefined,
-      hasEventHandler,
       descriptionIds,
     }),
-    [
-      store,
-      components,
-      resolvedMessages,
-      handleEventClick,
-      handleEventDoubleClick,
-      handleEventRightClick,
-      handleEventMiddleClick,
-      hasRightClick,
-      hasMiddleClick,
-      hasEventHandler,
-      descriptionIds,
-    ],
+    [store, components, resolvedMessages, descriptionIds],
   )
   return (
     <CalendarContext.Provider value={value as CalendarContextValue}>

@@ -113,20 +113,70 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       expect(store.date.value).toBe('2030-12-31T00:00:00.000Z')
     })
 
-    it('select sets and clears the selection and fires onSelect', () => {
-      const onSelect = vi.fn()
-      const store = createCalendarStore<Event>({ localizer, onSelect })
-      store.select({ id: 42 })
+    it('selectEvent sets and clears the selection and fires onEventSelect', () => {
+      const onEventSelect = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, onEventSelect })
+      store.selectEvent({ id: 42 })
       expect(store.selected.value).toBe(42)
-      store.select({ id: null })
+      store.selectEvent({ id: null })
       expect(store.selected.value).toBeNull()
-      expect(onSelect).toHaveBeenNthCalledWith(1, { id: 42 })
-      expect(onSelect).toHaveBeenNthCalledWith(2, { id: null })
+      expect(onEventSelect).toHaveBeenNthCalledWith(1, { id: 42 })
+      expect(onEventSelect).toHaveBeenNthCalledWith(2, { id: null })
     })
 
-    it('select works without an onSelect callback', () => {
+    it('selectEvent works without an onEventSelect callback', () => {
       const store = createCalendarStore<Event>({ localizer })
-      expect(() => store.select({ id: 1 })).not.toThrow()
+      expect(() => store.selectEvent({ id: 1 })).not.toThrow()
+    })
+
+    it('eventHandlers fire only the configured callbacks (no noop fabrication)', () => {
+      const onEventClick = vi.fn()
+      const onEventDoubleClick = vi.fn()
+      const onEventRightClick = vi.fn()
+      const onEventMiddleClick = vi.fn()
+      const store = createCalendarStore<Event>({
+        localizer,
+        onEventClick,
+        onEventDoubleClick,
+        onEventRightClick,
+        onEventMiddleClick,
+      })
+      const ev: Event = { id: 7, title: 'X', start: 's', end: 'e' }
+      const domEvent = {} as MouseEvent
+      expect(store.eventHandlers.has).toBe(true)
+      expect(store.eventHandlers.hasRightClick).toBe(true)
+      expect(store.eventHandlers.hasMiddleClick).toBe(true)
+      // click fires the callback but does NOT select (selection is composed separately)
+      store.eventHandlers.click(ev)
+      expect(onEventClick).toHaveBeenCalledWith(ev)
+      expect(store.selected.value).toBeNull()
+      store.eventHandlers.doubleClick(ev)
+      expect(onEventDoubleClick).toHaveBeenCalledWith(ev)
+      store.eventHandlers.rightClick(ev, domEvent)
+      expect(onEventRightClick).toHaveBeenCalledWith(ev, domEvent)
+      store.eventHandlers.middleClick(ev, domEvent)
+      expect(onEventMiddleClick).toHaveBeenCalledWith(ev, domEvent)
+    })
+
+    it('eventHandlers report no presence and never throw when nothing is configured', () => {
+      const store = createCalendarStore<Event>({ localizer })
+      const ev: Event = { id: 1, title: 'X', start: 's', end: 'e' }
+      expect(store.eventHandlers.has).toBe(false)
+      expect(store.eventHandlers.hasRightClick).toBe(false)
+      expect(store.eventHandlers.hasMiddleClick).toBe(false)
+      expect(() => {
+        store.eventHandlers.click(ev)
+        store.eventHandlers.doubleClick(ev)
+        store.eventHandlers.rightClick(ev, {} as MouseEvent)
+        store.eventHandlers.middleClick(ev, {} as MouseEvent)
+      }).not.toThrow()
+    })
+
+    it('eventHandlers.has is true when only one handler is configured', () => {
+      const store = createCalendarStore<Event>({ localizer, onEventRightClick: () => {} })
+      expect(store.eventHandlers.has).toBe(true)
+      expect(store.eventHandlers.hasRightClick).toBe(true)
+      expect(store.eventHandlers.hasMiddleClick).toBe(false)
     })
 
     it('replaces event, background-event and resource lists', () => {
@@ -317,23 +367,25 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
     })
 
     it('is disabled by default (no selectable)', () => {
-      const onSelectSlot = vi.fn()
-      const store = createCalendarStore<Event>({ localizer, date: monday, view: Views.DAY, onSelectSlot })
+      const onSlotSelect = vi.fn()
+      const onSlotClick = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, date: monday, view: Views.DAY, onSlotSelect, onSlotClick })
       store.selection.start({ slot: 2, date: monday, mode: 'time' })
       store.selection.complete()
       store.selection.click({ slot: 3, date: monday, mode: 'time' })
       expect(store.selection.range.value).toBeNull()
-      expect(onSelectSlot).not.toHaveBeenCalled()
+      expect(onSlotSelect).not.toHaveBeenCalled()
+      expect(onSlotClick).not.toHaveBeenCalled()
     })
 
     it('tracks a time-mode drag in slot-index space and commits translated dates', () => {
-      const onSelectSlot = vi.fn()
+      const onSlotSelect = vi.fn()
       const store = createCalendarStore<Event>({
         localizer,
         date: monday,
         view: Views.DAY,
         selectable: true,
-        onSelectSlot,
+        onSlotSelect,
       })
       store.selection.start({ slot: 2, date: monday, mode: 'time' })
       store.selection.to({ slot: 4 })
@@ -341,24 +393,23 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       expect(store.selection.range.value).toEqual({ start: 2, end: 4 })
       store.selection.complete()
       // step defaults to 30 → slots 2..4 are 01:00 / 01:30 / 02:00; exclusive end 02:30.
-      expect(onSelectSlot).toHaveBeenCalledWith({
+      expect(onSlotSelect).toHaveBeenCalledWith({
         start: slot(60),
         end: slot(150),
         slots: [slot(60), slot(90), slot(120)],
-        action: 'select',
         allDay: false,
       })
       expect(store.selection.range.value).toBeNull()
     })
 
     it('marks a cross-day time drag allDay while keeping its instant start/end times', () => {
-      const onSelectSlot = vi.fn()
+      const onSlotSelect = vi.fn()
       const store = createCalendarStore<Event>({
         localizer,
         date: monday,
         view: Views.WEEK,
         selectable: true,
-        onSelectSlot,
+        onSlotSelect,
       })
       const days = store.range.value.days
       // Full-day window → 48 slots/column. Anchor day 0 slot 10, drag to day 2 slot 5.
@@ -366,10 +417,9 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       store.selection.start({ slot: 0 * slotCount + 10, date: days[0]!, mode: 'time', slotCount })
       store.selection.to({ slot: 2 * slotCount + 5 })
       store.selection.complete()
-      const arg = onSelectSlot.mock.calls[0]![0]
+      const arg = onSlotSelect.mock.calls[0]![0]
       // All-day span, but with real instant times (step 30: slot 10 = 05:00).
       expect(arg.allDay).toBe(true)
-      expect(arg.action).toBe('select')
       expect(arg.start).toBe(localizer.getSlotDate({ date: days[0]!, minutesFromMidnight: 10 * 30 }))
       // Exclusive end on day 2: the slot just past slot 5 → 03:00.
       expect(arg.end).toBe(localizer.getSlotDate({ date: days[2]!, minutesFromMidnight: 6 * 30 }))
@@ -380,107 +430,105 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
     })
 
     it('treats an entire-day same-day drag as an all-day selection (midnight → 23:59:59)', () => {
-      const onSelectSlot = vi.fn()
+      const onSlotSelect = vi.fn()
       const store = createCalendarStore<Event>({
         localizer,
         date: monday,
         view: Views.DAY,
         selectable: true,
-        onSelectSlot,
+        onSlotSelect,
       })
       const days = store.range.value.days
       // Full midnight→end-of-day window → 48 slots; select slot 0 through 47.
       store.selection.start({ slot: 0, date: days[0]!, mode: 'time', slotCount: 48 })
       store.selection.to({ slot: 47 })
       store.selection.complete()
-      expect(onSelectSlot).toHaveBeenCalledWith({
+      expect(onSlotSelect).toHaveBeenCalledWith({
         start: days[0],
         end: localizer.endOf({ value: days[0]!, unit: 'day' }),
         slots: [days[0]],
-        action: 'select',
         allDay: true,
       })
     })
 
     it('ends a drag on the last slot of a full day at end-of-day, not next-day midnight', () => {
-      const onSelectSlot = vi.fn()
+      const onSlotSelect = vi.fn()
       const store = createCalendarStore<Event>({
         localizer,
         date: monday,
         view: Views.DAY,
         selectable: true,
-        onSelectSlot,
+        onSlotSelect,
       })
       const days = store.range.value.days
       // 10:00 → last slot of the day: a timed selection (not the whole day).
       store.selection.start({ slot: 20, date: days[0]!, mode: 'time', slotCount: 48 })
       store.selection.to({ slot: 47 })
       store.selection.complete()
-      const arg = onSelectSlot.mock.calls[0]![0]
+      const arg = onSlotSelect.mock.calls[0]![0]
       expect(arg.allDay).toBe(false)
       expect(arg.start).toBe(localizer.getSlotDate({ date: days[0]!, minutesFromMidnight: 20 * 30 }))
       expect(arg.end).toBe(localizer.endOf({ value: days[0]!, unit: 'day' }))
     })
 
-    it('vetoes a time-mode start when onSelecting returns false (dates passed through)', () => {
-      const onSelecting = vi.fn(() => false)
+    it('vetoes a time-mode start when onSlotSelecting returns false (dates passed through)', () => {
+      const onSlotSelecting = vi.fn(() => false)
       const store = createCalendarStore<Event>({
         localizer,
         date: monday,
         view: Views.DAY,
         selectable: true,
-        onSelecting,
+        onSlotSelecting,
       })
       store.selection.start({ slot: 2, date: monday, mode: 'time' })
-      expect(onSelecting).toHaveBeenCalledWith({ start: slot(60), end: slot(90), allDay: false })
+      expect(onSlotSelecting).toHaveBeenCalledWith({ start: slot(60), end: slot(90), allDay: false })
       expect(store.selection.range.value).toBeNull()
     })
 
-    it('commits a click and a double-click with the right action and a single slot', () => {
-      const onSelectSlot = vi.fn()
+    it('routes a click to onSlotClick and a double-click to onSlotDoubleClick, each a single slot', () => {
+      const onSlotClick = vi.fn()
+      const onSlotDoubleClick = vi.fn()
       const store = createCalendarStore<Event>({
         localizer,
         date: monday,
         view: Views.DAY,
         selectable: true,
-        onSelectSlot,
+        onSlotClick,
+        onSlotDoubleClick,
       })
       store.selection.click({ slot: 3, date: monday, mode: 'time' })
       store.selection.doubleClick({ slot: 3, date: monday, mode: 'time' })
-      expect(onSelectSlot).toHaveBeenNthCalledWith(1, {
+      expect(onSlotClick).toHaveBeenCalledWith({
         start: slot(90),
         end: slot(120),
         slots: [slot(90)],
-        action: 'click',
         allDay: false,
       })
-      expect(onSelectSlot).toHaveBeenNthCalledWith(2, {
+      expect(onSlotDoubleClick).toHaveBeenCalledWith({
         start: slot(90),
         end: slot(120),
         slots: [slot(90)],
-        action: 'doubleClick',
         allDay: false,
       })
     })
 
     it('translates day-mode indices into visible days, ending at end-of-day', () => {
-      const onSelectSlot = vi.fn()
+      const onSlotSelect = vi.fn()
       const store = createCalendarStore<Event>({
         localizer,
         date: monday,
         view: Views.MONTH,
         selectable: true,
-        onSelectSlot,
+        onSlotSelect,
       })
       const days = store.range.value.days
       store.selection.start({ slot: 0, date: days[0]!, mode: 'day' })
       store.selection.to({ slot: 2 })
       store.selection.complete()
-      expect(onSelectSlot).toHaveBeenCalledWith({
+      expect(onSlotSelect).toHaveBeenCalledWith({
         start: days[0],
         end: localizer.endOf({ value: days[2]!, unit: 'day' }),
         slots: [days[0], days[1], days[2]],
-        action: 'select',
         allDay: true,
       })
     })

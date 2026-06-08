@@ -7,6 +7,35 @@
 **Phase 4 — React (MVP)** STARTED. Phases 0–3 complete. 2m view-registry + store-selection wiring
 folded into Phase 4 (per Cutter). See DECISIONS.md (2026-06-02).
 
+### Phase 4 — Slot/event handler separation + move-to-core (Cutter, 2026-06-07) ✓ (uncommitted at time of writing)
+Cutter's separation-of-concerns refactor. **Slot** and **event** interaction are now two distinct,
+focused concerns, both **core-owned** (framework-agnostic), with the React layer reduced to a dumb
+DOM→core translator. No noop handlers anywhere — core fires a callback only when defined.
+- **Renames (breaking public API):**
+  - event-selection action `store.select({id})` → **`store.selectEvent({id})`**; notify `onSelect` → **`onEventSelect`**.
+  - slot live callback `onSelecting` → **`onSlotSelecting`**.
+  - committed slot callback `onSelectSlot` (single, with `action`) **split** into **`onSlotClick` /
+    `onSlotDoubleClick` / `onSlotSelect`** — *which* fires encodes the gesture; the `action` field was
+    **removed** from `SlotSelectionDates`. (Symmetric with `onEventClick`/`onEventDoubleClick`.)
+- **Event handlers moved INTO core** (`CalendarConfig`): `onEventClick` / `onEventDoubleClick` /
+  `onEventRightClick` / `onEventMiddleClick`. `domEvent` is the **global `MouseEvent`** (web standard via
+  the DOM lib already in `tsconfig.base`), NOT React's synthetic — the React adapter passes `e.nativeEvent`.
+  This is the first DOM *type* in core (no DOM *listeners* in core).
+- **New `store.eventHandlers`** (`EventHandlerApi<TEvent>`, exported): `has` / `hasRightClick` /
+  `hasMiddleClick` presence flags + `click` / `doubleClick` / `rightClick` / `middleClick` methods that
+  fire the configured callback if defined. **`click` does NOT select** — selection is composed separately:
+  grid `EventButton` calls `store.selectEvent({id})` + `eventHandlers.click(event)`; the agenda (no
+  selection) calls `eventHandlers.click(event)` alone. Presence resolved once at store creation.
+- **React adapter thinned:** `CalendarProvider` no longer wraps/tracks event handlers (flow straight
+  through `...props` → `useCalendar` → core config, stable via the existing ref). Context dropped its
+  `onEvent*`/`hasEventHandler` fields. `EventButton`/`AgendaEventButton` read `store.eventHandlers`.
+  `CalendarProps` inherits the handler types from `CalendarConfig` (declarations deleted from useCalendar.ts).
+- Gates: typecheck core+react ✓; tests core 151 + react 151 ✓; per-file coverage all touched files clear
+  (EventButton 100fn/96.7br, AgendaEventButton 100/100, CalendarProvider 100/100, calendar.context 100/100,
+  useCalendar 95/96.9, createCalendarStore 97.1/91.4); lint ✓; build-storybook core+react ✓.
+- Tests: split-callback tests use a `slotSpy()` helper (fans `onSlotClick`/`onSlotDoubleClick`/
+  `onSlotSelect` into one spy, re-injecting `action`) so the existing gesture assertions stay expressive.
+
 ### Phase 4 — Task 4a: React test infra + signals→React bridge ✓ (commit f7929a4, pushed)
 
 - **Test infra:** installed `jsdom` + `@testing-library/react` + `@testing-library/dom` (Cutter

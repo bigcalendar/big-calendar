@@ -1,6 +1,5 @@
 import type { CalendarConfig, CalendarStore, ViewKey } from '@big-calendar/core'
 import { createCalendarStore } from '@big-calendar/core'
-import type { MouseEvent as ReactMouseEvent } from 'react'
 import { useEffect, useRef } from 'react'
 
 /**
@@ -24,32 +23,10 @@ export interface CalendarProps<TEvent = unknown, TResource = unknown>
   view?: ViewKey | undefined
   /** Controlled focus date (RFC 3339/9557). */
   date?: string | undefined
-  /**
-   * Event primary action: fired on click / Enter / Space, after the event is
-   * selected. Receives the full event. Defaults to a noop.
-   */
-  onEventClick?: ((event: TEvent) => void) | undefined
-  /**
-   * Event secondary action: fired on double-click / F2. Receives the full event.
-   * Defaults to a noop. (There is no keyboard double-click; F2 is the parity key
-   * per WCAG 2.1.1.)
-   */
-  onEventDoubleClick?: ((event: TEvent) => void) | undefined
-  /**
-   * Event context-menu action: fired on right-click (and the keyboard Menu key /
-   * Shift+F10, and touch long-press). Receives the full event **and** the DOM
-   * mouse event, so you can read `clientX`/`clientY` to position a custom menu
-   * and call `preventDefault()` to replace the native one. Omit it to leave the
-   * browser's native context menu untouched — no `contextmenu` listener is wired.
-   */
-  onEventRightClick?: ((event: TEvent, domEvent: ReactMouseEvent) => void) | undefined
-  /**
-   * Event tertiary action: fired on a middle-button ("scroll wheel") click.
-   * Receives the full event **and** the DOM mouse event. Pointer-only — there is
-   * no keyboard equivalent (like middle-click everywhere). Omit it and no
-   * `auxclick` listener is wired.
-   */
-  onEventMiddleClick?: ((event: TEvent, domEvent: ReactMouseEvent) => void) | undefined
+  // Event-interaction callbacks (`onEventClick` / `onEventDoubleClick` /
+  // `onEventRightClick` / `onEventMiddleClick` / `onEventSelect`) and slot
+  // callbacks (`onSlot*`) are inherited from {@link CalendarConfig} — the shared,
+  // framework-agnostic surface. Right/middle receive the native DOM `MouseEvent`.
 }
 
 /**
@@ -75,15 +52,37 @@ export function useCalendar<TEvent = unknown, TResource = unknown>(
       date: props.date ?? props.defaultDate,
       onNavigate: (args) => propsRef.current.onNavigate?.(args),
       onView: (args) => propsRef.current.onView?.(args),
-      onSelect: (args) => propsRef.current.onSelect?.(args),
+      onEventSelect: (args) => propsRef.current.onEventSelect?.(args),
       onDrillDown: (args) => propsRef.current.onDrillDown?.(args),
-      // Wrap only when provided so the store doesn't wire selection callbacks
-      // (and their per-move translation) for calendars that never use them.
-      onSelecting: props.onSelecting
-        ? (args) => propsRef.current.onSelecting?.(args)
+      // Event interaction. Wrap-when-provided so core's `eventHandlers.has` (and
+      // the per-handler presence flags) reflect what the app actually passed —
+      // an omitted right/middle handler wires no listener at all. The wrapper
+      // keeps a stable identity while reading the latest prop via the ref.
+      onEventClick: props.onEventClick
+        ? (event) => propsRef.current.onEventClick?.(event)
         : undefined,
-      onSelectSlot: props.onSelectSlot
-        ? (args) => propsRef.current.onSelectSlot?.(args)
+      onEventDoubleClick: props.onEventDoubleClick
+        ? (event) => propsRef.current.onEventDoubleClick?.(event)
+        : undefined,
+      onEventRightClick: props.onEventRightClick
+        ? (event, domEvent) => propsRef.current.onEventRightClick?.(event, domEvent)
+        : undefined,
+      onEventMiddleClick: props.onEventMiddleClick
+        ? (event, domEvent) => propsRef.current.onEventMiddleClick?.(event, domEvent)
+        : undefined,
+      // Slot selection. Wrap only when provided so the store doesn't wire the
+      // callbacks (and their per-move translation) for calendars that never use them.
+      onSlotSelecting: props.onSlotSelecting
+        ? (args) => propsRef.current.onSlotSelecting?.(args)
+        : undefined,
+      onSlotClick: props.onSlotClick
+        ? (args) => propsRef.current.onSlotClick?.(args)
+        : undefined,
+      onSlotDoubleClick: props.onSlotDoubleClick
+        ? (args) => propsRef.current.onSlotDoubleClick?.(args)
+        : undefined,
+      onSlotSelect: props.onSlotSelect
+        ? (args) => propsRef.current.onSlotSelect?.(args)
         : undefined,
       // Wrap only when provided: an always-present handler would force the
       // store's range effect (and a full localizer) even when unused.

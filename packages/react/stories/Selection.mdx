@@ -38,24 +38,31 @@ Selection is **off by default**. Switch it on with the `selectable` prop:
 
 ## What your callbacks receive
 
-Two callbacks fire, both with **plain ISO date strings — never `Date` objects**:
+The callbacks all carry **plain ISO date strings — never `Date` objects**. Slot
+callbacks are a **separate, focused concern** from event callbacks (see the bottom
+of this page) so the two never overlap:
 
 ```ts
 // Fires repeatedly while a range is being dragged/extended. Return false to veto.
-onSelecting?: (args: { start: string; end: string; allDay: boolean }) => boolean | void
+onSlotSelecting?: (args: { start: string; end: string; allDay: boolean }) => boolean | void
 
-// Fires once, when a selection is committed.
-onSelectSlot?: (args: {
+// One of these fires once, when a slot selection is committed. *Which* one fires
+// tells you how — so there is no `action` discriminator to switch on.
+onSlotClick?:       (args: SlotSelection) => void  // a single slot/day
+onSlotDoubleClick?: (args: SlotSelection) => void  // a double-click
+onSlotSelect?:      (args: SlotSelection) => void  // a drag, or a keyboard Shift+Arrow range
+
+// the committed payload:
+type SlotSelection = {
   start: string            // ISO start
   end: string              // ISO end
   slots: string[]          // every slot/day the selection covers, in order
-  action: 'select' | 'click' | 'doubleClick'
   allDay: boolean
-}) => void
+}
 ```
 
-`action` tells you how it was committed: `'select'` (a drag, or a keyboard
-Shift+Arrow range), `'click'` (a single slot/day), or `'doubleClick'`.
+Wire only the gesture you care about. The names mirror the event callbacks
+(`onSlotClick` ↔ `onEventClick`, `onSlotDoubleClick` ↔ `onEventDoubleClick`).
 
 ### What `allDay` means
 
@@ -81,10 +88,10 @@ not at the following midnight. A partial window (say a 9–5 grid) ends at its w
 
 ## Pointer
 
-- **Drag** across slots/days → a range. `onSelecting` fires as it grows; release →
-  `onSelectSlot` with `action: 'select'`.
-- **Click** a single slot/day → `action: 'click'`.
-- **Double-click** → `action: 'doubleClick'`.
+- **Drag** across slots/days → a range. `onSlotSelecting` fires as it grows;
+  release → `onSlotSelect`.
+- **Click** a single slot/day → `onSlotClick`.
+- **Double-click** → `onSlotDoubleClick`.
 
 Single- and double-click are disambiguated by a **250 ms** timer, so the two never both
 fire for the same gesture. A press that starts **on an event** is ignored (the event
@@ -137,10 +144,10 @@ not selection.
 
 Touch needs to coexist with scrolling, so selection is gated behind a **long-press**:
 
-- **Tap** a slot/day → `action: 'click'` (or `'doubleClick'` on a quick second tap),
+- **Tap** a slot/day → `onSlotClick` (or `onSlotDoubleClick` on a quick second tap),
   exactly like a mouse tap.
 - **Press and hold** (default **500 ms**) → a selection begins at that slot; keep the
-  finger down and drag to extend the range, then lift to commit (`action: 'select'`).
+  finger down and drag to extend the range, then lift to commit (`onSlotSelect`).
 - **Move before the hold elapses** → read as a scroll: the gesture is abandoned and the
   calendar body scrolls normally (no selection, no click).
 
@@ -174,9 +181,10 @@ emits the identical payload**.
 
 These are two different things on two different layers:
 
-- **Slot selection** (this page) → empty space → `onSelecting` / `onSelectSlot`.
+- **Slot selection** (this page) → empty space → `onSlotSelecting` / `onSlotClick`
+  / `onSlotDoubleClick` / `onSlotSelect`.
 - **Event selection** → an existing event → `store.selected` + `onEventClick` /
-  `onEventDoubleClick`.
+  `onEventDoubleClick` (+ `onEventSelect` fires when the selected id changes).
 
 An event interaction never also triggers a slot selection.
 
@@ -194,9 +202,10 @@ Every event (in any view) responds to four optional callbacks:
   </tbody>
 </table>
 
-The right- and middle-click handlers also receive the **DOM mouse event**, so you
-can read `clientX`/`clientY` to position a custom context menu and call
-`preventDefault()` to suppress the native one:
+The right- and middle-click handlers also receive the **native DOM `MouseEvent`**
+(the same web-standard event in every framework adapter — not React's synthetic
+wrapper), so you can read `clientX`/`clientY` to position a custom context menu and
+call `preventDefault()` to suppress the native one:
 
 ```tsx
 <Calendar

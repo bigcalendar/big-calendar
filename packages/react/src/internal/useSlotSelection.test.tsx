@@ -59,9 +59,25 @@ describe('useSlotSelection', () => {
     )
   }
 
+  /**
+   * The committed slot callbacks were split per gesture (`onSlotClick` /
+   * `onSlotDoubleClick` / `onSlotSelect`) and the payload dropped its `action`
+   * field. This fans all three into one spy and re-injects `action` (from which
+   * callback fired) so the gesture assertions below stay expressive.
+   */
+  function slotSpy() {
+    const fn = vi.fn()
+    const props: Partial<CalendarProviderProps<Event>> = {
+      onSlotClick: (s) => fn({ action: 'click', ...s }),
+      onSlotDoubleClick: (s) => fn({ action: 'doubleClick', ...s }),
+      onSlotSelect: (s) => fn({ action: 'select', ...s }),
+    }
+    return { fn, props }
+  }
+
   it('drag-selects across slots and commits a range', () => {
-    const onSelectSlot = vi.fn()
-    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { getByTestId } = renderSurface({ selectable: true, ...slotProps })
     stubPoint(getByTestId('slot3'))
 
     fireEvent.pointerDown(getByTestId('slot1'), { button: 0, clientX: 0, clientY: 0 })
@@ -80,8 +96,8 @@ describe('useSlotSelection', () => {
 
   it('treats a press without a drag as a click after the double-click window', () => {
     vi.useFakeTimers()
-    const onSelectSlot = vi.fn()
-    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { getByTestId } = renderSurface({ selectable: true, ...slotProps })
     fireEvent.pointerDown(getByTestId('slot2'), { button: 0, clientX: 0, clientY: 0 })
     fireEvent.pointerUp(window)
     expect(onSelectSlot).not.toHaveBeenCalled() // waiting to rule out a double
@@ -94,8 +110,8 @@ describe('useSlotSelection', () => {
 
   it('upgrades two quick presses on the same slot to a double-click', () => {
     vi.useFakeTimers()
-    const onSelectSlot = vi.fn()
-    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { getByTestId } = renderSurface({ selectable: true, ...slotProps })
     fireEvent.pointerDown(getByTestId('slot2'), { button: 0, clientX: 0, clientY: 0 })
     fireEvent.pointerUp(window)
     act(() => {
@@ -112,8 +128,8 @@ describe('useSlotSelection', () => {
 
   it('a second tap on a different slot supersedes the first pending click', () => {
     vi.useFakeTimers()
-    const onSelectSlot = vi.fn()
-    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { getByTestId } = renderSurface({ selectable: true, ...slotProps })
     fireEvent.pointerDown(getByTestId('slot1'), { button: 0, clientX: 0, clientY: 0 })
     fireEvent.pointerUp(window)
     act(() => {
@@ -132,8 +148,8 @@ describe('useSlotSelection', () => {
 
   it('ignores presses over an event (events own their interaction)', () => {
     vi.useFakeTimers()
-    const onSelectSlot = vi.fn()
-    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { getByTestId } = renderSurface({ selectable: true, ...slotProps })
     fireEvent.pointerDown(getByTestId('event'), { button: 0, clientX: 0, clientY: 0 })
     fireEvent.pointerUp(window)
     act(() => {
@@ -143,8 +159,8 @@ describe('useSlotSelection', () => {
   })
 
   it('ignores presses that miss a slot cell and non-primary buttons', () => {
-    const onSelectSlot = vi.fn()
-    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { getByTestId } = renderSurface({ selectable: true, ...slotProps })
     fireEvent.pointerDown(getByTestId('nocell'), { button: 0, clientX: 0, clientY: 0 })
     fireEvent.pointerDown(getByTestId('slot1'), { button: 2, clientX: 0, clientY: 0 }) // right-click
     fireEvent.pointerUp(window)
@@ -153,8 +169,8 @@ describe('useSlotSelection', () => {
 
   it('does nothing when selection is disabled', () => {
     vi.useFakeTimers()
-    const onSelectSlot = vi.fn()
-    const { getByTestId } = renderSurface({ onSelectSlot }) // selectable defaults to false
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { getByTestId } = renderSurface({ ...slotProps }) // selectable defaults to false
     fireEvent.pointerDown(getByTestId('slot1'), { button: 0, clientX: 0, clientY: 0 })
     fireEvent.pointerUp(window)
     act(() => {
@@ -168,8 +184,8 @@ describe('useSlotSelection', () => {
 
   it('starts a touch selection only after the long-press, then drag-commits a range', () => {
     vi.useFakeTimers()
-    const onSelectSlot = vi.fn()
-    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { getByTestId } = renderSurface({ selectable: true, ...slotProps })
     stubPoint(getByTestId('slot3'))
 
     fireEvent.pointerDown(getByTestId('slot1'), { button: 0, clientX: 0, clientY: 0, pointerType: 'touch', pointerId: 1 })
@@ -196,8 +212,8 @@ describe('useSlotSelection', () => {
 
   it('abandons a touch gesture (no selection, no click) when the finger moves before the hold', () => {
     vi.useFakeTimers()
-    const onSelectSlot = vi.fn()
-    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { getByTestId } = renderSurface({ selectable: true, ...slotProps })
     fireEvent.pointerDown(getByTestId('slot1'), { button: 0, clientX: 0, clientY: 0, pointerType: 'touch', pointerId: 1 })
     // A scroll: the finger moves past the threshold before the long-press fires.
     fireEvent.pointerMove(window, { clientX: 0, clientY: 60 })
@@ -213,8 +229,8 @@ describe('useSlotSelection', () => {
 
   it('treats a quick touch tap (lift before the hold) as a click', () => {
     vi.useFakeTimers()
-    const onSelectSlot = vi.fn()
-    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { getByTestId } = renderSurface({ selectable: true, ...slotProps })
     fireEvent.pointerDown(getByTestId('slot2'), { button: 0, clientX: 0, clientY: 0, pointerType: 'touch', pointerId: 1 })
     fireEvent.pointerUp(window)
     act(() => {
@@ -226,7 +242,7 @@ describe('useSlotSelection', () => {
 
   it('suppresses native scroll while an engaged touch drag is in progress', () => {
     vi.useFakeTimers()
-    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot: vi.fn() })
+    const { getByTestId } = renderSurface({ selectable: true, ...slotSpy().props })
     fireEvent.pointerDown(getByTestId('slot2'), { button: 0, clientX: 0, clientY: 0, pointerType: 'touch', pointerId: 1 })
     act(() => {
       vi.advanceTimersByTime(LONG_PRESS_MS) // engage → non-passive touchmove guard attaches
@@ -239,8 +255,8 @@ describe('useSlotSelection', () => {
 
   it('aborts an engaged touch selection on pointercancel (no commit, no stale range)', () => {
     vi.useFakeTimers()
-    const onSelectSlot = vi.fn()
-    const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { getByTestId } = renderSurface({ selectable: true, ...slotProps })
     fireEvent.pointerDown(getByTestId('slot2'), { button: 0, clientX: 0, clientY: 0, pointerType: 'touch', pointerId: 1 })
     act(() => {
       vi.advanceTimersByTime(LONG_PRESS_MS) // engage
@@ -266,8 +282,8 @@ describe('useSlotSelection', () => {
     proto.setPointerCapture = setCap
     proto.releasePointerCapture = relCap
     try {
-      const onSelectSlot = vi.fn()
-      const { getByTestId } = renderSurface({ selectable: true, onSelectSlot })
+      const { fn: onSelectSlot, props: slotProps } = slotSpy()
+      const { getByTestId } = renderSurface({ selectable: true, ...slotProps })
       stubPoint(getByTestId('slot3'))
       fireEvent.pointerDown(getByTestId('slot1'), { button: 0, clientX: 0, clientY: 0, pointerType: 'touch', pointerId: 7 })
       act(() => {
@@ -286,8 +302,8 @@ describe('useSlotSelection', () => {
 
   it('honours a custom longPressThreshold', () => {
     vi.useFakeTimers()
-    const onSelectSlot = vi.fn()
-    const { getByTestId } = renderSurface({ selectable: true, longPressThreshold: 100, onSelectSlot })
+    const { fn: onSelectSlot, props: slotProps } = slotSpy()
+    const { getByTestId } = renderSurface({ selectable: true, longPressThreshold: 100, ...slotProps })
     fireEvent.pointerDown(getByTestId('slot2'), { button: 0, clientX: 0, clientY: 0, pointerType: 'touch', pointerId: 1 })
     act(() => {
       vi.advanceTimersByTime(100)

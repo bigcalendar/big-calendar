@@ -33,15 +33,18 @@ export interface EventButtonProps<TEvent> {
  * event", and centralizes event interaction in a single place instead of
  * duplicating it across Month / TimeGrid / Agenda:
  *
- * - **click** (pointer) selects the event (`store.select`) and fires the context
+ * - **click** (pointer) selects the event (`store.selectEvent`) and fires
  *   `onEventClick`; **double-click** fires `onEventDoubleClick`. The two are
  *   disambiguated by a {@link DOUBLE_CLICK_MS} timer so they never both fire.
+ *   Behaviour is core-owned via `store.eventHandlers`; this component only routes
+ *   DOM events and composes the selection side-effect (grid views select).
  * - **right-click** (`contextmenu`, also the keyboard Menu key) fires
  *   `onEventRightClick`; **middle-click** (`auxclick`, button 1) fires
- *   `onEventMiddleClick`. Both receive the DOM event; the app decides whether to
- *   `preventDefault` (e.g. to replace the native context menu). Each listener is
- *   attached **only when its handler is provided** — omit the right-click handler
- *   and the browser's native context menu is left untouched.
+ *   `onEventMiddleClick`. Both receive the **native** DOM event; the app decides
+ *   whether to `preventDefault` (e.g. to replace the native context menu). Each
+ *   listener is attached **only when its handler is provided**
+ *   (`store.eventHandlers.hasRightClick` / `hasMiddleClick`) — omit the
+ *   right-click handler and the browser's native context menu is left untouched.
  * - **keyboard**: Enter / Space = primary (select + `onEventClick`); **F2** =
  *   secondary (`onEventDoubleClick`) — there is no keyboard double-click, so F2
  *   is the WCAG-2.1.1 parity key. Keys are advertised via `aria-keyshortcuts`.
@@ -60,8 +63,8 @@ export default function EventButton<TEvent>({
   style,
   children,
 }: EventButtonProps<TEvent>) {
-  const { store, onEventClick, onEventDoubleClick, onEventRightClick, onEventMiddleClick, descriptionIds } =
-    useCalendarContext<TEvent>()
+  const { store, descriptionIds } = useCalendarContext<TEvent>()
+  const { eventHandlers } = store
   const id = wrapAccessor(store.accessors.id)(event)
   const selectedId = useSignalValue(store.selected)
   const isSelected = id != null && selectedId === id
@@ -76,11 +79,12 @@ export default function EventButton<TEvent>({
   )
 
   const primary = () => {
-    if (id != null) store.select({ id })
-    onEventClick(event)
+    // Grid views select on click; core fires onEventClick (if configured).
+    if (id != null) store.selectEvent({ id })
+    eventHandlers.click(event)
   }
   const secondary = () => {
-    onEventDoubleClick(event)
+    eventHandlers.doubleClick(event)
   }
 
   const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
@@ -128,12 +132,14 @@ export default function EventButton<TEvent>({
       onDoubleClick={handleDoubleClick}
       onKeyDown={handleKeyDown}
       onContextMenu={
-        onEventRightClick ? (e: MouseEvent<HTMLButtonElement>) => onEventRightClick(event, e) : undefined
+        eventHandlers.hasRightClick
+          ? (e: MouseEvent<HTMLButtonElement>) => eventHandlers.rightClick(event, e.nativeEvent)
+          : undefined
       }
       onAuxClick={
-        onEventMiddleClick
+        eventHandlers.hasMiddleClick
           ? (e: MouseEvent<HTMLButtonElement>) => {
-              if (e.button === 1) onEventMiddleClick(event, e)
+              if (e.button === 1) eventHandlers.middleClick(event, e.nativeEvent)
             }
           : undefined
       }

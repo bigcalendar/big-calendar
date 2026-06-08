@@ -40,7 +40,9 @@ export type SelectionMode = 'time' | 'day'
 
 /**
  * A committed slot selection translated to **primitive ISO date strings** — the
- * public shape emitted to `onSelectSlot`. (`core` never exposes JS `Date`.)
+ * public shape emitted to `onSlotClick` / `onSlotDoubleClick` / `onSlotSelect`.
+ * (`core` never exposes JS `Date`.) How the selection was produced is encoded by
+ * **which** callback fires, so this payload no longer carries an `action` field.
  */
 export interface SlotSelectionDates {
   /** Start of the first selected slot/day (ISO). */
@@ -53,8 +55,6 @@ export interface SlotSelectionDates {
   end: string
   /** Start of each selected slot (time) or day (day), in order (ISO). */
   slots: string[]
-  /** How the selection was produced. */
-  action: SelectAction
   /**
    * Whether this is an all-day span. `true` for month/day selections (whole
    * days: `start`/`end` are day bounds, `slots` are day-starts) **and** for

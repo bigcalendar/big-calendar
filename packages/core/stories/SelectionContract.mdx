@@ -18,11 +18,19 @@ never `Date` objects** (matching the rest of core's public surface).
 ```ts
 // Fires repeatedly while a range is being dragged or extended.
 // Return false to veto the in-progress change.
-onSelecting?: (args: { start: string; end: string; allDay: boolean }) => boolean | void
+onSlotSelecting?: (args: { start: string; end: string; allDay: boolean }) => boolean | void
 
-// Fires once, when a selection is committed.
-onSelectSlot?: (args: SlotSelectionDates) => void
+// One of these fires once, when a selection is committed. *Which* one fires
+// encodes how it was committed — so there is no `action` field on the payload.
+onSlotClick?:       (args: SlotSelectionDates) => void  // a single slot/day
+onSlotDoubleClick?: (args: SlotSelectionDates) => void  // a double-click
+onSlotSelect?:      (args: SlotSelectionDates) => void  // a drag / keyboard Shift+Arrow range
 ```
+
+These are a focused, separate concern from the **event-interaction** callbacks
+(`onEventClick` / `onEventDoubleClick` / `onEventRightClick` /
+`onEventMiddleClick` / `onEventSelect`), which receive the event object (and, for
+right/middle, the native DOM `MouseEvent`) rather than a slot payload.
 
 ## `SlotSelectionDates`
 
@@ -31,15 +39,14 @@ interface SlotSelectionDates {
   start: string   // ISO; start of the first slot/day
   end: string     // ISO; EXCLUSIVE end (see the end-of-day rule)
   slots: string[] // ISO; each selected slot-start (time) or day-start (day), in order
-  action: 'select' | 'click' | 'doubleClick'
   allDay: boolean
 }
 ```
 
-`action` says how it was committed: `'select'` (a drag, or a keyboard
-Shift+Arrow range), `'click'` (a single slot/day), or `'doubleClick'`. The
-adapter disambiguates click vs double-click with a 250 ms timer, so the two never
-both fire for one gesture.
+How the selection was committed is encoded by **which** callback fired
+(`onSlotClick` / `onSlotDoubleClick` / `onSlotSelect`), not by a field on the
+payload. The adapter disambiguates click vs double-click with a 250 ms timer, so
+the two never both fire for one gesture.
 
 ## What `allDay` means
 

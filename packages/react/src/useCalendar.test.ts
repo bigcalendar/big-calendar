@@ -57,7 +57,7 @@ describe.each(LOCALIZER_CASES)('useCalendar [$name]', ({ create }) => {
 
   it('forwards every store callback to the latest props', () => {
     const onView = vi.fn()
-    const onSelect = vi.fn()
+    const onEventSelect = vi.fn()
     const onDrillDown = vi.fn()
     const onRangeChange = vi.fn()
 
@@ -67,7 +67,7 @@ describe.each(LOCALIZER_CASES)('useCalendar [$name]', ({ create }) => {
         view: Views.DAY,
         date: '2026-06-15T00:00:00.000Z',
         onView,
-        onSelect,
+        onEventSelect,
         onDrillDown,
         onRangeChange,
       }),
@@ -76,8 +76,8 @@ describe.each(LOCALIZER_CASES)('useCalendar [$name]', ({ create }) => {
     act(() => result.current.setView({ view: Views.DAY }))
     expect(onView).toHaveBeenCalledWith({ view: Views.DAY })
 
-    act(() => result.current.select({ id: 1 }))
-    expect(onSelect).toHaveBeenCalledWith({ id: 1 })
+    act(() => result.current.selectEvent({ id: 1 }))
+    expect(onEventSelect).toHaveBeenCalledWith({ id: 1 })
 
     act(() => result.current.drilldown({ date: '2026-06-20T00:00:00.000Z' }))
     expect(onDrillDown).toHaveBeenCalledWith({ date: '2026-06-20T00:00:00.000Z', view: Views.DAY })

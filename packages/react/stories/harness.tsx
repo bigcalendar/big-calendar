@@ -72,10 +72,10 @@ export function CalendarStage({ children, height = 800, rows = 'auto 1fr', ...pr
 
 /**
  * A {@link CalendarStage} pre-wired for exercising slot/event selection:
- * `selectable` is on and the selection callbacks (`onSelectSlot`,
- * `onEventClick`, `onEventDoubleClick`, plus `onEventRightClick` /
- * `onEventMiddleClick`) feed a live read-out below the view so you can see what
- * each gesture emits without opening the console. Switch `view` to **Agenda** to
+ * `selectable` is on and the callbacks — slot (`onSlotClick` / `onSlotDoubleClick`
+ * / `onSlotSelect`) and event (`onEventClick`, `onEventDoubleClick`, plus
+ * `onEventRightClick` / `onEventMiddleClick`) — feed a live read-out below the
+ * view so you can see what each gesture emits without opening the console. Switch `view` to **Agenda** to
  * see the same event handlers drive its link-styled title buttons. Pass the
  * `<Toolbar/>` + `.bc-calendar` view as children, like {@link CalendarStage}.
  * Any prop (e.g. `selectable={false}`) can be overridden.
@@ -90,7 +90,9 @@ export function SelectionDemo({ children, ...props }: CalendarStageProps) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
       <CalendarStage
         selectable
-        onSelectSlot={(selection) => setLog(`onSelectSlot · ${selection.action}\n${JSON.stringify(selection, null, 2)}`)}
+        onSlotClick={(selection) => setLog(`onSlotClick\n${JSON.stringify(selection, null, 2)}`)}
+        onSlotDoubleClick={(selection) => setLog(`onSlotDoubleClick\n${JSON.stringify(selection, null, 2)}`)}
+        onSlotSelect={(selection) => setLog(`onSlotSelect\n${JSON.stringify(selection, null, 2)}`)}
         onEventClick={(event) => setLog(`onEventClick\n${JSON.stringify(event, null, 2)}`)}
         onEventDoubleClick={(event) => setLog(`onEventDoubleClick\n${JSON.stringify(event, null, 2)}`)}
         onEventRightClick={(event, e) => {
