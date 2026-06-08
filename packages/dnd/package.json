@@ -29,5 +29,7 @@
     "@atlaskit/pragmatic-drag-and-drop": "^1.8.1"
   },
   "peerDependencies": {},
-  "devDependencies": {}
+  "devDependencies": {
+    "jsdom": "^29.1.1"
+  }
 }

@@ -1,5 +1,5 @@
 import type { LocalizerContract } from '@big-calendar/localizer'
-import type { Accessors } from '../accessors/accessors.type'
+import type { Accessor, Accessors } from '../accessors/accessors.type'
 import type { DayLayoutAlgorithm, DayLayoutAlgorithmKey } from '../layout/layout.type'
 import type { SelectableMode, SlotSelectionDates } from '../selection/selection.type'
 import type { GetDrilldownView } from '../store/drilldown.function'
@@ -120,6 +120,27 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
   onEventMiddleClick?: ((event: TEvent, domEvent: MouseEvent) => void) | undefined
   /** Fired after the selected event changes via `selectEvent`. */
   onEventSelect?: ((args: { id: EventId | null }) => void) | undefined
+
+  // --- event drag-and-drop (move / resize) ---
+  // The behaviour (date-math + firing the callback) is core-owned so every
+  // adapter computes an identical move; the optional `@big-calendar/dnd` package
+  // is the framework-neutral pointer layer that decodes a DOM drop into a target
+  // slot/day and calls `store.moveEvent`. The callback fires only when defined.
+  /**
+   * Whether a given event may be dragged. A string reads a boolean field; a
+   * function derives it. Omitted → every event is draggable. Read by the DnD
+   * layer to decide which events to make drag sources.
+   */
+  draggableAccessor?: Accessor<TEvent, boolean> | undefined
+  /**
+   * Fired when an event is dropped at a new position. Receives the event plus
+   * its recomputed bounds as ISO date strings (`allDay` flags a whole-day span);
+   * core preserves the original duration. Apply it to your own event data — the
+   * calendar does not mutate `events` itself.
+   */
+  onEventDrop?:
+    | ((args: { event: TEvent; start: string; end: string; allDay: boolean }) => void)
+    | undefined
 
   // --- slot selection (picking empty time/days to create an event) ---
   // Distinct from event interaction above. Mirrors the event callbacks' shape:

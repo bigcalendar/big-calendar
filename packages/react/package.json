@@ -31,10 +31,17 @@
     "@preact/signals-core": "^1.14.2"
   },
   "peerDependencies": {
+    "@big-calendar/dnd": "workspace:*",
     "react": ">=18",
     "react-dom": ">=18"
   },
+  "peerDependenciesMeta": {
+    "@big-calendar/dnd": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@big-calendar/dnd": "workspace:*",
     "@big-calendar/localizer-temporal": "workspace:*",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",

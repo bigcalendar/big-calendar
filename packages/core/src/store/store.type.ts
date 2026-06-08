@@ -10,6 +10,7 @@ import type {
   SelectionState,
 } from '../selection/selection.type'
 import type { CalendarViewModel } from '../views/viewModel.type'
+import type { MoveMode } from '../dnd/moveEvent.function'
 
 /**
  * The store's slot-selection surface: the FSM's live signals (in slot-index
@@ -160,6 +161,12 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    * selection; mouse/pen selection is immediate and ignores it.
    */
   readonly longPressThreshold: number
+  /**
+   * Whether a given event may be dragged (`config.draggableAccessor`, default
+   * `() => true`). The DnD layer reads it to decide which events become drag
+   * sources, so the predicate stays defined once in core.
+   */
+  readonly isDraggable: (event: TEvent) => boolean
 
   // --- actions (named-parameter objects, per Appendix A) ---
   /** Move the focus date: PREV/NEXT step by view; TODAY resets to now; DATE jumps. */
@@ -170,6 +177,20 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
   setDate(args: { date: string }): void
   /** Select an event by id, or clear with `null`. Fires `onEventSelect`. */
   selectEvent(args: { id: EventId | null }): void
+  /**
+   * Look up a foreground event by its accessor id (string-compared). Returns
+   * `undefined` when none matches. Used by adapters (e.g. the DnD layer) that
+   * only hold an event's id from the DOM and need the object back.
+   */
+  getEvent(args: { id: EventId }): TEvent | undefined
+  /**
+   * Move (drop) an event to a new position. Looks the event up by id, recomputes
+   * its bounds via {@link moveEvent} (`mode` decides snap-to-instant vs whole-day
+   * shift; duration preserved), and fires `onEventDrop` with the new ISO bounds.
+   * A no-op when the id matches no event or no `onEventDrop` is configured. The
+   * store does not mutate `events` — apply the change to your own data.
+   */
+  moveEvent(args: { id: EventId; target: string; mode: MoveMode }): void
   /**
    * Drill into a clicked date: resolve the target view (per `drilldownView` /
    * `getDrilldownView`) and either delegate to `onDrillDown` or switch view +

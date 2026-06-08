@@ -21,6 +21,7 @@ export { Tooltip } from './Tooltip'
 export type { TooltipProps } from './Tooltip'
 export { Dialog } from './Dialog'
 export type { DialogProps } from './Dialog'
+export { useCalendarDnd } from './dnd/useCalendarDnd'
 export type {
   AgendaComponents,
   AgendaDateProps,

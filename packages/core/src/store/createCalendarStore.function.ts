@@ -1,6 +1,7 @@
 import { batch, computed, effect, signal } from '@preact/signals-core'
 import type { ReadonlySignal } from '@preact/signals-core'
-import { resolveAccessors } from '../accessors/accessors.function'
+import { resolveAccessors, wrapAccessor } from '../accessors/accessors.function'
+import { moveEvent } from '../dnd/moveEvent.function'
 import { BUILTIN_VIEWS, Views } from '../constants/views.constant'
 import { createSelection } from '../selection/selection.function'
 import type { SelectionMode, SelectionRange } from '../selection/selection.type'
@@ -40,6 +41,16 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   const timeslots = config.timeslots ?? 2
   const selectable = config.selectable ?? false
   const longPressThreshold = config.longPressThreshold ?? 500
+  // Resolved drag predicate: every event is draggable unless an accessor opts out.
+  const getDraggable = config.draggableAccessor ? wrapAccessor(config.draggableAccessor) : null
+  const isDraggable = (event: TEvent): boolean =>
+    getDraggable ? (getDraggable(event) ?? true) : true
+  const getEventId = wrapAccessor(accessors.id)
+  const findEvent = (id: EventId): TEvent | undefined =>
+    events.value.find((candidate) => {
+      const candidateId = getEventId(candidate)
+      return candidateId != null && String(candidateId) === String(id)
+    })
 
   const date = signal<string>(config.date ?? getNow())
   const view = signal<ViewKey>(config.view ?? Views.MONTH)
@@ -296,6 +307,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     timeslots,
     selectable,
     longPressThreshold,
+    isDraggable,
 
     navigate({ direction, date: target }) {
       const next = navigateDate({
@@ -323,6 +335,32 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
 
     selectEvent({ id }) {
       selectEventById(id)
+    },
+
+    getEvent({ id }) {
+      return findEvent(id)
+    },
+
+    moveEvent({ id, target, mode }) {
+      const drop = config.onEventDrop
+      if (drop == null) return
+      const getStart = wrapAccessor(accessors.start)
+      const getEnd = wrapAccessor(accessors.end)
+      const getAllDay = wrapAccessor(accessors.allDay)
+      const event = findEvent(id)
+      if (event == null) return
+      const start = getStart(event)
+      const end = getEnd(event)
+      if (start == null || end == null) return
+      const moved = moveEvent({
+        localizer,
+        start,
+        end,
+        allDay: getAllDay(event) ?? false,
+        target,
+        mode,
+      })
+      drop({ event, ...moved })
     },
 
     eventHandlers,

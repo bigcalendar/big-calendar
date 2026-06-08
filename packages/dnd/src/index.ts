@@ -1,1 +1,2 @@
-export const PACKAGE_NAME = '@big-calendar/dnd'
+export { bindCalendarDnd } from './bindCalendarDnd.function'
+export type { BindCalendarDndOptions, DndStore } from './bindCalendarDnd.function'

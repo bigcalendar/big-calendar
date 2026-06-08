@@ -4,8 +4,42 @@
 
 ## Current phase
 
-**Phase 4 — React (MVP)** STARTED. Phases 0–3 complete. 2m view-registry + store-selection wiring
-folded into Phase 4 (per Cutter). See DECISIONS.md (2026-06-02).
+**Phase 5 — DnD** STARTED. Phases 0–3 complete; **Phase 4 (React MVP) build-order cleared** (selection
+wiring + 2m view registry + §7.7 touch CSS + selection split docs all done & pushed). Phase 5 = the
+optional `@big-calendar/dnd` package + React integration (roadmap §14 row 5; exit: drop/resize/outside
+parity + keyboard DnD). Architecture + first slice locked by Cutter — see DECISIONS.md (2026-06-07,
+"Phase 5 (DnD) opened").
+
+### Phase 5 — Task 5a: event MOVE, end-to-end (Cutter, 2026-06-07) ✓ (uncommitted at time of writing)
+The thin vertical slice Cutter chose: event drag-to-move working through every layer for the **month**
+view (day-mode), gated, with a Storybook story. Core owns the date-math (mirrors selection).
+- **core** — pure [moveEvent](packages/core/src/dnd/moveEvent.function.ts) helper (`mode:'time'` =
+  snap-to-instant + preserve exact duration; `mode:'day'` = whole-day shift preserving time-of-day;
+  `allDay` preserved). `CalendarConfig` gained `onEventDrop` (ISO payload `{event,start,end,allDay}`,
+  no `Date`) + `draggableAccessor`. Store gained the `moveEvent({id,target,mode})` action (look up event
+  → compute → fire `onEventDrop`; no-op if unknown id / no callback; **never mutates `events`**),
+  `getEvent({id})` (reused by the action + the dnd controller), and resolved `isDraggable(event)`
+  (default `() => true`). Barrel exports `moveEvent` + `MoveEventArgs`/`MovedEvent`/`MoveMode`.
+- **dnd** (`@big-calendar/dnd`, was a scaffold) — [bindCalendarDnd](packages/dnd/src/bindCalendarDnd.function.ts)`({root,store,mode})`:
+  a framework-neutral **MutationObserver binder** on Pragmatic Drag and Drop. Scans `root` for
+  `[data-bc-event]` drag sources (gated by `store.isDraggable` via `canDrag`) + `[data-date]` drop
+  targets, registers each, re-syncs on mutations; one `monitorForElements` maps a drop → `store.moveEvent`.
+  **No per-component changes** (binds the `data-*` nodes the views already render). Narrow `DndStore<TEvent>`
+  interface (getEvent/isDraggable/moveEvent) avoids `TResource` variance. Added `jsdom` devDep; vitest env
+  → jsdom. Tests mock the Pragmatic adapter (jsdom can't fire native drag events) and invoke the captured
+  closures — 8 tests, bar met.
+- **react** — [useCalendarDnd](packages/react/src/dnd/useCalendarDnd.ts)`(containerRef)`: binds the
+  controller inside `containerRef` for views that support move (month→`'day'`; time-grid→`null`/deferred),
+  rebinds on view change, tears down on unmount. `@big-calendar/dnd` added as **optional peerDependency**
+  (+ devDep) per §11. Barrel exports `useCalendarDnd`. Tests mock `@big-calendar/dnd` (5 tests). New
+  `React/Drag and drop` stories (`MonthEventMove`, `LockedEvent` via `draggableAccessor`) — the demo holds
+  events in state and applies `onEventDrop` (calendar never mutates data).
+- **Gates:** all 8 projects typecheck/test/lint/build ✓ (core 184, dnd 8, react 159); build-storybook
+  react + core ✓. Per-file bar enforced by each test target (green).
+- **Deferred (next slices):** time-grid (`'time'`) move (needs slot-instant decode on cells) → then
+  **resize**, **drop-from-outside / drag-from-outside**, **keyboard DnD**; resource-aware drop (`resourceId`
+  in the payload); cross-surface timed↔all-day promotion; a dedicated `@big-calendar/react/dnd` entry +
+  a DnD `.mdx` guide.
 
 ### Phase 4 — Slot/event handler separation + move-to-core (Cutter, 2026-06-07) ✓ (uncommitted at time of writing)
 Cutter's separation-of-concerns refactor. **Slot** and **event** interaction are now two distinct,
@@ -318,12 +352,28 @@ clearly document the **core-FSM ↔ adapter-mapping** selection split. **Docs on
 1. ✅ **`<Calendar>`** batteries-included default tree (Toolbar + active view), consuming context —
    **DONE, see Task 4h below.** Light Storybook + the Toolbar/reset CSS fix landed in the same task.
 2. ✅ **Top-layer** (§7.5): Popover-API show-more/tooltip + floating-ui positioning — **DONE, see Task 4i below.**
-3. **Selection wiring** (pointer/keyboard → slot coords → core FSM) **+ Storybook docs** (Cutter's ask).
-   Plus **2m view registry**. Plus a **coarse-pointer/touch pass on `@big-calendar/styles`** (§7.7).
+3. ✅ **Selection wiring** + Storybook docs + **2m view registry** + **§7.7 coarse-pointer CSS** — **ALL DONE
+   & PUSHED** (commits `d790ca4`..`b5b5914`). The Phase-4 build-order is cleared.
 
-See [[bigcal-selection-storybook-phase4]].
+See [[bigcal-selection-storybook-phase4]] (obligation satisfied).
 
-## Possible next phase
+## ⚠ NEXT — Phase 5 (DnD) build order
+
+- ✅ **5a — event MOVE end-to-end (month/day-mode)** — DONE (see the Task 5a entry up top; uncommitted at
+  time of writing). core math + `@big-calendar/dnd` controller + `useCalendarDnd` + stories.
+- **5b — time-grid (`'time'`) move** — expose the slot instant on time-grid drop cells (step/dayStartMin
+  decode) so a drop snaps to the slot; flip `moveModeForView` to return `'time'` for week/day/work_week.
+- **5c — event RESIZE** — `onEventResize` + `resizeEvent` core math + `resizableAccessor`; dnd resize
+  handles (drag the top/bottom edge); `touch-action: none` on the handles (§7.7 deferred bit).
+- **5d — drop-from-outside / drag-from-outside** — `onDropFromOutside`, `dragFromOutsideItem`,
+  `onDragOver`, `onDragStart`.
+- **5e — keyboard-accessible DnD** (a11y upgrade over v1).
+- Packaging follow-ups: resource-aware drop (`resourceId` in `onEventDrop`), cross-surface
+  timed↔all-day promotion, a dedicated `@big-calendar/react/dnd` entry, a DnD `.mdx` guide.
+
+Exit criteria (roadmap §14): drop/resize/outside parity + keyboard DnD.
+
+## Earlier phases
 
 ### Phase 3 — Styles ✓ (commits 0f1a20f, ca0f567, 5d3bac6; pushed)
 

@@ -548,4 +548,81 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       expect(store.selection.range.value).toBeNull()
     })
   })
+
+  describe('event drag-and-drop (moveEvent)', () => {
+    const events: Event[] = [
+      { id: 1, title: 'A', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' },
+    ]
+
+    it('fires onEventDrop with the time-snapped bounds', () => {
+      const onEventDrop = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventDrop })
+      const target = '2026-06-16T13:00:00.000Z'
+      const durationMs = localizer.diff({ a: events[0]!.end, b: events[0]!.start, unit: 'millisecond' })
+      store.moveEvent({ id: 1, target, mode: 'time' })
+      expect(onEventDrop).toHaveBeenCalledWith({
+        event: events[0],
+        start: target,
+        end: localizer.add({ value: target, amount: durationMs, unit: 'millisecond' }),
+        allDay: false,
+      })
+    })
+
+    it('fires onEventDrop with a whole-day shift in day mode', () => {
+      const onEventDrop = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventDrop })
+      store.moveEvent({ id: 1, target: '2026-06-18T23:00:00.000Z', mode: 'day' })
+      expect(onEventDrop).toHaveBeenCalledWith({
+        event: events[0],
+        start: localizer.add({ value: events[0]!.start, amount: 3, unit: 'day' }),
+        end: localizer.add({ value: events[0]!.end, amount: 3, unit: 'day' }),
+        allDay: false,
+      })
+    })
+
+    it('is a no-op when the id matches no event', () => {
+      const onEventDrop = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventDrop })
+      store.moveEvent({ id: 999, target: '2026-06-16T13:00:00.000Z', mode: 'time' })
+      expect(onEventDrop).not.toHaveBeenCalled()
+    })
+
+    it('is a no-op (no throw) when no onEventDrop is configured', () => {
+      const store = createCalendarStore<Event>({ localizer, events })
+      expect(() =>
+        store.moveEvent({ id: 1, target: '2026-06-16T13:00:00.000Z', mode: 'time' }),
+      ).not.toThrow()
+    })
+
+    it('getEvent resolves an event by id, else undefined', () => {
+      const store = createCalendarStore<Event>({ localizer, events })
+      expect(store.getEvent({ id: 1 })).toBe(events[0])
+      expect(store.getEvent({ id: 999 })).toBeUndefined()
+    })
+  })
+
+  describe('isDraggable', () => {
+    interface DraggableEvent extends Event {
+      draggable?: boolean
+    }
+    const event: DraggableEvent = { id: 1, title: 'A', start: 's', end: 'e' }
+
+    it('defaults to every event being draggable', () => {
+      const store = createCalendarStore<DraggableEvent>({ localizer })
+      expect(store.isDraggable(event)).toBe(true)
+    })
+
+    it('respects a function draggableAccessor', () => {
+      const store = createCalendarStore<DraggableEvent>({ localizer, draggableAccessor: (e) => e.id !== 2 })
+      expect(store.isDraggable({ ...event, id: 1 })).toBe(true)
+      expect(store.isDraggable({ ...event, id: 2 })).toBe(false)
+    })
+
+    it('reads a string draggableAccessor, defaulting an unset field to draggable', () => {
+      const store = createCalendarStore<DraggableEvent>({ localizer, draggableAccessor: 'draggable' })
+      expect(store.isDraggable({ ...event, draggable: false })).toBe(false)
+      // field absent → accessor resolves null → defaults to draggable
+      expect(store.isDraggable(event)).toBe(true)
+    })
+  })
 })
