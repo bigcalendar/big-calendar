@@ -113,17 +113,38 @@ your data, so there is exactly one source of truth: your `events` state. See the
 **Drag and drop → AsyncSaveWithRollback** story for a runnable version (with a checkbox
 that forces the save to fail).
 
-## Locking individual events
+## Resizing (time-grid)
 
-Use `draggableAccessor` to decide which events may be dragged — a field name or a
-function. Events that return `false` can't be picked up:
+In the **time-grid** views, hovering a timed event reveals a grab bar on its top and
+bottom edge. Dragging an edge to another slot resizes the event: the dragged edge snaps
+to the slot, the other edge stays put, and (like move) you can drag past a day boundary
+to grow the event across midnight. The event is clamped to a one-slot minimum so it can
+never collapse.
+
+Resize reports through `onEventResize`, which has the **exact same shape** as
+`onEventDrop` — so apply (and roll back) it the same way:
 
 ```tsx
-<CalendarProvider draggableAccessor={(e) => !e.locked} ... />
+// Both reports are { event, start, end, allDay } — one handler covers them.
+const apply = ({ event, start, end, allDay }) =>
+  setEvents(prev => prev.map(e => (e.id === event.id ? { ...e, start, end, allDay } : e)))
+
+<CalendarProvider events={events} onEventDrop={apply} onEventResize={apply}>
+```
+
+See the **Drag and drop → WeekEventResize** story for a runnable version.
+
+## Locking individual events
+
+Use `draggableAccessor` to decide which events may be **dragged**, and
+`resizableAccessor` to decide which may be **resized** — each takes a field name or a
+function. An event that returns `false` can't be picked up (or shows no resize handles):
+
+```tsx
+<CalendarProvider draggableAccessor={(e) => !e.locked} resizableAccessor={(e) => !e.fixed} ... />
 ```
 
 ## Not built yet
 
-**Resizing**, **drag-from-outside**, and **keyboard-driven** drag are planned follow-ups.
-Resizing will use the same shape — an `onEventResize` report you apply (and roll back)
-exactly like `onEventDrop`.
+**Drag-from-outside** and **keyboard-driven** drag are planned follow-ups, along with
+month multi-day resize.

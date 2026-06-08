@@ -3,7 +3,7 @@ import {
   dropTargetForElements,
   monitorForElements,
 } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
-import type { EventId, MoveMode } from '@big-calendar/core'
+import type { EventId, MoveMode, ResizeEdge } from '@big-calendar/core'
 
 /**
  * The slice of a calendar store the DnD layer needs. Narrowed (rather than the
@@ -15,8 +15,12 @@ export interface DndStore<TEvent> {
   getEvent(args: { id: EventId }): TEvent | undefined
   /** Whether the event may be dragged (`config.draggableAccessor`). */
   isDraggable(event: TEvent): boolean
-  /** Commit a drop: core recomputes the bounds and fires `onEventDrop`. */
+  /** Whether the event may be resized (`config.resizableAccessor`). */
+  isResizable(event: TEvent): boolean
+  /** Commit a move drop: core recomputes the bounds and fires `onEventDrop`. */
   moveEvent(args: { id: EventId; target: string; mode: MoveMode }): void
+  /** Commit a resize drop: core recomputes the bounds and fires `onEventResize`. */
+  resizeEvent(args: { id: EventId; edge: ResizeEdge; target: string }): void
 }
 
 /**
@@ -24,6 +28,12 @@ export interface DndStore<TEvent> {
  * becomes a drag source. The value is the event's accessor id.
  */
 const EVENT_ATTR = 'data-bc-event'
+/**
+ * Attribute on a resize handle inside an event element. Its value is the dragged
+ * {@link ResizeEdge} (`'start'` / `'end'`); the event id is read from the handle's
+ * nearest `[data-bc-event]` ancestor. Present only on the time-grid views today.
+ */
+const RESIZE_ATTR = 'data-bc-resize'
 /**
  * Drop-target attribute carrying the move target, by {@link MoveMode}:
  *
@@ -56,13 +66,20 @@ export interface BindCalendarDndOptions<TEvent> {
 }
 
 /**
- * Wire event drag-to-move for one calendar, framework-neutrally, on top of
- * Pragmatic Drag and Drop. It binds every `[data-bc-event]` element under `root`
- * as a drag source (gated by `store.isDraggable`) and every drop-target cell (by
- * `mode` — `data-date` for `'day'`, `data-bc-instant` for `'time'`) as a drop
- * target, then on drop calls `store.moveEvent` — core owns the date-math, so
- * every adapter behaves identically. A `MutationObserver` keeps the bindings in
- * sync as the view re-renders.
+ * Wire event drag-to-move **and** edge-resize for one calendar, framework-
+ * neutrally, on top of Pragmatic Drag and Drop. Under `root` it binds:
+ *
+ * - every `[data-bc-event]` element as a **move** drag source (gated by
+ *   `store.isDraggable`);
+ * - every `[data-bc-resize]` handle as a **resize** drag source (gated by
+ *   `store.isResizable`, carrying the dragged edge);
+ * - every drop-target cell (by `mode` — `data-date` for `'day'`, `data-bc-instant`
+ *   for `'time'`) as a drop target.
+ *
+ * On drop it calls `store.resizeEvent` (handle drags) or `store.moveEvent` (body
+ * drags) — core owns the date-math, so every adapter behaves identically. A
+ * `MutationObserver` keeps the bindings in sync as the view re-renders. Resize
+ * handles are only rendered in the time grid, so in `'day'` mode none are found.
  *
  * Returns a cleanup that disconnects the observer, stops the drop monitor, and
  * releases every per-element binding.
@@ -90,6 +107,25 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
     )
   }
 
+  const bindResizeHandle = (element: HTMLElement): void => {
+    if (bindings.has(element)) return
+    const edge = element.getAttribute(RESIZE_ATTR)
+    // The handle lives inside the event element, which carries the id.
+    const id = element.closest(`[${EVENT_ATTR}]`)?.getAttribute(EVENT_ATTR)
+    if (!edge || !id) return
+    bindings.set(
+      element,
+      draggable({
+        element,
+        getInitialData: () => ({ bcEventId: id, bcResizeEdge: edge }),
+        canDrag: () => {
+          const event = store.getEvent({ id })
+          return event != null && store.isResizable(event)
+        },
+      }),
+    )
+  }
+
   const bindDropTarget = (element: HTMLElement): void => {
     if (bindings.has(element)) return
     bindings.set(
@@ -103,6 +139,7 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
 
   const scan = (): void => {
     root.querySelectorAll<HTMLElement>(`[${EVENT_ATTR}]`).forEach(bindDraggable)
+    root.querySelectorAll<HTMLElement>(`[${RESIZE_ATTR}]`).forEach(bindResizeHandle)
     root.querySelectorAll<HTMLElement>(`[${dropAttr}]`).forEach(bindDropTarget)
   }
   scan()
@@ -124,6 +161,12 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
       const id = source.data.bcEventId
       const target = location.current.dropTargets[0]?.data.bcDropTarget
       if (typeof id !== 'string' || typeof target !== 'string') return
+      // A resize handle carries its edge; the event body does not — branch on it.
+      const edge = source.data.bcResizeEdge
+      if (edge === 'start' || edge === 'end') {
+        store.resizeEvent({ id, edge, target })
+        return
+      }
       store.moveEvent({ id, target, mode })
     },
   })

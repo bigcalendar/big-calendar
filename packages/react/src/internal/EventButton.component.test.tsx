@@ -203,4 +203,37 @@ describe('EventButton', () => {
     expect(onEventClick).toHaveBeenCalledWith(bare)
     expect(button.getAttribute('aria-selected')).toBe('false')
   })
+
+  function renderWithHandles(extra?: Partial<CalendarProviderProps<Event>>) {
+    const result = render(
+      <CalendarProvider<Event>
+        localizer={localizer}
+        defaultDate="2026-06-15"
+        defaultView={Views.DAY}
+        events={[event]}
+        {...extra}
+      >
+        <EventButton event={event} title="Standup" className="bc-event" withResizeHandles>
+          <span>content</span>
+        </EventButton>
+      </CalendarProvider>,
+    )
+    return result.container
+  }
+
+  it('renders top/bottom resize handles when withResizeHandles and the event is resizable', () => {
+    const container = renderWithHandles()
+    expect(container.querySelector('[data-bc-resize="start"]')).not.toBeNull()
+    expect(container.querySelector('[data-bc-resize="end"]')).not.toBeNull()
+  })
+
+  it('omits resize handles when the event is not resizable', () => {
+    const container = renderWithHandles({ resizableAccessor: () => false })
+    expect(container.querySelector('[data-bc-resize]')).toBeNull()
+  })
+
+  it('omits resize handles when withResizeHandles is not set', () => {
+    const { button } = renderButton()
+    expect(button.querySelector('[data-bc-resize]')).toBeNull()
+  })
 })

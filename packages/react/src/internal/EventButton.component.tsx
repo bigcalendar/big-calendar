@@ -23,6 +23,12 @@ export interface EventButtonProps<TEvent> {
   className: string
   /** Inline geometry custom properties from the view's geometry helper. */
   style?: CSSProperties | undefined
+  /**
+   * Render top/bottom edge resize handles (time-grid events only). Handles are
+   * emitted only when the event is also resizable (`store.isResizable`); the DnD
+   * layer (`@big-calendar/dnd`) binds them via their `data-bc-resize` edge.
+   */
+  withResizeHandles?: boolean | undefined
   /** Presentational event content (the overridable slot). */
   children: ReactNode
 }
@@ -63,6 +69,7 @@ export default function EventButton<TEvent>({
   time,
   className,
   style,
+  withResizeHandles,
   children,
 }: EventButtonProps<TEvent>) {
   const { store, descriptionIds } = useCalendarContext<TEvent>()
@@ -70,6 +77,8 @@ export default function EventButton<TEvent>({
   const id = wrapAccessor(store.accessors.id)(event)
   const selectedId = useSignalValue(store.selected)
   const isSelected = id != null && selectedId === id
+  // Resize handles render only when asked (time-grid) and the event allows it.
+  const showResizeHandles = withResizeHandles === true && store.isResizable(event)
 
   // A pending single-click timer; a double-click cancels it before it fires.
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -154,6 +163,12 @@ export default function EventButton<TEvent>({
       onPointerDown={(e: PointerEvent<HTMLButtonElement>) => e.stopPropagation()}
     >
       {children}
+      {showResizeHandles && (
+        <>
+          <span className="bc-resize-handle bc-resize-handle-start" data-bc-resize="start" aria-hidden="true" />
+          <span className="bc-resize-handle bc-resize-handle-end" data-bc-resize="end" aria-hidden="true" />
+        </>
+      )}
     </button>
   )
 }

@@ -63,4 +63,38 @@
     background: var(--bc-color-bg-event-bg);
     opacity: var(--bc-color-bg-event-opacity);
   }
+
+  /* Time-grid resize handles: thin grab strips on a timed event's top/bottom
+     edges. The DnD addon (`@big-calendar/dnd`) binds them by their
+     `data-bc-resize` edge. `touch-action: none` lets a touch drag resize the
+     event without the slot body scrolling underneath (§7.7). */
+  .bc-resize-handle {
+    position: absolute;
+    inset-inline: 0;
+    block-size: var(--bc-resize-handle-size, 0.5rem);
+    cursor: ns-resize;
+    touch-action: none;
+    z-index: 4;
+  }
+
+  .bc-resize-handle-start {
+    inset-block-start: 0;
+  }
+
+  .bc-resize-handle-end {
+    inset-block-end: 0;
+  }
+
+  /* A subtle grab bar, shown only while the event is hovered or focused. */
+  .bc-event:hover .bc-resize-handle::after,
+  .bc-event:focus-within .bc-resize-handle::after {
+    content: '';
+    position: absolute;
+    inset-inline: 35%;
+    inset-block-start: calc(50% - 1px);
+    block-size: 2px;
+    border-radius: 1px;
+    background: var(--bc-color-event-fg);
+    opacity: 0.5;
+  }
 }

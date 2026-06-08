@@ -274,6 +274,7 @@ function TimeGridView<TEvent = unknown>() {
                   event={event.event}
                   title={event.title}
                   time={event.time}
+                  withResizeHandles
                 >
                   <EventSlot event={event.event} title={event.title} time={event.time} />
                 </EventButton>

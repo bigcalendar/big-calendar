@@ -77,6 +77,37 @@ turned the views on.
   bar enforced green. **No browser run here** — jsdom can't fire native drag; the binder is tested via the
   mocked Pragmatic adapter, so verify the actual time-grid drag visually in Storybook (`WeekEventMove`).
 
+### Phase 5 — Task 5c: time-grid event RESIZE (Cutter, 2026-06-08) ✓ (uncommitted at time of writing)
+Drag a timed event's top/bottom edge to resize it (week/day/work-week). Cutter scoped it **time-grid only**
+(month multi-day resize deferred) and required **cross-day support like selection** — which falls out for
+free because the drop target is `data-bc-instant` (an absolute instant), so an edge dragged into another
+day column resizes across midnight.
+- **core** — pure [resizeEvent](packages/core/src/dnd/resizeEvent.function.ts) helper: `edge:'start'` snaps
+  the start to the slot; `edge:'end'` snaps the end to the slot's **end** (`target + step`, the same
+  inclusive-end convention as a slot selection); the other edge is untouched; result clamped to a one-slot
+  (`step`) minimum so a resize can't invert/collapse; `allDay` preserved. `CalendarConfig` gained
+  `onEventResize` (same `{event,start,end,allDay}` payload as `onEventDrop`) + `resizableAccessor`. Store
+  gained `resizeEvent({id,edge,target})` action (look up → compute via `step` → fire `onEventResize`;
+  no-op on unknown id / no callback; **never mutates `events`**) and resolved `isResizable(event)` (default
+  `()=>true`). Barrel exports `resizeEvent` + `ResizeEdge`/`ResizeEventArgs`/`ResizedEvent`.
+- **dnd** — [bindCalendarDnd](packages/dnd/src/bindCalendarDnd.function.ts) now also binds `[data-bc-resize]`
+  handles as draggables (edge from the attr, id from the nearest `[data-bc-event]` ancestor, gated by
+  `store.isResizable`); the drop monitor branches on `source.data.bcResizeEdge` → `store.resizeEvent`, else
+  `store.moveEvent`. Pragmatic's nested-draggable handling means a pointerdown on a handle starts the resize,
+  not the parent event-move. `DndStore` widened (+`isResizable`/`resizeEvent`). +4 tests (12 total).
+- **react** — [EventButton](packages/react/src/internal/EventButton.component.tsx) gained `withResizeHandles`;
+  renders two `<span data-bc-resize="start|end">` only when set **and** `store.isResizable(event)`.
+  [TimeGridView](packages/react/src/TimeGridView/TimeGridView.component.tsx) passes `withResizeHandles` on
+  timed events. No `useCalendarDnd` change needed (the store already satisfies the widened `DndStore`).
+- **styles** — [event.css](packages/styles/src/components/event.css): `.bc-resize-handle` top/bottom grab
+  strips, `cursor:ns-resize`, **`touch-action:none`** (§7.7 deferred bit), a faint center bar on hover/focus.
+- **stories/docs** — `WeekEventResize` story; `DragDemo` wires `onEventResize` (shares one `apply` with
+  `onEventDrop`); DnD `.mdx` documents resize + `resizableAccessor` (Not-built-yet trimmed to outside/keyboard
+  + month resize).
+- **Gates:** all 8 projects typecheck/test/lint/build ✓ (core 192, dnd 12, react 164); build-storybook react ✓.
+  Per-file bar enforced green. **No browser run here** (jsdom can't fire native drag) — verify the actual
+  edge-drag visually in Storybook (`WeekEventResize`).
+
 ### Phase 4 — Slot/event handler separation + move-to-core (Cutter, 2026-06-07) ✓ (uncommitted at time of writing)
 Cutter's separation-of-concerns refactor. **Slot** and **event** interaction are now two distinct,
 focused concerns, both **core-owned** (framework-agnostic), with the React layer reduced to a dumb
@@ -398,9 +429,10 @@ See [[bigcal-selection-storybook-phase4]] (obligation satisfied).
 - ✅ **5a — event MOVE end-to-end (month/day-mode)** — DONE (Task 5a entry up top; pushed `d1e4890`).
   core math + `@big-calendar/dnd` controller + `useCalendarDnd` + stories.
 - ✅ **5b — time-grid (`'time'`) move** — DONE (Task 5b entry up top). Slot-instant drop targets via
-  `data-bc-instant`; `moveModeForView` → `'time'` for week/day/work_week. **NEXT slice = 5c.**
-- **5c — event RESIZE** — `onEventResize` + `resizeEvent` core math + `resizableAccessor`; dnd resize
-  handles (drag the top/bottom edge); `touch-action: none` on the handles (§7.7 deferred bit).
+  `data-bc-instant`; `moveModeForView` → `'time'` for week/day/work_week.
+- ✅ **5c — event RESIZE (time-grid)** — DONE (Task 5c entry up top). `onEventResize` + `resizeEvent` core
+  math + `resizableAccessor` + `data-bc-resize` edge handles + `touch-action:none`. Cross-day supported
+  (drop instant is absolute). **Month multi-day resize deferred** (Cutter, 2026-06-08). **NEXT slice = 5d.**
 - **5d — drop-from-outside / drag-from-outside** — `onDropFromOutside`, `dragFromOutsideItem`,
   `onDragOver`, `onDragStart`.
 - **5e — keyboard-accessible DnD** (a11y upgrade over v1).

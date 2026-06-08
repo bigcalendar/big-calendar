@@ -38,6 +38,8 @@ export { createSelection } from './selection/selection.function'
 export type { SelectionController } from './selection/selection.function'
 export { moveEvent } from './dnd/moveEvent.function'
 export type { MoveEventArgs, MovedEvent, MoveMode } from './dnd/moveEvent.function'
+export { resizeEvent } from './dnd/resizeEvent.function'
+export type { ResizeEdge, ResizeEventArgs, ResizedEvent } from './dnd/resizeEvent.function'
 export type {
   SelectableMode,
   SelectAction,

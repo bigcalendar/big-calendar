@@ -151,6 +151,26 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
   onEventDrop?:
     | ((args: { event: TEvent; start: string; end: string; allDay: boolean }) => void)
     | undefined
+  /**
+   * Whether a given event may be resized. A string reads a boolean field; a
+   * function derives it. Omitted → every event is resizable. Read by the DnD
+   * layer to decide which events get resize handles.
+   */
+  resizableAccessor?: Accessor<TEvent, boolean> | undefined
+  /**
+   * Fired when an event is resized by dragging one of its edges. Receives the
+   * **original** event plus its **proposed** new bounds as ISO date strings; the
+   * un-dragged edge is unchanged and the duration is clamped to at least one slot.
+   *
+   * Like {@link onEventDrop} this is a *report*, not a mutation — the calendar is
+   * controlled and never changes `events` itself. Apply the bounds to your own
+   * state (optimistic update + rollback on a failed save); the original `event`
+   * is included so a revert is trivial. The handler may be `async`; the calendar
+   * does **not** await it.
+   */
+  onEventResize?:
+    | ((args: { event: TEvent; start: string; end: string; allDay: boolean }) => void)
+    | undefined
 
   // --- slot selection (picking empty time/days to create an event) ---
   // Distinct from event interaction above. Mirrors the event callbacks' shape:

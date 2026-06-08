@@ -601,6 +601,75 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
     })
   })
 
+  describe('event resize (resizeEvent)', () => {
+    const events: Event[] = [
+      { id: 1, title: 'A', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' },
+    ]
+
+    it('fires onEventResize moving the start edge to the dropped slot', () => {
+      const onEventResize = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventResize })
+      const target = '2026-06-15T08:30:00.000Z'
+      store.resizeEvent({ id: 1, edge: 'start', target })
+      expect(onEventResize).toHaveBeenCalledWith({
+        event: events[0],
+        start: target,
+        end: events[0]!.end,
+        allDay: false,
+      })
+    })
+
+    it('fires onEventResize moving the end edge to the slot end (target + step)', () => {
+      const onEventResize = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventResize, step: 30 })
+      const target = '2026-06-15T11:00:00.000Z'
+      store.resizeEvent({ id: 1, edge: 'end', target })
+      expect(onEventResize).toHaveBeenCalledWith({
+        event: events[0],
+        start: events[0]!.start,
+        end: localizer.add({ value: target, amount: 30, unit: 'minute' }),
+        allDay: false,
+      })
+    })
+
+    it('is a no-op when the id matches no event', () => {
+      const onEventResize = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventResize })
+      store.resizeEvent({ id: 999, edge: 'end', target: '2026-06-15T11:00:00.000Z' })
+      expect(onEventResize).not.toHaveBeenCalled()
+    })
+
+    it('is a no-op (no throw) when no onEventResize is configured', () => {
+      const store = createCalendarStore<Event>({ localizer, events })
+      expect(() => store.resizeEvent({ id: 1, edge: 'end', target: '2026-06-15T11:00:00.000Z' })).not.toThrow()
+    })
+  })
+
+  describe('isResizable', () => {
+    interface ResizableEvent extends Event {
+      resizable?: boolean
+    }
+    const event: ResizableEvent = { id: 1, title: 'A', start: 's', end: 'e' }
+
+    it('defaults to every event being resizable', () => {
+      const store = createCalendarStore<ResizableEvent>({ localizer })
+      expect(store.isResizable(event)).toBe(true)
+    })
+
+    it('respects a function resizableAccessor', () => {
+      const store = createCalendarStore<ResizableEvent>({ localizer, resizableAccessor: (e) => e.id !== 2 })
+      expect(store.isResizable({ ...event, id: 1 })).toBe(true)
+      expect(store.isResizable({ ...event, id: 2 })).toBe(false)
+    })
+
+    it('reads a string resizableAccessor, defaulting an unset field to resizable', () => {
+      const store = createCalendarStore<ResizableEvent>({ localizer, resizableAccessor: 'resizable' })
+      expect(store.isResizable({ ...event, resizable: false })).toBe(false)
+      // field absent → accessor resolves null → defaults to resizable
+      expect(store.isResizable(event)).toBe(true)
+    })
+  })
+
   describe('isDraggable', () => {
     interface DraggableEvent extends Event {
       draggable?: boolean

@@ -21,7 +21,9 @@ const tick = () => new Promise((resolve) => setTimeout(resolve, 0))
 const makeStore = (overrides: Partial<DndStore<{ id: number }>> = {}): DndStore<{ id: number }> => ({
   getEvent: vi.fn(({ id }) => (id === '1' ? { id: 1 } : undefined)),
   isDraggable: vi.fn(() => true),
+  isResizable: vi.fn(() => true),
   moveEvent: vi.fn(),
+  resizeEvent: vi.fn(),
   ...overrides,
 })
 
@@ -104,6 +106,41 @@ describe('bindCalendarDnd', () => {
       location: { current: { dropTargets: [{ data: { bcDropTarget: ISO } }] } },
     })
     expect(store.moveEvent).toHaveBeenCalledWith({ id: '1', target: ISO, mode: 'day' })
+  })
+
+  it('binds a resize handle as a drag source carrying its edge + the parent event id', () => {
+    const eventWithHandle = el({ 'data-bc-event': '1' })
+    const handle = el({ 'data-bc-resize': 'end' })
+    eventWithHandle.appendChild(handle)
+    root.appendChild(eventWithHandle)
+    const store = makeStore()
+    bindCalendarDnd({ root, store, mode: 'time' })
+    const handleCfg = draggableSpy.mock.calls.find((c) => c[0].element === handle)![0]
+    expect(handleCfg.getInitialData()).toEqual({ bcEventId: '1', bcResizeEdge: 'end' })
+    expect(handleCfg.canDrag()).toBe(true)
+  })
+
+  it('a resize handle is not draggable when the event is not resizable', () => {
+    const eventWithHandle = el({ 'data-bc-event': '1' })
+    const handle = el({ 'data-bc-resize': 'start' })
+    eventWithHandle.appendChild(handle)
+    root.appendChild(eventWithHandle)
+    bindCalendarDnd({ root, store: makeStore({ isResizable: vi.fn(() => false) }), mode: 'time' })
+    const handleCfg = draggableSpy.mock.calls.find((c) => c[0].element === handle)![0]
+    expect(handleCfg.canDrag()).toBe(false)
+  })
+
+  it('on a resize-handle drop, calls store.resizeEvent (not moveEvent)', () => {
+    const instant = '2026-06-16T09:30:00.000Z'
+    const store = makeStore()
+    bindCalendarDnd({ root, store, mode: 'time' })
+    const { onDrop } = monitorSpy.mock.calls[0]![0]
+    onDrop({
+      source: { data: { bcEventId: '1', bcResizeEdge: 'end' } },
+      location: { current: { dropTargets: [{ data: { bcDropTarget: instant } }] } },
+    })
+    expect(store.resizeEvent).toHaveBeenCalledWith({ id: '1', edge: 'end', target: instant })
+    expect(store.moveEvent).not.toHaveBeenCalled()
   })
 
   it('ignores a drop with no target or a non-string id', () => {

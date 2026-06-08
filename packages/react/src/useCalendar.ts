@@ -70,12 +70,15 @@ export function useCalendar<TEvent = unknown, TResource = unknown>(
       onEventMiddleClick: props.onEventMiddleClick
         ? (event, domEvent) => propsRef.current.onEventMiddleClick?.(event, domEvent)
         : undefined,
-      // Event drag-and-drop. Wrap-when-provided so the latest handler runs — a
-      // drop handler closes over the app's current `events` (for optimistic
-      // update + rollback), so calling a stale one would revert against the wrong
-      // snapshot. Add `onEventResize` here the same way when it lands.
+      // Event drag-and-drop + resize. Wrap-when-provided so the latest handler
+      // runs — a drop/resize handler closes over the app's current `events` (for
+      // optimistic update + rollback), so calling a stale one would revert against
+      // the wrong snapshot. Every new CalendarConfig callback must be wrapped here.
       onEventDrop: props.onEventDrop
         ? (args) => propsRef.current.onEventDrop?.(args)
+        : undefined,
+      onEventResize: props.onEventResize
+        ? (args) => propsRef.current.onEventResize?.(args)
         : undefined,
       // Slot selection. Wrap only when provided so the store doesn't wire the
       // callbacks (and their per-move translation) for calendars that never use them.

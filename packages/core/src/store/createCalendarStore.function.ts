@@ -2,6 +2,7 @@ import { batch, computed, effect, signal } from '@preact/signals-core'
 import type { ReadonlySignal } from '@preact/signals-core'
 import { resolveAccessors, wrapAccessor } from '../accessors/accessors.function'
 import { moveEvent } from '../dnd/moveEvent.function'
+import { resizeEvent } from '../dnd/resizeEvent.function'
 import { BUILTIN_VIEWS, Views } from '../constants/views.constant'
 import { createSelection } from '../selection/selection.function'
 import type { SelectionMode, SelectionRange } from '../selection/selection.type'
@@ -45,6 +46,10 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   const getDraggable = config.draggableAccessor ? wrapAccessor(config.draggableAccessor) : null
   const isDraggable = (event: TEvent): boolean =>
     getDraggable ? (getDraggable(event) ?? true) : true
+  // Resolved resize predicate: every event is resizable unless an accessor opts out.
+  const getResizable = config.resizableAccessor ? wrapAccessor(config.resizableAccessor) : null
+  const isResizable = (event: TEvent): boolean =>
+    getResizable ? (getResizable(event) ?? true) : true
   const getEventId = wrapAccessor(accessors.id)
   const findEvent = (id: EventId): TEvent | undefined =>
     events.value.find((candidate) => {
@@ -308,6 +313,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     selectable,
     longPressThreshold,
     isDraggable,
+    isResizable,
 
     navigate({ direction, date: target }) {
       const next = navigateDate({
@@ -361,6 +367,29 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
         mode,
       })
       drop({ event, ...moved })
+    },
+
+    resizeEvent({ id, edge, target }) {
+      const report = config.onEventResize
+      if (report == null) return
+      const getStart = wrapAccessor(accessors.start)
+      const getEnd = wrapAccessor(accessors.end)
+      const getAllDay = wrapAccessor(accessors.allDay)
+      const event = findEvent(id)
+      if (event == null) return
+      const start = getStart(event)
+      const end = getEnd(event)
+      if (start == null || end == null) return
+      const resized = resizeEvent({
+        localizer,
+        start,
+        end,
+        allDay: getAllDay(event) ?? false,
+        edge,
+        target,
+        step,
+      })
+      report({ event, ...resized })
     },
 
     eventHandlers,

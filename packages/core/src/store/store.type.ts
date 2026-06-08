@@ -11,6 +11,7 @@ import type {
 } from '../selection/selection.type'
 import type { CalendarViewModel } from '../views/viewModel.type'
 import type { MoveMode } from '../dnd/moveEvent.function'
+import type { ResizeEdge } from '../dnd/resizeEvent.function'
 
 /**
  * The store's slot-selection surface: the FSM's live signals (in slot-index
@@ -167,6 +168,12 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    * sources, so the predicate stays defined once in core.
    */
   readonly isDraggable: (event: TEvent) => boolean
+  /**
+   * Whether a given event may be resized (`config.resizableAccessor`, default
+   * `() => true`). The DnD layer reads it to decide which events get resize
+   * handles, so the predicate stays defined once in core.
+   */
+  readonly isResizable: (event: TEvent) => boolean
 
   // --- actions (named-parameter objects, per Appendix A) ---
   /** Move the focus date: PREV/NEXT step by view; TODAY resets to now; DATE jumps. */
@@ -191,6 +198,14 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    * store does not mutate `events` — apply the change to your own data.
    */
   moveEvent(args: { id: EventId; target: string; mode: MoveMode }): void
+  /**
+   * Resize an event by dragging one edge. Looks the event up by id, recomputes
+   * its bounds via {@link resizeEvent} (`edge` picks which end snaps to the
+   * dropped slot `target`; duration clamped to one slot), and fires
+   * `onEventResize` with the new ISO bounds. A no-op when the id matches no event
+   * or no `onEventResize` is configured. The store does not mutate `events`.
+   */
+  resizeEvent(args: { id: EventId; edge: ResizeEdge; target: string }): void
   /**
    * Drill into a clicked date: resolve the target view (per `drilldownView` /
    * `getDrilldownView`) and either delegate to `onDrillDown` or switch view +
