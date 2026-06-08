@@ -247,6 +247,7 @@ function TimeGridView<TEvent = unknown>() {
                     className="bc-time-slot"
                     data-date={column.day}
                     data-slot-index={colIndex * grid.slotCount + slotIndex}
+                    data-bc-instant={column.slots[slotIndex]}
                     tabIndex={timeRoving.cellTabIndex(colIndex * grid.slotCount + slotIndex)}
                     aria-describedby={descriptionIds.selection}
                   />

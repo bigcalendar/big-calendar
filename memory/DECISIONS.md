@@ -697,3 +697,15 @@ How move/resize interact with async persistence + rollback. Cutter chose **fully
 - **Rejected — calendar-managed optimistic state + auto-revert:** would force the calendar to hold a shadow copy of event data, breaking the segmentation (core owns calendar *logic/geometry/interaction state*; the developer owns *event data + persistence*) kept everywhere else.
 - **Deliverable (docs only):** new `React/Drag and drop/Guide` MDX documenting the controlled async pattern (optimistic update + rollback, novice tone) + a runnable `AsyncSaveWithRollback` story (a checkbox forces the next save to fail → the event reverts). The same pattern will cover `onEventResize` when resize lands.
 - **Gates:** core + react typecheck/test/lint/build ✓; build-storybook react ✓.
+
+## 2026-06-08 — Phase 5 task 5b: time-grid (`'time'`) move = slot-instant DOM attr
+
+How the deferred-from-5a time-grid move was wired, keeping the segmentation 5a established.
+
+- **Decision — the view exposes the slot instant; the DnD layer reads it; core math is unchanged.** Each time-grid slot cell already rendered `data-date` (its day) for selection; for `'time'` move it now also carries **`data-bc-instant`** (the slot's start instant). `moveEvent`'s `'time'` mode (snap start to target + preserve duration) already existed from 5a — **no core change**. The DnD binder's drop attribute is **mode-keyed**: `'day'`→`data-date`, `'time'`→`data-bc-instant`. **Why:** the slot instant is **geometry the view already computes** (gutter labels are slot times; `createSlotMetrics().slots`), so the view emits it and core stays the single source of slot-time math — no slot-decode logic duplicated into the dnd package or threaded as `slotCount` like selection.
+- **Rejected — pass `{slot,date,slotCount}` to a store decode (selection-style).** Would couple the framework-neutral binder to slot-index semantics and re-implement the slot→instant decode that `createSlotMetrics` already owns. The flat `data-bc-instant` string keeps the binder a dumb DOM→target mapper.
+- **`bcDropDate`→`bcDropTarget`** (the drop's Pragmatic data key) — it now carries a day *or* an instant.
+- **All-day row in `'time'` mode is not a drop target** (it has only `data-date`), so timed↔all-day promotion stays deferred (5d) — falls out naturally from the mode-keyed attribute.
+- **`moveModeForView`** → `'time'` for WEEK/WORK_WEEK/DAY (was month-only); agenda still `null`.
+- **Perf note (follow-up):** every slot cell becomes a Pragmatic drop target (~slotCount×dayCount, e.g. 48×7). Acceptable for now; a column-level drop target + pointer-Y decode is a later optimization if needed.
+- **Gates:** dnd 9 + react 161 tests; typecheck/test/lint/build ✓ for dnd+react; build-storybook react ✓. New `WeekEventMove` story. **No browser run here** (jsdom can't fire native drag) — verify the time-grid drag visually in Storybook.

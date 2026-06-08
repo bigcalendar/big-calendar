@@ -73,6 +73,8 @@ export interface TimeColumn<TEvent> {
   backgroundEvents: TimeBackgroundEvent<TEvent>[]
   /** Fraction `0..1` down the column for the now line, or `null` when not today / out of window. */
   nowTop: number | null
+  /** Start instant of each slot row (one per `slotCount`), for drag-to-move drop targets. */
+  slots: string[]
 }
 
 /** One all-day event segment across the header row. */
@@ -186,20 +188,19 @@ export default function useTimeGrid<TEvent>(): TimeGrid<TEvent> | null {
         }),
       )
 
+      // One metrics build per column: its slot-start instants (drop targets) and,
+      // for today, the now-line position. `slots` has numSlots+1 entries (the last
+      // is the window end); drop the tail so it matches the slotCount hit cells.
+      const metrics = createSlotMetrics({ localizer, min: column.min, max: column.max, step, timeslots })
+      const slots = metrics.slots.slice(0, metrics.numSlots)
+
       let nowTop: number | null = null
       if (isToday) {
-        const metrics = createSlotMetrics({
-          localizer,
-          min: column.min,
-          max: column.max,
-          step,
-          timeslots,
-        })
         const top = metrics.getCurrentTimePosition(now)
         if (top >= 0 && top <= 1) nowTop = top
       }
 
-      return { key: String(colIndex), day: column.date, isToday, events, backgroundEvents, nowTop }
+      return { key: String(colIndex), day: column.date, isToday, events, backgroundEvents, nowTop, slots }
     })
 
     const segments: TimeAllDaySegment<TEvent>[] = allDay.levels.flatMap((level, rowIndex) =>

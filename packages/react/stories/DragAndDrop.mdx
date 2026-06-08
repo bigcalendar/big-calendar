@@ -42,8 +42,10 @@ function DraggableCalendar() {
 }
 ```
 
-`useCalendarDnd` must be **inside** a `CalendarProvider`. Today it enables moving in the
-**month** view; the time-grid views are coming in a later release.
+`useCalendarDnd` must be **inside** a `CalendarProvider`. It enables moving in the
+**month** view (whole-day shifts) and the **time-grid** week / day / work-week views
+(the start snaps to the dropped slot, keeping the event's duration). The agenda view has
+no move.
 
 ## What `onEventDrop` gives you
 
@@ -122,6 +124,6 @@ function. Events that return `false` can't be picked up:
 
 ## Not built yet
 
-Moving in the **time-grid** (week/day) views, **resizing**, **drag-from-outside**, and
-**keyboard-driven** drag are planned follow-ups. Resizing will use the same shape — an
-`onEventResize` report you apply (and roll back) exactly like `onEventDrop`.
+**Resizing**, **drag-from-outside**, and **keyboard-driven** drag are planned follow-ups.
+Resizing will use the same shape — an `onEventResize` report you apply (and roll back)
+exactly like `onEventDrop`.

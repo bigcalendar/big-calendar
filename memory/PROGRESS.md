@@ -53,6 +53,30 @@ calendar reports the proposed change; the dev owns persist + optimistic update +
 - Same pattern will cover `onEventResize` when resize (5c) lands.
 - **Gates:** core + react typecheck/test/lint/build ✓; build-storybook react ✓.
 
+### Phase 5 — Task 5b: time-grid (`'time'`) event MOVE (2026-06-08) ✓ (uncommitted at time of writing)
+Extends 5a's move to the time-grid (week / day / work-week) views: a drop snaps the event's **start** to
+the dropped slot and keeps its duration. **No core change** — `moveEvent`'s `'time'` mode (snap start +
+preserve duration) already existed from 5a; this slice exposed the slot instant to the DnD layer and
+turned the views on.
+- **dnd** — [bindCalendarDnd](packages/dnd/src/bindCalendarDnd.function.ts): the drop-target attribute is
+  now **mode-keyed** (`DROP_ATTR: Record<MoveMode,string>`): `'day'`→`data-date` (month + all-day row),
+  `'time'`→`data-bc-instant` (time-slot cells). The drop's data key was renamed `bcDropDate`→`bcDropTarget`
+  (it now carries either a day or an instant). In `'time'` mode the all-day cells (only `data-date`) are
+  **not** drop targets → timed↔all-day promotion stays deferred (5d). +1 test (9 total).
+- **react** — [TimeGridView](packages/react/src/TimeGridView/TimeGridView.component.tsx) stamps each
+  `.bc-time-slot` with `data-bc-instant={column.slots[slotIndex]}`. [useTimeGrid](packages/react/src/TimeGridView/hooks/useTimeGrid.memo.ts)
+  resolves a per-column `slots: string[]` (slot-start instants) from one `createSlotMetrics` per column
+  (also reused for `nowTop`; `slots.slice(0, numSlots)` drops the trailing window-end). The view computes
+  the instant (geometry it already owns); core's slotMetrics is the single source of the slot times.
+  [useCalendarDnd](packages/react/src/dnd/useCalendarDnd.ts) `moveModeForView` → `'time'` for
+  WEEK/WORK_WEEK/DAY (was month-only); agenda still `null`. Tests reworked (binds time mode, rebinds on
+  mode change month→week, agenda = no-bind).
+- **stories/docs** — `WeekEventMove` story (the `MonthDragDemo` helper generalized to `DragDemo({view})`);
+  DnD `.mdx` + story meta updated (time-grid now supported; "Not built yet" trimmed to resize/outside/keyboard).
+- **Gates:** dnd + react typecheck/test/lint/build ✓ (dnd 9, react 161); build-storybook react ✓. Per-file
+  bar enforced green. **No browser run here** — jsdom can't fire native drag; the binder is tested via the
+  mocked Pragmatic adapter, so verify the actual time-grid drag visually in Storybook (`WeekEventMove`).
+
 ### Phase 4 — Slot/event handler separation + move-to-core (Cutter, 2026-06-07) ✓ (uncommitted at time of writing)
 Cutter's separation-of-concerns refactor. **Slot** and **event** interaction are now two distinct,
 focused concerns, both **core-owned** (framework-agnostic), with the React layer reduced to a dumb
@@ -371,10 +395,10 @@ See [[bigcal-selection-storybook-phase4]] (obligation satisfied).
 
 ## ⚠ NEXT — Phase 5 (DnD) build order
 
-- ✅ **5a — event MOVE end-to-end (month/day-mode)** — DONE (see the Task 5a entry up top; uncommitted at
-  time of writing). core math + `@big-calendar/dnd` controller + `useCalendarDnd` + stories.
-- **5b — time-grid (`'time'`) move** — expose the slot instant on time-grid drop cells (step/dayStartMin
-  decode) so a drop snaps to the slot; flip `moveModeForView` to return `'time'` for week/day/work_week.
+- ✅ **5a — event MOVE end-to-end (month/day-mode)** — DONE (Task 5a entry up top; pushed `d1e4890`).
+  core math + `@big-calendar/dnd` controller + `useCalendarDnd` + stories.
+- ✅ **5b — time-grid (`'time'`) move** — DONE (Task 5b entry up top). Slot-instant drop targets via
+  `data-bc-instant`; `moveModeForView` → `'time'` for week/day/work_week. **NEXT slice = 5c.**
 - **5c — event RESIZE** — `onEventResize` + `resizeEvent` core math + `resizableAccessor`; dnd resize
   handles (drag the top/bottom edge); `touch-action: none` on the handles (§7.7 deferred bit).
 - **5d — drop-from-outside / drag-from-outside** — `onDropFromOutside`, `dragFromOutsideItem`,

@@ -25,10 +25,21 @@ export interface DndStore<TEvent> {
  */
 const EVENT_ATTR = 'data-bc-event'
 /**
- * Attribute on a drop target (a month day cell today) carrying the target date
- * as an ISO string — the same `data-date` the grid uses for slot selection.
+ * Drop-target attribute carrying the move target, by {@link MoveMode}:
+ *
+ * - `'day'` reads `data-date` — the day cell's ISO day (month grid + all-day
+ *   row), the same attribute the grid uses for slot selection; core shifts the
+ *   event by whole days.
+ * - `'time'` reads `data-bc-instant` — the time-grid slot's start instant; core
+ *   snaps the event's start to it and keeps its duration.
+ *
+ * In `'time'` mode the all-day cells (which carry only `data-date`) are not drop
+ * targets — timed↔all-day promotion is a later slice.
  */
-const DROP_ATTR = 'data-date'
+const DROP_ATTR: Record<MoveMode, string> = {
+  day: 'data-date',
+  time: 'data-bc-instant',
+}
 
 /** Options for {@link bindCalendarDnd}. */
 export interface BindCalendarDndOptions<TEvent> {
@@ -37,9 +48,9 @@ export interface BindCalendarDndOptions<TEvent> {
   /** The store whose `moveEvent` action receives the committed drop. */
   store: DndStore<TEvent>
   /**
-   * How a drop's `data-date` is interpreted by `store.moveEvent`. `'day'` for the
-   * month grid (whole-day shift). Time-grid (`'time'`) drops — which need the
-   * slot instant, not just the day — are wired in a later slice.
+   * Which drop attribute to read and how `store.moveEvent` interprets it. `'day'`
+   * (month grid) reads `data-date` for a whole-day shift; `'time'` (week / day /
+   * work-week) reads `data-bc-instant` and snaps the event's start to that slot.
    */
   mode: MoveMode
 }
@@ -47,15 +58,17 @@ export interface BindCalendarDndOptions<TEvent> {
 /**
  * Wire event drag-to-move for one calendar, framework-neutrally, on top of
  * Pragmatic Drag and Drop. It binds every `[data-bc-event]` element under `root`
- * as a drag source (gated by `store.isDraggable`) and every `[data-date]`
- * element as a drop target, then on drop calls `store.moveEvent` — core owns the
- * date-math, so every adapter behaves identically. A `MutationObserver` keeps
- * the bindings in sync as the view re-renders.
+ * as a drag source (gated by `store.isDraggable`) and every drop-target cell (by
+ * `mode` — `data-date` for `'day'`, `data-bc-instant` for `'time'`) as a drop
+ * target, then on drop calls `store.moveEvent` — core owns the date-math, so
+ * every adapter behaves identically. A `MutationObserver` keeps the bindings in
+ * sync as the view re-renders.
  *
  * Returns a cleanup that disconnects the observer, stops the drop monitor, and
  * releases every per-element binding.
  */
 export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOptions<TEvent>): () => void {
+  const dropAttr = DROP_ATTR[mode]
   // Per-element Pragmatic DnD cleanups, so re-scans never double-bind and removed
   // nodes are released.
   const bindings = new Map<Element, () => void>()
@@ -83,14 +96,14 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
       element,
       dropTargetForElements({
         element,
-        getData: () => ({ bcDropDate: element.getAttribute(DROP_ATTR) }),
+        getData: () => ({ bcDropTarget: element.getAttribute(dropAttr) }),
       }),
     )
   }
 
   const scan = (): void => {
     root.querySelectorAll<HTMLElement>(`[${EVENT_ATTR}]`).forEach(bindDraggable)
-    root.querySelectorAll<HTMLElement>(`[${DROP_ATTR}]`).forEach(bindDropTarget)
+    root.querySelectorAll<HTMLElement>(`[${dropAttr}]`).forEach(bindDropTarget)
   }
   scan()
 
@@ -109,7 +122,7 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
   const stopMonitor = monitorForElements({
     onDrop({ source, location }) {
       const id = source.data.bcEventId
-      const target = location.current.dropTargets[0]?.data.bcDropDate
+      const target = location.current.dropTargets[0]?.data.bcDropTarget
       if (typeof id !== 'string' || typeof target !== 'string') return
       store.moveEvent({ id, target, mode })
     },

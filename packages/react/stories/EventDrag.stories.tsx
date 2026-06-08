@@ -1,4 +1,5 @@
 import { Views } from '@big-calendar/core'
+import type { ViewKey } from '@big-calendar/core'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useRef, useState } from 'react'
 import { Calendar, useCalendarDnd } from '../src'
@@ -25,12 +26,21 @@ function DraggableCalendar() {
  * Holds the event list in React state. The calendar never mutates your data — it
  * only *tells* you where an event was dropped via `onEventDrop`, and you apply
  * the new bounds. Here we map the moved event to its recomputed `start`/`end`.
+ * `view` switches the surface: the **month** grid moves by whole days; the
+ * **time-grid** views snap the event's start to the dropped slot (its duration
+ * is preserved). The wiring is identical — only `useCalendarDnd`'s mode differs.
  */
-function MonthDragDemo({ draggableAccessor }: { draggableAccessor?: (e: DemoEvent) => boolean }) {
+function DragDemo({
+  view = Views.MONTH,
+  draggableAccessor,
+}: {
+  view?: ViewKey
+  draggableAccessor?: (e: DemoEvent) => boolean
+}) {
   const [events, setEvents] = useState<DemoEvent[]>(demoEvents)
   return (
     <CalendarStage
-      defaultView={Views.MONTH}
+      defaultView={view}
       events={events}
       draggableAccessor={draggableAccessor}
       onEventDrop={({ event, start, end, allDay }) =>
@@ -109,7 +119,7 @@ const meta: Meta = {
     docs: {
       description: {
         component:
-          'Drag an event to a different day in the month grid to move it. The drag is powered by the optional `@big-calendar/dnd` package, wired with the `useCalendarDnd` hook. Core does the date-math (a whole-day shift that keeps the time of day) and reports the result through `onEventDrop`; your code applies it to the event data. Time-grid (week/day) move is a later slice.',
+          'Drag an event to move it — to another day in the month grid, or onto another slot in the time-grid (week/day) views. The drag is powered by the optional `@big-calendar/dnd` package, wired with the `useCalendarDnd` hook. Core does the date-math (month = a whole-day shift that keeps the time of day; time-grid = snap the start to the dropped slot, keep the duration) and reports the result through `onEventDrop`; your code applies it to the event data. Resize, drop-from-outside, and keyboard DnD are later slices.',
       },
     },
   },
@@ -119,7 +129,17 @@ type Story = StoryObj
 
 /** Drag any event onto another day; its time of day is preserved. */
 export const MonthEventMove: Story = {
-  render: () => <MonthDragDemo />,
+  render: () => <DragDemo />,
+}
+
+/**
+ * Time-grid (week) move: drag a timed event onto another slot — its start snaps
+ * to that slot and its duration is kept. Drag across day columns to move it to a
+ * different day at the same kind of time. (All-day → timed promotion is a later
+ * slice, so the all-day row isn't a drop target yet.)
+ */
+export const WeekEventMove: Story = {
+  render: () => <DragDemo view={Views.WEEK} />,
 }
 
 /**
@@ -127,7 +147,7 @@ export const MonthEventMove: Story = {
  * "Offsite" event (id 4) is locked in place; every other event still moves.
  */
 export const LockedEvent: Story = {
-  render: () => <MonthDragDemo draggableAccessor={(e) => e.id !== 4} />,
+  render: () => <DragDemo draggableAccessor={(e) => e.id !== 4} />,
 }
 
 /**

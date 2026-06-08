@@ -1,4 +1,5 @@
 import { Views } from '@big-calendar/core'
+import type { ViewKey } from '@big-calendar/core'
 import { render } from '@testing-library/react'
 import { useRef } from 'react'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -40,7 +41,7 @@ describe.each(LOCALIZER_CASES)('useCalendarDnd [$name]', ({ create }) => {
     cleanupSpy.mockClear()
   })
 
-  function renderHook(props: { view?: typeof Views.MONTH | typeof Views.WEEK; attach?: boolean } = {}) {
+  function renderHook(props: { view?: ViewKey; attach?: boolean } = {}) {
     const { view = Views.MONTH, attach = true } = props
     return render(
       <CalendarProvider<Event> localizer={localizer} defaultDate={focus} view={view}>
@@ -55,8 +56,14 @@ describe.each(LOCALIZER_CASES)('useCalendarDnd [$name]', ({ create }) => {
     expect(bindSpy.mock.calls[0]![0]).toMatchObject({ root: getByTestId('root'), mode: 'day' })
   })
 
-  it('does not bind for a view without move support (time grid)', () => {
-    renderHook({ view: Views.WEEK })
+  it('binds the controller in time mode for the time-grid views', () => {
+    const { getByTestId } = renderHook({ view: Views.WEEK })
+    expect(bindSpy).toHaveBeenCalledTimes(1)
+    expect(bindSpy.mock.calls[0]![0]).toMatchObject({ root: getByTestId('root'), mode: 'time' })
+  })
+
+  it('does not bind for a view without move support (agenda)', () => {
+    renderHook({ view: Views.AGENDA })
     expect(bindSpy).not.toHaveBeenCalled()
   })
 
@@ -65,11 +72,24 @@ describe.each(LOCALIZER_CASES)('useCalendarDnd [$name]', ({ create }) => {
     expect(bindSpy).not.toHaveBeenCalled()
   })
 
-  it('releases the binding and does not rebind when the view loses support', () => {
+  it('rebinds with the new mode when the view changes move mode', () => {
     const { rerender } = renderHook({ view: Views.MONTH })
     expect(bindSpy).toHaveBeenCalledTimes(1)
     rerender(
       <CalendarProvider<Event> localizer={localizer} defaultDate={focus} view={Views.WEEK}>
+        <Harness />
+      </CalendarProvider>,
+    )
+    expect(cleanupSpy).toHaveBeenCalledTimes(1)
+    expect(bindSpy).toHaveBeenCalledTimes(2)
+    expect(bindSpy.mock.calls[1]![0]).toMatchObject({ mode: 'time' })
+  })
+
+  it('releases the binding and does not rebind when the view loses support', () => {
+    const { rerender } = renderHook({ view: Views.MONTH })
+    expect(bindSpy).toHaveBeenCalledTimes(1)
+    rerender(
+      <CalendarProvider<Event> localizer={localizer} defaultDate={focus} view={Views.AGENDA}>
         <Harness />
       </CalendarProvider>,
     )

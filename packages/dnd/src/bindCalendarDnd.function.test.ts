@@ -80,7 +80,19 @@ describe('bindCalendarDnd', () => {
     expect(dropSpy).toHaveBeenCalledTimes(1)
     const cfg = dropSpy.mock.calls[0]![0]
     expect(cfg.element).toBe(cellEl)
-    expect(cfg.getData()).toEqual({ bcDropDate: ISO })
+    expect(cfg.getData()).toEqual({ bcDropTarget: ISO })
+  })
+
+  it("in 'time' mode binds [data-bc-instant] cells and ignores day-only cells", () => {
+    const instant = '2026-06-16T09:30:00.000Z'
+    const slotEl = el({ 'data-bc-instant': instant })
+    root.appendChild(slotEl)
+    bindCalendarDnd({ root, store: makeStore(), mode: 'time' })
+    // Only the slot cell is a drop target — the plain `data-date` cell is not.
+    expect(dropSpy).toHaveBeenCalledTimes(1)
+    const cfg = dropSpy.mock.calls[0]![0]
+    expect(cfg.element).toBe(slotEl)
+    expect(cfg.getData()).toEqual({ bcDropTarget: instant })
   })
 
   it('on drop, calls store.moveEvent with the id, target and mode', () => {
@@ -89,7 +101,7 @@ describe('bindCalendarDnd', () => {
     const { onDrop } = monitorSpy.mock.calls[0]![0]
     onDrop({
       source: { data: { bcEventId: '1' } },
-      location: { current: { dropTargets: [{ data: { bcDropDate: ISO } }] } },
+      location: { current: { dropTargets: [{ data: { bcDropTarget: ISO } }] } },
     })
     expect(store.moveEvent).toHaveBeenCalledWith({ id: '1', target: ISO, mode: 'day' })
   })
@@ -101,7 +113,7 @@ describe('bindCalendarDnd', () => {
     onDrop({ source: { data: { bcEventId: '1' } }, location: { current: { dropTargets: [] } } })
     onDrop({
       source: { data: { bcEventId: 42 } },
-      location: { current: { dropTargets: [{ data: { bcDropDate: ISO } }] } },
+      location: { current: { dropTargets: [{ data: { bcDropTarget: ISO } }] } },
     })
     expect(store.moveEvent).not.toHaveBeenCalled()
   })
