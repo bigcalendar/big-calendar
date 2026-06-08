@@ -3,10 +3,6 @@ import {
   dropTargetForElements,
   monitorForElements,
 } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
-import {
-  dropTargetForExternal,
-  monitorForExternal,
-} from '@atlaskit/pragmatic-drag-and-drop/external/adapter'
 import type { EventId, EventTransfer, MoveMode, ResizeEdge } from '@big-calendar/core'
 
 /**
@@ -152,19 +148,22 @@ export interface BindCalendarDndOptions<TEvent> {
  * `MutationObserver` keeps the bindings in sync as the view re-renders. Resize
  * handles are only rendered in the time grid, so in `'day'` mode none are found.
  *
- * It also wires drag/drop across the calendar boundary:
+ * It also wires drag/drop across the calendar boundary (time grid only this
+ * slice; month is later):
  *
- * - **drop-from-outside** (time grid only this slice): each slot is also a drop
- *   target for outside items, from either a Pragmatic `draggable` palette item
- *   (carrying {@link ExternalDragPayload} as element data) or a plain native
- *   `draggable="true"` element (carrying it as JSON on the {@link EXTERNAL_MIME}
- *   type). A drop calls `store.dropExternal`;
+ * - **drop-from-outside** from a same-page palette *outside the grid*, via two
+ *   transports: a Pragmatic `draggable` palette item (carrying
+ *   {@link ExternalDragPayload} as element data, handled by the element monitor
+ *   with a true-extent preview), or a plain native `draggable="true"` element
+ *   (carrying it as JSON on the {@link EXTERNAL_MIME} type, handled by delegated
+ *   HTML5 `dragover`/`drop` listeners on the root with a single-slot preview).
+ *   Either way a drop calls `store.dropExternal`;
  * - **drag-out** (every mode): each event also exposes its data on the native
  *   `dataTransfer` (so an external HTML5 dropzone can read it) and reports
  *   `store.eventDragStart` when its drag begins.
  *
- * Returns a cleanup that disconnects the observer, stops both monitors, and
- * releases every per-element binding.
+ * Returns a cleanup that disconnects the observer, stops the monitor, removes the
+ * native listeners, and releases every per-element binding.
  */
 export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOptions<TEvent>): () => void {
   const dropAttr = DROP_ATTR[mode]
@@ -223,23 +222,13 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
 
   const bindDropTarget = (element: HTMLElement): void => {
     if (bindings.has(element)) return
-    const getData = (): { bcDropTarget: string | null } => ({ bcDropTarget: element.getAttribute(dropAttr) })
-    // A slot may carry two registrations (internal move/resize + native outside);
-    // compose their cleanups under the one element key so re-scans stay correct.
-    const cleanups = [dropTargetForElements({ element, getData })]
-    if (externalEnabled) {
-      cleanups.push(
-        dropTargetForExternal({
-          element,
-          // Only our outside items — ignore unrelated native drags (files, text).
-          canDrop: ({ source }) => source.types.includes(EXTERNAL_MIME),
-          getData,
-        }),
-      )
-    }
-    bindings.set(element, () => {
-      for (const cleanup of cleanups) cleanup()
-    })
+    bindings.set(
+      element,
+      dropTargetForElements({
+        element,
+        getData: () => ({ bcDropTarget: element.getAttribute(dropAttr) }),
+      }),
+    )
   }
 
   const scan = (): void => {
@@ -316,43 +305,75 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
     },
   })
 
-  // Native HTML5 drag-from-outside. The element monitor above can't see plain
-  // `draggable="true"` sources, so a second monitor on the external adapter
-  // handles them. Per the HTML5 spec the payload is in protected mode during the
-  // drag (only the media *types* are visible), so the live preview can show only
-  // a single landing slot until the drop reveals the duration.
-  const stopExternalMonitor = externalEnabled
-    ? monitorForExternal({
-        canMonitor: ({ source }) => source.types.includes(EXTERNAL_MIME),
-        onDropTargetChange({ location }) {
-          const target = location.current.dropTargets[0]?.data.bcDropTarget
-          if (typeof target !== 'string') {
-            store.clearDragPreview()
-            return
-          }
-          // No duration available mid-drag → single-slot preview.
-          store.previewExternal({ target })
-        },
-        onDrop({ source, location }) {
-          const target = location.current.dropTargets[0]?.data.bcDropTarget
-          if (typeof target !== 'string') {
-            store.clearDragPreview()
-            return
-          }
-          const payload = parseExternalPayload(source.getStringData(EXTERNAL_MIME))
-          store.dropExternal({
-            target,
-            durationMinutes: payload?.durationMinutes,
-            allDay: payload?.allDay,
-          })
-        },
-      })
-    : null
+  // Native HTML5 drag-from-outside (a plain `draggable="true"` palette item on the
+  // same page, *outside the grid*). Pragmatic can't help here: its element adapter
+  // only tracks its own `draggable()` sources, and its *external* adapter means
+  // "from outside the browser window" (files, other tabs) — it explicitly ignores
+  // drags that started inside the document. So we attach plain delegated HTML5
+  // listeners to the root: find the hovered slot via `closest`, gate on our MIME,
+  // and `preventDefault` to accept the drop. Per the HTML5 spec the payload is in
+  // protected mode during the drag (only media *types* are readable), so the live
+  // preview is a single landing slot until the drop reveals the duration. Wired
+  // for `'time'` only (month drop-from-outside is a later slice).
+  const carriesPayload = (event: DragEvent): boolean =>
+    event.dataTransfer != null && Array.from(event.dataTransfer.types).includes(EXTERNAL_MIME)
+  const slotInstant = (event: DragEvent): string | null =>
+    (event.target as Element | null)?.closest<HTMLElement>(`[${dropAttr}]`)?.getAttribute(dropAttr) ?? null
+
+  // Only re-set the preview when the hovered slot changes (dragover fires rapidly).
+  let lastPreviewInstant: string | null = null
+  const onNativeDragOver = (event: DragEvent): void => {
+    if (!carriesPayload(event)) return
+    const target = slotInstant(event)
+    if (target == null) {
+      if (lastPreviewInstant !== null) {
+        store.clearDragPreview()
+        lastPreviewInstant = null
+      }
+      return
+    }
+    // Accept the drop on this slot (and show the copy cursor).
+    event.preventDefault()
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy'
+    if (target !== lastPreviewInstant) {
+      store.previewExternal({ target }) // single-slot highlight at the hovered slot
+      lastPreviewInstant = target
+    }
+  }
+  const onNativeDrop = (event: DragEvent): void => {
+    if (!carriesPayload(event)) return
+    lastPreviewInstant = null
+    const target = slotInstant(event)
+    if (target == null) {
+      store.clearDragPreview()
+      return
+    }
+    event.preventDefault()
+    const payload = parseExternalPayload(event.dataTransfer?.getData(EXTERNAL_MIME) ?? null)
+    store.dropExternal({ target, durationMinutes: payload?.durationMinutes, allDay: payload?.allDay })
+  }
+  const onNativeDragLeave = (event: DragEvent): void => {
+    // Clear once the pointer leaves the root entirely (not on inner-element hops).
+    const to = event.relatedTarget as Node | null
+    if (to == null || !root.contains(to)) {
+      lastPreviewInstant = null
+      store.clearDragPreview()
+    }
+  }
+  if (externalEnabled) {
+    root.addEventListener('dragover', onNativeDragOver)
+    root.addEventListener('drop', onNativeDrop)
+    root.addEventListener('dragleave', onNativeDragLeave)
+  }
 
   return () => {
     observer.disconnect()
     stopMonitor()
-    stopExternalMonitor?.()
+    if (externalEnabled) {
+      root.removeEventListener('dragover', onNativeDragOver)
+      root.removeEventListener('drop', onNativeDrop)
+      root.removeEventListener('dragleave', onNativeDragLeave)
+    }
     store.clearDragPreview()
     for (const release of bindings.values()) release()
     bindings.clear()

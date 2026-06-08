@@ -4,24 +4,38 @@ import { bindCalendarDnd, type DndStore } from './bindCalendarDnd.function'
 // The Pragmatic DnD element adapter drives native drag events, which jsdom does
 // not implement. Mock it: each registrar records its config (so the test can
 // invoke the closures) and returns a cleanup spy.
-const { draggableSpy, dropSpy, monitorSpy, dropExtSpy, monitorExtSpy } = vi.hoisted(() => ({
+const { draggableSpy, dropSpy, monitorSpy } = vi.hoisted(() => ({
   draggableSpy: vi.fn(),
   dropSpy: vi.fn(),
   monitorSpy: vi.fn(),
-  dropExtSpy: vi.fn(),
-  monitorExtSpy: vi.fn(),
 }))
 vi.mock('@atlaskit/pragmatic-drag-and-drop/element/adapter', () => ({
   draggable: draggableSpy,
   dropTargetForElements: dropSpy,
   monitorForElements: monitorSpy,
 }))
-vi.mock('@atlaskit/pragmatic-drag-and-drop/external/adapter', () => ({
-  dropTargetForExternal: dropExtSpy,
-  monitorForExternal: monitorExtSpy,
-}))
 
 const ISO = '2026-06-16T00:00:00.000Z'
+const EXTERNAL_MIME = 'application/x-bigcal-external'
+
+// Dispatch a synthetic native drag event with a stub `dataTransfer` (jsdom has no
+// real DataTransfer). Dispatched on `on` so delegation's `event.target.closest`
+// resolves from there; bubbles up to the root listeners.
+const fireDrag = (
+  type: 'dragover' | 'drop' | 'dragleave',
+  opts: { on: HTMLElement; types?: string[]; data?: Record<string, string>; relatedTarget?: Node | null },
+): Event => {
+  const event = new Event(type, { bubbles: true, cancelable: true })
+  Object.defineProperty(event, 'dataTransfer', {
+    configurable: true,
+    value: { types: opts.types ?? [], getData: (t: string) => opts.data?.[t] ?? '', dropEffect: 'none' },
+  })
+  if ('relatedTarget' in opts) {
+    Object.defineProperty(event, 'relatedTarget', { configurable: true, value: opts.relatedTarget ?? null })
+  }
+  opts.on.dispatchEvent(event)
+  return event
+}
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 const makeStore = (overrides: Partial<DndStore<{ id: number }>> = {}): DndStore<{ id: number }> => ({
@@ -56,8 +70,6 @@ describe('bindCalendarDnd', () => {
     draggableSpy.mockReset().mockImplementation(() => vi.fn())
     dropSpy.mockReset().mockImplementation(() => vi.fn())
     monitorSpy.mockReset().mockImplementation(() => vi.fn())
-    dropExtSpy.mockReset().mockImplementation(() => vi.fn())
-    monitorExtSpy.mockReset().mockImplementation(() => vi.fn())
     document.body.innerHTML = ''
     root = document.createElement('div')
     eventEl = el({ 'data-bc-event': '1' })
@@ -260,30 +272,8 @@ describe('bindCalendarDnd', () => {
     })
   })
 
-  describe('drop-from-outside (time grid)', () => {
+  describe('drop-from-outside — Pragmatic palette source (element monitor)', () => {
     const instant = '2026-06-16T09:30:00.000Z'
-    let slotEl: HTMLElement
-    beforeEach(() => {
-      slotEl = el({ 'data-bc-instant': instant })
-      root.appendChild(slotEl)
-    })
-
-    it("registers each slot as a native external drop target in 'time' mode only", () => {
-      bindCalendarDnd({ root, store: makeStore(), mode: 'time' })
-      expect(dropExtSpy).toHaveBeenCalledTimes(1)
-      const cfg = dropExtSpy.mock.calls[0]![0]
-      expect(cfg.element).toBe(slotEl)
-      expect(cfg.getData()).toEqual({ bcDropTarget: instant })
-      // Accepts only our outside items, not arbitrary native drags.
-      expect(cfg.canDrop({ source: { types: ['application/x-bigcal-external'] } })).toBe(true)
-      expect(cfg.canDrop({ source: { types: ['Files'] } })).toBe(false)
-    })
-
-    it("does not wire the external adapter in 'day' mode", () => {
-      bindCalendarDnd({ root, store: makeStore(), mode: 'day' })
-      expect(dropExtSpy).not.toHaveBeenCalled()
-      expect(monitorExtSpy).not.toHaveBeenCalled()
-    })
 
     it('drops a Pragmatic palette item via the element monitor (true-extent payload)', () => {
       const store = makeStore()
@@ -307,57 +297,85 @@ describe('bindCalendarDnd', () => {
       })
       expect(store.previewExternal).toHaveBeenCalledWith({ target: instant, durationMinutes: 90 })
     })
+  })
 
-    it('drops a native item via the external monitor, reading the duration on drop', () => {
+  describe('drop-from-outside — native HTML5 palette source (delegated listeners)', () => {
+    const instant = '2026-06-16T09:30:00.000Z'
+    let slotEl: HTMLElement
+    beforeEach(() => {
+      slotEl = el({ 'data-bc-instant': instant })
+      root.appendChild(slotEl)
+    })
+
+    it('accepts the drop and previews a single slot while hovering a slot', () => {
       const store = makeStore()
       bindCalendarDnd({ root, store, mode: 'time' })
-      const cfg = monitorExtSpy.mock.calls[0]![0]
-      // Only our typed drags are monitored.
-      expect(cfg.canMonitor({ source: { types: ['application/x-bigcal-external'] } })).toBe(true)
-      expect(cfg.canMonitor({ source: { types: ['text/plain'] } })).toBe(false)
-      cfg.onDrop({
-        source: { getStringData: () => JSON.stringify({ durationMinutes: 45, allDay: true }) },
-        location: { current: { dropTargets: [{ data: { bcDropTarget: instant } }] } },
+      const event = fireDrag('dragover', { on: slotEl, types: [EXTERNAL_MIME] })
+      expect(event.defaultPrevented).toBe(true) // preventDefault → the drop is accepted
+      expect(store.previewExternal).toHaveBeenCalledWith({ target: instant })
+    })
+
+    it('only re-previews when the hovered slot changes', () => {
+      const store = makeStore()
+      const other = el({ 'data-bc-instant': '2026-06-16T10:00:00.000Z' })
+      root.appendChild(other)
+      bindCalendarDnd({ root, store, mode: 'time' })
+      fireDrag('dragover', { on: slotEl, types: [EXTERNAL_MIME] })
+      fireDrag('dragover', { on: slotEl, types: [EXTERNAL_MIME] }) // same slot → no re-fire
+      expect(store.previewExternal).toHaveBeenCalledTimes(1)
+      fireDrag('dragover', { on: other, types: [EXTERNAL_MIME] })
+      expect(store.previewExternal).toHaveBeenCalledTimes(2)
+    })
+
+    it('ignores drags that do not carry our payload type (move/resize)', () => {
+      const store = makeStore()
+      bindCalendarDnd({ root, store, mode: 'time' })
+      const event = fireDrag('dragover', { on: slotEl, types: ['text/plain'] })
+      expect(event.defaultPrevented).toBe(false)
+      expect(store.previewExternal).not.toHaveBeenCalled()
+    })
+
+    it('creates on drop, reading the duration off the dataTransfer', () => {
+      const store = makeStore()
+      bindCalendarDnd({ root, store, mode: 'time' })
+      const event = fireDrag('drop', {
+        on: slotEl,
+        types: [EXTERNAL_MIME],
+        data: { [EXTERNAL_MIME]: JSON.stringify({ durationMinutes: 45, allDay: true }) },
       })
+      expect(event.defaultPrevented).toBe(true)
       expect(store.dropExternal).toHaveBeenCalledWith({ target: instant, durationMinutes: 45, allDay: true })
     })
 
-    it('previews a native item as a single slot (no duration mid-drag)', () => {
+    it('tolerates a malformed payload on drop (falls back to defaults)', () => {
       const store = makeStore()
       bindCalendarDnd({ root, store, mode: 'time' })
-      const { onDropTargetChange } = monitorExtSpy.mock.calls[0]![0]
-      onDropTargetChange({ location: { current: { dropTargets: [{ data: { bcDropTarget: instant } }] } } })
-      expect(store.previewExternal).toHaveBeenCalledWith({ target: instant })
-      // Off every slot → clear.
-      onDropTargetChange({ location: { current: { dropTargets: [] } } })
-      expect(store.clearDragPreview).toHaveBeenCalled()
-    })
-
-    it('tolerates a malformed native payload (falls back to defaults)', () => {
-      const store = makeStore()
-      bindCalendarDnd({ root, store, mode: 'time' })
-      const { onDrop } = monitorExtSpy.mock.calls[0]![0]
-      onDrop({
-        source: { getStringData: () => 'not json' },
-        location: { current: { dropTargets: [{ data: { bcDropTarget: instant } }] } },
-      })
+      fireDrag('drop', { on: slotEl, types: [EXTERNAL_MIME], data: { [EXTERNAL_MIME]: 'not json' } })
       expect(store.dropExternal).toHaveBeenCalledWith({ target: instant, durationMinutes: undefined, allDay: undefined })
     })
 
-    it('a native drop outside every slot clears the preview without creating', () => {
+    it('clears the preview when the drag leaves the root', () => {
       const store = makeStore()
       bindCalendarDnd({ root, store, mode: 'time' })
-      const { onDrop } = monitorExtSpy.mock.calls[0]![0]
-      onDrop({ source: { getStringData: () => '{}' }, location: { current: { dropTargets: [] } } })
-      expect(store.dropExternal).not.toHaveBeenCalled()
+      fireDrag('dragover', { on: slotEl, types: [EXTERNAL_MIME] })
+      fireDrag('dragleave', { on: root, types: [EXTERNAL_MIME], relatedTarget: null })
       expect(store.clearDragPreview).toHaveBeenCalled()
     })
 
-    it('cleanup stops the external monitor too', () => {
-      const dispose = bindCalendarDnd({ root, store: makeStore(), mode: 'time' })
-      const extMonitorCleanup = monitorExtSpy.mock.results[0]!.value as ReturnType<typeof vi.fn>
+    it("does not attach native listeners in 'day' mode", () => {
+      const store = makeStore()
+      bindCalendarDnd({ root, store, mode: 'day' })
+      fireDrag('dragover', { on: slotEl, types: [EXTERNAL_MIME] })
+      expect(store.previewExternal).not.toHaveBeenCalled()
+    })
+
+    it('removes the native listeners on cleanup', () => {
+      const store = makeStore()
+      const dispose = bindCalendarDnd({ root, store, mode: 'time' })
       dispose()
-      expect(extMonitorCleanup).toHaveBeenCalledTimes(1)
+      ;(store.previewExternal as ReturnType<typeof vi.fn>).mockClear()
+      fireDrag('dragover', { on: slotEl, types: [EXTERNAL_MIME] })
+      expect(store.previewExternal).not.toHaveBeenCalled()
     })
   })
 })

@@ -140,12 +140,16 @@ as four sub-slices in one push (Cutter: "all four slices before push"). Two flag
   preview), `previewExternal({target,durationMinutes?})` (sets `dragPreview`; no duration ⇒ single slot),
   `getEventTransfer({id})` → `EventTransfer|null` (serialize for native drag-out), `eventDragStart({id})`
   (fires `onEventDragStart`). Barrel + `EventTransfer` type exported.
-- **dnd (5d-2 drop-into)** — binder now also listens on Pragmatic's **external adapter**. Each time-grid slot
-  gets a second `dropTargetForExternal` (gated `canDrop` to our MIME); a `monitorForExternal` handles native
-  sources (single-slot `previewExternal` mid-drag — HTML5 protected mode hides the payload until drop — and
-  reads the JSON payload via `getStringData` on drop). `monitorForElements` gained an external branch for a
-  **Pragmatic** palette item (carries `bcExternal` payload ⇒ true-extent preview). External wiring is
-  `mode==='time'` only.
+- **dnd (5d-2 drop-into)** — two same-page transports, `mode==='time'` only:
+  - a **native** `draggable="true"` palette item (outside the grid) → **delegated HTML5 `dragover`/`drop`/
+    `dragleave` listeners on the root** (find the slot via `closest('[data-bc-instant]')`, gate on `EXTERNAL_MIME`,
+    `preventDefault` to accept). Single-slot `previewExternal` on hover (HTML5 protected mode hides the payload
+    mid-drag); reads the JSON duration via `getData` on drop. **Correction (2026-06-08):** the first build used
+    Pragmatic's *external adapter* — wrong: Pragmatic "external" = *outside the browser window* (files/other
+    tabs), and it explicitly ignores drags started inside the document, so a same-page native chip was never
+    accepted (snapped back). Replaced with the manual listeners. See DECISIONS.md correction.
+  - a **Pragmatic** `draggable` palette item → `monitorForElements` external branch (carries `bcExternal`
+    payload ⇒ true-extent preview). Still valid, kept.
 - **dnd (5d-3 drag-out)** — the event `draggable` gained `getInitialDataForExternal` (writes `text/plain` +
   `EVENT_MIME` JSON so a **native** external dropzone can read the event) and `onDragStart`→`store.eventDragStart`.
   Works in every mode. Public MIME constants exported (`EXTERNAL_MIME`, `EVENT_MIME`, `EXTERNAL_DATA_KEY`) so
