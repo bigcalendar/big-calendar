@@ -1,0 +1,127 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="React/Drag and drop/Guide" />
+
+# Drag and drop — moving events
+
+Dragging an event to a new day (or, later, a new time) is really an **edit** of that
+event. Big Calendar splits this into clear jobs so each part stays simple:
+
+- **`@big-calendar/core`** does the **date-math** — given where you dropped the event,
+  it works out the event's new start/end (keeping its duration).
+- **`@big-calendar/dnd`** does the **pointer work** — it turns the browser drag into
+  "this event was dropped here" using the optional
+  [Pragmatic Drag and Drop](https://atlassian.design/components/pragmatic-drag-and-drop/about)
+  library.
+- **You** do the **saving** — the calendar tells you the proposed change; your code
+  writes it to your data (and to your server).
+
+This is the same idea as a controlled `<input>`: the calendar shows what you give it
+and tells you what the user did, but **you own the data**.
+
+## Turning it on
+
+Install the optional package and call the hook with a ref around your calendar:
+
+```bash
+pnpm add @big-calendar/dnd
+```
+
+```tsx
+import { useRef } from 'react'
+import { Calendar, CalendarProvider, useCalendarDnd } from '@big-calendar/react'
+
+function DraggableCalendar() {
+  const ref = useRef(null)
+  useCalendarDnd(ref) // enables drag-to-move for everything inside `ref`
+  return (
+    <div ref={ref}>
+      <Calendar />
+    </div>
+  )
+}
+```
+
+`useCalendarDnd` must be **inside** a `CalendarProvider`. Today it enables moving in the
+**month** view; the time-grid views are coming in a later release.
+
+## What `onEventDrop` gives you
+
+When the user drops an event, the calendar calls `onEventDrop` with the **original**
+event plus the **proposed** new bounds:
+
+```ts
+onEventDrop={({ event, start, end, allDay }) => {
+  // `event`            → the original event object, untouched
+  // `start`/`end`      → the proposed new times, as ISO strings
+  // `allDay`           → whether it's now a whole-day event
+}}
+```
+
+Two things to notice, both on purpose:
+
+1. **It's a report, not a change.** The calendar never edits your `events`. It can't,
+   really — it reads your events through *accessors* (which are read-only), so it has no
+   way to write `start`/`end` back into your particular event shape. You do that.
+2. **You get the original event**, so undoing a change is trivial.
+
+## The simple case
+
+If you don't need a server round-trip, just apply the new bounds to your state:
+
+```tsx
+const [events, setEvents] = useState(initialEvents)
+
+<CalendarProvider events={events}
+  onEventDrop={({ event, start, end, allDay }) =>
+    setEvents(prev =>
+      prev.map(e => (e.id === event.id ? { ...e, start, end, allDay } : e)),
+    )
+  }
+>
+```
+
+## The real case: async save with rollback
+
+Usually a move has to be saved to a server, and that can fail. The standard pattern is
+**optimistic update + rollback**: move the event right away so the UI feels instant,
+then save; if the save fails, put it back.
+
+```tsx
+const [events, setEvents] = useState(initialEvents)
+
+const onEventDrop = ({ event, start, end, allDay }) => {
+  const previous = events // remember the state to roll back to
+
+  // 1. optimistic update — show the move immediately
+  setEvents(prev =>
+    prev.map(e => (e.id === event.id ? { ...e, start, end, allDay } : e)),
+  )
+
+  // 2. save; the calendar does NOT await this — the lifecycle is yours
+  saveEvent(event.id, { start, end, allDay }).catch(() => {
+    // 3. on failure, roll back to the original state
+    setEvents(previous)
+  })
+}
+```
+
+Your handler can be `async`. The calendar never waits on it and never holds a copy of
+your data, so there is exactly one source of truth: your `events` state. See the
+**Drag and drop → AsyncSaveWithRollback** story for a runnable version (with a checkbox
+that forces the save to fail).
+
+## Locking individual events
+
+Use `draggableAccessor` to decide which events may be dragged — a field name or a
+function. Events that return `false` can't be picked up:
+
+```tsx
+<CalendarProvider draggableAccessor={(e) => !e.locked} ... />
+```
+
+## Not built yet
+
+Moving in the **time-grid** (week/day) views, **resizing**, **drag-from-outside**, and
+**keyboard-driven** drag are planned follow-ups. Resizing will use the same shape — an
+`onEventResize` report you apply (and roll back) exactly like `onEventDrop`.

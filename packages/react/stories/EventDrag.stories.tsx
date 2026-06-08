@@ -42,6 +42,67 @@ function MonthDragDemo({ draggableAccessor }: { draggableAccessor?: (e: DemoEven
   )
 }
 
+/**
+ * The realistic flow: a drop kicks off an async save that can fail. We update
+ * the events **optimistically** (move it right away), then `await` a simulated
+ * request; on failure we **roll back** to the events we captured before the move.
+ * The calendar itself never holds this state — it only renders the `events` we
+ * pass and reports the proposed change. Use the checkbox to force the next save
+ * to fail and watch the event snap back.
+ */
+function AsyncMoveDemo() {
+  const [events, setEvents] = useState<DemoEvent[]>(demoEvents)
+  const [status, setStatus] = useState('Drag an event to another day — the save is simulated (~800ms).')
+  const failNext = useRef(false)
+
+  const handleDrop = ({
+    event,
+    start,
+    end,
+    allDay,
+  }: {
+    event: DemoEvent
+    start: string
+    end: string
+    allDay: boolean
+  }) => {
+    const previous = events // snapshot for rollback
+    setEvents((prev) => prev.map((e) => (e.id === event.id ? { ...e, start, end, allDay } : e)))
+    setStatus(`Saving "${event.title}"…`)
+    void (async () => {
+      await new Promise((resolve) => setTimeout(resolve, 800))
+      if (failNext.current) {
+        setEvents(previous) // ← rollback to the original state
+        setStatus(`Save failed — "${event.title}" was reverted to its original time.`)
+      } else {
+        setStatus(`Saved "${event.title}".`)
+      }
+    })()
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      <label style={{ fontSize: '0.8rem', display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+        <input type="checkbox" onChange={(e) => (failNext.current = e.target.checked)} />
+        Make the next save fail (forces a rollback)
+      </label>
+      <CalendarStage defaultView={Views.MONTH} events={events} onEventDrop={handleDrop}>
+        <DraggableCalendar />
+      </CalendarStage>
+      <output
+        style={{
+          fontSize: '0.8rem',
+          padding: '0.4rem 0.6rem',
+          border: '1px solid var(--bc-color-border, #d4d4d8)',
+          borderRadius: '4px',
+        }}
+      >
+        {status}
+      </output>
+    </div>
+  )
+}
+
 const meta: Meta = {
   title: 'React/Drag and drop',
   parameters: {
@@ -67,4 +128,12 @@ export const MonthEventMove: Story = {
  */
 export const LockedEvent: Story = {
   render: () => <MonthDragDemo draggableAccessor={(e) => e.id !== 4} />,
+}
+
+/**
+ * Optimistic update with rollback on a failed async save — the real-world flow.
+ * Tick the checkbox to force the next save to fail and watch the event revert.
+ */
+export const AsyncSaveWithRollback: Story = {
+  render: () => <AsyncMoveDemo />,
 }

@@ -41,6 +41,18 @@ view (day-mode), gated, with a Storybook story. Core owns the date-math (mirrors
   in the payload); cross-surface timed↔all-day promotion; a dedicated `@big-calendar/react/dnd` entry +
   a DnD `.mdx` guide.
 
+### Phase 5 — Task 5a-docs: DnD async data lifecycle = fully controlled (Cutter, 2026-06-08) ✓ (uncommitted at time of writing)
+Cutter chose **fully controlled** for the move/resize async-save flow (see DECISIONS.md 2026-06-08). The
+calendar reports the proposed change; the dev owns persist + optimistic update + **rollback** on their own
+`events` state. Docs only — no contract change (an `async` handler already assigns to `=> void`).
+- Enriched the `onEventDrop` JSDoc ([config.type.ts](packages/core/src/types/config.type.ts)): report-not-mutation,
+  why the payload is original event + proposed bounds (accessors are read-only → dev writes back), the
+  optimistic-update+rollback pattern, and that the calendar does **not** await the handler.
+- New [DragAndDrop.mdx](packages/react/stories/DragAndDrop.mdx) guide (`React/Drag and drop/Guide`,
+  novice tone) + `AsyncSaveWithRollback` story (checkbox forces a save failure → event reverts).
+- Same pattern will cover `onEventResize` when resize (5c) lands.
+- **Gates:** core + react typecheck/test/lint/build ✓; build-storybook react ✓.
+
 ### Phase 4 — Slot/event handler separation + move-to-core (Cutter, 2026-06-07) ✓ (uncommitted at time of writing)
 Cutter's separation-of-concerns refactor. **Slot** and **event** interaction are now two distinct,
 focused concerns, both **core-owned** (framework-agnostic), with the React layer reduced to a dumb

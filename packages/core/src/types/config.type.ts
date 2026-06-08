@@ -133,10 +133,20 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
    */
   draggableAccessor?: Accessor<TEvent, boolean> | undefined
   /**
-   * Fired when an event is dropped at a new position. Receives the event plus
-   * its recomputed bounds as ISO date strings (`allDay` flags a whole-day span);
-   * core preserves the original duration. Apply it to your own event data — the
-   * calendar does not mutate `events` itself.
+   * Fired when an event is dropped at a new position. Receives the **original**
+   * event plus its **proposed** new bounds as ISO date strings (`allDay` flags a
+   * whole-day span); core preserves the original duration.
+   *
+   * This is a *report*, not a mutation: the calendar is controlled and never
+   * changes `events` itself. Because accessors are read-only, core can't write
+   * the new values back into your event shape — you do, by updating the `events`
+   * you pass in. The original `event` is included so a revert is trivial.
+   *
+   * The move is usually persisted asynchronously and may fail, so the typical
+   * pattern is **optimistic update + rollback**: apply the proposed bounds to your
+   * state, `await` your save, and on failure restore the previous `events`. The
+   * handler may be `async`; the calendar does **not** await it — you own the
+   * persist/rollback lifecycle entirely.
    */
   onEventDrop?:
     | ((args: { event: TEvent; start: string; end: string; allDay: boolean }) => void)
