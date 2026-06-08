@@ -24,8 +24,12 @@ function Calendar<TEvent = unknown, TResource = unknown>({
 }: {
   toolbar?: boolean | undefined
 }) {
-  const { store } = useCalendarContext<TEvent, TResource>()
+  const { store, components } = useCalendarContext<TEvent, TResource>()
   const viewModel = useSignalValue(store.viewModel)
+
+  // A registered custom view (core emits `kind: 'custom'`); render its component
+  // from `components.views`, or nothing when none is registered for the key.
+  const CustomView = viewModel.kind === 'custom' ? components.views?.[viewModel.view] : undefined
 
   return (
     <>
@@ -34,6 +38,9 @@ function Calendar<TEvent = unknown, TResource = unknown>({
         {viewModel.kind === 'month' && <MonthView<TEvent> />}
         {viewModel.kind === 'time' && <TimeGridView<TEvent> />}
         {viewModel.kind === 'agenda' && <AgendaView<TEvent> />}
+        {viewModel.kind === 'custom' && CustomView && (
+          <CustomView view={viewModel.view} model={viewModel.model} />
+        )}
       </div>
     </>
   )

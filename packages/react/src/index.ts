@@ -27,6 +27,7 @@ export type {
   AgendaEmptyProps,
   AgendaEventProps,
   CalendarComponents,
+  CustomViewProps,
   MonthComponents,
   MonthDateProps,
   MonthEventProps,

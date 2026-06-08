@@ -84,6 +84,23 @@ React view-component contract decision (surfaced to Cutter; see "open design dec
 - **Gates:** typecheck/test/lint/build core ✓; typecheck/test 151/lint/build react ✓; build-storybook
   core+react ✓. Per-file bar enforced by the test target (green).
 
+### Phase 4 — Task 2m: view registry — REACT render path (Option A, Cutter 2026-06-07) ✓ (uncommitted at time of writing)
+Cutter chose **Option A — `components.views` map** (AskUserQuestion 2026-06-07), mirroring the existing
+component-override pattern; core config stays React-free. Completes 2m end-to-end.
+- **`CalendarComponents.views?: Record<string, ComponentType<CustomViewProps>>`** + new exported
+  `CustomViewProps { view: ViewKey; model: unknown }` ([components.type.ts](packages/react/src/components.type.ts)).
+  The component **receives `{ view, model }` as props** (a small refinement over the context-read sketch in the
+  AskUserQuestion preview — props are more ergonomic/testable) and casts `model` to its `TModel`.
+- **`<Calendar>` dispatch** ([Calendar.component.tsx](packages/react/src/Calendar/Calendar.component.tsx)):
+  reads `components` from context; for `viewModel.kind === 'custom'` looks up `components.views?.[viewModel.view]`
+  and renders it inside `.bc-calendar` with `{ view, model }`; renders **nothing** when no component is
+  registered for the key. Barrel exports `CustomViewProps`.
+- **Tests:** +2 Calendar ([Calendar.component.test.tsx](packages/react/src/Calendar/Calendar.component.test.tsx)) —
+  a demo "3-day" `defineView` + component renders via `components.views` (model reaches the component:
+  `data-day-count="3"`, no built-in view renders), and renders nothing when the component is unregistered.
+- **Storybook:** new `React/Calendar → CustomView` story (3-day custom view, model → React list).
+- **Gates:** react typecheck/test (153)/lint/build ✓; build-storybook react ✓. **2m fully done** (core + React).
+
 ### Phase 4 — Task 4a: React test infra + signals→React bridge ✓ (commit f7929a4, pushed)
 
 - **Test infra:** installed `jsdom` + `@testing-library/react` + `@testing-library/dom` (Cutter
@@ -1027,10 +1044,9 @@ subgrid table. Instead the agenda keeps its DOM and makes only the **title** (`.
   `undefined`). All files in THIS change typecheck clean. Awaiting Cutter's OK to fix the 2-line stub.
 
 ## In progress — selection wiring remaining
-- **Open items carried:** ✅ *double-click-also-selects RESOLVED 2026-06-07.* ✅ *2m view-registry CORE
-  RESOLVED 2026-06-07 (Option B implemented — see the Task 2m entry above).* **Remaining for 2m:** the
-  **React rendering path** for a `kind:'custom'` view — needs the React view-component contract decision
-  (surfaced to Cutter; see "open design decisions #1" below).
+- **Open items carried:** ✅ *double-click-also-selects RESOLVED 2026-06-07.* ✅ *2m view-registry FULLY
+  RESOLVED 2026-06-07 — CORE (Option B) + REACT render path (Option A, `components.views` map). See the two
+  Task 2m entries above.*
 
 ## Phase 2 status
 
@@ -1041,15 +1057,9 @@ background events. 168 Vitest cases, every file ≥85% branch / ≥95% func, bui
 
 ## Next — open design decisions (do NOT guess; confirm with Cutter first)
 
-1. **2m — view registry (custom views, §9)** — ✅ **CORE IMPLEMENTED 2026-06-07** (Option B; see the
-   Task 2m entry above + DECISIONS.md 2026-06-07). All four core seams now fall through to the registry;
-   `CalendarViewModel` has the `custom` arm; `defineView` ships. **REMAINING (needs a Cutter decision):
-   the React rendering path** for a `kind:'custom'` view model — i.e. how a custom view-component is
-   registered/looked up on the React side and how it reads back its `TModel` from `viewModel.model`
-   (`unknown`). Candidate shapes to pick from: (a) a `components.views: Record<string, ComponentType<{...}>>`
-   slot consumed by `<Calendar>`'s dispatch; (b) a render-prop / `children`-as-function on `<Calendar>`;
-   (c) pair the core `ViewDefinition` with its component in one registration object. **Surfaced to Cutter
-   — do not guess.**
+1. **2m — view registry (custom views, §9)** — ✅ **FULLY IMPLEMENTED 2026-06-07.** CORE = Option B
+   (registry seams + `custom` arm + `defineView`); REACT = Option A (`components.views` map consumed by
+   `<Calendar>`). See the two Task 2m entries above + DECISIONS.md 2026-06-07. Nothing outstanding.
 2. **Store-level selection wiring** — the selection FSM (2h) is the core logic. Mapping slot indices →
    dates is view/adapter-specific (month = day cells; time-grid = (column, slot) 2D), so the store/
    `beginSlotSelection` wiring is better done alongside the adapter (Phase 4). Confirm this split.

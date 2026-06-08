@@ -17,6 +17,26 @@ export interface CalendarComponents<TEvent = unknown> {
   time?: TimeComponents<TEvent>
   /** Agenda-view slot overrides. */
   agenda?: AgendaComponents<TEvent>
+  /**
+   * Custom view components, keyed by the same view key registered in the core
+   * `views` config. When the active view is a registered custom view, `<Calendar>`
+   * renders `views[viewKey]` inside `.bc-calendar`. With nothing registered for
+   * the key, nothing renders.
+   */
+  views?: Record<string, ComponentType<CustomViewProps>>
+}
+
+/**
+ * Props passed to a custom view component (`components.views[viewKey]`). `model`
+ * is whatever the matching core `ViewDefinition.buildModel` returned — typed
+ * `unknown` here, so cast it to the model type you produced (the same `TModel`
+ * you inferred with `defineView`).
+ */
+export interface CustomViewProps {
+  /** The active custom view key. */
+  view: ViewKey
+  /** The model the core view definition built; cast to your `TModel`. */
+  model: unknown
 }
 
 /** Props passed to the toolbar — the default one or a `components.toolbar` override. */

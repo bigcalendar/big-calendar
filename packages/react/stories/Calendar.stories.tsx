@@ -1,6 +1,7 @@
-import { Views } from '@big-calendar/core'
+import { Navigate, Views, defineView } from '@big-calendar/core'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Calendar } from '../src'
+import type { CustomViewProps } from '../src'
 import type { DemoEvent } from './harness'
 import { CalendarStage, SelectionDemo } from './harness'
 
@@ -97,6 +98,61 @@ export const WithoutToolbar: Story = {
   render: () => (
     <CalendarStage defaultView={Views.MONTH} rows="1fr">
       <Calendar toolbar={false} />
+    </CalendarStage>
+  ),
+}
+
+/**
+ * A registered **custom view** (§9). The core `views` config maps the key
+ * `'3day'` to a pure `ViewDefinition` (range / navigate / label / buildModel run
+ * in core, like the built-ins); `components.views['3day']` supplies the React
+ * component, which reads the model core built. `<Calendar>` renders it inside
+ * `.bc-calendar` when the active view is `'3day'`.
+ */
+interface ThreeDayModel {
+  dayLabels: string[]
+  eventCount: number
+}
+const threeDayView = defineView<DemoEvent>()({
+  range: ({ localizer, date }) => {
+    const start = localizer.startOf({ value: date, unit: 'day' })
+    const last = localizer.add({ value: start, amount: 2, unit: 'day' })
+    return { firstVisibleDay: start, lastVisibleDay: last, days: localizer.range({ start, end: last, unit: 'day' }) }
+  },
+  navigate: ({ localizer, date, direction }) =>
+    localizer.add({ value: date, amount: direction === Navigate.NEXT ? 3 : -3, unit: 'day' }),
+  label: ({ localizer, range }) =>
+    `${localizer.format({ value: range.firstVisibleDay, format: 'monthDay' })} – ${localizer.format({ value: range.lastVisibleDay, format: 'monthDay' })}`,
+  buildModel: ({ localizer, days, events }): ThreeDayModel => ({
+    dayLabels: days.map((d) => localizer.format({ value: d, format: 'dayHeader' })),
+    eventCount: events.length,
+  }),
+})
+
+function ThreeDayView({ model }: CustomViewProps) {
+  const { dayLabels, eventCount } = model as ThreeDayModel
+  return (
+    <div style={{ padding: '1rem' }}>
+      <p style={{ marginBlock: '0 0.75rem' }}>
+        Custom 3-day view — {eventCount} event{eventCount === 1 ? '' : 's'} in range
+      </p>
+      <ul style={{ margin: 0, paddingInlineStart: '1.25rem' }}>
+        {dayLabels.map((label) => (
+          <li key={label}>{label}</li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+export const CustomView: Story = {
+  render: () => (
+    <CalendarStage
+      defaultView="3day"
+      views={{ '3day': threeDayView }}
+      components={{ views: { '3day': ThreeDayView } }}
+    >
+      <Calendar />
     </CalendarStage>
   ),
 }
