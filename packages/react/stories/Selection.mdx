@@ -177,6 +177,64 @@ The core state machine works purely in slot-index space; the store translates th
 committed indices back into the ISO dates described above, so **every framework adapter
 emits the identical payload**.
 
+## Architecture: core FSM ↔ adapter mapping
+
+Selection is deliberately split across two packages so the *behaviour* is shared and the
+*DOM wiring* is swappable. There are three layers:
+
+<table>
+  <thead><tr><th>layer</th><th>package</th><th>owns</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>1. The state machine</strong> (<code>createSelection</code>)</td>
+      <td><code>@big-calendar/core</code></td>
+      <td>The pure FSM in <strong>slot-index space</strong> — <code>idle</code> ↔ <code>selecting(anchor, head)</code>, the <code>start</code>/<code>to</code>/<code>complete</code>/<code>click</code>/<code>doubleClick</code>/<code>cancel</code> transitions, the live normalized <code>range</code>, and the <code>onSelecting</code> veto. Knows nothing about dates, the DOM, or pixels.</td>
+    </tr>
+    <tr>
+      <td><strong>2. Index → date translation</strong> (the store)</td>
+      <td><code>@big-calendar/core</code></td>
+      <td>On <em>commit</em>, turns the FSM's slot indices into the ISO <code>SlotSelectionDates</code> payload (the end-of-day rule, the <code>allDay</code> promotion, cross-day spans). It captures the <strong>anchor</strong> (day + mode + <code>slotCount</code>) when a gesture starts so it can decode a global index back into a day + slot.</td>
+    </tr>
+    <tr>
+      <td><strong>3. The adapter</strong> (DOM ↔ coordinates)</td>
+      <td><code>@big-calendar/react</code></td>
+      <td>The only layer that touches the DOM. It maps pointer / keyboard / touch events to a slot coordinate (reading <code>data-slot-index</code> + <code>data-date</code> off the focused / hit cell — <strong>no pixel hit-testing</strong>), drives the FSM via <code>store.selection.*</code>, and reads <code>store.selection.range</code> + <code>store.selection.anchor</code> to paint the live <code>.bc-selection</code> overlay.</td>
+    </tr>
+  </tbody>
+</table>
+
+### The round trip (a pointer drag)
+
+1. **pointerdown** on a `[data-slot-index]` cell → the adapter (`useSlotSelection`) reads
+   that cell's `data-date` + `data-slot-index` and calls
+   `store.selection.start({ slot, date, mode, slotCount })`. The store stashes the anchor;
+   the FSM moves to `selecting`.
+2. **pointermove** → the adapter resolves the cell under the pointer
+   (`document.elementFromPoint`), reads its index, and calls `store.selection.to({ slot })`.
+   The FSM updates `head`; its `range` signal changes; `onSlotSelecting(...)` fires (in date
+   space) and may return `false` to veto. The adapter re-renders the overlay from `range`.
+3. **pointerup** → `store.selection.complete()`. The store translates the committed index
+   range to ISO dates and fires the matching commit callback (`onSlotSelect`, or
+   `onSlotClick` / `onSlotDoubleClick` for a tap).
+
+**Keyboard** drives the *same* FSM with no pixels at all: `useRovingSelection` moves the
+focused cell via a view-supplied `neighbor(index, dir)` map, then `Shift+Arrow` →
+`start` + `to`, `Enter`/`Space` → `complete`/`click`, `Esc` → `cancel`. The focused cell's
+`data-*` attributes are the source of truth, so keyboard and pointer converge on identical
+coordinates.
+
+### Why the split
+
+- **One behaviour, many adapters.** The FSM + the date translation live in core, so React
+  today — and any future Vue / Angular / Lit adapter — emit the *identical* `SlotSelectionDates`.
+  An adapter only has to answer "what slot is this DOM event over?"; it never re-implements
+  selection logic.
+- **Testable in isolation.** The FSM is a pure unit (`createSelection`), the translation is a
+  pure store concern, and the DOM mapping is the only part that needs jsdom.
+- **The view owns its geometry.** Each view decides how its cells map to indices (time grid:
+  vertical slots / a **global** `dayIndex*slotCount + slot`; month + all-day: a linear day
+  index) and supplies the keyboard `neighbor` map — without the core FSM knowing any of it.
+
 ## Slot selection vs event selection
 
 These are two different things on two different layers:

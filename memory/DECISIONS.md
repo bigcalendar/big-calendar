@@ -664,3 +664,11 @@ Styles-side of §7.7 (touch behaviour — long-press + time-body `touch-action` 
 - **Deliberately excluded:** geometry-sized `.bc-event`/`.bc-segment` and the slot cells — their size encodes duration / the slot grid, so forcing 44px would corrupt the time-grid/month layout. Their actions remain reachable by tap / long-press. (Decision: enlarge controls, not data-driven boxes.)
 - **`touch-action: pan-y`** extended from `.bc-time-body` to the other selectable surfaces `.bc-month-grid` + `.bc-allday-row` so a day-mode drag-select doesn't fight native scroll/zoom.
 - **No new unit test:** jsdom has no box model or media emulation; verified via `nx build styles` + `build-storybook react`. The Playwright touch-emulation gate (§7.7) is a CI concern out of scope here; drag-handle `touch-action: none` belongs to `@big-calendar/dnd` (unbuilt).
+
+## 2026-06-07 — Selection Storybook split docs (Cutter, IMPLEMENTED)
+
+Closes the carried Phase-4 obligation (bigcal-selection-storybook-phase4): the React Storybook must clearly document the core-FSM ↔ adapter-mapping selection split. Docs only.
+
+- **`Selection.mdx`** — new "Architecture: core FSM ↔ adapter mapping" section: a 3-layer table (core `createSelection` FSM in slot-index space / core store index→ISO-date translation / the React adapter as the only DOM-touching layer), the pointer-drag round trip, the keyboard path on the same FSM, and the rationale (one behaviour across adapters, isolation testing, view-owned geometry). Added **after** the existing "Under the hood" section — that prose was left intact (no rewrite).
+- **`SelectionContract.mdx`** (core) — added a cross-reference to the React Architecture section.
+- **Gate:** build-storybook core + react ✓.

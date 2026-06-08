@@ -124,6 +124,19 @@ emulation; verified via `build-storybook`).
   concern not runnable in this environment; drag-handle `touch-action: none` belongs to `@big-calendar/dnd`
   (not built yet).
 
+### Phase 4 — Selection Storybook split docs (Cutter, 2026-06-07) ✓ (uncommitted at time of writing)
+Satisfies the carried Phase-4 obligation [[bigcal-selection-storybook-phase4]] — the React Storybook MUST
+clearly document the **core-FSM ↔ adapter-mapping** selection split. **Docs only** (no code).
+- **`Selection.mdx`** gained a new **"Architecture: core FSM ↔ adapter mapping"** section (added after the
+  existing "Under the hood" — existing prose left intact): a 3-layer table (1 core `createSelection` FSM in
+  slot-index space · 2 store index→ISO-date translation · 3 the React adapter, the only DOM-touching layer),
+  the **round-trip** for a pointer drag (pointerdown→`start`, move→`to`+`onSlotSelecting` veto, up→`complete`),
+  the keyboard path driving the *same* FSM (`useRovingSelection`), and **why** the split (one behaviour/many
+  adapters, isolation testing, each view owns its geometry/`neighbor` map).
+- **`SelectionContract.mdx`** (core) gained a pointer to the React Architecture section from its "Why
+  translation lives in core" section.
+- **Gates:** build-storybook core + react ✓ (MDX validated).
+
 ### Phase 4 — Task 4a: React test infra + signals→React bridge ✓ (commit f7929a4, pushed)
 
 - **Test infra:** installed `jsdom` + `@testing-library/react` + `@testing-library/dom` (Cutter

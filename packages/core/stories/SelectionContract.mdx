@@ -81,3 +81,7 @@ A time-body index only becomes a date once you know the anchor day, so the
 **store** captures the anchor and does the index → ISO-date translation on
 commit. Putting it here — rather than in each adapter — is what guarantees React,
 and any future Vue/Angular/Lit adapter, all emit the same `SlotSelectionDates`.
+
+For the full three-layer picture — the core FSM, this store translation, and how
+an adapter binds DOM pointer/keyboard events to slot coordinates and drives it —
+see **React → Selection → "Architecture: core FSM ↔ adapter mapping"**.
