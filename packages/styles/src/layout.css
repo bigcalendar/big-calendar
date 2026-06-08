@@ -93,6 +93,10 @@
   .bc-month-grid {
     grid-auto-rows: minmax(var(--bc-month-row-min), 1fr);
     min-block-size: 0;
+    /* Selectable surface (day-mode drag): allow vertical page scroll but reserve
+       the gesture so a day-drag doesn't fight native horizontal pan/zoom on
+       touch (the long-press in useSlotSelection then captures the pointer). */
+    touch-action: pan-y;
   }
 
   /* A week spans all seven columns and re-exposes them via subgrid so day
@@ -191,6 +195,9 @@
      (each in its own layer), so the day-column area lines up across them. */
   .bc-allday-row {
     align-items: start;
+    /* Selectable surface (all-day day-mode drag) — same touch-action rationale
+       as `.bc-month-grid` / `.bc-time-body`. */
+    touch-action: pan-y;
   }
 
   .bc-allday-label {

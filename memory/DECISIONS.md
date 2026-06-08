@@ -655,3 +655,12 @@ Completes 2m. Cutter chose **Option A** (AskUserQuestion) over a render-prop (B)
 - **Why A:** mirrors the established per-slot override pattern (toolbar / month / time / agenda); keeps the core `views` config **React-free** (the pure `ViewDefinition` stays in core config; the React component lives in the React `components` prop). Rejected **C** because it would put a React `ComponentType` into the config object handed to core's `createCalendarStore`; rejected **B** (render-prop) because one function for all custom views doesn't compose with the components map.
 - **Component contract refinement:** the custom view component **receives `{ view, model }` as props** (`CustomViewProps`, `model: unknown`) rather than re-reading the model from context (the AskUserQuestion preview sketched a context read). Props are more ergonomic + unit-testable; the component casts `model` to the `TModel` it produced via `defineView`.
 - **Gates:** react typecheck/test (153)/lint/build ✓; build-storybook react ✓. New `React/Calendar → CustomView` story + 2 Calendar tests (renders via the map / renders nothing when unregistered).
+
+## 2026-06-07 — §7.7 coarse-pointer/touch CSS pass (Cutter, IMPLEMENTED)
+
+Styles-side of §7.7 (touch behaviour — long-press + time-body `touch-action` — already shipped with selection wiring). CSS/docs only.
+
+- **Hit targets:** new `--bc-touch-target` token (44px) applied under `@media (pointer: coarse), (hover: none)` (new `components/coarse-pointer.css`) to **discrete** controls only: toolbar buttons, `.bc-date-number`/`.bc-day-heading` drilldowns, `.bc-show-more`, `button.bc-agenda-event`.
+- **Deliberately excluded:** geometry-sized `.bc-event`/`.bc-segment` and the slot cells — their size encodes duration / the slot grid, so forcing 44px would corrupt the time-grid/month layout. Their actions remain reachable by tap / long-press. (Decision: enlarge controls, not data-driven boxes.)
+- **`touch-action: pan-y`** extended from `.bc-time-body` to the other selectable surfaces `.bc-month-grid` + `.bc-allday-row` so a day-mode drag-select doesn't fight native scroll/zoom.
+- **No new unit test:** jsdom has no box model or media emulation; verified via `nx build styles` + `build-storybook react`. The Playwright touch-emulation gate (§7.7) is a CI concern out of scope here; drag-handle `touch-action: none` belongs to `@big-calendar/dnd` (unbuilt).

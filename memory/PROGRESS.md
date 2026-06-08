@@ -101,6 +101,29 @@ component-override pattern; core config stays React-free. Completes 2m end-to-en
 - **Storybook:** new `React/Calendar → CustomView` story (3-day custom view, model → React list).
 - **Gates:** react typecheck/test (153)/lint/build ✓; build-storybook react ✓. **2m fully done** (core + React).
 
+### Phase 4 — §7.7 coarse-pointer / touch CSS pass (Cutter, 2026-06-07) ✓ (uncommitted at time of writing)
+The styles-side of §7.7 (the touch *behaviour* — long-press, `touch-action: pan-y` on the time body — already
+shipped with selection wiring). **CSS/docs only**, no JS, no new unit tests (jsdom has no box model / media
+emulation; verified via `build-storybook`).
+- **`--bc-touch-target` token** ([tokens.css](packages/styles/src/tokens.css)) — default `2.75rem` (44px), the
+  WCAG 2.5.5 / platform touch floor.
+- **`components/coarse-pointer.css`** (NEW, `@layer bc.components`, imported last in
+  [index.css](packages/styles/src/index.css)) — a `@media (pointer: coarse), (hover: none)` block that grows the
+  **discrete** controls to `--bc-touch-target`: `.bc-toolbar button`, the `.bc-date-number` / `.bc-day-heading`
+  drilldowns, `.bc-show-more`, `button.bc-agenda-event`. **Geometry-sized event boxes + slot cells are
+  deliberately NOT enlarged** (their size encodes duration / the slot grid; enlarging breaks layout) — their
+  actions stay reachable by tap / long-press. No hover-only affordances (show-more/popover/tooltip all open on tap).
+- **`touch-action: pan-y`** added to the other two selectable surfaces — `.bc-month-grid` + `.bc-allday-row`
+  ([layout.css](packages/styles/src/layout.css)) — matching the existing `.bc-time-body`, so a day-mode drag
+  doesn't fight native scroll/zoom.
+- **VOCABULARY.md** gained a "Touch & coarse pointer (§7.7)" section documenting the token, the coarse file, and
+  the touch-action surfaces.
+- **styles dist rebuilt** (`nx build styles` = src→dist copy; coarse-pointer.css + its `@import` present in dist).
+- **Gates:** `nx build styles` ✓; `build-storybook react` ✓ (consumes `@big-calendar/styles/index.css`).
+- **Note (deferred, not this scope):** the Playwright touch-emulation visual/a11y gate (§7.7 bullet) is a CI
+  concern not runnable in this environment; drag-handle `touch-action: none` belongs to `@big-calendar/dnd`
+  (not built yet).
+
 ### Phase 4 — Task 4a: React test infra + signals→React bridge ✓ (commit f7929a4, pushed)
 
 - **Test infra:** installed `jsdom` + `@testing-library/react` + `@testing-library/dom` (Cutter

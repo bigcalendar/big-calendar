@@ -88,6 +88,10 @@
   --bc-now-width: 2px;
   /* Height of a single stacked event row in the month / all-day grid. */
   --bc-segment-height: 1.25rem;
+  /* Minimum hit-target size for discrete controls on coarse pointers (touch),
+     applied via `@media (pointer: coarse)` in components/coarse-pointer.css.
+     2.75rem = 44px, the WCAG 2.5.5 / platform touch-target floor (plan §7.7). */
+  --bc-touch-target: 2.75rem;
 
   /* ── elevation (top-layer popovers) ────────────────────────────────── */
   --bc-shadow-popover: 0 4px 16px color-mix(in oklab, CanvasText 25%, transparent);

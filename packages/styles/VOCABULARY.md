@@ -56,3 +56,19 @@ Empty: `.bc-agenda-empty`.
 All edges use logical properties; direction comes from the document + `:dir()`
 — no `rtl` prop. Responsive collapsing is driven by `@container bc (...)` on the
 calendar's own inline size, not the viewport.
+
+## Touch & coarse pointer (§7.7)
+
+Touch is orthogonal to responsive sizing — handled in `components/coarse-pointer.css`
+(a `@media (pointer: coarse), (hover: none)` block in the `bc.components` layer):
+
+- **Hit targets** — discrete controls (toolbar buttons, the `.bc-date-number` /
+  `.bc-day-heading` drilldowns, `.bc-show-more`, `button.bc-agenda-event`) grow to
+  the `--bc-touch-target` token (default `2.75rem` = 44px). Geometry-sized event
+  boxes and slot cells are **not** enlarged (their size encodes duration / the slot
+  grid); their actions stay reachable by tap / long-press.
+- **`touch-action`** — selectable surfaces (`.bc-time-body`, `.bc-month-grid`,
+  `.bc-allday-row`) set `touch-action: pan-y` so a long-press drag-select doesn't
+  fight native scroll/zoom; the adapter captures the pointer once a drag engages.
+- **No hover-only affordances** — the `.bc-show-more` overflow, the popover, and the
+  tooltip all open on tap (the tooltip toggles on tap in the adapter).
