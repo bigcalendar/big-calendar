@@ -559,10 +559,43 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       dragPreview.value = { start, end }
     },
 
-    grabResize({ minutes = 0, days = 0 }) {
+    grabResize({ minutes = 0, days = 0, edge = 'end' }) {
       const grab = keyboardDrag.value
       if (grab == null) return
       grabResized = true
+
+      if (edge === 'start') {
+        const candidate = localizer.add({
+          value: localizer.add({ value: grab.start, amount: days, unit: 'day' }),
+          amount: minutes,
+          unit: 'minute',
+        })
+        let start: string
+        if (days !== 0) {
+          // Whole-day resize (month): start can't go forward past end's day.
+          start = localizer.gt({ a: candidate, b: grab.end, unit: 'day' })
+            ? localizer.add({
+                value: grab.start,
+                amount: localizer.diff({
+                  a: localizer.startOf({ value: grab.end, unit: 'day' }),
+                  b: localizer.startOf({ value: grab.start, unit: 'day' }),
+                  unit: 'day',
+                }),
+                unit: 'day',
+              })
+            : candidate
+        } else {
+          // Slot resize (time grid): start can't cross within one slot of the end.
+          start =
+            localizer.diff({ a: grab.end, b: candidate, unit: 'minute' }) < step
+              ? localizer.add({ value: grab.end, amount: -step, unit: 'minute' })
+              : candidate
+        }
+        keyboardDrag.value = { ...grab, start }
+        dragPreview.value = { start, end: grab.end }
+        return
+      }
+
       const candidate = localizer.add({
         value: localizer.add({ value: grab.end, amount: days, unit: 'day' }),
         amount: minutes,

@@ -57,8 +57,8 @@ export function useKeyboardDnd<TEvent = unknown>({ mode }: KeyboardDndOptions): 
   const gridSelector = mode === 'time' ? '.bc-time-body' : '.bc-month-grid'
   const pickupHint =
     mode === 'time'
-      ? 'Picked up. Arrow keys move, Shift with Up or Down resizes, Enter drops, Escape cancels.'
-      : 'Picked up. Arrow keys move, Shift with the arrow keys resizes the end, Enter drops, Escape cancels.'
+      ? 'Picked up. Arrow keys move. Shift+Up/Down resizes end. Shift+Alt+Up/Down resizes start. Enter drops, Escape cancels.'
+      : 'Picked up. Arrow keys move. Shift+arrows resizes end. Shift+Alt+arrows resizes start. Enter drops, Escape cancels.'
 
   // Build the description from the live grab bounds (read after the action so it
   // reflects the new position): a time range for the time grid, a date range for
@@ -123,12 +123,14 @@ export function useKeyboardDnd<TEvent = unknown>({ mode }: KeyboardDndOptions): 
       e.preventDefault()
       e.stopPropagation()
       if (mode === 'time') {
-        // ↑/↓ step a slot (resize end with Shift); ←/→ step a day (move only).
+        // ↑/↓ step a slot; Shift resizes end, Shift+Alt resizes start; ←/→ move a day.
         if (e.key === 'ArrowUp') {
-          if (e.shiftKey) store.grabResize({ minutes: -step })
+          if (e.shiftKey && e.altKey) store.grabResize({ minutes: -step, edge: 'start' })
+          else if (e.shiftKey) store.grabResize({ minutes: -step })
           else store.grabMove({ minutes: -step })
         } else if (e.key === 'ArrowDown') {
-          if (e.shiftKey) store.grabResize({ minutes: step })
+          if (e.shiftKey && e.altKey) store.grabResize({ minutes: step, edge: 'start' })
+          else if (e.shiftKey) store.grabResize({ minutes: step })
           else store.grabMove({ minutes: step })
         } else if (e.key === 'ArrowLeft') {
           if (!e.shiftKey) store.grabMove({ days: -1 })
@@ -136,16 +138,21 @@ export function useKeyboardDnd<TEvent = unknown>({ mode }: KeyboardDndOptions): 
           store.grabMove({ days: 1 })
         }
       } else {
-        // ←/→ step a day, ↑/↓ step a week; Shift resizes the end by the same amount.
+        // ←/→ step a day, ↑/↓ step a week; Shift resizes end, Shift+Alt resizes start.
         if (e.key === 'ArrowLeft') {
-          if (e.shiftKey) store.grabResize({ days: -1 })
+          if (e.shiftKey && e.altKey) store.grabResize({ days: -1, edge: 'start' })
+          else if (e.shiftKey) store.grabResize({ days: -1 })
           else store.grabMove({ days: -1 })
         } else if (e.key === 'ArrowRight') {
-          if (e.shiftKey) store.grabResize({ days: 1 })
+          if (e.shiftKey && e.altKey) store.grabResize({ days: 1, edge: 'start' })
+          else if (e.shiftKey) store.grabResize({ days: 1 })
           else store.grabMove({ days: 1 })
         } else if (e.key === 'ArrowUp') {
-          if (e.shiftKey) store.grabResize({ days: -7 })
+          if (e.shiftKey && e.altKey) store.grabResize({ days: -7, edge: 'start' })
+          else if (e.shiftKey) store.grabResize({ days: -7 })
           else store.grabMove({ days: -7 })
+        } else if (e.shiftKey && e.altKey) {
+          store.grabResize({ days: 7, edge: 'start' })
         } else if (e.shiftKey) {
           store.grabResize({ days: 7 })
         } else {

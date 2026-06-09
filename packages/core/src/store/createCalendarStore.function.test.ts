@@ -977,6 +977,39 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       )
     })
 
+    it('grabResize edge=start moves the start edge and clamps to a one-slot minimum', () => {
+      const store = createCalendarStore<Event>({ localizer, events, step: 30 })
+      store.grabEvent({ id: 1 })
+      // Move start earlier by one slot → event grows (start is earlier, end stays).
+      store.grabResize({ minutes: -30, edge: 'start' })
+      expect(store.keyboardDrag.value!.start).toBe(localizer.add({ value: events[0]!.start, amount: -30, unit: 'minute' }))
+      expect(store.keyboardDrag.value!.end).toBe(events[0]!.end)
+      // Push start forward well past the end → clamps to exactly one slot before end.
+      store.grabResize({ minutes: 10000, edge: 'start' })
+      expect(localizer.diff({ a: store.keyboardDrag.value!.end, b: store.keyboardDrag.value!.start, unit: 'minute' })).toBe(30)
+    })
+
+    it('grabResize edge=start moves the start edge by whole days (month) and clamps to a one-day minimum', () => {
+      const adEvents: Event[] = [
+        { id: 1, title: 'A', start: '2026-06-15T00:00:00.000Z', end: localizer.endOf({ value: '2026-06-17T00:00:00.000Z', unit: 'day' }) },
+      ]
+      const store = createCalendarStore<Event>({ localizer, events: adEvents })
+      store.grabEvent({ id: 1 })
+      // Move start earlier by 2 days → start on 13th, end still on 17th.
+      store.grabResize({ days: -2, edge: 'start' })
+      expect(localizer.startOf({ value: store.keyboardDrag.value!.start, unit: 'day' })).toBe(
+        localizer.startOf({ value: '2026-06-13T00:00:00.000Z', unit: 'day' }),
+      )
+      expect(localizer.startOf({ value: store.keyboardDrag.value!.end, unit: 'day' })).toBe(
+        localizer.startOf({ value: '2026-06-17T00:00:00.000Z', unit: 'day' }),
+      )
+      // Push start forward well past end → clamps to same day as end (one-day event).
+      store.grabResize({ days: 50, edge: 'start' })
+      expect(localizer.startOf({ value: store.keyboardDrag.value!.start, unit: 'day' })).toBe(
+        localizer.startOf({ value: adEvents[0]!.end, unit: 'day' }),
+      )
+    })
+
     it('grabMove steps by whole weeks (month ↑/↓)', () => {
       const store = createCalendarStore<Event>({ localizer, events })
       store.grabEvent({ id: 1 })

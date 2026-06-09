@@ -368,11 +368,16 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    */
   grabMove(args: { days?: number | undefined; minutes?: number | undefined }): void
   /**
-   * Resize a grabbed event's **end** edge and update the preview, by `minutes`
-   * (time grid, clamped to a one-slot minimum) and/or whole `days` (month, clamped
-   * to a one-day minimum). A no-op when nothing is grabbed. Negative values shrink.
+   * Resize a grabbed event by `minutes` (time grid) or whole `days` (month), moving
+   * either the `'end'` edge (default) or the `'start'` edge. Each edge is clamped so
+   * the event can't shrink below one slot (time grid) or one day (month). A no-op
+   * when nothing is grabbed. Negative values shrink the edge inward.
    */
-  grabResize(args: { minutes?: number | undefined; days?: number | undefined }): void
+  grabResize(args: {
+    minutes?: number | undefined
+    days?: number | undefined
+    edge?: 'start' | 'end' | undefined
+  }): void
   /**
    * Drop a grabbed event: fire `onEventDrop` (if it moved) or `onEventResize` (if
    * it only resized) with the proposed bounds, then clear the grab + preview. A
