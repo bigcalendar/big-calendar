@@ -263,6 +263,43 @@ the mouse, so there's nothing extra to handle. (Enter still **opens** an event;
 Space is what picks it up.) Keyboard drag is wired on the **month and time-grid**
 views.
 
+## Resource columns and cross-resource drag
+
+Give the calendar a `resources` array and the **day** and **week** views
+automatically split into per-resource columns — a "rooms" / "people" schedule.
+The day view gives each resource one column under a single-tier title header; the
+week view gives each resource a **two-tier** header (its title spanning that
+resource's day columns, with the day names beneath) and lays the columns out
+**resource-major** (all of one resource's days, then the next resource). Each
+event lands in its resource's column via the `resource` accessor (which reads
+`resourceId` by default), and each resource gets its own all-day lane:
+
+```tsx
+<CalendarProvider
+  events={events}
+  resources={[{ id: 'board', title: 'Board room' }, { id: 'training', title: 'Training room' }]}
+  // event.resourceId decides the column; override with `resourceAccessor` if your field differs
+/>
+```
+
+Dragging an event into a **different** resource's column is a real edit, so the
+move/resize/drop callbacks now also report the **landing** `resourceId` — the
+column you dropped onto:
+
+```tsx
+onEventDrop={({ event, start, end, allDay, resourceId }) => {
+  // `resourceId` is the column dropped onto (undefined in a resource-less grid).
+  // It's a report: you reassign the event to that resource in your own data.
+  setEvents(prev => prev.map(e => (e.id === event.id ? { ...e, start, end, allDay, resourceId } : e)))
+}}
+```
+
+The same `resourceId` rides along on `onEventResize`, `onDropFromOutside`, and the
+slot-selection callbacks (`onSlotClick` / `onSlotSelect`), so a create-on-select
+or drop-to-create also knows the chosen resource. See the **Views → TimeGridView →
+DayWithResources** and **WeekWithResources** stories. (A **day-major** week
+ordering — days outer, resources nested within each day — is still in progress.)
+
 ## Locking individual events
 
 Use `draggableAccessor` to decide which events may be **dragged**, and
@@ -276,7 +313,8 @@ function. An event that returns `false` can't be picked up (or shows no resize h
 ## Not built yet
 
 Move, resize, drop-from-outside, drag-out, and keyboard drag are all wired for both
-the **month** and **time-grid** views today. The remaining follow-ups are
-cross-surface concerns: a `resourceId` on the drop payload (for resource columns),
-timed↔all-day **promotion** (dropping a timed event onto the all-day row, and back),
-and a dedicated `@big-calendar/react/dnd` entry point.
+the **month** and **time-grid** views today, and the **day** and **week** views
+support **resource columns** (resource-major) with cross-resource reassignment. The
+remaining follow-ups: a **day-major** week resource ordering, timed→all-day
+**promotion** (dropping a timed event onto the all-day row), and a dedicated
+`@big-calendar/react/dnd` entry point.

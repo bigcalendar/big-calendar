@@ -8,4 +8,5 @@ export type {
   TimeGrid,
   TimeGutterLabel,
   TimePositionedEvent,
+  TimeResourceGroup,
 } from './useTimeGrid.memo'

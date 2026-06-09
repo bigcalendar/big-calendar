@@ -12,6 +12,8 @@ const DOUBLE_CLICK_MS = 250
 interface SlotCoord {
   slot: number
   date: string
+  /** Owning resource column id (resource grids), else `undefined`. */
+  resourceId?: string | undefined
 }
 
 /** Read the slot coordinate from the nearest hit cell, or `null` when none. */
@@ -20,7 +22,8 @@ function slotFromElement(el: EventTarget | null): SlotCoord | null {
   if (cell == null) return null
   const { date, slotIndex } = cell.dataset
   if (date == null || slotIndex == null) return null
-  return { slot: Number(slotIndex), date }
+  const resourceId = cell.closest<HTMLElement>('[data-bc-resource]')?.getAttribute('data-bc-resource') ?? undefined
+  return { slot: Number(slotIndex), date, resourceId }
 }
 
 /** Whether the pointer is over an event (events own their own interaction). */
@@ -101,7 +104,7 @@ export function useSlotSelection(
 
       const begin = () => {
         started = true
-        store.selection.start({ slot: anchor.slot, date: anchor.date, mode, slotCount })
+        store.selection.start({ slot: anchor.slot, date: anchor.date, mode, slotCount, resourceId: anchor.resourceId })
       }
       const extendTo = (clientX: number, clientY: number) => {
         const coord = slotFromElement(document.elementFromPoint(clientX, clientY))
@@ -160,13 +163,13 @@ export function useSlotSelection(
         if (prev != null && prev.slot === slot && prev.date === date && now - prev.at < DOUBLE_CLICK_MS) {
           clearTimeout(prev.timer)
           tap.current = null
-          store.selection.doubleClick({ slot, date, mode, slotCount })
+          store.selection.doubleClick({ slot, date, mode, slotCount, resourceId: anchor.resourceId })
           return
         }
         if (prev != null) clearTimeout(prev.timer)
         const timer = setTimeout(() => {
           tap.current = null
-          store.selection.click({ slot, date, mode, slotCount })
+          store.selection.click({ slot, date, mode, slotCount, resourceId: anchor.resourceId })
         }, DOUBLE_CLICK_MS)
         tap.current = { slot, date, at: now, timer }
       }

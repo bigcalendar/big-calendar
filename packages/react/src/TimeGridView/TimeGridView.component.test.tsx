@@ -45,7 +45,7 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
   beforeAll(async () => {
     localizer = await create()
     dayStart = localizer.startOf({ value: focus, unit: 'day' })
-    heading = localizer.format({ value: dayStart, format: 'dayHeader' })
+    heading = localizer.format({ value: dayStart, format: 'dayColumnHeader' })
     firstLabel = localizer.format({ value: dayStart, format: 'timeGutter' })
   })
 
@@ -344,7 +344,7 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
     const { container } = renderGrid({ defaultDate: '2026-06-16' })
     const heading16 = localizer.format({
       value: localizer.startOf({ value: '2026-06-16', unit: 'day' }),
-      format: 'dayHeader',
+      format: 'dayColumnHeader',
     })
     expect(container.querySelector('.bc-now-indicator')).toBeNull()
     expect(screen.getByText(heading16).classList.contains('bc-today')).toBe(false)
@@ -503,5 +503,225 @@ describe.each(LOCALIZER_CASES)('TimeGridView keyboard DnD [$name]', ({ create })
     press(btn, 'ArrowDown')
     press(btn, 'Enter')
     expect(onEventDrop).not.toHaveBeenCalled()
+  })
+
+  describe('with resources (day view)', () => {
+    interface ResEvent extends Event {
+      resourceId?: string
+    }
+    interface Resource {
+      id: string
+      title: string
+    }
+    const resources: Resource[] = [
+      { id: 'r1', title: 'Board room' },
+      { id: 'r2', title: 'Training room' },
+    ]
+    const resEvents: ResEvent[] = [
+      { id: 1, title: 'Board mtg', resourceId: 'r1', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' },
+      { id: 2, title: 'Class', resourceId: 'r2', start: '2026-06-15T11:00:00.000Z', end: '2026-06-15T12:00:00.000Z' },
+      { id: 3, title: 'Board holiday', resourceId: 'r1', allDay: true, ...allDayBounds },
+    ]
+
+    function renderResourceGrid() {
+      return render(
+        <CalendarProvider<ResEvent>
+          localizer={localizer}
+          defaultDate={focus}
+          defaultView={Views.DAY}
+          events={resEvents}
+          resources={resources}
+          getNow={() => NOW}
+        >
+          <TimeGridView />
+        </CalendarProvider>,
+      )
+    }
+
+    it('renders one single-tier title header per resource', () => {
+      renderResourceGrid()
+      expect(screen.getByText('Board room')).toBeTruthy()
+      expect(screen.getByText('Training room')).toBeTruthy()
+    })
+
+    it('renders one time column per resource carrying data-bc-resource', () => {
+      const { container } = renderResourceGrid()
+      const columns = container.querySelectorAll('.bc-day-column[data-bc-resource]')
+      expect(columns).toHaveLength(2)
+      expect(container.querySelector('.bc-day-column[data-bc-resource="r1"]')).toBeTruthy()
+      expect(container.querySelector('.bc-day-column[data-bc-resource="r2"]')).toBeTruthy()
+    })
+
+    it('places each timed event in its own resource column', () => {
+      const { container } = renderResourceGrid()
+      const board = container.querySelector<HTMLElement>('.bc-day-column[data-bc-resource="r1"]')!
+      const training = container.querySelector<HTMLElement>('.bc-day-column[data-bc-resource="r2"]')!
+      expect(board.textContent).toContain('Board mtg')
+      expect(board.textContent).not.toContain('Class')
+      expect(training.textContent).toContain('Class')
+    })
+
+    it('routes a resource all-day event to that resource lane only', () => {
+      const { container } = renderResourceGrid()
+      const lanes = container.querySelectorAll<HTMLElement>('.bc-allday-resource[data-bc-resource]')
+      expect(lanes).toHaveLength(2)
+      const r1Lane = container.querySelector<HTMLElement>('.bc-allday-resource[data-bc-resource="r1"]')!
+      const r2Lane = container.querySelector<HTMLElement>('.bc-allday-resource[data-bc-resource="r2"]')!
+      expect(r1Lane.textContent).toContain('Board holiday')
+      expect(r2Lane.textContent).not.toContain('Board holiday')
+    })
+  })
+
+  describe('with resources (week view)', () => {
+    interface ResEvent extends Event {
+      resourceId?: string
+    }
+    interface Resource {
+      id: string
+      title: string
+    }
+    const resources: Resource[] = [
+      { id: 'r1', title: 'Board room' },
+      { id: 'r2', title: 'Training room' },
+    ]
+    const resEvents: ResEvent[] = [
+      { id: 1, title: 'Board mtg', resourceId: 'r1', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' },
+      { id: 2, title: 'Class', resourceId: 'r2', start: '2026-06-15T11:00:00.000Z', end: '2026-06-15T12:00:00.000Z' },
+      { id: 3, title: 'Board holiday', resourceId: 'r1', allDay: true, ...allDayBounds },
+    ]
+
+    function renderResourceWeek() {
+      return render(
+        <CalendarProvider<ResEvent>
+          localizer={localizer}
+          defaultDate={focus}
+          defaultView={Views.WEEK}
+          events={resEvents}
+          resources={resources}
+          getNow={() => NOW}
+        >
+          <TimeGridView />
+        </CalendarProvider>,
+      )
+    }
+
+    it('renders a two-tier header: resource titles over day names', () => {
+      const { container } = renderResourceWeek()
+      expect(container.querySelector('.bc-time-header-tiered')).toBeTruthy()
+      expect(screen.getByText('Board room')).toBeTruthy()
+      expect(screen.getByText('Training room')).toBeTruthy()
+      // Day-name tier: one heading per visible day per resource (7 days × 2).
+      expect(container.querySelectorAll('.bc-day-heading')).toHaveLength(14)
+    })
+
+    it('lays out one body column per resource per visible day (resource-major)', () => {
+      const { container } = renderResourceWeek()
+      expect(container.querySelectorAll('.bc-day-column[data-bc-resource="r1"]')).toHaveLength(7)
+      expect(container.querySelectorAll('.bc-day-column[data-bc-resource="r2"]')).toHaveLength(7)
+    })
+
+    it('places each timed event in its own resource column', () => {
+      const { container } = renderResourceWeek()
+      const r1Cols = Array.from(container.querySelectorAll<HTMLElement>('.bc-day-column[data-bc-resource="r1"]'))
+      const r2Cols = Array.from(container.querySelectorAll<HTMLElement>('.bc-day-column[data-bc-resource="r2"]'))
+      expect(r1Cols.some((c) => c.textContent?.includes('Board mtg'))).toBe(true)
+      expect(r1Cols.some((c) => c.textContent?.includes('Class'))).toBe(false)
+      expect(r2Cols.some((c) => c.textContent?.includes('Class'))).toBe(true)
+    })
+
+    it('routes a resource all-day event to that resource lane only', () => {
+      const { container } = renderResourceWeek()
+      const lanes = container.querySelectorAll<HTMLElement>('.bc-allday-resource-week[data-bc-resource]')
+      expect(lanes).toHaveLength(2)
+      const r1Lane = container.querySelector<HTMLElement>('.bc-allday-resource-week[data-bc-resource="r1"]')!
+      const r2Lane = container.querySelector<HTMLElement>('.bc-allday-resource-week[data-bc-resource="r2"]')!
+      expect(r1Lane.textContent).toContain('Board holiday')
+      expect(r2Lane.textContent).not.toContain('Board holiday')
+    })
+  })
+
+  describe('with resources and resourceLayout:"day" (day-major, week view)', () => {
+    interface ResEvent extends Event {
+      resourceId?: string
+    }
+    interface Resource {
+      id: string
+      title: string
+    }
+    const resources: Resource[] = [
+      { id: 'r1', title: 'Board room' },
+      { id: 'r2', title: 'Training room' },
+    ]
+    const resEvents: ResEvent[] = [
+      { id: 1, title: 'Board mtg', resourceId: 'r1', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' },
+      { id: 2, title: 'Class', resourceId: 'r2', start: '2026-06-15T11:00:00.000Z', end: '2026-06-15T12:00:00.000Z' },
+      { id: 3, title: 'Board holiday', resourceId: 'r1', allDay: true, ...allDayBounds },
+    ]
+
+    function renderDayMajorWeek() {
+      return render(
+        <CalendarProvider<ResEvent>
+          localizer={localizer}
+          defaultDate={focus}
+          defaultView={Views.WEEK}
+          events={resEvents}
+          resources={resources}
+          resourceLayout="day"
+          getNow={() => NOW}
+        >
+          <TimeGridView />
+        </CalendarProvider>,
+      )
+    }
+
+    it('renders the day-major container class', () => {
+      const { container } = renderDayMajorWeek()
+      expect(container.querySelector('.bc-time-grid-resources-day-major')).toBeTruthy()
+    })
+
+    it('renders a two-tier header: day names on row 1, resource names on row 2', () => {
+      const { container } = renderDayMajorWeek()
+      expect(container.querySelector('.bc-time-header-tiered')).toBeTruthy()
+      // Row 1: one day-major header cell per visible day (7 days).
+      expect(container.querySelectorAll('.bc-day-major-header')).toHaveLength(7)
+      // Row 2: resource labels — one per (day × resource) cell (7 × 2 = 14).
+      expect(container.querySelectorAll('.bc-resource-header-label')).toHaveLength(14)
+      // Both resource names appear.
+      expect(screen.getAllByText('Board room').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('Training room').length).toBeGreaterThan(0)
+    })
+
+    it('renders one body column per (day × resource) cell in day-first order', () => {
+      const { container } = renderDayMajorWeek()
+      // 7 days × 2 resources = 14 leaf columns.
+      const allCols = container.querySelectorAll('.bc-day-column[data-bc-resource]')
+      expect(allCols).toHaveLength(14)
+      expect(container.querySelectorAll('.bc-day-column[data-bc-resource="r1"]')).toHaveLength(7)
+      expect(container.querySelectorAll('.bc-day-column[data-bc-resource="r2"]')).toHaveLength(7)
+    })
+
+    it('renders one all-day lane per (day × resource) cell', () => {
+      const { container } = renderDayMajorWeek()
+      // 7 days × 2 resources = 14 stacked all-day lanes.
+      expect(container.querySelectorAll('.bc-allday-resource[data-bc-resource]')).toHaveLength(14)
+    })
+
+    it('places each timed event in its (day, resource) column only', () => {
+      const { container } = renderDayMajorWeek()
+      const r1Cols = Array.from(container.querySelectorAll<HTMLElement>('.bc-day-column[data-bc-resource="r1"]'))
+      const r2Cols = Array.from(container.querySelectorAll<HTMLElement>('.bc-day-column[data-bc-resource="r2"]'))
+      expect(r1Cols.some((c) => c.textContent?.includes('Board mtg'))).toBe(true)
+      expect(r2Cols.some((c) => c.textContent?.includes('Board mtg'))).toBe(false)
+      expect(r2Cols.some((c) => c.textContent?.includes('Class'))).toBe(true)
+      expect(r1Cols.some((c) => c.textContent?.includes('Class'))).toBe(false)
+    })
+
+    it('routes a resource all-day event to that resource lanes only', () => {
+      const { container } = renderDayMajorWeek()
+      const r1Lanes = Array.from(container.querySelectorAll<HTMLElement>('.bc-allday-resource[data-bc-resource="r1"]'))
+      const r2Lanes = Array.from(container.querySelectorAll<HTMLElement>('.bc-allday-resource[data-bc-resource="r2"]'))
+      expect(r1Lanes.some((l) => l.textContent?.includes('Board holiday'))).toBe(true)
+      expect(r2Lanes.some((l) => l.textContent?.includes('Board holiday'))).toBe(false)
+    })
   })
 })

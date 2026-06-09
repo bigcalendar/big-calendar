@@ -70,7 +70,7 @@ export function useKeyboardDnd<TEvent = unknown>({ mode }: KeyboardDndOptions): 
       const event = store.getEvent({ id })
       const name = (event != null ? wrapAccessor(store.accessors.title)(event) : '') ?? ''
       if (mode === 'time') {
-        const day = localizer.format({ value: grab.start, format: 'dayHeader' })
+        const day = localizer.format({ value: grab.start, format: 'dayColumnHeader' })
         const from = localizer.format({ value: grab.start, format: 'time' })
         const to = localizer.format({ value: grab.end, format: 'time' })
         return `${prefix} ${name}, ${day} ${from} to ${to}`.trim()

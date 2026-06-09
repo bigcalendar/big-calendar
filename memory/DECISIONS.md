@@ -795,3 +795,22 @@ Cutter: "you can do DnD path of keyboard resizing events in month view." Scoped 
 - **Rejected:** resize-only month grab (Cutter chose move+resize); ←→-only mapping (chose ←→ day / ↑↓ week).
 - **Deferred:** start-edge keyboard resize (end-edge only, both views); month keyboard pickup still ungated by `isDraggable`/`isResizable` (matches time-grid 5e).
 - **Gates:** core 240 + dnd 29 + react 184; all 8 projects typecheck/test/lint/build ✓; build-storybook react ✓. **Confirm feel + SR announcements in Storybook** (`MonthKeyboardDrag`).
+
+## 2026-06-08 — Phase 5 tail mini-plan + Step 1 (time-grid resources) scoping (Cutter)
+
+Cutter ordered the remaining Phase-5 tail as a mini-plan: **(1) time-grid resource columns**, (2) timed→all-day promotion (one-way), (3) dedicated `@big-calendar/react/dnd` entry, (4) start-edge keyboard resize (**Shift+Alt+arrow**), (5) month keyboard pickup gating by `isDraggable`/`isResizable`, (6) Luxon localizer arm, (7) comprehensive "wiring it all together" docs.
+
+Reviewed RBC's resource model (the port target): no new public view names — `Day`/`Week` render resource columns automatically when a `resources` array is supplied. **Two column orderings** via a boolean (`resourceGroupingLayout`, default OFF): OFF = **resource-major** (outer=resource, inner=days, `TimeGridHeader`), ON = **day-major** (outer=day, inner=resources, `TimeGridHeaderResources`). **Both** week orderings render a **two-tier header** and a **per-resource all-day lane**; Day view = single-tier resource columns, per-resource all-day lane. Cross-resource DnD is **report-only**: the landing column's resource id flows out as `resourceId` in `onEventDrop`/`onEventResize`/`onDropFromOutside`/`onSelectSlot` (RBC `EventContainerWrapper`); RBC never mutates the event.
+
+Decisions for Step 1 (via AskUserQuestion):
+- **Prop name = `resourceLayout: 'resource' | 'day'`** (default `'resource'`), not RBC's `resourceGroupingLayout` boolean — clearer/extensible for a fresh API. `'resource'` = resource-major, `'day'` = day-major.
+- **Cross-resource DnD wired in chunk 1a** (Day) so it's testable on the simplest layout; threads the landing `resourceId` through the drop payload.
+- **Selection reports `resourceId`** too (e.g. `onSelectSlot`) — full parity, included this step.
+- **Column sizing = min-width per leaf column + horizontal scroll** when columns overflow (matches the RBC week screenshots), not equal-flex.
+- **Step 1 broken into chunks (Cutter):** **1a** Day layout + core view-model resource support + cross-resource DnD + selection resourceId; **1b** ungrouped week (resource-major, two-tier header); **1c** grouped week (day-major, two-tier header).
+
+Already in place (no work needed): the `resources` input prop already syncs into the store (`useCalendar.ts`); the `resource`/`resourceId`/`resourceTitle` accessors exist with defaults. Missing: `timeGridViewModel` consuming `resources`, the React resource layouts, and the DnD/selection resourceId threading.
+
+- **Start-edge keyboard resize chord = Shift+Alt+arrow** (Alt is the same physical key on Mac/Win; relies on preventDefault while grabbed). Rejected Shift+Cmd/Ctrl (Cmd+arrow = browser nav/line-nav on Mac).
+- **Rejected:** grouped-only resource layout (Cutter's screenshots showed both orderings → support both); RBC's `resourceGroupingLayout` prop name.
+- **1a delivered (2026-06-09):** Day view resource columns + resourceId end-to-end (core/dnd/react), all gates green (core 250 / dnd 31 / react 188). Core model is **additive** — `TimeGridViewModel` gained `resources: TimeGridResourceGroup[] | null` and `TimeGridColumn.resourceId`; the no-resource path is byte-for-byte unchanged. **Deferred to 1b/1c:** week orderings (the `resourceLayout` prop isn't consumed yet — Day ignores it). **Deferred (noted):** DnD live-preview isn't scoped per-resource (core `dragPreview` lacks a resourceId → would show in every column, so it's omitted in the resource branch — revisit by adding `resourceId` to `dragPreview`); empty-slot keyboard roving not wired in resource columns (event keyboard DnD still works); multi-day-per-resource all-day lane (Day = single cell).

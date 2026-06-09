@@ -1,3 +1,4 @@
+import { resolve } from 'node:path'
 import type { StorybookConfig } from '@storybook/react-vite'
 
 /**
@@ -11,6 +12,21 @@ const config: StorybookConfig = {
   framework: {
     name: '@storybook/react-vite',
     options: {},
+  },
+  viteFinal: (config) => {
+    // Point every @big-calendar/* import at the package source so CSS and TS
+    // changes show up in Storybook immediately without a rebuild step.
+    const pkgs = resolve(import.meta.dirname, '../..')
+    config.resolve ??= {}
+    config.resolve.alias = {
+      ...(config.resolve.alias as Record<string, string>),
+      '@big-calendar/core': resolve(pkgs, 'core/src/index.ts'),
+      '@big-calendar/dnd': resolve(pkgs, 'dnd/src/index.ts'),
+      '@big-calendar/localizer': resolve(pkgs, 'localizer/src/index.ts'),
+      '@big-calendar/localizer-temporal': resolve(pkgs, 'localizer-temporal/src/index.ts'),
+      '@big-calendar/styles': resolve(pkgs, 'styles/src'),
+    }
+    return config
   },
 }
 

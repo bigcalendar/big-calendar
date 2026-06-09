@@ -27,8 +27,8 @@
   /* ── color: events ─────────────────────────────────────────────────── */
   /* Temporary periwinkle event fill (was AccentColor); applies to .bc-event +
      .bc-segment → Month and time-grid views. Revisit with event-styling pass. */
-  --bc-color-event-bg: #ccccff;
-  --bc-color-event-fg: AccentColorText;
+  --bc-color-event-bg: #006deb;
+  --bc-color-event-fg: #fff;
   --bc-color-event-border: color-mix(in oklab, AccentColor 80%, CanvasText);
   --bc-color-bg-event-bg: color-mix(in oklab, AccentColor 18%, Canvas);
   --bc-color-bg-event-opacity: 0.5;

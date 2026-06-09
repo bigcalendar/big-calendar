@@ -1,7 +1,9 @@
 import { Views } from '@big-calendar/core'
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { TimeGridView, Toolbar } from '../src'
-import { CalendarStage, SelectionDemo } from './harness'
+import { CalendarProvider, TimeGridView, Toolbar } from '../src'
+import { CalendarStage, FOCUS, localizer, NOW, SelectionDemo } from './harness'
+import type { DemoEvent } from './demoEvents'
+import { demoEvents } from './demoEvents'
 
 const meta: Meta<typeof TimeGridView> = {
   title: 'React/Views/TimeGridView',
@@ -31,6 +33,113 @@ const render = (defaultView: (typeof Views)[keyof typeof Views]) => () => (
 export const Week: Story = { render: render(Views.WEEK) }
 export const WorkWeek: Story = { render: render(Views.WORK_WEEK) }
 export const Day: Story = { render: render(Views.DAY) }
+
+/** A resource. */
+interface Room {
+  id: string
+  title: string
+}
+
+// A wide roster on purpose, so the day view (one column per resource) and the
+// week view (resource × day) both overflow and exercise horizontal scrolling.
+const rooms: Room[] = [
+  { id: 'board', title: 'Board room' },
+  { id: 'training', title: 'Training room' },
+  { id: 'mtg1', title: 'Meeting room 1' },
+  { id: 'mtg2', title: 'Meeting room 2' },
+  { id: 'mtg3', title: 'Meeting room 3' },
+  { id: 'mtg4', title: 'Meeting room 4' },
+  { id: 'exec', title: 'Executive suite' },
+  { id: 'lab', title: 'Innovation lab' },
+  { id: 'studio', title: 'Recording studio' },
+  { id: 'annex', title: 'Annex hall' },
+]
+
+/**
+ * Day view split into one column per **resource** (rooms here). Supplying a
+ * `resources` array automatically swaps the day view to its resource layout: a
+ * single-tier title header, a per-resource all-day lane, and one time column per
+ * resource. Each event lands in its resource's column via the `resource`
+ * accessor (here `resourceId`). Columns get a min width and the grid scrolls
+ * horizontally when they overflow.
+ */
+export const DayWithResources: Story = {
+  render: () => (
+    <div style={{ display: 'grid', gridTemplateRows: 'auto 1fr', blockSize: 800, inlineSize: '100%' }}>
+      <CalendarProvider<DemoEvent>
+        localizer={localizer}
+        getNow={() => NOW}
+        events={demoEvents}
+        resources={rooms}
+        defaultDate={FOCUS}
+        defaultView={Views.DAY}
+      >
+        <Toolbar />
+        <div className="bc-calendar">
+          <TimeGridView />
+        </div>
+      </CalendarProvider>
+    </div>
+  ),
+}
+
+/**
+ * Week view with resources. Each resource gets a **two-tier** header — its title
+ * spanning that resource's seven day columns, with the day names beneath — and a
+ * multi-day all-day lane scoped to its own days. The day columns are laid out in
+ * **resource-major** order (all of one resource's days, then the next resource).
+ * Events route to their resource via the `resource` accessor (here `resourceId`),
+ * and the grid scrolls horizontally as the resource count grows.
+ */
+export const WeekWithResources: Story = {
+  render: () => (
+    <div style={{ display: 'grid', gridTemplateRows: 'auto 1fr', blockSize: 800, inlineSize: '100%' }}>
+      <CalendarProvider<DemoEvent>
+        localizer={localizer}
+        getNow={() => NOW}
+        events={demoEvents}
+        resources={rooms}
+        defaultDate={FOCUS}
+        defaultView={Views.WEEK}
+      >
+        <Toolbar />
+        <div className="bc-calendar">
+          <TimeGridView />
+        </div>
+      </CalendarProvider>
+    </div>
+  ),
+}
+
+/**
+ * Week view with resources in **day-major** order (`resourceLayout="day"`).
+ * The header has two tiers: **day names on row 1**, each spanning its resource
+ * columns, and **resource names beneath on row 2**. The body columns are laid
+ * out day-first — all resources for Monday, then all resources for Tuesday,
+ * and so on — which lets you compare every room's availability within a single
+ * day at a glance. Each all-day lane is scoped to its own (day × resource)
+ * cell. Switch to the `WeekWithResources` story to compare resource-major order.
+ */
+export const WeekWithResourcesDayMajor: Story = {
+  render: () => (
+    <div style={{ display: 'grid', gridTemplateRows: 'auto 1fr', blockSize: 800, inlineSize: '100%' }}>
+      <CalendarProvider<DemoEvent>
+        localizer={localizer}
+        getNow={() => NOW}
+        events={demoEvents}
+        resources={rooms}
+        resourceLayout="day"
+        defaultDate={FOCUS}
+        defaultView={Views.WEEK}
+      >
+        <Toolbar />
+        <div className="bc-calendar">
+          <TimeGridView />
+        </div>
+      </CalendarProvider>
+    </div>
+  ),
+}
 
 /**
  * `selectable` on. Drag down a column to select a time range, click or

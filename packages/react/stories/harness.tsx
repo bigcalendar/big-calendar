@@ -3,6 +3,10 @@ import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { CalendarProvider } from '../src'
 import type { CalendarProviderProps } from '../src'
+import type { DemoEvent } from './demoEvents'
+import { demoEvents } from './demoEvents'
+export type { DemoEvent }
+export { demoEvents }
 
 /**
  * Shared dev harness for the `@big-calendar/react` stories.
@@ -18,25 +22,6 @@ export const localizer = await createTemporalLocalizer({ locale: 'en-US', timezo
 export const NOW = '2026-06-15T12:00:00.000Z'
 /** Focus date the demo calendar opens on (Mon, Jun 15 2026). */
 export const FOCUS = '2026-06-15'
-
-/** Minimal event shape used by the demo data. */
-export interface DemoEvent {
-  id: number
-  title: string
-  start: string
-  end: string
-  allDay?: boolean
-}
-
-/** A week's worth of sample events around {@link FOCUS}. */
-export const demoEvents: DemoEvent[] = [
-  { id: 1, title: 'Standup', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T09:30:00.000Z' },
-  { id: 2, title: 'Design review', start: '2026-06-15T11:00:00.000Z', end: '2026-06-15T12:30:00.000Z' },
-  { id: 3, title: 'Lunch & learn', start: '2026-06-16T12:00:00.000Z', end: '2026-06-16T13:00:00.000Z' },
-  { id: 4, title: 'Offsite', start: '2026-06-17T00:00:00.000Z', end: '2026-06-19T00:00:00.000Z', allDay: true },
-  { id: 5, title: '1:1 with Dana', start: '2026-06-18T15:00:00.000Z', end: '2026-06-18T15:30:00.000Z' },
-  { id: 6, title: 'Release cut', start: '2026-06-19T16:00:00.000Z', end: '2026-06-19T17:00:00.000Z' },
-]
 
 /** Props for {@link CalendarStage}: provider config plus stage sizing. */
 export type CalendarStageProps = Partial<CalendarProviderProps<DemoEvent>> & {

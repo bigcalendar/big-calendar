@@ -195,6 +195,10 @@
      (each in its own layer), so the day-column area lines up across them. */
   .bc-allday-row {
     align-items: start;
+    /* A consistent baseline height across every time-grid view, so the all-day
+       strip reads as a band rather than collapsing to its content. Grows past
+       this when more segment rows stack. Overridable via the var. */
+    min-block-size: var(--bc-allday-row-min-height, 4rem);
     /* Selectable surface (all-day day-mode drag) — same touch-action rationale
        as `.bc-month-grid` / `.bc-time-body`. */
     touch-action: pan-y;
@@ -280,6 +284,213 @@
     min-inline-size: 0;
     min-block-size: 0;
     position: relative;
+  }
+
+  /* ── resource time grid (day / week) ─────────────────────────────────
+     One column per resource (day) or per resource×day (week). Columns get a min
+     width (`--bc-resource-col-min`) so a wide grid scrolls horizontally rather
+     than crushing columns.
+
+     The whole grid is a single 2-D scroll container: the parent owns the leaf-
+     column tracks; the header + all-day "head" is sticky to the top (stays put on
+     vertical scroll) and the gutter column is sticky to the inline-start (stays
+     put on horizontal scroll). Head and body inherit the parent's exact tracks via
+     `subgrid`, so every row stays aligned at any scroll offset. */
+  .bc-time-grid-resources {
+    display: grid;
+    grid-template-columns:
+      var(--bc-gutter-width)
+      repeat(var(--bc-day-count), minmax(var(--bc-resource-col-min, 8rem), 1fr));
+    /* head (auto) then body (natural, tall) — the container scrolls to reveal. */
+    grid-template-rows: auto auto;
+    overflow: auto;
+  }
+
+  /* Day columns are full per-resource columns, so they get a roomier minimum than
+     the narrow week day-columns (which keep the 8rem default). */
+  .bc-time-grid-resources-day {
+    --bc-resource-col-min: 28rem;
+  }
+
+  .bc-time-grid-resources > .bc-time-head,
+  .bc-time-grid-resources > .bc-time-body {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+  }
+
+  .bc-time-grid-resources > .bc-time-head {
+    grid-template-rows: auto auto; /* header row, all-day row */
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 3;
+    background: var(--bc-color-bg);
+  }
+
+  .bc-time-grid-resources .bc-time-header,
+  .bc-time-grid-resources .bc-allday-row {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+  }
+
+  /* The body no longer scrolls on its own (the container owns both axes); a nested
+     scroller would trap the gutter's sticky positioning. */
+  .bc-time-grid-resources .bc-time-body {
+    overflow: visible;
+  }
+
+  /* Frozen gutter: the time-label column stays pinned while columns scroll
+     horizontally; the head's gutter cells sit above it as the fixed corner. The
+     trailing border is a fixed divider from the scrolling area (the first column's
+     own leading border scrolls away), and `align-self: stretch` makes each cell's
+     opaque background fill its whole cell so scrolled content can't show through. */
+  .bc-time-grid-resources .bc-time-gutter {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 2;
+    background: var(--bc-color-bg);
+    border-inline-end: var(--bc-border);
+  }
+
+  .bc-time-grid-resources .bc-time-header-gutter,
+  .bc-time-grid-resources .bc-allday-label {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 4;
+    align-self: stretch;
+    background: var(--bc-color-bg);
+    border-inline-end: var(--bc-border);
+  }
+
+  /* Single-tier resource title cell. */
+  .bc-resource-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 0;
+    font-weight: var(--bc-font-weight-bold, 600);
+  }
+
+  /* One resource's all-day lane: a hit-target fill with its events stacked above.
+     Stretch to fill the all-day band (the row sets `align-items: start`) so the
+     lane's column divider spans the band's full height, not just its content. */
+  .bc-allday-resource {
+    position: relative;
+    align-self: stretch;
+    min-block-size: var(--bc-segment-height);
+    padding: var(--bc-event-gap);
+  }
+
+  .bc-allday-resource > .bc-allday-slot {
+    position: absolute;
+    inset: 0;
+  }
+
+  .bc-allday-resource-stack {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--bc-event-gap);
+  }
+
+  /* A stacked all-day segment flows in the lane (no month-style grid placement). */
+  .bc-segment-stacked {
+    position: relative;
+  }
+
+  /* ── resource WEEK layout ────────────────────────────────────────────
+     Two-tier header (resource titles over day names) and per-resource all-day
+     lanes that each span the resource's day columns. */
+
+  /* Divider before each resource header, matching the body day-column dividers.
+     Applies to both the day single-tier header and the week two-tier title row. */
+  .bc-time-grid-resources .bc-resource-header {
+    border-inline-start: var(--bc-border);
+  }
+
+  /* Week two-tier only: separator beneath the resource titles (row 1) and a
+     leading divider before each day name (row 2), so the header reads as a grid
+     that lines up with the body. */
+  .bc-time-header-tiered .bc-resource-header {
+    border-block-end: var(--bc-border);
+  }
+
+  /* Grid so the (content-width) heading button stretches to fill the cell, the
+     way it does as a direct child in the flat header — its centered text then
+     reads centered. */
+  .bc-time-header-tiered .bc-resource-day-head {
+    display: grid;
+    border-inline-start: var(--bc-border);
+  }
+
+  /* All-day lane day cells: a divider before EACH day, including the first — that
+     first border is the resource-boundary divider. The week lane therefore drops
+     the shared leading resource border (below) so its internal day sub-grid isn't
+     shifted off the body columns by a border eating into the lane's content box. */
+  .bc-allday-resource-slots > .bc-allday-slot {
+    border-inline-start: var(--bc-border);
+  }
+
+  /* One resource's WEEK all-day lane spans its day columns; its hit targets and
+     segments sit on a sub-grid of those days. The per-day cells draw their own
+     dividers (incl. the resource boundary), so the lane drops the shared leading
+     resource border — done in `timegrid.css` (bc.components) so it outranks the
+     shared `.bc-allday-resource` border, which lives in that later layer. */
+  .bc-allday-resource-week {
+    padding: 0;
+  }
+
+  .bc-allday-resource-slots {
+    position: absolute;
+    inset: 0;
+    display: grid; /* one column per day (template set inline) */
+  }
+
+  .bc-allday-resource-segments {
+    position: relative;
+    display: grid; /* one column per day (template set inline) */
+    grid-auto-rows: var(--bc-segment-height);
+    gap: var(--bc-event-gap);
+    padding: var(--bc-event-gap);
+    /* Empty cells fall through to the hit layer; segments re-enable themselves. */
+    pointer-events: none;
+  }
+
+  /* ── day-major resource layout ──────────────────────────────────────
+     Day-major flips the grouping: days are the outer tier (row 1), resources the
+     inner tier (row 2). The scroll architecture (sticky head, frozen gutter,
+     subgrid) is identical to resource-major; only the header tiers differ. */
+
+  /* Day-major columns are full per-resource columns; give them the same roomier
+     minimum as resource-major day columns (8rem fits a resource label). */
+  .bc-time-grid-resources-day-major {
+    --bc-resource-col-min: 8rem;
+  }
+
+  /* Top-tier: day name spanning its resource columns. Shares the bold/centered
+     base style from `.bc-resource-header` via the parent selector below, but
+     needs a block-end divider (row 1 / row 2 separator). */
+  .bc-time-grid-resources-day-major .bc-day-major-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 0;
+    font-weight: var(--bc-font-weight-bold, 600);
+    border-block-end: var(--bc-border);
+    border-inline-start: var(--bc-border);
+  }
+
+  /* Resource label in row 2 of the day-major tiered header: centered text. */
+  .bc-resource-header-label {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+    padding-inline: var(--bc-space-1);
+    font-size: var(--bc-font-size-sm);
+    color: var(--bc-color-text-subtle);
   }
 
   /* ── slot focus ──────────────────────────────────────────────────────

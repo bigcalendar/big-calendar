@@ -10,6 +10,108 @@ optional `@big-calendar/dnd` package + React integration (roadmap §14 row 5; ex
 parity + keyboard DnD). Architecture + first slice locked by Cutter — see DECISIONS.md (2026-06-07,
 "Phase 5 (DnD) opened").
 
+### Phase 5 tail — format split: `dayColumnHeader` vs `dayHeader` (Cutter, 2026-06-09) ✓ (uncommitted at time of writing)
+Our localizer had conflated RBC's two distinct day formats under one `dayHeader` key. Split to mirror RBC:
+- **`dayColumnHeader`** `{ weekday: 'short', day: '2-digit' }` (≈ RBC `dayFormat`, "Sun 14") — the **time-grid
+  per-day column header**. New FormatKey ([localizer.type.ts](packages/localizer/src/types/localizer.type.ts)) +
+  default ([formats.constant.ts](packages/localizer/src/constants/formats.constant.ts)). Consumed by
+  [useTimeGrid](packages/react/src/TimeGridView/hooks/useTimeGrid.memo.ts) (column headings) and
+  [useKeyboardDnd](packages/react/src/internal/useKeyboardDnd.ts) (time-mode announcement, now matches the
+  documented "Tue 16" short form).
+- **`dayHeader`** `{ weekday:'long', month:'long', day:'numeric' }` (≈ RBC `dayHeaderFormat`, "Sunday, June 14")
+  — unchanged, still titles the **Day-view toolbar label** ([viewLabel.ts](packages/core/src/store/viewLabel.function.ts)).
+- Tests updated (TimeGridView column-heading expectations → `dayColumnHeader`). Gates: build/test localizer, core,
+  react ✓; typecheck localizer+core+react ✓; lint localizer+react ✓.
+- **DEFERRED (Cutter, explicit):** the format **constants** still need a broader refinement pass for better
+  **Intl layout** (RBC's full set — `dateFormat`/`weekdayFormat`/`dayRangeHeaderFormat`/`agendaHeaderFormat`,
+  ordering quirks like en-US "Sun 14" vs RBC's "14 Sun"). Revisit when we do the localization polish; no date set.
+
+### Phase 5 tail — resource grid SCROLL architecture (sticky head + frozen gutter) (Cutter, 2026-06-09) ✓ (uncommitted at time of writing)
+Styling follow-ups to 1a/1b turned into a layout-architecture change for the **shared** resource grid
+(`.bc-time-grid-resources`, day + week):
+- The grid is now a **single 2-D scroll container** (`overflow: auto`, owns the leaf-column tracks). The header
+  + all-day rows are wrapped in a new sticky `.bc-time-head` (`position: sticky; inset-block-start: 0`) so they
+  stay pinned on vertical scroll; the **gutter column** (`.bc-time-gutter` + `.bc-time-header-gutter` +
+  `.bc-allday-label`) is `position: sticky; inset-inline-start: 0` so it stays fixed on horizontal scroll. The
+  body no longer scrolls on its own (a nested scroller trapped the gutter's sticky positioning).
+- **`subgrid`**: `.bc-time-head` / `.bc-time-body` (and the header/all-day rows nested in the head) use
+  `grid-template-columns: subgrid` to inherit the parent's exact tracks → perfect column alignment at any scroll
+  offset (also removes the earlier all-day sub-pixel drift concern). **Browser baseline: subgrid** (Chrome 117+,
+  FF 71+, Safari 16+) — acceptable for the modern target; noted here as a new dependency.
+- **Day min-width**: `.bc-time-grid-resources-day { --bc-resource-col-min: 14rem }` (week keeps the 8rem default
+  via the var) — day resource columns are full per-resource columns and 8rem was too cramped. Variant class added
+  in [TimeGridView](packages/react/src/TimeGridView/TimeGridView.component.tsx) (`-day` / `-week`).
+- **Header dividers** now apply to the day single-tier header too (`.bc-time-grid-resources .bc-resource-header`),
+  not just the week tiered header.
+- **Border layer bug** (fixed earlier this session): the week-lane border-removal had to live in `timegrid.css`
+  (`@layer bc.components`) to outrank the shared `.bc-allday-resource` border — an override in `layout.css`
+  (`bc.layout`) loses to components regardless of specificity (layer order: reset, tokens, **layout, components**,
+  theme, overrides). Root cause of the earlier double-border + 1px shift.
+- **story** — `rooms` expanded 4 → 10 so both DayWithResources + WeekWithResources exercise horizontal scroll.
+- **Gates:** typecheck/test/lint react ✓ (192); build styles + build-storybook ✓. **No browser run** (jsdom can't
+  render sticky/subgrid/scroll) — all of this needs visual verification in Storybook.
+
+### Phase 5 tail — Task 1b: RESOURCE columns in the WEEK view (resource-major) (Cutter, 2026-06-09) ✓ (uncommitted at time of writing)
+Second chunk of the mini-plan. **React-render only** — core already emits each resource group's columns for
+*all* visible days + a multi-day all-day `SegmentRows`, so 1b needed no core/dnd change. When the time grid
+has resources **and more than one visible day**, [TimeGridView](packages/react/src/TimeGridView/TimeGridView.component.tsx)
+now renders a **two-tier header** (resource title spanning its day columns on row 1, day names beneath on row 2 —
+placed explicitly into the leaf-column grid via `colStartOf(gi)=2+gi*daysPerGroup`) and a **multi-day all-day
+lane** per resource (`.bc-allday-resource-week` spanning the resource's days, with a per-day hit-target sub-grid +
+a `segmentStyle`-placed segment sub-grid, mirroring the flat all-day row scoped to one resource). Body columns
+stay resource-major (`groups.flatMap`); the day view keeps its single-tier header + stacked lane unchanged
+(branch on `isWeek = grid.headings.length > 1`).
+- **selection** — timed-selection highlight box now scopes to **resourceId AND the column's day** (`resourceSelectionBox(resourceId, date)`,
+  matching `selAnchor.date`), so a resource's in-progress highlight no longer bleeds across its week days. All-day
+  hit cells carry `data-slot-index = day index` (== global day index, since every resource lists the same days),
+  so day-mode selection/drops decode the date + report `resourceId` (via the `data-bc-resource` ancestor) as in 1a.
+- **styles** ([layout.css](packages/styles/src/layout.css)) — `.bc-time-header-tiered .bc-resource-header`
+  (tier separator), `.bc-allday-resource-week` (padding 0), `.bc-allday-resource-slots` (absolute fill grid),
+  `.bc-allday-resource-segments` (day-column grid, auto-rows `--bc-segment-height`, pointer-events none).
+- **tests/docs** — react **192 (+4)**: new `'with resources (week view)'` describe (two-tier header / 14 day
+  headings, resource-major column counts 7×2, per-resource timed routing, all-day lane routing). New
+  `WeekWithResources` story. DragAndDrop.mdx resource section + "Not built yet" updated (day + week resource-major
+  done; **day-major** week ordering = remaining 1c).
+- **Deferred to 1c / later:** the **day-major** week ordering (days outer, resources nested) — will arm the
+  `resourceLayout: 'resource' | 'day'` prop (default `'resource'`, the 1b path); **cross-day timed-selection
+  drag within a resource** (per-column scoped today); all-day **selection band** highlight in resource lanes
+  (hit cells report, but no visible drag band — same as 1a); DnD move/resize live-preview still omitted in
+  resource columns (core `dragPreview` has no resourceId).
+- **Gates:** lint react ✓; typecheck react ✓; build styles ✓; test react 192 ✓. **No browser run** — verify
+  the two-tier header alignment + multi-day all-day lanes in Storybook (`TimeGridView → WeekWithResources`).
+
+### Phase 5 tail — Task 1a: time-grid RESOURCE columns (day view) + resourceId everywhere (Cutter, 2026-06-09) ✓ (uncommitted at time of writing)
+First chunk of the post-Phase-5 mini-plan (see DECISIONS.md 2026-06-08 mini-plan entry). Day view splits into
+one column per resource when a `resources` array is supplied; cross-resource DnD + selection now report the
+**landing** `resourceId`. Chunks 1b (ungrouped/resource-major week) + 1c (grouped/day-major week) still to come.
+- **core** — [timeGridViewModel](packages/core/src/timegrid/timeGrid.function.ts) made resource-aware
+  (**additive**: no-resource path untouched). New `TimeGridResourceGroup` (resourceId/resourceTitle/columns/
+  allDay); `TimeGridColumn` gained `resourceId: ResourceId | null`; `TimeGridViewModel` gained
+  `resources: …[] | null`. With resources: one group per resource, events bucketed by the `resource` accessor
+  (unmatched dropped, multi-resource appears in each), per-resource all-day lane; top-level `columns`/`allDay`
+  empty. `viewModel.function.ts` forwards `resources` (store already fed `resources.value`). `resourceId`
+  threaded into `onEventDrop`/`onEventResize`/`onDropFromOutside` payloads + `SlotSelectionDates`, and the
+  `moveEvent`/`resizeEvent`/`dropExternal` + selection `start`/`click`/`doubleClick` actions (anchor carries it).
+- **dnd** — new `data-bc-resource` ([bindCalendarDnd](packages/dnd/src/bindCalendarDnd.function.ts)): drop
+  targets read the nearest `[data-bc-resource]` ancestor as `bcResourceId` and report it as the landing
+  `resourceId` on move/resize/external (Pragmatic monitor **and** native HTML5 path).
+- **react** — [useTimeGrid](packages/react/src/TimeGridView/hooks/useTimeGrid.memo.ts) extracts
+  `resolveColumn`/`resolveAllDay`, emits `resources: TimeResourceGroup[] | null`. [TimeGridView](packages/react/src/TimeGridView/TimeGridView.component.tsx)
+  renders a resource branch (single-tier title header, per-resource all-day lane, time column with
+  `data-bc-resource`, per-resource live selection box). `useSlotSelection` reads `data-bc-resource` and passes
+  `resourceId`. Styles: `.bc-time-grid-resources` (min-width cols `--bc-resource-col-min:8rem` + overflow-x),
+  `.bc-resource-header`, `.bc-allday-resource(-stack)`, `.bc-segment-stacked` in `layout.css`.
+- **tests/docs** — core 250 (+10), dnd 31 (+2), react 188 (+4); `DayWithResources` story (TimeGridView);
+  DragAndDrop.mdx gained a "Resource columns and cross-resource drag" section, "Not built yet" trimmed.
+- **Deferred (to 1b/1c or later):** resource columns in WEEK views (1b resource-major two-tier, 1c day-major
+  two-tier); **DnD move/resize live-preview not shown in resource columns** (core `dragPreview` has no
+  resourceId → would paint in every column; omitted for now); **keyboard slot-roving not wired in resource
+  columns** (event keyboard DnD + roving still work; empty-slot tab roving deferred); multi-day-per-resource
+  all-day lane (Day = single cell today).
+- **Gates:** lint core/dnd/react ✓; typecheck/build/test core+dnd+react+styles ✓; build-storybook react ✓.
+  **No browser run** (jsdom can't fire native drag) — verify the resource day layout + cross-resource drag
+  visually in Storybook (`TimeGridView → DayWithResources`).
+
 ### Phase 5 — Task 5a: event MOVE, end-to-end (Cutter, 2026-06-07) ✓ (uncommitted at time of writing)
 The thin vertical slice Cutter chose: event drag-to-move working through every layer for the **month**
 view (day-mode), gated, with a Storybook story. Core owns the date-math (mirrors selection).

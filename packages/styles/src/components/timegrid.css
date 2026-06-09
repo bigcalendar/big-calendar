@@ -1,8 +1,11 @@
 /* Time grid: day headings, time gutter labels, slot lines, now-indicator. */
 @layer bc.components {
-  /* Closing edge for the whole grid; the 2px outer margin (layout.css) keeps it
-     off the container edge so this final border stays visible. */
+  /* Opening + closing edge for the whole grid; the 2px outer margin (layout.css)
+     keeps the closing border off the container edge so it stays visible. The
+     opening border sits between the toolbar and the headers (it belongs to the
+     grid, not the toolbar). */
   .bc-time-grid {
+    border-block-start: var(--bc-border);
     border-block-end: var(--bc-border);
   }
 
@@ -69,6 +72,49 @@
 
   .bc-day-column.bc-today {
     background-color: var(--bc-color-today-bg);
+  }
+
+  /* Extend the today highlight into the all-day strip: the slot cell (plain grid
+     and resource-week per-day cells) and the resource lane (day view + day-major). */
+  .bc-allday-slot.bc-today,
+  .bc-allday-resource.bc-today {
+    background-color: var(--bc-color-today-bg);
+  }
+
+  /* Resource grid: give each all-day lane the same leading divider as the body
+     day columns, so a resource's all-day allocation lines up under its column. */
+  .bc-time-grid-resources .bc-allday-resource {
+    border-inline-start: var(--bc-border);
+  }
+
+  /* WEEK lane exception: the multi-day lane's own per-day cells draw the dividers
+     (including the resource boundary), so the lane drops this leading border —
+     otherwise it doubles at the boundary and shifts the day cells off the body
+     columns. Must sit in this layer (bc.components) to outrank the rule above. */
+  .bc-time-grid-resources .bc-allday-resource-week {
+    border-inline-start: none;
+  }
+
+  /* The frozen gutter's trailing border (layout.css) owns the divider at the
+     gutter↔content line. The first content cell in each row therefore drops its
+     own leading border — otherwise the two stack and read thicker at rest, and
+     only the gutter's border stays put when the columns scroll under it. In this
+     layer (bc.components) so it outranks the leading-border rules wherever they
+     live. The `+ gutter` selectors catch the first body column, header title, and
+     day all-day lane; the two-tier rules catch the week header's first day-head
+     and the first all-day day cell, which sit on that same gutter line. */
+  .bc-time-grid-resources .bc-time-gutter + .bc-day-column,
+  .bc-time-grid-resources .bc-time-header-gutter + .bc-resource-header,
+  .bc-time-grid-resources .bc-allday-label + .bc-allday-resource {
+    border-inline-start: none;
+  }
+  .bc-time-grid-resources .bc-time-header-tiered .bc-resource-day-head:nth-child(3),
+  .bc-time-grid-resources
+    .bc-allday-label
+    + .bc-allday-resource-week
+    .bc-allday-resource-slots
+    > .bc-allday-slot:first-child {
+    border-inline-start: none;
   }
 
   .bc-now-indicator {
