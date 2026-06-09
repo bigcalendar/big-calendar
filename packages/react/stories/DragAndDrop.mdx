@@ -29,7 +29,8 @@ pnpm add @big-calendar/dnd
 
 ```tsx
 import { useRef } from 'react'
-import { Calendar, CalendarProvider, useCalendarDnd } from '@big-calendar/react'
+import { Calendar, CalendarProvider } from '@big-calendar/react'
+import { useCalendarDnd } from '@big-calendar/react/dnd'  // dedicated DnD entry
 
 function DraggableCalendar() {
   const ref = useRef(null)
@@ -41,6 +42,10 @@ function DraggableCalendar() {
   )
 }
 ```
+
+`useCalendarDnd` is exported from the dedicated **`@big-calendar/react/dnd`** subpath so
+apps that don't use DnD can exclude it cleanly. It is also re-exported from the main
+`@big-calendar/react` barrel for convenience — both imports work.
 
 `useCalendarDnd` must be **inside** a `CalendarProvider`. It enables moving in the
 **month** view (whole-day shifts) and the **time-grid** week / day / work-week views

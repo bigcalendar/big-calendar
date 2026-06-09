@@ -9,9 +9,11 @@ export default defineConfig({
     target: 'es2024',
     sourcemap: true,
     lib: {
-      entry: resolve(import.meta.dirname, 'src/index.ts'),
+      entry: {
+        index: resolve(import.meta.dirname, 'src/index.ts'),
+        dnd: resolve(import.meta.dirname, 'src/dnd/index.ts'),
+      },
       formats: ['es'],
-      fileName: 'index',
     },
     rollupOptions: {
       external: (id) => !id.startsWith('.') && !id.startsWith('/'),
