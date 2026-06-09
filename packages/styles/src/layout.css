@@ -354,8 +354,10 @@
   }
 
   /* Month variant: not an absolute box but a full-height grid item spanning the
-     selected day columns of one week row. Overrides the time-grid placement. */
-  .bc-selection-month {
+     selected day columns of one week row. Overrides the time-grid placement.
+     The drag-preview band (move / drop-from-outside) shares the same placement. */
+  .bc-selection-month,
+  .bc-drag-preview-month {
     position: relative;
     inset: auto;
     grid-row: 1;

@@ -1,4 +1,5 @@
 import { createSlotMetrics } from '@big-calendar/core'
+import type { ResizeEdge } from '@big-calendar/core'
 import type { ComponentType } from 'react'
 import { useCallback } from 'react'
 import { useCalendarContext } from '../CalendarProvider'
@@ -31,6 +32,9 @@ import DefaultTimeEvent from './components/DefaultTimeEvent.component'
 import DefaultTimeLabel from './components/DefaultTimeLabel.component'
 import DefaultTimeShowMore from './components/DefaultTimeShowMore.component'
 import { useTimeGrid } from './hooks'
+
+/** A timed event resizes from both edges (top + bottom); stable identity. */
+const TIMED_RESIZE_EDGES: readonly ResizeEdge[] = ['start', 'end']
 
 /**
  * The time-grid view (day / week / work-week): a day-column header, an all-day
@@ -93,7 +97,7 @@ function TimeGridView<TEvent = unknown>() {
     neighbor: allDayNeighbor,
   })
   const eventRoving = useEventRoving()
-  const keyboardDnd = useKeyboardDnd<TEvent>()
+  const keyboardDnd = useKeyboardDnd<TEvent>({ mode: 'time' })
 
   if (grid === null) return null
 
@@ -301,7 +305,7 @@ function TimeGridView<TEvent = unknown>() {
                   event={event.event}
                   title={event.title}
                   time={event.time}
-                  withResizeHandles
+                  resizeEdges={TIMED_RESIZE_EDGES}
                 >
                   <EventSlot event={event.event} title={event.title} time={event.time} />
                 </EventButton>

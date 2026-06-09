@@ -1,4 +1,5 @@
 import { wrapAccessor } from '@big-calendar/core'
+import type { ResizeEdge } from '@big-calendar/core'
 import type { CSSProperties, KeyboardEvent, MouseEvent, PointerEvent, ReactNode } from 'react'
 import { useEffect, useRef } from 'react'
 import { useCalendarContext } from '../CalendarProvider'
@@ -24,11 +25,15 @@ export interface EventButtonProps<TEvent> {
   /** Inline geometry custom properties from the view's geometry helper. */
   style?: CSSProperties | undefined
   /**
-   * Render top/bottom edge resize handles (time-grid events only). Handles are
-   * emitted only when the event is also resizable (`store.isResizable`); the DnD
-   * layer (`@big-calendar/dnd`) binds them via their `data-bc-resize` edge.
+   * Which resize-edge handles to render. Time-grid timed events pass both
+   * (`['start','end']` → top/bottom strips); month segments pass only the edges
+   * that fall in this week row (a multi-week event shows `start` on its first row
+   * and `end` on its last). Handles are emitted only when the event is also
+   * resizable (`store.isResizable`); the DnD layer (`@big-calendar/dnd`) binds
+   * them via their `data-bc-resize` edge, and CSS orients them (vertical inside a
+   * `.bc-event`, horizontal inside a `.bc-segment`).
    */
-  withResizeHandles?: boolean | undefined
+  resizeEdges?: readonly ResizeEdge[] | undefined
   /** Presentational event content (the overridable slot). */
   children: ReactNode
 }
@@ -69,7 +74,7 @@ export default function EventButton<TEvent>({
   time,
   className,
   style,
-  withResizeHandles,
+  resizeEdges,
   children,
 }: EventButtonProps<TEvent>) {
   const { store, descriptionIds } = useCalendarContext<TEvent>()
@@ -83,8 +88,8 @@ export default function EventButton<TEvent>({
   const grab = useSignalValue(store.keyboardDrag)
   // String-compare so a numeric accessor id and a DOM-sourced id still match.
   const isGrabbed = id != null && grab != null && String(grab.id) === String(id)
-  // Resize handles render only when asked (time-grid) and the event allows it.
-  const showResizeHandles = withResizeHandles === true && store.isResizable(event)
+  // Resize handles render only for the requested edges and when the event allows it.
+  const edges: readonly ResizeEdge[] = resizeEdges != null && store.isResizable(event) ? resizeEdges : []
 
   // A pending single-click timer; a double-click cancels it before it fires.
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -170,12 +175,14 @@ export default function EventButton<TEvent>({
       onPointerDown={(e: PointerEvent<HTMLButtonElement>) => e.stopPropagation()}
     >
       {children}
-      {showResizeHandles && (
-        <>
-          <span className="bc-resize-handle bc-resize-handle-start" data-bc-resize="start" aria-hidden="true" />
-          <span className="bc-resize-handle bc-resize-handle-end" data-bc-resize="end" aria-hidden="true" />
-        </>
-      )}
+      {edges.map((edge) => (
+        <span
+          key={edge}
+          className={`bc-resize-handle bc-resize-handle-${edge}`}
+          data-bc-resize={edge}
+          aria-hidden="true"
+        />
+      ))}
     </button>
   )
 }

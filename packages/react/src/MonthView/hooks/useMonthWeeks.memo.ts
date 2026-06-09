@@ -42,6 +42,14 @@ export interface MonthSegmentCell<TEvent> {
   span: number
   /** 1-based stack level. */
   row: number
+  /**
+   * Whether the event's **real start** falls in this week row, so the leading
+   * resize handle belongs here (a multi-week event's earlier rows continue from a
+   * prior week and show no start handle).
+   */
+  resizeStart: boolean
+  /** Whether the event's **real end** falls in this week row (the trailing handle). */
+  resizeEnd: boolean
 }
 
 /** One week row: its day cells, placed segments, and the overflow row. */
@@ -80,6 +88,8 @@ export default function useMonthWeeks<TEvent>(): MonthGrid<TEvent> | null {
     const now = getNow()
     const id = wrapAccessor(accessors.id)
     const title = wrapAccessor(accessors.title)
+    const start = wrapAccessor(accessors.start)
+    const end = wrapAccessor(accessors.end)
     const { weeks } = viewModel.month
 
     const weekdays: MonthWeekday[] = (weeks[0]?.days ?? []).map((day) => ({
@@ -115,15 +125,40 @@ export default function useMonthWeeks<TEvent>(): MonthGrid<TEvent> | null {
         }
       })
 
+      // This week's day bounds, for deciding which resize handles a segment shows:
+      // the leading handle belongs to the row holding the event's real start, the
+      // trailing handle to the row holding its real end (an event spanning weeks
+      // shows neither on its middle rows). `ceil(end) − 1 day` is the last day the
+      // event actually covers (matching the segment clamp).
+      const weekFirst = week.days[0]
+      const weekLast = week.days[week.days.length - 1]
       const segments: MonthSegmentCell<TEvent>[] = week.levels.flatMap((level, rowIndex) =>
-        level.map((segment, segIndex) => ({
-          key: `${weekIndex}-${rowIndex}-${segIndex}-${String(id(segment.event) ?? '')}`,
-          event: segment.event,
-          title: title(segment.event) ?? '',
-          left: segment.left,
-          span: segment.span,
-          row: rowIndex + 1,
-        })),
+        level.map((segment, segIndex) => {
+          const evStart = start(segment.event)
+          const evEnd = end(segment.event)
+          let resizeStart = false
+          let resizeEnd = false
+          if (evStart != null && evEnd != null && weekFirst != null && weekLast != null) {
+            const startDay = localizer.startOf({ value: evStart, unit: 'day' })
+            const endDay = localizer.add({
+              value: localizer.ceil({ value: evEnd, unit: 'day' }),
+              amount: -1,
+              unit: 'day',
+            })
+            resizeStart = localizer.gte({ a: startDay, b: weekFirst, unit: 'day' })
+            resizeEnd = localizer.lte({ a: endDay, b: weekLast, unit: 'day' })
+          }
+          return {
+            key: `${weekIndex}-${rowIndex}-${segIndex}-${String(id(segment.event) ?? '')}`,
+            event: segment.event,
+            title: title(segment.event) ?? '',
+            left: segment.left,
+            span: segment.span,
+            row: rowIndex + 1,
+            resizeStart,
+            resizeEnd,
+          }
+        }),
       )
 
       return { key: String(weekIndex), days, segments, moreRow: week.levels.length + 1 }

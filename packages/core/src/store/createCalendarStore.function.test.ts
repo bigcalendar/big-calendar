@@ -599,6 +599,44 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       expect(store.getEvent({ id: 1 })).toBe(events[0])
       expect(store.getEvent({ id: 999 })).toBeUndefined()
     })
+
+    it('previewMove sets dragPreview to the proposed bounds without firing onEventDrop', () => {
+      const onEventDrop = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventDrop })
+      const target = '2026-06-16T13:00:00.000Z'
+      const durationMs = localizer.diff({ a: events[0]!.end, b: events[0]!.start, unit: 'millisecond' })
+      store.previewMove({ id: 1, target, mode: 'time' })
+      expect(store.dragPreview.value).toEqual({
+        start: target,
+        end: localizer.add({ value: target, amount: durationMs, unit: 'millisecond' }),
+      })
+      expect(onEventDrop).not.toHaveBeenCalled()
+    })
+
+    it('previewMove previews a whole-day shift in day mode', () => {
+      const store = createCalendarStore<Event>({ localizer, events, onEventDrop: vi.fn() })
+      store.previewMove({ id: 1, target: '2026-06-18T23:00:00.000Z', mode: 'day' })
+      expect(store.dragPreview.value).toEqual({
+        start: localizer.add({ value: events[0]!.start, amount: 3, unit: 'day' }),
+        end: localizer.add({ value: events[0]!.end, amount: 3, unit: 'day' }),
+      })
+    })
+
+    it('previewMove clears the preview when the id matches no event', () => {
+      const store = createCalendarStore<Event>({ localizer, events, onEventDrop: vi.fn() })
+      store.previewMove({ id: 1, target: '2026-06-16T13:00:00.000Z', mode: 'time' })
+      expect(store.dragPreview.value).not.toBeNull()
+      store.previewMove({ id: 999, target: '2026-06-16T13:00:00.000Z', mode: 'time' })
+      expect(store.dragPreview.value).toBeNull()
+    })
+
+    it('committing a move clears the preview', () => {
+      const store = createCalendarStore<Event>({ localizer, events, onEventDrop: vi.fn() })
+      store.previewMove({ id: 1, target: '2026-06-16T13:00:00.000Z', mode: 'time' })
+      expect(store.dragPreview.value).not.toBeNull()
+      store.moveEvent({ id: 1, target: '2026-06-16T13:00:00.000Z', mode: 'time' })
+      expect(store.dragPreview.value).toBeNull()
+    })
   })
 
   describe('event resize (resizeEvent)', () => {
@@ -679,6 +717,19 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       store.clearDragPreview()
       expect(store.dragPreview.value).toBeNull()
     })
+
+    it('resizes by whole days in day mode (month), keeping the untouched edge', () => {
+      const adEvents: Event[] = [
+        { id: 1, title: 'A', start: '2026-06-15T00:00:00.000Z', end: localizer.endOf({ value: '2026-06-17T00:00:00.000Z', unit: 'day' }) },
+      ]
+      const onEventResize = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events: adEvents, onEventResize })
+      const target = '2026-06-20T00:00:00.000Z'
+      store.resizeEvent({ id: 1, edge: 'end', target, mode: 'day' })
+      const call = onEventResize.mock.calls[0]![0]
+      expect(call.start).toBe(adEvents[0]!.start)
+      expect(localizer.startOf({ value: call.end, unit: 'day' })).toBe(localizer.startOf({ value: target, unit: 'day' }))
+    })
   })
 
   describe('drop-from-outside (dropExternal / previewExternal)', () => {
@@ -744,6 +795,34 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       expect(store.dragPreview.value).not.toBeNull()
       store.dropExternal({ target, durationMinutes: 90 })
       expect(store.dragPreview.value).toBeNull()
+    })
+
+    it('day mode with no template fires onDropFromOutside as a whole-day event on the dropped day', () => {
+      const onDropFromOutside = vi.fn()
+      const day = '2026-06-15T00:00:00.000Z'
+      const store = createCalendarStore<Event>({ localizer, onDropFromOutside, step: 30 })
+      store.dropExternal({ target: day, mode: 'day' })
+      expect(onDropFromOutside).toHaveBeenCalledWith({
+        start: localizer.startOf({ value: day, unit: 'day' }),
+        end: localizer.endOf({ value: day, unit: 'day' }),
+        allDay: true,
+      })
+    })
+
+    it('day mode with a start/end template re-dates it onto the dropped day', () => {
+      const onDropFromOutside = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, onDropFromOutside, step: 30 })
+      store.dropExternal({
+        target: '2026-06-15T00:00:00.000Z',
+        mode: 'day',
+        start: '2026-02-03T09:00:00.000Z',
+        end: '2026-02-03T10:30:00.000Z',
+      })
+      const call = onDropFromOutside.mock.calls[0]![0]
+      expect(localizer.startOf({ value: call.start, unit: 'day' })).toBe(localizer.startOf({ value: '2026-06-15T00:00:00.000Z', unit: 'day' }))
+      expect(localizer.getMinutesFromMidnight(call.start)).toBe(9 * 60)
+      expect(localizer.diff({ a: call.end, b: call.start, unit: 'minute' })).toBe(90)
+      expect(call.allDay).toBe(false)
     })
   })
 
@@ -831,6 +910,31 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       // Shrink well past the start → clamps to exactly one slot.
       store.grabResize({ minutes: -1000 })
       expect(localizer.diff({ a: store.keyboardDrag.value!.end, b: store.keyboardDrag.value!.start, unit: 'minute' })).toBe(30)
+    })
+
+    it('grabResize moves the end edge by whole days (month) and clamps to a one-day minimum', () => {
+      // A 3-day all-day event.
+      const adEvents: Event[] = [
+        { id: 1, title: 'A', start: '2026-06-15T00:00:00.000Z', end: localizer.endOf({ value: '2026-06-17T00:00:00.000Z', unit: 'day' }) },
+      ]
+      const store = createCalendarStore<Event>({ localizer, events: adEvents })
+      store.grabEvent({ id: 1 })
+      store.grabResize({ days: 2 }) // end → 19th
+      expect(localizer.startOf({ value: store.keyboardDrag.value!.end, unit: 'day' })).toBe(
+        localizer.startOf({ value: '2026-06-19T00:00:00.000Z', unit: 'day' }),
+      )
+      // Shrink well below the start → clamps to a one-day event (end day == start day).
+      store.grabResize({ days: -50 })
+      expect(localizer.startOf({ value: store.keyboardDrag.value!.end, unit: 'day' })).toBe(
+        localizer.startOf({ value: adEvents[0]!.start, unit: 'day' }),
+      )
+    })
+
+    it('grabMove steps by whole weeks (month ↑/↓)', () => {
+      const store = createCalendarStore<Event>({ localizer, events })
+      store.grabEvent({ id: 1 })
+      store.grabMove({ days: 7 })
+      expect(store.keyboardDrag.value!.start).toBe(localizer.add({ value: events[0]!.start, amount: 7, unit: 'day' }))
     })
 
     it('grabCommit after a move fires onEventDrop with the proposed bounds', () => {

@@ -204,7 +204,10 @@ describe('EventButton', () => {
     expect(button.getAttribute('aria-selected')).toBe('false')
   })
 
-  function renderWithHandles(extra?: Partial<CalendarProviderProps<Event>>) {
+  function renderWithHandles(
+    extra?: Partial<CalendarProviderProps<Event>>,
+    edges: readonly ('start' | 'end')[] = ['start', 'end'],
+  ) {
     const result = render(
       <CalendarProvider<Event>
         localizer={localizer}
@@ -213,7 +216,7 @@ describe('EventButton', () => {
         events={[event]}
         {...extra}
       >
-        <EventButton event={event} title="Standup" className="bc-event" withResizeHandles>
+        <EventButton event={event} title="Standup" className="bc-event" resizeEdges={edges}>
           <span>content</span>
         </EventButton>
       </CalendarProvider>,
@@ -221,9 +224,15 @@ describe('EventButton', () => {
     return result.container
   }
 
-  it('renders top/bottom resize handles when withResizeHandles and the event is resizable', () => {
+  it('renders the requested resize handles when the event is resizable', () => {
     const container = renderWithHandles()
     expect(container.querySelector('[data-bc-resize="start"]')).not.toBeNull()
+    expect(container.querySelector('[data-bc-resize="end"]')).not.toBeNull()
+  })
+
+  it('renders only the requested edges (month single-edge segments)', () => {
+    const container = renderWithHandles(undefined, ['end'])
+    expect(container.querySelector('[data-bc-resize="start"]')).toBeNull()
     expect(container.querySelector('[data-bc-resize="end"]')).not.toBeNull()
   })
 
@@ -232,7 +241,7 @@ describe('EventButton', () => {
     expect(container.querySelector('[data-bc-resize]')).toBeNull()
   })
 
-  it('omits resize handles when withResizeHandles is not set', () => {
+  it('omits resize handles when resizeEdges is not set', () => {
     const { button } = renderButton()
     expect(button.querySelector('[data-bc-resize]')).toBeNull()
   })

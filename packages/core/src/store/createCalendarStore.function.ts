@@ -2,6 +2,7 @@ import { batch, computed, effect, signal } from '@preact/signals-core'
 import type { ReadonlySignal } from '@preact/signals-core'
 import { resolveAccessors, wrapAccessor } from '../accessors/accessors.function'
 import { moveEvent } from '../dnd/moveEvent.function'
+import type { MoveMode } from '../dnd/moveEvent.function'
 import { placeExternalEvent } from '../dnd/placeExternalEvent.function'
 import { resizeEvent } from '../dnd/resizeEvent.function'
 import type { ResizeEdge } from '../dnd/resizeEvent.function'
@@ -73,6 +74,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     id: EventId,
     edge: ResizeEdge,
     target: string,
+    mode: MoveMode,
   ): { event: TEvent; start: string; end: string; allDay: boolean } | null => {
     const event = findEvent(id)
     if (event == null) return null
@@ -86,9 +88,36 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       allDay: getEventAllDay(event) ?? false,
       edge,
       target,
+      mode,
       step,
     })
     return { event, ...resized }
+  }
+
+  /**
+   * Resolve an event by id and run the move math, or `null` when the id matches no
+   * event or the event lacks bounds. Shared by the `moveEvent` action (commit) and
+   * `previewMove` (live overlay) so both compute identical bounds.
+   */
+  const computeMove = (
+    id: EventId,
+    target: string,
+    mode: MoveMode,
+  ): { event: TEvent; start: string; end: string; allDay: boolean } | null => {
+    const event = findEvent(id)
+    if (event == null) return null
+    const start = getEventStart(event)
+    const end = getEventEnd(event)
+    if (start == null || end == null) return null
+    const moved = moveEvent({
+      localizer,
+      start,
+      end,
+      allDay: getEventAllDay(event) ?? false,
+      target,
+      mode,
+    })
+    return { event, ...moved }
   }
 
   const date = signal<string>(config.date ?? getNow())
@@ -396,39 +425,32 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     },
 
     moveEvent({ id, target, mode }) {
+      // The drag is over: clear the live preview regardless of the outcome.
+      dragPreview.value = null
       const drop = config.onEventDrop
       if (drop == null) return
-      const getStart = wrapAccessor(accessors.start)
-      const getEnd = wrapAccessor(accessors.end)
-      const getAllDay = wrapAccessor(accessors.allDay)
-      const event = findEvent(id)
-      if (event == null) return
-      const start = getStart(event)
-      const end = getEnd(event)
-      if (start == null || end == null) return
-      const moved = moveEvent({
-        localizer,
-        start,
-        end,
-        allDay: getAllDay(event) ?? false,
-        target,
-        mode,
-      })
-      drop({ event, ...moved })
+      const moved = computeMove(id, target, mode)
+      if (moved == null) return
+      drop({ event: moved.event, start: moved.start, end: moved.end, allDay: moved.allDay })
     },
 
-    resizeEvent({ id, edge, target }) {
+    previewMove({ id, target, mode }) {
+      const moved = computeMove(id, target, mode)
+      dragPreview.value = moved == null ? null : { start: moved.start, end: moved.end }
+    },
+
+    resizeEvent({ id, edge, target, mode = 'time' }) {
       // The drag is over: clear the live preview regardless of the outcome.
       dragPreview.value = null
       const report = config.onEventResize
       if (report == null) return
-      const resized = computeResize(id, edge, target)
+      const resized = computeResize(id, edge, target, mode)
       if (resized == null) return
       report({ event: resized.event, start: resized.start, end: resized.end, allDay: resized.allDay })
     },
 
-    previewResize({ id, edge, target }) {
-      const resized = computeResize(id, edge, target)
+    previewResize({ id, edge, target, mode = 'time' }) {
+      const resized = computeResize(id, edge, target, mode)
       dragPreview.value = resized == null ? null : { start: resized.start, end: resized.end }
     },
 
@@ -436,18 +458,19 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       dragPreview.value = null
     },
 
-    dropExternal({ target, durationMinutes, allDay }) {
+    dropExternal({ target, mode = 'time', durationMinutes, allDay, start, end }) {
       // The drag is over: clear the live preview regardless of the outcome.
       dragPreview.value = null
       const report = config.onDropFromOutside
       if (report == null) return
-      report(placeExternalEvent({ localizer, target, durationMinutes, allDay, step }))
+      report(placeExternalEvent({ localizer, target, mode, durationMinutes, allDay, start, end, step }))
     },
 
-    previewExternal({ target, durationMinutes }) {
+    previewExternal({ target, mode = 'time', durationMinutes, start, end }) {
       // No event lookup: the outside item isn't in `events` yet. A missing
-      // duration (native drag) previews a single slot via the placement default.
-      const placed = placeExternalEvent({ localizer, target, durationMinutes, step })
+      // duration/template (native drag) previews a single slot (time) or the
+      // dropped day (day) via the placement default.
+      const placed = placeExternalEvent({ localizer, target, mode, durationMinutes, start, end, step })
       dragPreview.value = { start: placed.start, end: placed.end }
     },
 
@@ -504,16 +527,37 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       dragPreview.value = { start, end }
     },
 
-    grabResize({ minutes }) {
+    grabResize({ minutes = 0, days = 0 }) {
       const grab = keyboardDrag.value
       if (grab == null) return
       grabResized = true
-      const candidate = localizer.add({ value: grab.end, amount: minutes, unit: 'minute' })
-      // Never let the end cross within one slot of the start.
-      const end =
-        localizer.diff({ a: candidate, b: grab.start, unit: 'minute' }) < step
-          ? localizer.add({ value: grab.start, amount: step, unit: 'minute' })
+      const candidate = localizer.add({
+        value: localizer.add({ value: grab.end, amount: days, unit: 'day' }),
+        amount: minutes,
+        unit: 'minute',
+      })
+      let end: string
+      if (days !== 0) {
+        // Whole-day resize (month): keep the event at least one day long — clamp the
+        // end back to the start's day (keeping its time-of-day) if it would go below.
+        end = localizer.lt({ a: candidate, b: grab.start, unit: 'day' })
+          ? localizer.add({
+              value: grab.end,
+              amount: localizer.diff({
+                a: localizer.startOf({ value: grab.start, unit: 'day' }),
+                b: localizer.startOf({ value: grab.end, unit: 'day' }),
+                unit: 'day',
+              }),
+              unit: 'day',
+            })
           : candidate
+      } else {
+        // Slot resize (time grid): never let the end cross within one slot of the start.
+        end =
+          localizer.diff({ a: candidate, b: grab.start, unit: 'minute' }) < step
+            ? localizer.add({ value: grab.start, amount: step, unit: 'minute' })
+            : candidate
+      }
       keyboardDrag.value = { ...grab, end }
       dragPreview.value = { start: grab.start, end }
     },

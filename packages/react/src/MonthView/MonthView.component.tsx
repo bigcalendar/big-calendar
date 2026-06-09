@@ -1,3 +1,4 @@
+import type { ResizeEdge } from '@big-calendar/core'
 import type { ComponentType } from 'react'
 import { useCallback } from 'react'
 import { useCalendarContext } from '../CalendarProvider'
@@ -10,6 +11,7 @@ import type {
 import EventButton from '../internal/EventButton.component'
 import { monthGridStyle, segmentStyle } from '../internal/geometry.function'
 import { useEventRoving } from '../internal/useEventRoving'
+import { useKeyboardDnd } from '../internal/useKeyboardDnd'
 import type { Direction } from '../internal/useRovingSelection'
 import { useRovingSelection } from '../internal/useRovingSelection'
 import { useSignalValue } from '../internal/useSignalValue'
@@ -34,6 +36,19 @@ function MonthView<TEvent = unknown>() {
   const onSlotPointerDown = useSlotSelection('day')
   const selRange = useSignalValue(store.selection.range)
   const selAnchor = useSignalValue(store.selection.anchor)
+  // Live drag preview (move / drop-from-outside): the proposed event's day-range,
+  // painted as a one-row band across the covered columns of each week — the same
+  // grid placement as the selection band. `ceil(end) − 1 day` is the last day the
+  // proposal actually covers (an all-day event ends at 23:59, a midnight end stops
+  // the day before). `null` outside a drag.
+  const dragPreview = useSignalValue(store.dragPreview)
+  const { localizer } = store
+  const previewFirst =
+    dragPreview === null ? null : localizer.startOf({ value: dragPreview.start, unit: 'day' })
+  const previewLast =
+    dragPreview === null
+      ? null
+      : localizer.add({ value: localizer.ceil({ value: dragPreview.end, unit: 'day' }), amount: -1, unit: 'day' })
 
   // Keyboard roving over the day cells (one tab stop): left/right step a day,
   // up/down step a week, across the linear day grid (== range.days order).
@@ -55,6 +70,8 @@ function MonthView<TEvent = unknown>() {
   )
   const roving = useRovingSelection({ mode: 'day', count: cellCount, neighbor })
   const eventRoving = useEventRoving()
+  // Keyboard grab (move/resize a segment by whole days/weeks, no mouse).
+  const keyboardDnd = useKeyboardDnd<TEvent>({ mode: 'day' })
 
   if (grid === null) return null
 
@@ -69,9 +86,13 @@ function MonthView<TEvent = unknown>() {
     <div
       className="bc-month"
       ref={eventRoving.containerRef}
+      onKeyDownCapture={keyboardDnd.onKeyDownCapture}
       onKeyDown={eventRoving.onKeyDown}
       onFocusCapture={eventRoving.onFocusCapture}
     >
+      <div className="bc-sr-only" role="status" aria-live="polite">
+        {keyboardDnd.announcement}
+      </div>
       <div className="bc-month-header">
         {grid.weekdays.map((weekday) => (
           <Weekday key={weekday.day} day={weekday.day} long={weekday.long} short={weekday.short} />
@@ -131,18 +152,45 @@ function MonthView<TEvent = unknown>() {
                 })}
               />
             )}
+            {(() => {
+              // Clip the proposed day-range to this week → one band per covered row.
+              if (previewFirst === null || previewLast === null) return null
+              let first = -1
+              let last = -1
+              week.days.forEach((cell, dayIndex) => {
+                const inPreview =
+                  localizer.gte({ a: cell.day, b: previewFirst, unit: 'day' }) &&
+                  localizer.lte({ a: cell.day, b: previewLast, unit: 'day' })
+                if (inPreview) {
+                  if (first === -1) first = dayIndex
+                  last = dayIndex
+                }
+              })
+              return first === -1 ? null : (
+                <div
+                  className="bc-drag-preview bc-drag-preview-month"
+                  style={segmentStyle({ left: first + 1, span: last - first + 1, row: 1 })}
+                />
+              )
+            })()}
             <div className="bc-week-events">
-              {week.segments.map((segment) => (
-                <EventButton
-                  key={segment.key}
-                  className="bc-segment"
-                  style={segmentStyle({ left: segment.left, span: segment.span, row: segment.row })}
-                  event={segment.event}
-                  title={segment.title}
-                >
-                  <EventSlot event={segment.event} title={segment.title} />
-                </EventButton>
-              ))}
+              {week.segments.map((segment) => {
+                const segEdges: ResizeEdge[] = []
+                if (segment.resizeStart) segEdges.push('start')
+                if (segment.resizeEnd) segEdges.push('end')
+                return (
+                  <EventButton
+                    key={segment.key}
+                    className="bc-segment"
+                    style={segmentStyle({ left: segment.left, span: segment.span, row: segment.row })}
+                    event={segment.event}
+                    title={segment.title}
+                    resizeEdges={segEdges}
+                  >
+                    <EventSlot event={segment.event} title={segment.title} />
+                  </EventButton>
+                )
+              })}
               {week.days.map((cell, dayIndex) =>
                 cell.extra !== null ? (
                   <div

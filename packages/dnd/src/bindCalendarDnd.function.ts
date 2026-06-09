@@ -19,16 +19,31 @@ export interface DndStore<TEvent> {
   isResizable(event: TEvent): boolean
   /** Commit a move drop: core recomputes the bounds and fires `onEventDrop`. */
   moveEvent(args: { id: EventId; target: string; mode: MoveMode }): void
+  /** Update the live move preview as a dragged event moves over slots/cells. */
+  previewMove(args: { id: EventId; target: string; mode: MoveMode }): void
   /** Commit a resize drop: core recomputes the bounds and fires `onEventResize`. */
-  resizeEvent(args: { id: EventId; edge: ResizeEdge; target: string }): void
-  /** Update the live resize preview as the dragged edge moves over slots. */
-  previewResize(args: { id: EventId; edge: ResizeEdge; target: string }): void
+  resizeEvent(args: { id: EventId; edge: ResizeEdge; target: string; mode: MoveMode }): void
+  /** Update the live resize preview as the dragged edge moves over slots/cells. */
+  previewResize(args: { id: EventId; edge: ResizeEdge; target: string; mode: MoveMode }): void
   /** Clear the live resize preview (drag left every slot, or ended). */
   clearDragPreview(): void
   /** Commit a drop from outside the calendar: core fires `onDropFromOutside`. */
-  dropExternal(args: { target: string; durationMinutes?: number | undefined; allDay?: boolean | undefined }): void
-  /** Update the live preview as an outside item moves over slots (single slot if no duration). */
-  previewExternal(args: { target: string; durationMinutes?: number | undefined }): void
+  dropExternal(args: {
+    target: string
+    mode: MoveMode
+    durationMinutes?: number | undefined
+    allDay?: boolean | undefined
+    start?: string | undefined
+    end?: string | undefined
+  }): void
+  /** Update the live preview as an outside item moves over slots/cells (single slot/day if no payload). */
+  previewExternal(args: {
+    target: string
+    mode: MoveMode
+    durationMinutes?: number | undefined
+    start?: string | undefined
+    end?: string | undefined
+  }): void
   /** Serialize an event for a native drag-out transfer, or `null` if unknown. */
   getEventTransfer(args: { id: EventId }): EventTransfer | null
   /** Report that an event drag began (fires `onEventDragStart`). */
@@ -47,10 +62,18 @@ export interface DndStore<TEvent> {
  *   preview falls back to a single landing slot).
  */
 export interface ExternalDragPayload {
-  /** The item's length in minutes; omitted → a one-slot event. */
+  /** The item's length in minutes; omitted → a one-slot event (time-grid drop). */
   durationMinutes?: number | undefined
   /** Whether the dropped item should become a whole-day event. */
   allDay?: boolean | undefined
+  /**
+   * The dragged item's own **template** bounds, when it already has a time-of-day
+   * (e.g. an unscheduled task). A `'day'` (month) drop keeps their time-of-day and
+   * moves their date to the dropped day; a `'time'` drop falls back to their span
+   * when no `durationMinutes` is given.
+   */
+  start?: string | undefined
+  end?: string | undefined
 }
 
 /**
@@ -108,10 +131,12 @@ function parseExternalPayload(raw: string | null): ExternalDragPayload | null {
   try {
     const parsed: unknown = JSON.parse(raw)
     if (parsed == null || typeof parsed !== 'object') return {}
-    const { durationMinutes, allDay } = parsed as Record<string, unknown>
+    const { durationMinutes, allDay, start, end } = parsed as Record<string, unknown>
     return {
       durationMinutes: typeof durationMinutes === 'number' ? durationMinutes : undefined,
       allDay: allDay === true,
+      start: typeof start === 'string' ? start : undefined,
+      end: typeof end === 'string' ? end : undefined,
     }
   } catch {
     return null
@@ -148,16 +173,17 @@ export interface BindCalendarDndOptions<TEvent> {
  * `MutationObserver` keeps the bindings in sync as the view re-renders. Resize
  * handles are only rendered in the time grid, so in `'day'` mode none are found.
  *
- * It also wires drag/drop across the calendar boundary (time grid only this
- * slice; month is later):
+ * It also wires drag/drop across the calendar boundary (both modes — time grid
+ * and month):
  *
  * - **drop-from-outside** from a same-page palette *outside the grid*, via two
  *   transports: a Pragmatic `draggable` palette item (carrying
  *   {@link ExternalDragPayload} as element data, handled by the element monitor
  *   with a true-extent preview), or a plain native `draggable="true"` element
  *   (carrying it as JSON on the {@link EXTERNAL_MIME} type, handled by delegated
- *   HTML5 `dragover`/`drop` listeners on the root with a single-slot preview).
- *   Either way a drop calls `store.dropExternal`;
+ *   HTML5 `dragover`/`drop` listeners on the root with a single-slot/day preview).
+ *   Either way a drop calls `store.dropExternal` (in `'day'`/month mode a drop
+ *   with no `start`/`end` template becomes a whole-day event on the dropped day);
  * - **drag-out** (every mode): each event also exposes its data on the native
  *   `dataTransfer` (so an external HTML5 dropzone can read it) and reports
  *   `store.eventDragStart` when its drag begins.
@@ -167,10 +193,6 @@ export interface BindCalendarDndOptions<TEvent> {
  */
 export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOptions<TEvent>): () => void {
   const dropAttr = DROP_ATTR[mode]
-  // Drop-from-outside is wired on the time grid only this slice (month is later),
-  // so the external adapter is engaged for `'time'` drops. Drag-*out* works in
-  // every mode (it's just the event becoming a native drag source).
-  const externalEnabled = mode === 'time'
   // Per-element Pragmatic DnD cleanups, so re-scans never double-bind and removed
   // nodes are released.
   const bindings = new Map<Element, () => void>()
@@ -251,57 +273,68 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
   observer.observe(root, { childList: true, subtree: true })
 
   const stopMonitor = monitorForElements({
-    // Live preview: as a drag crosses into a new slot, recompute the proposed
-    // bounds so the view can render the resulting extent. Two in-window sources:
-    // a **resize** edge (true extent) and a **Pragmatic** outside item (true
-    // extent, payload readable mid-drag). A plain move carries neither, so it's
-    // skipped (move preview is a later slice).
+    // Live preview: as a drag crosses into a new slot/cell, recompute the proposed
+    // bounds so the view can render the resulting extent. Three in-window sources:
+    // a **Pragmatic** outside item (true extent, payload readable mid-drag), a
+    // **resize** edge (true extent), and a plain **move** (the dragged event's
+    // shifted bounds).
     onDropTargetChange({ source, location }) {
       const target = location.current.dropTargets[0]?.data.bcDropTarget
+      // A Pragmatic outside item (palette) carries a readable payload mid-drag, so
+      // its preview shows the true extent — in both modes (time + month).
       const external = source.data[EXTERNAL_DATA_KEY]
-      if (externalEnabled && external != null && typeof external === 'object') {
+      if (external != null && typeof external === 'object') {
         if (typeof target !== 'string') {
           store.clearDragPreview()
           return
         }
-        store.previewExternal({ target, durationMinutes: (external as ExternalDragPayload).durationMinutes })
+        const { durationMinutes, start, end } = external as ExternalDragPayload
+        store.previewExternal({ target, mode, durationMinutes, start, end })
         return
       }
       const edge = source.data.bcResizeEdge
-      if (edge !== 'start' && edge !== 'end') return
       const id = source.data.bcEventId
+      // No edge → a plain event-body move; show where it would land.
+      if (edge !== 'start' && edge !== 'end') {
+        if (typeof id !== 'string' || typeof target !== 'string') {
+          store.clearDragPreview()
+          return
+        }
+        store.previewMove({ id, target, mode })
+        return
+      }
       if (typeof id !== 'string' || typeof target !== 'string') {
         store.clearDragPreview()
         return
       }
-      store.previewResize({ id, edge, target })
+      store.previewResize({ id, edge, target, mode })
     },
     onDrop({ source, location }) {
       const target = location.current.dropTargets[0]?.data.bcDropTarget
       // A Pragmatic outside item (palette) creates an event; branch first.
       const external = source.data[EXTERNAL_DATA_KEY]
-      if (externalEnabled && external != null && typeof external === 'object') {
+      if (external != null && typeof external === 'object') {
         if (typeof target !== 'string') {
           store.clearDragPreview()
           return
         }
-        const { durationMinutes, allDay } = external as ExternalDragPayload
-        store.dropExternal({ target, durationMinutes, allDay }) // clears the preview itself
+        const { durationMinutes, allDay, start, end } = external as ExternalDragPayload
+        store.dropExternal({ target, mode, durationMinutes, allDay, start, end }) // clears the preview itself
         return
       }
       const id = source.data.bcEventId
       // A resize handle carries its edge; the event body does not — branch on it.
       const edge = source.data.bcResizeEdge
       if (typeof id !== 'string' || typeof target !== 'string') {
-        // Dropped outside every slot — abandon any in-flight resize preview.
-        if (edge === 'start' || edge === 'end') store.clearDragPreview()
+        // Dropped outside every cell — abandon any in-flight preview (move or resize).
+        store.clearDragPreview()
         return
       }
       if (edge === 'start' || edge === 'end') {
-        store.resizeEvent({ id, edge, target }) // clears the preview itself
+        store.resizeEvent({ id, edge, target, mode }) // clears the preview itself
         return
       }
-      store.moveEvent({ id, target, mode })
+      store.moveEvent({ id, target, mode }) // clears the preview itself
     },
   })
 
@@ -313,8 +346,8 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
   // listeners to the root: find the hovered slot via `closest`, gate on our MIME,
   // and `preventDefault` to accept the drop. Per the HTML5 spec the payload is in
   // protected mode during the drag (only media *types* are readable), so the live
-  // preview is a single landing slot until the drop reveals the duration. Wired
-  // for `'time'` only (month drop-from-outside is a later slice).
+  // preview is a single landing slot/day until the drop reveals the payload. Wired
+  // in both modes — `'time'` (slot drop) and `'day'` (month-cell drop).
   const carriesPayload = (event: DragEvent): boolean =>
     event.dataTransfer != null && Array.from(event.dataTransfer.types).includes(EXTERNAL_MIME)
   const slotInstant = (event: DragEvent): string | null =>
@@ -336,7 +369,7 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
     event.preventDefault()
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy'
     if (target !== lastPreviewInstant) {
-      store.previewExternal({ target }) // single-slot highlight at the hovered slot
+      store.previewExternal({ target, mode }) // single-slot/day highlight at the hovered cell
       lastPreviewInstant = target
     }
   }
@@ -350,7 +383,14 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
     }
     event.preventDefault()
     const payload = parseExternalPayload(event.dataTransfer?.getData(EXTERNAL_MIME) ?? null)
-    store.dropExternal({ target, durationMinutes: payload?.durationMinutes, allDay: payload?.allDay })
+    store.dropExternal({
+      target,
+      mode,
+      durationMinutes: payload?.durationMinutes,
+      allDay: payload?.allDay,
+      start: payload?.start,
+      end: payload?.end,
+    })
   }
   const onNativeDragLeave = (event: DragEvent): void => {
     // Clear once the pointer leaves the root entirely (not on inner-element hops).
@@ -360,20 +400,16 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
       store.clearDragPreview()
     }
   }
-  if (externalEnabled) {
-    root.addEventListener('dragover', onNativeDragOver)
-    root.addEventListener('drop', onNativeDrop)
-    root.addEventListener('dragleave', onNativeDragLeave)
-  }
+  root.addEventListener('dragover', onNativeDragOver)
+  root.addEventListener('drop', onNativeDrop)
+  root.addEventListener('dragleave', onNativeDragLeave)
 
   return () => {
     observer.disconnect()
     stopMonitor()
-    if (externalEnabled) {
-      root.removeEventListener('dragover', onNativeDragOver)
-      root.removeEventListener('drop', onNativeDrop)
-      root.removeEventListener('dragleave', onNativeDragLeave)
-    }
+    root.removeEventListener('dragover', onNativeDragOver)
+    root.removeEventListener('drop', onNativeDrop)
+    root.removeEventListener('dragleave', onNativeDragLeave)
     store.clearDragPreview()
     for (const release of bindings.values()) release()
     bindings.clear()

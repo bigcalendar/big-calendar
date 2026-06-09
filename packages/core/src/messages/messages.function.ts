@@ -21,7 +21,7 @@ export const DEFAULT_MESSAGES: Messages = {
   selectionInstructions:
     'Use the arrow keys to move between slots. Hold Shift and an arrow key to select a range. Press Enter or Space to confirm, or Escape to cancel.',
   eventInstructions:
-    'Use the arrow keys to move between events. Press Enter to open an event or F2 for its secondary action. On a timed event, press Space to pick it up, then the arrow keys to move it (hold Shift with Up or Down to resize), Enter to drop, or Escape to cancel.',
+    'Use the arrow keys to move between events. Press Enter to open an event or F2 for its secondary action. To reposition an event, press Space to pick it up, then the arrow keys to move it (hold Shift while pressing an arrow key to resize), Enter to drop, or Escape to cancel.',
 }
 
 /** Merge caller overrides over {@link DEFAULT_MESSAGES}, yielding a complete set. */

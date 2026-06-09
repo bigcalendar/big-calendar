@@ -105,4 +105,40 @@
     background: var(--bc-color-event-fg);
     opacity: 0.5;
   }
+
+  /* Month resize handles: the same `data-bc-resize` strips, but on a segment's
+     leading/trailing INLINE edges (a whole-day resize) rather than its block
+     edges. The segment is the positioning context for them. CSS keys off the
+     parent class, so EventButton needs no orientation prop. */
+  .bc-segment {
+    position: relative;
+  }
+
+  .bc-segment .bc-resize-handle {
+    inset-inline: auto;
+    inset-block: 0;
+    inline-size: var(--bc-resize-handle-size, 0.5rem);
+    block-size: auto;
+    cursor: ew-resize;
+  }
+
+  .bc-segment .bc-resize-handle-start {
+    inset-inline-start: 0;
+  }
+
+  .bc-segment .bc-resize-handle-end {
+    inset-inline-end: 0;
+  }
+
+  .bc-segment:hover .bc-resize-handle::after,
+  .bc-segment:focus-within .bc-resize-handle::after {
+    content: '';
+    position: absolute;
+    inset-block: 35%;
+    inset-inline-start: calc(50% - 1px);
+    inline-size: 2px;
+    border-radius: 1px;
+    background: var(--bc-color-event-fg);
+    opacity: 0.5;
+  }
 }

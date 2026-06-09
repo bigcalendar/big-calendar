@@ -1,7 +1,7 @@
 import { Views } from '@big-calendar/core'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
-import { CalendarProvider } from '../CalendarProvider'
+import { CalendarProvider, useCalendarStore } from '../CalendarProvider'
 import type { CalendarProviderProps } from '../CalendarProvider'
 import type { MonthEventProps } from '../components.type'
 import { LOCALIZER_CASES } from '../testing/localizers'
@@ -295,5 +295,181 @@ describe.each(LOCALIZER_CASES)('MonthView [$name]', ({ create }) => {
     expect(container.querySelector('.bc-month')).not.toBeNull()
     expect(container.querySelector('.bc-weekday')).toBeNull()
     expect(container.querySelector('.bc-month-week')).toBeNull()
+  })
+
+  describe('multi-day resize handles + drag preview', () => {
+    it('renders both resize handles on a single-day segment', () => {
+      renderMonth()
+      const seg = screen.getByText('Standup').closest('.bc-segment') as HTMLElement
+      expect(seg.querySelector('[data-bc-resize="start"]')).not.toBeNull()
+      expect(seg.querySelector('[data-bc-resize="end"]')).not.toBeNull()
+    })
+
+    it('splits the handles across week rows: start on the first row, end on the last', () => {
+      // Jun 19 (Fri) → Jun 23 (Tue) spans week rows Jun14–20 and Jun21–27.
+      const crossWeek: Event[] = [
+        { id: 9, title: 'Trip', start: '2026-06-19T00:00:00.000Z', end: '2026-06-23T23:59:59.999Z' },
+      ]
+      const { container } = renderMonth({ events: crossWeek })
+      const starts = container.querySelectorAll('[data-bc-resize="start"]')
+      const ends = container.querySelectorAll('[data-bc-resize="end"]')
+      expect(starts.length).toBe(1)
+      expect(ends.length).toBe(1)
+      // The two handles live in different week segments (the event wraps a row).
+      expect(starts[0]!.closest('.bc-segment')).not.toBe(ends[0]!.closest('.bc-segment'))
+    })
+
+    it('omits resize handles when the event is locked from resizing', () => {
+      const { container } = renderMonth({ resizableAccessor: () => false })
+      expect(container.querySelector('[data-bc-resize]')).toBeNull()
+    })
+
+    it('paints a day-cell drag-preview band from a move preview', () => {
+      let store: ReturnType<typeof useCalendarStore<Event>> | null = null
+      function Capture() {
+        store = useCalendarStore<Event>()
+        return null
+      }
+      const { container } = render(
+        <CalendarProvider<Event>
+          localizer={localizer}
+          defaultDate={focus}
+          defaultView={Views.MONTH}
+          events={events}
+          getNow={() => NOW}
+          onEventDrop={vi.fn()}
+        >
+          <MonthView />
+          <Capture />
+        </CalendarProvider>,
+      )
+      expect(container.querySelector('.bc-drag-preview-month')).toBeNull()
+      // Move event 1 (Jun 15) three days → Jun 18, column 5 of its week row.
+      act(() => {
+        store!.previewMove({ id: 1, target: '2026-06-18T00:00:00.000Z', mode: 'day' })
+      })
+      const band = container.querySelector('.bc-drag-preview-month') as HTMLElement
+      expect(band).not.toBeNull()
+      expect(band.style.getPropertyValue('--bc-seg-left')).toBe('5')
+      expect(band.style.getPropertyValue('--bc-seg-span')).toBe('1')
+      // Clearing the preview removes the band.
+      act(() => store!.clearDragPreview())
+      expect(container.querySelector('.bc-drag-preview-month')).toBeNull()
+    })
+
+    it('paints a day-cell band for a whole-day drop-from-outside preview', () => {
+      let store: ReturnType<typeof useCalendarStore<Event>> | null = null
+      function Capture() {
+        store = useCalendarStore<Event>()
+        return null
+      }
+      const { container } = render(
+        <CalendarProvider<Event>
+          localizer={localizer}
+          defaultDate={focus}
+          defaultView={Views.MONTH}
+          events={events}
+          getNow={() => NOW}
+          onDropFromOutside={vi.fn()}
+        >
+          <MonthView />
+          <Capture />
+        </CalendarProvider>,
+      )
+      act(() => store!.previewExternal({ target: '2026-06-18T00:00:00.000Z', mode: 'day' }))
+      const band = container.querySelector('.bc-drag-preview-month') as HTMLElement
+      expect(band).not.toBeNull()
+      expect(band.style.getPropertyValue('--bc-seg-left')).toBe('5')
+    })
+  })
+})
+
+describe.each(LOCALIZER_CASES)('MonthView keyboard DnD [$name]', ({ create }) => {
+  let localizer: Awaited<ReturnType<typeof create>>
+  beforeAll(async () => {
+    localizer = await create()
+  })
+
+  const one: Event[] = [{ id: 1, title: 'Standup', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' }]
+
+  function renderMonth(extra?: Partial<CalendarProviderProps<Event>>) {
+    return render(
+      <CalendarProvider<Event>
+        localizer={localizer}
+        defaultDate={focus}
+        defaultView={Views.MONTH}
+        events={one}
+        getNow={() => NOW}
+        {...extra}
+      >
+        <MonthView />
+      </CalendarProvider>,
+    )
+  }
+
+  const grab = (btn: HTMLElement) => act(() => void fireEvent.keyDown(btn, { key: ' ' }))
+  const press = (btn: HTMLElement, key: string, shiftKey = false) =>
+    act(() => void fireEvent.keyDown(btn, { key, shiftKey }))
+
+  it('Space picks a segment up (aria-grabbed + announcement) without opening it', () => {
+    const onEventClick = vi.fn()
+    renderMonth({ onEventClick })
+    const btn = screen.getByRole('button', { name: /Standup/ })
+    grab(btn)
+    expect(btn.getAttribute('aria-grabbed')).toBe('true')
+    expect(screen.getByRole('status').textContent).toMatch(/Picked up/)
+    expect(onEventClick).not.toHaveBeenCalled()
+  })
+
+  it('ArrowRight then Enter moves the event one day via onEventDrop', () => {
+    const onEventDrop = vi.fn()
+    renderMonth({ onEventDrop })
+    const btn = screen.getByRole('button', { name: /Standup/ })
+    grab(btn)
+    press(btn, 'ArrowRight')
+    press(btn, 'Enter')
+    expect(onEventDrop).toHaveBeenCalledTimes(1)
+    expect(onEventDrop.mock.calls[0]![0]).toMatchObject({
+      start: localizer.add({ value: one[0]!.start, amount: 1, unit: 'day' }),
+      end: localizer.add({ value: one[0]!.end, amount: 1, unit: 'day' }),
+    })
+  })
+
+  it('ArrowDown moves by a whole week', () => {
+    const onEventDrop = vi.fn()
+    renderMonth({ onEventDrop })
+    const btn = screen.getByRole('button', { name: /Standup/ })
+    grab(btn)
+    press(btn, 'ArrowDown') // next week
+    press(btn, 'Enter')
+    expect(onEventDrop.mock.calls[0]![0]).toMatchObject({
+      start: localizer.add({ value: one[0]!.start, amount: 7, unit: 'day' }),
+    })
+  })
+
+  it('Shift+ArrowRight then Enter resizes the end by a day via onEventResize', () => {
+    const onEventResize = vi.fn()
+    renderMonth({ onEventResize })
+    const btn = screen.getByRole('button', { name: /Standup/ })
+    grab(btn)
+    press(btn, 'ArrowRight', true) // grow the end edge one day
+    press(btn, 'Enter')
+    expect(onEventResize).toHaveBeenCalledTimes(1)
+    expect(onEventResize.mock.calls[0]![0]).toMatchObject({
+      start: one[0]!.start,
+      end: localizer.add({ value: one[0]!.end, amount: 1, unit: 'day' }),
+    })
+  })
+
+  it('Escape cancels the grab and fires nothing', () => {
+    const onEventDrop = vi.fn()
+    renderMonth({ onEventDrop })
+    const btn = screen.getByRole('button', { name: /Standup/ })
+    grab(btn)
+    press(btn, 'ArrowRight')
+    press(btn, 'Escape')
+    expect(onEventDrop).not.toHaveBeenCalled()
+    expect(btn.getAttribute('aria-grabbed')).toBeNull()
+    expect(screen.getByRole('status').textContent).toMatch(/cancelled/i)
   })
 })

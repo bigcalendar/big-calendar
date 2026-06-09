@@ -40,4 +40,58 @@ describe.each(LOCALIZER_CASES)('placeExternalEvent [$name]', ({ create }) => {
     expect(placed.start).toBe(lateTarget)
     expect(localizer.diff({ a: placed.end, b: placed.start, unit: 'minute' })).toBe(180)
   })
+
+  it('derives the duration from a start/end template when none is supplied (time mode)', () => {
+    const placed = placeExternalEvent({
+      localizer,
+      target,
+      start: '2026-01-01T09:00:00.000Z',
+      end: '2026-01-01T10:15:00.000Z',
+      step,
+    })
+    expect(placed.start).toBe(target)
+    expect(localizer.diff({ a: placed.end, b: placed.start, unit: 'minute' })).toBe(75)
+  })
+
+  describe("day mode (month drop)", () => {
+    const day = '2026-06-15T00:00:00.000Z'
+
+    it('creates a whole-day event on the dropped day when the payload has no template', () => {
+      const placed = placeExternalEvent({ localizer, target: day, mode: 'day', step })
+      expect(placed.allDay).toBe(true)
+      expect(placed.start).toBe(localizer.startOf({ value: day, unit: 'day' }))
+      expect(placed.end).toBe(localizer.endOf({ value: day, unit: 'day' }))
+    })
+
+    it('keeps the template time-of-day, moves the date to the dropped day, preserves duration', () => {
+      // A "9:00–10:30" task dropped on the 15th → 9:00–10:30 on the 15th. Derive
+      // expectations via the localizer (Temporal drops trailing `.000` ms).
+      const placed = placeExternalEvent({
+        localizer,
+        target: day,
+        mode: 'day',
+        start: '2026-02-03T09:00:00.000Z',
+        end: '2026-02-03T10:30:00.000Z',
+        step,
+      })
+      expect(placed.allDay).toBe(false)
+      expect(localizer.startOf({ value: placed.start, unit: 'day' })).toBe(localizer.startOf({ value: day, unit: 'day' }))
+      expect(localizer.getMinutesFromMidnight(placed.start)).toBe(9 * 60)
+      expect(localizer.diff({ a: placed.end, b: placed.start, unit: 'minute' })).toBe(90)
+    })
+
+    it('uses the day of `target`, not its time-of-day, to anchor the template', () => {
+      // Dropping anywhere on the 15th places the template's own time-of-day.
+      const placed = placeExternalEvent({
+        localizer,
+        target: '2026-06-15T17:45:00.000Z',
+        mode: 'day',
+        start: '2026-02-03T08:00:00.000Z',
+        end: '2026-02-03T08:30:00.000Z',
+        step,
+      })
+      expect(localizer.startOf({ value: placed.start, unit: 'day' })).toBe(localizer.startOf({ value: day, unit: 'day' }))
+      expect(localizer.getMinutesFromMidnight(placed.start)).toBe(8 * 60)
+    })
+  })
 })

@@ -242,37 +242,65 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    */
   moveEvent(args: { id: EventId; target: string; mode: MoveMode }): void
   /**
+   * Update the live move preview ({@link CalendarStore.dragPreview}) to the bounds
+   * a move would produce, without firing `onEventDrop`. Called by the DnD layer as
+   * a dragged event moves over slots/cells — the time grid renders the proposed
+   * extent as a dashed box, the month grid as a highlighted day-cell band. A
+   * no-op-to-`null` when the id matches no event.
+   */
+  previewMove(args: { id: EventId; target: string; mode: MoveMode }): void
+  /**
    * Resize an event by dragging one edge. Looks the event up by id, recomputes
    * its bounds via {@link resizeEvent} (`edge` picks which end snaps to the
-   * dropped slot `target`; duration clamped to one slot), and fires
-   * `onEventResize` with the new ISO bounds. A no-op when the id matches no event
-   * or no `onEventResize` is configured. The store does not mutate `events`.
+   * dropped `target`; `mode` decides slot-snap vs whole-day snap; duration clamped
+   * to one slot / one day), and fires `onEventResize` with the new ISO bounds. A
+   * no-op when the id matches no event or no `onEventResize` is configured. `mode`
+   * defaults to `'time'`. The store does not mutate `events`.
    */
-  resizeEvent(args: { id: EventId; edge: ResizeEdge; target: string }): void
+  resizeEvent(args: { id: EventId; edge: ResizeEdge; target: string; mode?: MoveMode | undefined }): void
   /**
    * Update the live resize preview ({@link CalendarStore.dragPreview}) to the
    * bounds a resize would produce, without firing `onEventResize`. Called by the
-   * DnD layer as the dragged edge moves over slots. A no-op-to-`null` when the id
-   * matches no event.
+   * DnD layer as the dragged edge moves over slots/cells. `mode` defaults to
+   * `'time'`. A no-op-to-`null` when the id matches no event.
    */
-  previewResize(args: { id: EventId; edge: ResizeEdge; target: string }): void
+  previewResize(args: { id: EventId; edge: ResizeEdge; target: string; mode?: MoveMode | undefined }): void
   /** Clear the live drag preview (drag ended outside a slot, or was cancelled). */
   clearDragPreview(): void
   /**
-   * Drop an item dragged from **outside** the calendar onto a time-grid slot.
-   * Recomputes the new event's bounds via {@link placeExternalEvent} (`target` is
-   * the dropped slot; `durationMinutes` from the drag payload, defaulting to one
-   * slot) and fires `onDropFromOutside`. Clears the live preview. A no-op when no
-   * `onDropFromOutside` is configured. The store does not add the event — you do.
+   * Drop an item dragged from **outside** the calendar onto a slot (`'time'`) or
+   * day cell (`'day'`). Recomputes the new event's bounds via
+   * {@link placeExternalEvent} (in `'time'` mode `target` is the dropped slot and
+   * `durationMinutes`/`start`/`end` drive the length; in `'day'` mode a drop with
+   * no `start`/`end` becomes a whole-day event on the dropped day, while a drop
+   * with a `start`/`end` template keeps its time-of-day and moves its date to the
+   * dropped day) and fires `onDropFromOutside`. Clears the live preview. `mode`
+   * defaults to `'time'`. A no-op when no `onDropFromOutside` is configured. The
+   * store does not add the event — you do.
    */
-  dropExternal(args: { target: string; durationMinutes?: number | undefined; allDay?: boolean | undefined }): void
+  dropExternal(args: {
+    target: string
+    mode?: MoveMode | undefined
+    durationMinutes?: number | undefined
+    allDay?: boolean | undefined
+    start?: string | undefined
+    end?: string | undefined
+  }): void
   /**
    * Update the live preview ({@link CalendarStore.dragPreview}) to where an
    * outside item would land, without firing `onDropFromOutside`. Called by the DnD
-   * layer as the outside drag moves over slots. With no `durationMinutes` (a
-   * native drag, whose payload is unreadable mid-drag) it previews a single slot.
+   * layer as the outside drag moves over slots/cells. `mode` defaults to `'time'`.
+   * With no `durationMinutes`/`start`/`end` (a native drag, whose payload is
+   * unreadable mid-drag) it previews a single slot (`'time'`) or the dropped day
+   * (`'day'`).
    */
-  previewExternal(args: { target: string; durationMinutes?: number | undefined }): void
+  previewExternal(args: {
+    target: string
+    mode?: MoveMode | undefined
+    durationMinutes?: number | undefined
+    start?: string | undefined
+    end?: string | undefined
+  }): void
   /**
    * Serialize an event for a **drag-out** transfer: the DnD layer writes this onto
    * the native drag's `dataTransfer` so a plain HTML5 drop target outside the
@@ -306,10 +334,11 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    */
   grabMove(args: { days?: number | undefined; minutes?: number | undefined }): void
   /**
-   * Resize a grabbed event's **end** edge by `minutes`, clamped to a one-slot
-   * minimum, and update the preview. A no-op when nothing is grabbed.
+   * Resize a grabbed event's **end** edge and update the preview, by `minutes`
+   * (time grid, clamped to a one-slot minimum) and/or whole `days` (month, clamped
+   * to a one-day minimum). A no-op when nothing is grabbed. Negative values shrink.
    */
-  grabResize(args: { minutes: number }): void
+  grabResize(args: { minutes?: number | undefined; days?: number | undefined }): void
   /**
    * Drop a grabbed event: fire `onEventDrop` (if it moved) or `onEventResize` (if
    * it only resized) with the proposed bounds, then clear the grab + preview. A

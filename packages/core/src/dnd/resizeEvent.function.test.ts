@@ -74,4 +74,60 @@ describe.each(LOCALIZER_CASES)('resizeEvent [$name]', ({ create }) => {
     })
     expect(resized.allDay).toBe(true)
   })
+
+  describe("day mode (month multi-day resize)", () => {
+    // A 3-day all-day event: 15th 00:00 → 17th 23:59:59.999.
+    const adStart = '2026-06-15T00:00:00.000Z'
+    const sameDay = (a: string, b: string): void =>
+      expect(localizer.startOf({ value: a, unit: 'day' })).toBe(localizer.startOf({ value: b, unit: 'day' }))
+    let adEnd: string
+    beforeAll(() => {
+      adEnd = localizer.endOf({ value: '2026-06-17T00:00:00.000Z', unit: 'day' })
+    })
+
+    it('moves the start to the dropped day, keeping the end (start edge)', () => {
+      const target = '2026-06-13T00:00:00.000Z'
+      const resized = resizeEvent({ localizer, start: adStart, end: adEnd, allDay: true, edge: 'start', target, mode: 'day', step })
+      sameDay(resized.start, target)
+      expect(resized.end).toBe(adEnd)
+    })
+
+    it('moves the end to the dropped day, keeping the start (end edge)', () => {
+      const target = '2026-06-20T00:00:00.000Z'
+      const resized = resizeEvent({ localizer, start: adStart, end: adEnd, allDay: true, edge: 'end', target, mode: 'day', step })
+      expect(resized.start).toBe(adStart)
+      sameDay(resized.end, target)
+    })
+
+    it('preserves time-of-day on a timed multi-day event (start edge)', () => {
+      const tStart = '2026-06-15T09:00:00.000Z'
+      const tEnd = '2026-06-17T11:00:00.000Z'
+      const target = '2026-06-12T00:00:00.000Z'
+      const resized = resizeEvent({ localizer, start: tStart, end: tEnd, allDay: false, edge: 'start', target, mode: 'day', step })
+      sameDay(resized.start, target)
+      expect(localizer.getMinutesFromMidnight(resized.start)).toBe(9 * 60)
+      expect(resized.end).toBe(tEnd)
+    })
+
+    it('clamps the start to a one-day minimum when dragged past the end', () => {
+      const target = '2026-06-25T00:00:00.000Z'
+      const resized = resizeEvent({ localizer, start: adStart, end: adEnd, allDay: true, edge: 'start', target, mode: 'day', step })
+      // Start clamps to the end's day (a 1-day event), never beyond.
+      sameDay(resized.start, adEnd)
+    })
+
+    it('clamps the end to a one-day minimum when dragged before the start', () => {
+      const target = '2026-06-10T00:00:00.000Z'
+      const resized = resizeEvent({ localizer, start: adStart, end: adEnd, allDay: true, edge: 'end', target, mode: 'day', step })
+      sameDay(resized.end, adStart)
+    })
+
+    it('resizes across a week boundary (absolute day target)', () => {
+      // Drop the end 9 days past the original end (the next week row).
+      const target = '2026-06-26T00:00:00.000Z'
+      const resized = resizeEvent({ localizer, start: adStart, end: adEnd, allDay: true, edge: 'end', target, mode: 'day', step })
+      sameDay(resized.end, target)
+      expect(localizer.diff({ a: resized.end, b: adStart, unit: 'day' })).toBe(11)
+    })
+  })
 })

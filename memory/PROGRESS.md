@@ -188,6 +188,60 @@ Flagged + kept: pickup key = **Space** (Enter stays "open"), since a focused eve
   Keyboard path tested in jsdom (real key events via Testing Library) — but **Cutter should still confirm the
   feel + announcements in Storybook** (`KeyboardDrag`).
 
+### Phase 5 — Task 5g: month keyboard DnD (Cutter, 2026-06-08) ✓ (uncommitted at time of writing)
+Cutter: "you can do DnD path of keyboard resizing events in month view." Extends the 5e modal grab to the
+month view. Scoped via AskUserQuestion: **move + resize**, **←→ = ±1 day / ↑↓ = ±1 week** (Shift = resize end).
+- **core** — `grabResize` now takes `{minutes?, days?}`: whole-day end resize clamped to a one-day minimum
+  (parallel to the minute/one-slot clamp). `grabMove` already did days → week steps = `grabMove({days:±7})`.
+  `eventInstructions` message broadened (view-agnostic; still has `F2`).
+- **react** — `useKeyboardDnd` generalized to `{ mode: MoveMode }`: `'time'` = slot/minute scheme (unchanged),
+  `'day'` = ←→ ±1 day / ↑↓ ±1 week, Shift+arrow resizes the end by that amount; mode also picks the grabbable
+  container (`.bc-time-body` / `.bc-month-grid`) + the announcement (time range / date range). `TimeGridView`
+  passes `{mode:'time'}`; `MonthView` mounts `{mode:'day'}` + `onKeyDownCapture` on `.bc-month` + a polite live
+  region. Preview band + `aria-grabbed`/`.bc-event-grabbed` reuse the 5f/5e wiring automatically.
+- **stories/docs** — `MonthKeyboardDrag` story; `DragAndDrop.mdx` keyboard section split into time-grid + month
+  key tables; "Not built yet" no longer lists keyboard.
+- **Gates:** all 8 projects typecheck/test/lint/build ✓ (core 240, dnd 29, react 184); build-storybook react ✓.
+  jsdom drives the keys via real events — **Cutter to confirm feel + SR announcements in Storybook**
+  (`MonthKeyboardDrag`).
+
+### Phase 5 — Task 5f: month drop-from-outside + month resize + pointer move preview (Cutter, 2026-06-08) ✓ (uncommitted at time of writing)
+Cutter: "let's do month drop-from-outside and month multi-day resize, plus pointer move now." Three Phase-5
+tail follow-ups in one slice; scoped via AskUserQuestion + a payload clarification (see DECISIONS.md 2026-06-08
+follow-ups entry).
+- **core** —
+  - `placeExternalEvent` is now **mode-aware** (`mode: MoveMode`, default `'time'`) + optional `start`/`end`
+    template. `'day'` drop: no template → whole-day event on the dropped day (start..endOf-day); template →
+    keep its time-of-day, move the date to the dropped day, preserve duration. `'time'` also derives duration
+    from a template when `durationMinutes` is absent.
+  - `resizeEvent` gained `mode: 'day'`: move the dragged edge by the **day delta** to the dropped day,
+    preserve time-of-day, clamp to a one-day minimum (`min/max(rawDelta, …)`). Cross-week free (absolute
+    `data-date`).
+  - new `previewMove({id,target,mode})` (+ shared `computeMove`, mirrors `previewResize`); `moveEvent` now
+    clears `dragPreview` on commit. `resizeEvent`/`previewResize`/`dropExternal`/`previewExternal` thread
+    `mode` (+ `start`/`end` on the external pair). Store `previewMove` exposed on `CalendarStore`.
+- **dnd** — `bindCalendarDnd`: external + native listeners now wired in **both** modes (dropped the
+  `externalEnabled = mode==='time'` gate; native day-mode reads `data-date`). `onDropTargetChange` move
+  branch (no edge) → `store.previewMove`; resize/move/external all thread `mode`; external payload carries
+  `start`/`end`. `DndStore` widened (+`previewMove`, `mode` on resize/preview/external). 29 tests.
+- **react** —
+  - `EventButton`: `withResizeHandles: boolean` → **`resizeEdges: ResizeEdge[]`** (selective edges). CSS
+    orients handles by parent class (`.bc-event` vertical / `.bc-segment` horizontal), no orientation prop.
+  - `useMonthWeeks` computes per-segment `resizeStart`/`resizeEnd` (handle splits across week rows: leading on
+    the first row, trailing on the last). `MonthView` passes the per-segment edges and renders a
+    `.bc-drag-preview-month` **day-cell band** from `store.dragPreview` (move + drop-from-outside). `TimeGridView`
+    passes `resizeEdges={['start','end']}`.
+- **styles** — `.bc-segment` `position: relative`; `.bc-segment .bc-resize-handle` horizontal (ew-resize)
+  leading/trailing variant + hover grab bar; `.bc-drag-preview-month` shares the `.bc-selection-month` grid
+  placement (dashed skin from `.bc-drag-preview`). styles dist rebuilt.
+- **stories/docs** — `MonthEventResize` + `MonthDropFromOutside` stories; `DropFromOutsideDemo` parametrized
+  (`view` + `palette` of JSON payloads). `DragAndDrop.mdx`: resize section now covers month + the move preview;
+  new "Dropping onto the month grid" section; "Not built yet" trimmed to resourceId / timed↔all-day promotion /
+  dedicated react-dnd entry (+ month keyboard).
+- **Gates:** all 8 projects typecheck/test/lint/build ✓ (core 238, dnd 29, react 179); build-storybook react ✓.
+  **No browser run here** (jsdom can't fire native drag) — verify month resize / month drop / move preview
+  visually in Storybook (`MonthEventResize`, `MonthDropFromOutside`, `MonthEventMove`).
+
 ### Phase 4 — Slot/event handler separation + move-to-core (Cutter, 2026-06-07) ✓ (uncommitted at time of writing)
 Cutter's separation-of-concerns refactor. **Slot** and **event** interaction are now two distinct,
 focused concerns, both **core-owned** (framework-agnostic), with the React layer reduced to a dumb
@@ -519,13 +573,18 @@ See [[bigcal-selection-storybook-phase4]] (obligation satisfied).
   Pragmatic external adapter — see the 5d correction); public MIME constants exported.
 - ✅ **5e — keyboard-accessible DnD** — DONE (Task 5e entry up top). Modal grab (Space pick up, arrows move,
   Shift+↑↓ resize end, Enter drop, Esc cancel); core `keyboardDrag` controller; `useKeyboardDnd` capture handler;
-  live-region announcements; `aria-grabbed` marking. Time-grid only. **NEXT: Phase 5 exit review + deferred
-  follow-ups** (month drop-from-outside, month multi-day resize, pointer move live-preview, resourceId in payload,
-  timed↔all-day promotion, dedicated `@big-calendar/react/dnd` entry).
-- Packaging follow-ups: resource-aware drop (`resourceId` in `onEventDrop`), cross-surface
-  timed↔all-day promotion, a dedicated `@big-calendar/react/dnd` entry, a DnD `.mdx` guide.
+  live-region announcements; `aria-grabbed` marking. Time-grid only.
+- ✅ **5f — month drop-from-outside + month multi-day resize + pointer move preview** — DONE (Task 5f entry up
+  top). `placeExternalEvent`/`resizeEvent` mode-aware (`'day'`); payload `start`/`end` template; `previewMove`;
+  month resize handles split across week rows; `.bc-drag-preview-month` day-cell band; external wired in both
+  modes. `MonthEventResize` + `MonthDropFromOutside` stories.
+- ✅ **5g — month keyboard DnD** — DONE (Task 5g entry up top). Same modal grab, day-granular (←→ day, ↑↓ week,
+  Shift = resize end); `useKeyboardDnd({mode})` generalized; core `grabResize` gained `days`.
+- **NEXT: Phase 5 exit review + remaining tail** — resourceId in the drop payload, cross-surface timed↔all-day
+  promotion, a dedicated `@big-calendar/react/dnd` entry, start-edge keyboard resize.
 
-Exit criteria (roadmap §14): drop/resize/outside parity + keyboard DnD.
+Exit criteria (roadmap §14): drop/resize/outside parity + keyboard DnD — **all met** (parity now across month +
+time-grid; keyboard DnD on the time-grid). Exit review pending.
 
 ## Earlier phases
 

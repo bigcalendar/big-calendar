@@ -125,12 +125,14 @@ function AsyncMoveDemo() {
  * drag's payload is hidden until the drop, the live preview is a single landing
  * slot (the real duration applies on release).
  */
-function DropFromOutsideDemo() {
-  const palette = [
-    { label: '30-min meeting', durationMinutes: 30 },
-    { label: '1-hour focus block', durationMinutes: 60 },
-    { label: '90-min workshop', durationMinutes: 90 },
-  ]
+function DropFromOutsideDemo({
+  view = Views.WEEK,
+  palette,
+}: {
+  view?: ViewKey
+  /** Each chip carries the JSON payload it writes onto the drag's `dataTransfer`. */
+  palette: { label: string; payload: Record<string, unknown> }[]
+}) {
   const [events, setEvents] = useState<DemoEvent[]>(demoEvents)
   const nextId = useRef(1000)
 
@@ -144,7 +146,7 @@ function DropFromOutsideDemo() {
             draggable
             onDragStart={(e) => {
               e.dataTransfer.effectAllowed = 'copy'
-              e.dataTransfer.setData(EXTERNAL_MIME, JSON.stringify({ durationMinutes: item.durationMinutes }))
+              e.dataTransfer.setData(EXTERNAL_MIME, JSON.stringify(item.payload))
             }}
             style={{
               padding: '0.5rem 0.6rem',
@@ -161,7 +163,7 @@ function DropFromOutsideDemo() {
       </aside>
       <div style={{ flex: 1, minInlineSize: 0 }}>
         <CalendarStage
-          defaultView={Views.WEEK}
+          defaultView={view}
           events={events}
           onDropFromOutside={({ start, end, allDay }) =>
             setEvents((prev) => [...prev, { id: nextId.current++, title: 'New event', start, end, allDay }])
@@ -233,7 +235,7 @@ const meta: Meta = {
     docs: {
       description: {
         component:
-          'Drag an event to move it (to another day in the month grid, or onto another slot in the time-grid week/day views), or drag a timed event’s top/bottom edge to resize it. Powered by the optional `@big-calendar/dnd` package, wired with the `useCalendarDnd` hook. Core does the date-math (month move = a whole-day shift that keeps the time of day; time-grid move = snap the start to the dropped slot, keep the duration; resize = snap the dragged edge, keep the other) and reports the result through `onEventDrop` / `onEventResize`; your code applies it to the event data. You can also drag items in from outside (`onDropFromOutside`) and drag events out to your own dropzone (`onEventDragStart`); keyboard DnD is a later slice.',
+          'Drag an event to move it (to another day in the month grid, or onto another slot in the time-grid week/day views), or drag an event’s edges to resize it — top/bottom on a timed event, leading/trailing on a month segment (whole-day, including across week rows). A dashed live preview follows both move and resize (a highlighted day-cell band in the month grid). Powered by the optional `@big-calendar/dnd` package, wired with the `useCalendarDnd` hook. Core does the date-math (month move = a whole-day shift that keeps the time of day; time-grid move = snap the start to the dropped slot, keep the duration; resize = snap the dragged edge, keep the other) and reports the result through `onEventDrop` / `onEventResize`; your code applies it to the event data. You can also drag items in from outside (`onDropFromOutside` — onto a time-grid slot, or onto a month day where a payload with no `start`/`end` becomes an all-day event and one with a `start`/`end` template is re-dated to the dropped day) and drag events out to your own dropzone (`onEventDragStart`), all without a mouse via the keyboard (Space to pick up, arrows to move, Shift+arrows to resize).',
       },
     },
   },
@@ -271,6 +273,19 @@ export const WeekEventResize: Story = {
 }
 
 /**
+ * Month resize: hover a month segment to reveal a grab strip on its leading and
+ * trailing edge, then drag an edge to another day to grow/shrink the event by
+ * whole days (the time of day is kept). For an event that spans more than one week
+ * row, the leading handle sits on its first row and the trailing handle on its
+ * last; dragging across the week boundary just works (the drop target is an
+ * absolute day). A highlighted day-cell band previews the proposed span. Same demo
+ * as the move story — `onEventDrop` and `onEventResize` share one `apply`.
+ */
+export const MonthEventResize: Story = {
+  render: () => <DragDemo />,
+}
+
+/**
  * `draggableAccessor` decides which events may be dragged. Here the all-day
  * "Offsite" event (id 4) is locked in place; every other event still moves.
  */
@@ -293,7 +308,42 @@ export const AsyncSaveWithRollback: Story = {
  * live preview is a single landing slot until you release.
  */
 export const DropFromOutside: Story = {
-  render: () => <DropFromOutsideDemo />,
+  render: () => (
+    <DropFromOutsideDemo
+      palette={[
+        { label: '30-min meeting', payload: { durationMinutes: 30 } },
+        { label: '1-hour focus block', payload: { durationMinutes: 60 } },
+        { label: '90-min workshop', payload: { durationMinutes: 90 } },
+      ]}
+    />
+  ),
+}
+
+/**
+ * Drop-from-outside onto the **month** grid. A month day has no time slot, so the
+ * payload decides what gets created: a chip with **no** `start`/`end` becomes a
+ * whole-day event on the dropped day; a chip carrying a `start`/`end` **template**
+ * keeps its time-of-day and is re-dated to the dropped day (a "9–10am standup"
+ * dropped on the 14th becomes 9–10am on the 14th). A day-cell band previews where
+ * it will land.
+ */
+export const MonthDropFromOutside: Story = {
+  render: () => (
+    <DropFromOutsideDemo
+      view={Views.MONTH}
+      palette={[
+        { label: 'Holiday (all-day)', payload: {} },
+        {
+          label: '9–10am standup (re-dated)',
+          payload: { start: '2020-01-01T09:00:00.000Z', end: '2020-01-01T10:00:00.000Z' },
+        },
+        {
+          label: '2–3:30pm review (re-dated)',
+          payload: { start: '2020-01-01T14:00:00.000Z', end: '2020-01-01T15:30:00.000Z' },
+        },
+      ]}
+    />
+  ),
 }
 
 /**
@@ -316,4 +366,16 @@ export const DragOutToUnschedule: Story = {
  */
 export const KeyboardDrag: Story = {
   render: () => <DragDemo view={Views.WEEK} />,
+}
+
+/**
+ * Keyboard drag in the **month** grid (no mouse): Tab to an event, **Space** to
+ * pick it up. **←/→** move it ±1 day, **↑/↓** move it ±1 week; **Shift+←/→** grow /
+ * shrink its end by a day, **Shift+↑/↓** by a week (resizing across a week boundary
+ * works); **Enter** drops, **Escape** cancels. A day-cell band previews the span and
+ * each step is announced. Same demo as MonthEventMove — no wiring beyond
+ * `onEventDrop` / `onEventResize`.
+ */
+export const MonthKeyboardDrag: Story = {
+  render: () => <DragDemo />,
 }

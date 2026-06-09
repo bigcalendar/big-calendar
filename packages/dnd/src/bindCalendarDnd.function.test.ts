@@ -43,6 +43,7 @@ const makeStore = (overrides: Partial<DndStore<{ id: number }>> = {}): DndStore<
   isDraggable: vi.fn(() => true),
   isResizable: vi.fn(() => true),
   moveEvent: vi.fn(),
+  previewMove: vi.fn(),
   resizeEvent: vi.fn(),
   previewResize: vi.fn(),
   clearDragPreview: vi.fn(),
@@ -167,7 +168,7 @@ describe('bindCalendarDnd', () => {
       source: { data: { bcEventId: '1', bcResizeEdge: 'end' } },
       location: { current: { dropTargets: [{ data: { bcDropTarget: instant } }] } },
     })
-    expect(store.resizeEvent).toHaveBeenCalledWith({ id: '1', edge: 'end', target: instant })
+    expect(store.resizeEvent).toHaveBeenCalledWith({ id: '1', edge: 'end', target: instant, mode: 'time' })
     expect(store.moveEvent).not.toHaveBeenCalled()
   })
 
@@ -180,10 +181,10 @@ describe('bindCalendarDnd', () => {
       source: { data: { bcEventId: '1', bcResizeEdge: 'end' } },
       location: { current: { dropTargets: [{ data: { bcDropTarget: instant } }] } },
     })
-    expect(store.previewResize).toHaveBeenCalledWith({ id: '1', edge: 'end', target: instant })
+    expect(store.previewResize).toHaveBeenCalledWith({ id: '1', edge: 'end', target: instant, mode: 'time' })
   })
 
-  it('clears the preview when the edge leaves every slot, and ignores move drags', () => {
+  it('clears the preview when the edge leaves every slot', () => {
     const store = makeStore()
     bindCalendarDnd({ root, store, mode: 'time' })
     const { onDropTargetChange } = monitorSpy.mock.calls[0]![0]
@@ -193,12 +194,21 @@ describe('bindCalendarDnd', () => {
       location: { current: { dropTargets: [] } },
     })
     expect(store.clearDragPreview).toHaveBeenCalledTimes(1)
-    // A move drag (no edge) never previews this slice.
+  })
+
+  it('previews a plain event move (no edge) as the drag changes cell', () => {
+    const store = makeStore()
+    bindCalendarDnd({ root, store, mode: 'day' })
+    const { onDropTargetChange } = monitorSpy.mock.calls[0]![0]
     onDropTargetChange({
       source: { data: { bcEventId: '1' } },
-      location: { current: { dropTargets: [{ data: { bcDropTarget: '2026-06-16T09:30:00.000Z' } }] } },
+      location: { current: { dropTargets: [{ data: { bcDropTarget: ISO } }] } },
     })
+    expect(store.previewMove).toHaveBeenCalledWith({ id: '1', target: ISO, mode: 'day' })
     expect(store.previewResize).not.toHaveBeenCalled()
+    // Move off every cell → clear.
+    onDropTargetChange({ source: { data: { bcEventId: '1' } }, location: { current: { dropTargets: [] } } })
+    expect(store.clearDragPreview).toHaveBeenCalledTimes(1)
   })
 
   it('clears the preview when a resize is dropped outside every slot', () => {
@@ -283,7 +293,14 @@ describe('bindCalendarDnd', () => {
         source: { data: { bcExternal: { durationMinutes: 90, allDay: false } } },
         location: { current: { dropTargets: [{ data: { bcDropTarget: instant } }] } },
       })
-      expect(store.dropExternal).toHaveBeenCalledWith({ target: instant, durationMinutes: 90, allDay: false })
+      expect(store.dropExternal).toHaveBeenCalledWith({
+        target: instant,
+        mode: 'time',
+        durationMinutes: 90,
+        allDay: false,
+        start: undefined,
+        end: undefined,
+      })
       expect(store.moveEvent).not.toHaveBeenCalled()
     })
 
@@ -295,7 +312,33 @@ describe('bindCalendarDnd', () => {
         source: { data: { bcExternal: { durationMinutes: 90 } } },
         location: { current: { dropTargets: [{ data: { bcDropTarget: instant } }] } },
       })
-      expect(store.previewExternal).toHaveBeenCalledWith({ target: instant, durationMinutes: 90 })
+      expect(store.previewExternal).toHaveBeenCalledWith({
+        target: instant,
+        mode: 'time',
+        durationMinutes: 90,
+        start: undefined,
+        end: undefined,
+      })
+    })
+
+    it('carries a start/end template through to a month (day-mode) drop', () => {
+      const store = makeStore()
+      const day = '2026-06-16T00:00:00.000Z'
+      const tmpl = { start: '2026-02-03T09:00:00.000Z', end: '2026-02-03T10:30:00.000Z' }
+      bindCalendarDnd({ root, store, mode: 'day' })
+      const { onDrop } = monitorSpy.mock.calls[0]![0]
+      onDrop({
+        source: { data: { bcExternal: tmpl } },
+        location: { current: { dropTargets: [{ data: { bcDropTarget: day } }] } },
+      })
+      expect(store.dropExternal).toHaveBeenCalledWith({
+        target: day,
+        mode: 'day',
+        durationMinutes: undefined,
+        allDay: undefined,
+        start: tmpl.start,
+        end: tmpl.end,
+      })
     })
   })
 
@@ -312,7 +355,7 @@ describe('bindCalendarDnd', () => {
       bindCalendarDnd({ root, store, mode: 'time' })
       const event = fireDrag('dragover', { on: slotEl, types: [EXTERNAL_MIME] })
       expect(event.defaultPrevented).toBe(true) // preventDefault → the drop is accepted
-      expect(store.previewExternal).toHaveBeenCalledWith({ target: instant })
+      expect(store.previewExternal).toHaveBeenCalledWith({ target: instant, mode: 'time' })
     })
 
     it('only re-previews when the hovered slot changes', () => {
@@ -344,14 +387,28 @@ describe('bindCalendarDnd', () => {
         data: { [EXTERNAL_MIME]: JSON.stringify({ durationMinutes: 45, allDay: true }) },
       })
       expect(event.defaultPrevented).toBe(true)
-      expect(store.dropExternal).toHaveBeenCalledWith({ target: instant, durationMinutes: 45, allDay: true })
+      expect(store.dropExternal).toHaveBeenCalledWith({
+        target: instant,
+        mode: 'time',
+        durationMinutes: 45,
+        allDay: true,
+        start: undefined,
+        end: undefined,
+      })
     })
 
     it('tolerates a malformed payload on drop (falls back to defaults)', () => {
       const store = makeStore()
       bindCalendarDnd({ root, store, mode: 'time' })
       fireDrag('drop', { on: slotEl, types: [EXTERNAL_MIME], data: { [EXTERNAL_MIME]: 'not json' } })
-      expect(store.dropExternal).toHaveBeenCalledWith({ target: instant, durationMinutes: undefined, allDay: undefined })
+      expect(store.dropExternal).toHaveBeenCalledWith({
+        target: instant,
+        mode: 'time',
+        durationMinutes: undefined,
+        allDay: undefined,
+        start: undefined,
+        end: undefined,
+      })
     })
 
     it('clears the preview when the drag leaves the root', () => {
@@ -362,11 +419,28 @@ describe('bindCalendarDnd', () => {
       expect(store.clearDragPreview).toHaveBeenCalled()
     })
 
-    it("does not attach native listeners in 'day' mode", () => {
+    it("in 'day' mode previews/drops on a date cell, ignoring non-day targets", () => {
       const store = makeStore()
       bindCalendarDnd({ root, store, mode: 'day' })
+      // A slot cell carries no `data-date` → not a day target.
       fireDrag('dragover', { on: slotEl, types: [EXTERNAL_MIME] })
       expect(store.previewExternal).not.toHaveBeenCalled()
+      // The month day cell (data-date) is the target; a template drop re-dates it.
+      fireDrag('dragover', { on: cellEl, types: [EXTERNAL_MIME] })
+      expect(store.previewExternal).toHaveBeenCalledWith({ target: ISO, mode: 'day' })
+      fireDrag('drop', {
+        on: cellEl,
+        types: [EXTERNAL_MIME],
+        data: { [EXTERNAL_MIME]: JSON.stringify({ start: '2026-02-03T09:00:00.000Z', end: '2026-02-03T10:30:00.000Z' }) },
+      })
+      expect(store.dropExternal).toHaveBeenCalledWith({
+        target: ISO,
+        mode: 'day',
+        durationMinutes: undefined,
+        allDay: false,
+        start: '2026-02-03T09:00:00.000Z',
+        end: '2026-02-03T10:30:00.000Z',
+      })
     })
 
     it('removes the native listeners on cleanup', () => {

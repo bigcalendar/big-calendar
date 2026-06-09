@@ -113,7 +113,7 @@ your data, so there is exactly one source of truth: your `events` state. See the
 **Drag and drop → AsyncSaveWithRollback** story for a runnable version (with a checkbox
 that forces the save to fail).
 
-## Resizing (time-grid)
+## Resizing
 
 In the **time-grid** views, hovering a timed event reveals a grab bar on its top and
 bottom edge. Dragging an edge to another slot resizes the event: the dragged edge snaps
@@ -121,6 +121,17 @@ to the slot, the other edge stays put, and (like move) you can drag past a day b
 to grow the event across midnight. The event is clamped to a one-slot minimum so it can
 never collapse. While you drag, a dashed **live preview** box shows the proposed new
 size so you're not guessing from the pointer alone.
+
+In the **month** grid the same idea applies by whole days: hovering a segment reveals a
+grab strip on its **leading** and **trailing** edge, and dragging an edge to another day
+grows or shrinks the event by whole days (the time of day is kept; the event can't drop
+below one day). If an event spans more than one week row, the leading handle sits on its
+first row and the trailing handle on its last — and dragging an edge across the week
+boundary just works, because the drop target is an absolute day. A highlighted day-cell
+band previews the proposed span.
+
+The same dashed/highlighted preview also follows a **move** (not just a resize), so you
+can see where an event will land before you let go.
 
 Resize reports through `onEventResize`, which has the **exact same shape** as
 `onEventDrop` — so apply (and roll back) it the same way:
@@ -177,8 +188,21 @@ payload hidden until the drop (a browser security rule), so the live preview can
 only show a **single landing slot** while you drag — the real duration appears
 when you release. A **Pragmatic** drag exposes its payload throughout, so the
 preview shows the event's full proposed size as you move. Either way, the drop
-itself is exact. Drop-from-outside is wired on the **time-grid** views; the month
-grid is a later slice. See the **Drag and drop → DropFromOutside** story.
+itself is exact. See the **Drag and drop → DropFromOutside** story.
+
+### Dropping onto the month grid
+
+You can also drop onto the **month** grid, where a day cell has no time of its own,
+so the payload decides what gets created:
+
+- a payload with **no** `start`/`end` becomes a **whole-day** event on the dropped
+  day (a `durationMinutes` is ignored here — there's no slot to place it in);
+- a payload carrying a `start`/`end` **template** keeps its time-of-day and is
+  **re-dated** to the dropped day — a "9–10am standup" template dropped on the 14th
+  becomes 9–10am on the 14th, preserving the duration.
+
+A highlighted day-cell band previews where the new event will land. See the
+**Drag and drop → MonthDropFromOutside** story.
 
 ## Dragging events out of the calendar
 
@@ -206,7 +230,10 @@ DragOutToUnschedule** story.
 ## Keyboard drag and drop
 
 Everything above works **without a mouse**, so the calendar stays usable for
-keyboard and screen-reader users. Tab to a timed event and:
+keyboard and screen-reader users. Tab to an event, press **Space** to pick it up
+(again to drop), and use the arrows — the step sizes match the surface:
+
+**Time-grid** (week / day):
 
 | Key | Action |
 | --- | --- |
@@ -214,15 +241,27 @@ keyboard and screen-reader users. Tab to a timed event and:
 | **↑ / ↓** | move it one slot earlier / later |
 | **← / →** | move it to the previous / next day |
 | **Shift + ↓ / ↑** | grow / shrink the end edge by one slot |
-| **Enter** | drop it (commit) |
-| **Escape** | cancel and put it back |
+| **Enter** / **Escape** | drop / cancel |
 
-While the event is "in hand" it dims and a dashed box previews where it will
-land — the same box a mouse resize shows — and every step is announced through a
-polite live region (e.g. _"Standup, Tue 16 9:30 AM to 10:30 AM"_). Dropping fires
-the **same** `onEventDrop` / `onEventResize` you already wired for the mouse, so
-there's nothing extra to handle. (Enter still **opens** an event; Space is what
-picks it up.) Keyboard drag is wired on the **time-grid** views this slice.
+**Month** (whole days):
+
+| Key | Action |
+| --- | --- |
+| **Space** | pick the event up (and again to drop) |
+| **← / →** | move it ±1 day |
+| **↑ / ↓** | move it ±1 week |
+| **Shift + ← / →** | grow / shrink the end edge by a day |
+| **Shift + ↑ / ↓** | grow / shrink the end edge by a week |
+| **Enter** / **Escape** | drop / cancel |
+
+While the event is "in hand" it dims and a preview shows where it will land — a
+dashed box in the time grid, a highlighted day-cell band in the month grid — and
+every step is announced through a polite live region (e.g. _"Standup, Tue 16
+9:30 AM to 10:30 AM"_ in the time grid, _"Standup, Jun 16"_ in the month).
+Dropping fires the **same** `onEventDrop` / `onEventResize` you already wired for
+the mouse, so there's nothing extra to handle. (Enter still **opens** an event;
+Space is what picks it up.) Keyboard drag is wired on the **month and time-grid**
+views.
 
 ## Locking individual events
 
@@ -236,6 +275,8 @@ function. An event that returns `false` can't be picked up (or shows no resize h
 
 ## Not built yet
 
-**Month** drop-from-outside and **month** multi-day resize are the remaining
-follow-ups; everything else (move, resize, drop-from-outside, drag-out, and
-keyboard drag) is wired for the time-grid views today.
+Move, resize, drop-from-outside, drag-out, and keyboard drag are all wired for both
+the **month** and **time-grid** views today. The remaining follow-ups are
+cross-surface concerns: a `resourceId` on the drop payload (for resource columns),
+timed↔all-day **promotion** (dropping a timed event onto the all-day row, and back),
+and a dedicated `@big-calendar/react/dnd` entry point.
