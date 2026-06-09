@@ -693,10 +693,17 @@ See [[bigcal-selection-storybook-phase4]] (obligation satisfied).
   `ALLDAY_TARGET_ATTR` exported from dnd; promotion path in binder (canDrop blocks allday-row sources;
   mode:'day'+promote:true on drop); `moveEvent.targetAllDay`; `store.moveEvent.promote`. +9 core / +5 dnd tests.
   Story: `TimedToAllDayPromotion`; DragAndDrop.mdx section added.
-- **NEXT: dedicated `@big-calendar/react/dnd` entry** — export `useCalendarDnd` (and eventually other
-  DnD hooks/utilities) from a dedicated entry point `@big-calendar/react/dnd` so apps can opt in without
-  importing from the main barrel. After that: start-edge keyboard resize (Shift+Alt+arrow), day-major
-  week ordering (1c), month/keyboard DnD gating by isDraggable/isResizable.
+- ✅ **Dedicated `@big-calendar/react/dnd` entry** — DONE (commit 73bf489). `src/dnd/index.ts` barrel;
+  multi-entry vite config; `"./dnd"` exports map. Both `@big-calendar/react/dnd` and the main barrel work.
+- ✅ **Start-edge keyboard resize (Shift+Alt+arrow)** — DONE (commit da76e6b). `grabResize` gained
+  `edge?: 'start' | 'end'` (default `'end'`); start-edge clamped to never shrink below one slot/day.
+  `useKeyboardDnd` extended with `Shift+Alt+↑↓` (time-grid) / `Shift+Alt+←→↑↓` (month) chords;
+  `pickupHint` updated; keyboard table in DragAndDrop.mdx updated. 9 new React tests + 2 core tests.
+  **Note:** react tests import from `dist/`; always rebuild core (`pnpm nx build core`) after any core
+  source change before running react tests.
+- **NEXT: day-major week ordering (1c)** — `resourceLayout: 'resource' | 'day'` prop (default
+  `'resource'`); days-outer, resources-nested layout for the week time-grid.
+  After that: month/keyboard DnD gating by isDraggable/isResizable.
 
 Exit criteria (roadmap §14): drop/resize/outside parity + keyboard DnD — **all met** (parity now across month +
 time-grid; keyboard DnD on the time-grid). Tail items (promotion, dnd entry, resize) are polish/completeness,
