@@ -9,7 +9,7 @@ import type { ResizeEdge } from '../dnd/resizeEvent.function'
 import { BUILTIN_VIEWS, Views } from '../constants/views.constant'
 import { createSelection } from '../selection/selection.function'
 import type { SelectionMode, SelectionRange } from '../selection/selection.type'
-import type { EventId, ViewKey } from '../types/calendar.type'
+import type { EventId, ResourceId, ViewKey } from '../types/calendar.type'
 import type { CalendarConfig } from '../types/config.type'
 import { buildViewModel } from '../views/viewModel.function'
 import { resolveDrilldownView } from './drilldown.function'
@@ -177,6 +177,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
         allDayMaxRows,
         showMultiDayTimes: config.showMultiDayTimes,
         weekEventLimit: config.weekEventLimit,
+        resourceLayout: config.resourceLayout,
       },
     }),
   )
@@ -189,7 +190,12 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   // drag can span day columns: same-day → a timed selection; cross-day → a
   // promoted whole-day (all-day) span. The anchor is a signal so the adapter can
   // place the highlight overlay in the right column(s)/row while a drag is live.
-  const selectionAnchor = signal<{ mode: SelectionMode; date: string; slotCount?: number | undefined } | null>(null)
+  const selectionAnchor = signal<{
+    mode: SelectionMode
+    date: string
+    slotCount?: number | undefined
+    resourceId?: ResourceId | undefined
+  } | null>(null)
 
   // Shape returned to the public callbacks: ISO dates + the whole-day flag.
   type Translated = { start: string; end: string; slots: string[]; allDay: boolean }
@@ -264,7 +270,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     // internal FSM keeps an `action` to disambiguate; the public payload doesn't.
     onSelect: (selection) => {
       const { start, end, slots, allDay } = translate(selection)
-      const payload = { start, end, slots, allDay }
+      const payload = { start, end, slots, allDay, resourceId: selectionAnchor.value?.resourceId }
       if (selection.action === 'click') config.onSlotClick?.(payload)
       else if (selection.action === 'doubleClick') config.onSlotDoubleClick?.(payload)
       else config.onSlotSelect?.(payload)
@@ -343,9 +349,20 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   const selection = {
     state: selectionController.state,
     range: selectionController.range,
-    anchor: selectionAnchor as ReadonlySignal<{ mode: SelectionMode; date: string; slotCount?: number | undefined } | null>,
-    start({ slot, date: anchorDate, mode, slotCount }: { slot: number; date: string; mode: SelectionMode; slotCount?: number | undefined }) {
-      selectionAnchor.value = { mode, date: anchorDate, slotCount }
+    anchor: selectionAnchor as ReadonlySignal<{
+      mode: SelectionMode
+      date: string
+      slotCount?: number | undefined
+      resourceId?: ResourceId | undefined
+    } | null>,
+    start({ slot, date: anchorDate, mode, slotCount, resourceId }: {
+      slot: number
+      date: string
+      mode: SelectionMode
+      slotCount?: number | undefined
+      resourceId?: ResourceId | undefined
+    }) {
+      selectionAnchor.value = { mode, date: anchorDate, slotCount, resourceId }
       selectionController.start({ slot })
     },
     to({ slot }: { slot: number }) {
@@ -355,12 +372,24 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       selectionController.complete()
       selectionAnchor.value = null
     },
-    click({ slot, date: anchorDate, mode, slotCount }: { slot: number; date: string; mode: SelectionMode; slotCount?: number | undefined }) {
-      selectionAnchor.value = { mode, date: anchorDate, slotCount }
+    click({ slot, date: anchorDate, mode, slotCount, resourceId }: {
+      slot: number
+      date: string
+      mode: SelectionMode
+      slotCount?: number | undefined
+      resourceId?: ResourceId | undefined
+    }) {
+      selectionAnchor.value = { mode, date: anchorDate, slotCount, resourceId }
       selectionController.click({ slot })
     },
-    doubleClick({ slot, date: anchorDate, mode, slotCount }: { slot: number; date: string; mode: SelectionMode; slotCount?: number | undefined }) {
-      selectionAnchor.value = { mode, date: anchorDate, slotCount }
+    doubleClick({ slot, date: anchorDate, mode, slotCount, resourceId }: {
+      slot: number
+      date: string
+      mode: SelectionMode
+      slotCount?: number | undefined
+      resourceId?: ResourceId | undefined
+    }) {
+      selectionAnchor.value = { mode, date: anchorDate, slotCount, resourceId }
       selectionController.doubleClick({ slot })
     },
     cancel() {
@@ -424,14 +453,14 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       return findEvent(id)
     },
 
-    moveEvent({ id, target, mode }) {
+    moveEvent({ id, target, mode, resourceId }) {
       // The drag is over: clear the live preview regardless of the outcome.
       dragPreview.value = null
       const drop = config.onEventDrop
       if (drop == null) return
       const moved = computeMove(id, target, mode)
       if (moved == null) return
-      drop({ event: moved.event, start: moved.start, end: moved.end, allDay: moved.allDay })
+      drop({ event: moved.event, start: moved.start, end: moved.end, allDay: moved.allDay, resourceId })
     },
 
     previewMove({ id, target, mode }) {
@@ -439,14 +468,14 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       dragPreview.value = moved == null ? null : { start: moved.start, end: moved.end }
     },
 
-    resizeEvent({ id, edge, target, mode = 'time' }) {
+    resizeEvent({ id, edge, target, mode = 'time', resourceId }) {
       // The drag is over: clear the live preview regardless of the outcome.
       dragPreview.value = null
       const report = config.onEventResize
       if (report == null) return
       const resized = computeResize(id, edge, target, mode)
       if (resized == null) return
-      report({ event: resized.event, start: resized.start, end: resized.end, allDay: resized.allDay })
+      report({ event: resized.event, start: resized.start, end: resized.end, allDay: resized.allDay, resourceId })
     },
 
     previewResize({ id, edge, target, mode = 'time' }) {
@@ -458,12 +487,13 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       dragPreview.value = null
     },
 
-    dropExternal({ target, mode = 'time', durationMinutes, allDay, start, end }) {
+    dropExternal({ target, mode = 'time', durationMinutes, allDay, start, end, resourceId }) {
       // The drag is over: clear the live preview regardless of the outcome.
       dragPreview.value = null
       const report = config.onDropFromOutside
       if (report == null) return
-      report(placeExternalEvent({ localizer, target, mode, durationMinutes, allDay, start, end, step }))
+      const placed = placeExternalEvent({ localizer, target, mode, durationMinutes, allDay, start, end, step })
+      report({ ...placed, resourceId })
     },
 
     previewExternal({ target, mode = 'time', durationMinutes, start, end }) {

@@ -512,6 +512,25 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       })
     })
 
+    it('carries the anchor resourceId into the committed selection payload', () => {
+      const onSlotClick = vi.fn()
+      const onSlotSelect = vi.fn()
+      const store = createCalendarStore<Event>({
+        localizer,
+        date: monday,
+        view: Views.DAY,
+        selectable: true,
+        onSlotClick,
+        onSlotSelect,
+      })
+      store.selection.click({ slot: 3, date: monday, mode: 'time', resourceId: 'room-a' })
+      expect(onSlotClick.mock.calls[0]![0].resourceId).toBe('room-a')
+      store.selection.start({ slot: 2, date: monday, mode: 'time', resourceId: 'room-b' })
+      store.selection.to({ slot: 4 })
+      store.selection.complete()
+      expect(onSlotSelect.mock.calls[0]![0].resourceId).toBe('room-b')
+    })
+
     it('translates day-mode indices into visible days, ending at end-of-day', () => {
       const onSlotSelect = vi.fn()
       const store = createCalendarStore<Event>({
@@ -637,6 +656,13 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       store.moveEvent({ id: 1, target: '2026-06-16T13:00:00.000Z', mode: 'time' })
       expect(store.dragPreview.value).toBeNull()
     })
+
+    it('reports the landing resourceId on onEventDrop when given one', () => {
+      const onEventDrop = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventDrop })
+      store.moveEvent({ id: 1, target: '2026-06-16T13:00:00.000Z', mode: 'time', resourceId: 42 })
+      expect(onEventDrop.mock.calls[0]![0].resourceId).toBe(42)
+    })
   })
 
   describe('event resize (resizeEvent)', () => {
@@ -729,6 +755,13 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       const call = onEventResize.mock.calls[0]![0]
       expect(call.start).toBe(adEvents[0]!.start)
       expect(localizer.startOf({ value: call.end, unit: 'day' })).toBe(localizer.startOf({ value: target, unit: 'day' }))
+    })
+
+    it('reports the landing resourceId on onEventResize when given one', () => {
+      const onEventResize = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventResize })
+      store.resizeEvent({ id: 1, edge: 'start', target: '2026-06-15T08:30:00.000Z', resourceId: 7 })
+      expect(onEventResize.mock.calls[0]![0].resourceId).toBe(7)
     })
   })
 
@@ -823,6 +856,13 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       expect(localizer.getMinutesFromMidnight(call.start)).toBe(9 * 60)
       expect(localizer.diff({ a: call.end, b: call.start, unit: 'minute' })).toBe(90)
       expect(call.allDay).toBe(false)
+    })
+
+    it('reports the landing resourceId on onDropFromOutside when given one', () => {
+      const onDropFromOutside = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, onDropFromOutside, step: 30 })
+      store.dropExternal({ target, durationMinutes: 60, resourceId: 3 })
+      expect(onDropFromOutside.mock.calls[0]![0].resourceId).toBe(3)
     })
   })
 

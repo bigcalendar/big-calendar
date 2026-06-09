@@ -1,3 +1,5 @@
+import type { ResourceId } from '../types/calendar.type'
+
 /**
  * Whether slot selection is allowed. `true` enables it, `false` disables it, and
  * `'ignoreEvents'` enables it but lets the adapter start selections even when the
@@ -63,4 +65,10 @@ export interface SlotSelectionDates {
    * `false` for a within-day timed selection.
    */
   allDay: boolean
+  /**
+   * The resource id of the column the selection started in, or `undefined` in a
+   * resource-less grid. Lets a create-on-select handler scope the new event to
+   * the chosen resource.
+   */
+  resourceId?: ResourceId | undefined
 }

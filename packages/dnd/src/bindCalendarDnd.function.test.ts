@@ -111,7 +111,7 @@ describe('bindCalendarDnd', () => {
     expect(dropSpy).toHaveBeenCalledTimes(1)
     const cfg = dropSpy.mock.calls[0]![0]
     expect(cfg.element).toBe(cellEl)
-    expect(cfg.getData()).toEqual({ bcDropTarget: ISO })
+    expect(cfg.getData()).toEqual({ bcDropTarget: ISO, bcResourceId: null })
   })
 
   it("in 'time' mode binds [data-bc-instant] cells and ignores day-only cells", () => {
@@ -123,7 +123,7 @@ describe('bindCalendarDnd', () => {
     expect(dropSpy).toHaveBeenCalledTimes(1)
     const cfg = dropSpy.mock.calls[0]![0]
     expect(cfg.element).toBe(slotEl)
-    expect(cfg.getData()).toEqual({ bcDropTarget: instant })
+    expect(cfg.getData()).toEqual({ bcDropTarget: instant, bcResourceId: null })
   })
 
   it('on drop, calls store.moveEvent with the id, target and mode', () => {
@@ -135,6 +135,31 @@ describe('bindCalendarDnd', () => {
       location: { current: { dropTargets: [{ data: { bcDropTarget: ISO } }] } },
     })
     expect(store.moveEvent).toHaveBeenCalledWith({ id: '1', target: ISO, mode: 'day' })
+  })
+
+  it('on drop, reports the landing resourceId from the drop target', () => {
+    const instant = '2026-06-16T09:30:00.000Z'
+    const store = makeStore()
+    bindCalendarDnd({ root, store, mode: 'time' })
+    const { onDrop } = monitorSpy.mock.calls[0]![0]
+    onDrop({
+      source: { data: { bcEventId: '1' } },
+      location: { current: { dropTargets: [{ data: { bcDropTarget: instant, bcResourceId: 'room-a' } }] } },
+    })
+    expect(store.moveEvent).toHaveBeenCalledWith({ id: '1', target: instant, mode: 'time', resourceId: 'room-a' })
+  })
+
+  it("reads data-bc-resource off a drop target's ancestor into its getData", () => {
+    const instant = '2026-06-16T09:30:00.000Z'
+    const wrapper = document.createElement('div')
+    wrapper.setAttribute('data-bc-resource', 'room-b')
+    const slot = document.createElement('div')
+    slot.setAttribute('data-bc-instant', instant)
+    wrapper.appendChild(slot)
+    root.appendChild(wrapper)
+    bindCalendarDnd({ root, store: makeStore(), mode: 'time' })
+    const cfg = dropSpy.mock.calls.find((c) => c[0].element === slot)![0]
+    expect(cfg.getData()).toEqual({ bcDropTarget: instant, bcResourceId: 'room-b' })
   })
 
   it('binds a resize handle as a drag source carrying its edge + the parent event id', () => {

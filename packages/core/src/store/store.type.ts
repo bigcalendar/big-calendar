@@ -1,7 +1,7 @@
 import type { LocalizerContract } from '@big-calendar/localizer'
 import type { ReadonlySignal, Signal } from '@preact/signals-core'
 import type { Accessors } from '../accessors/accessors.type'
-import type { EventId, ViewKey, VisibleRange } from '../types/calendar.type'
+import type { EventId, ResourceId, ViewKey, VisibleRange } from '../types/calendar.type'
 import type { NavigateDirection } from '../constants/views.constant'
 import type {
   SelectableMode,
@@ -36,21 +36,41 @@ export interface SelectionApi {
     mode: SelectionMode
     date: string
     slotCount?: number | undefined
+    resourceId?: ResourceId | undefined
   } | null>
   /**
    * Begin a drag at the anchor slot; `date`+`mode` set the translation context.
    * For `'time'` mode the slot index is **global** (`dayIndex*slotCount + slot`)
    * and `slotCount` must be supplied so the store can decode cross-day spans.
+   * `resourceId` (resource grids) scopes the committed selection to a resource.
    */
-  start(args: { slot: number; date: string; mode: SelectionMode; slotCount?: number | undefined }): void
+  start(args: {
+    slot: number
+    date: string
+    mode: SelectionMode
+    slotCount?: number | undefined
+    resourceId?: ResourceId | undefined
+  }): void
   /** Extend the in-progress drag to a new head slot (pointer move / Shift+Arrow). */
   to(args: { slot: number }): void
   /** Commit the in-progress drag (`action: 'select'`). */
   complete(): void
   /** Commit a single-slot click (`action: 'click'`). */
-  click(args: { slot: number; date: string; mode: SelectionMode; slotCount?: number | undefined }): void
+  click(args: {
+    slot: number
+    date: string
+    mode: SelectionMode
+    slotCount?: number | undefined
+    resourceId?: ResourceId | undefined
+  }): void
   /** Commit a single-slot double-click (`action: 'doubleClick'`). */
-  doubleClick(args: { slot: number; date: string; mode: SelectionMode; slotCount?: number | undefined }): void
+  doubleClick(args: {
+    slot: number
+    date: string
+    mode: SelectionMode
+    slotCount?: number | undefined
+    resourceId?: ResourceId | undefined
+  }): void
   /** Abort an in-progress drag without committing. */
   cancel(): void
 }
@@ -240,7 +260,7 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    * A no-op when the id matches no event or no `onEventDrop` is configured. The
    * store does not mutate `events` — apply the change to your own data.
    */
-  moveEvent(args: { id: EventId; target: string; mode: MoveMode }): void
+  moveEvent(args: { id: EventId; target: string; mode: MoveMode; resourceId?: ResourceId | undefined }): void
   /**
    * Update the live move preview ({@link CalendarStore.dragPreview}) to the bounds
    * a move would produce, without firing `onEventDrop`. Called by the DnD layer as
@@ -257,7 +277,13 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    * no-op when the id matches no event or no `onEventResize` is configured. `mode`
    * defaults to `'time'`. The store does not mutate `events`.
    */
-  resizeEvent(args: { id: EventId; edge: ResizeEdge; target: string; mode?: MoveMode | undefined }): void
+  resizeEvent(args: {
+    id: EventId
+    edge: ResizeEdge
+    target: string
+    mode?: MoveMode | undefined
+    resourceId?: ResourceId | undefined
+  }): void
   /**
    * Update the live resize preview ({@link CalendarStore.dragPreview}) to the
    * bounds a resize would produce, without firing `onEventResize`. Called by the
@@ -285,6 +311,7 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
     allDay?: boolean | undefined
     start?: string | undefined
     end?: string | undefined
+    resourceId?: ResourceId | undefined
   }): void
   /**
    * Update the live preview ({@link CalendarStore.dragPreview}) to where an

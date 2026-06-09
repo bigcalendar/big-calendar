@@ -3,7 +3,7 @@ import {
   dropTargetForElements,
   monitorForElements,
 } from '@atlaskit/pragmatic-drag-and-drop/element/adapter'
-import type { EventId, EventTransfer, MoveMode, ResizeEdge } from '@big-calendar/core'
+import type { EventId, EventTransfer, MoveMode, ResizeEdge, ResourceId } from '@big-calendar/core'
 
 /**
  * The slice of a calendar store the DnD layer needs. Narrowed (rather than the
@@ -18,11 +18,17 @@ export interface DndStore<TEvent> {
   /** Whether the event may be resized (`config.resizableAccessor`). */
   isResizable(event: TEvent): boolean
   /** Commit a move drop: core recomputes the bounds and fires `onEventDrop`. */
-  moveEvent(args: { id: EventId; target: string; mode: MoveMode }): void
+  moveEvent(args: { id: EventId; target: string; mode: MoveMode; resourceId?: ResourceId | undefined }): void
   /** Update the live move preview as a dragged event moves over slots/cells. */
   previewMove(args: { id: EventId; target: string; mode: MoveMode }): void
   /** Commit a resize drop: core recomputes the bounds and fires `onEventResize`. */
-  resizeEvent(args: { id: EventId; edge: ResizeEdge; target: string; mode: MoveMode }): void
+  resizeEvent(args: {
+    id: EventId
+    edge: ResizeEdge
+    target: string
+    mode: MoveMode
+    resourceId?: ResourceId | undefined
+  }): void
   /** Update the live resize preview as the dragged edge moves over slots/cells. */
   previewResize(args: { id: EventId; edge: ResizeEdge; target: string; mode: MoveMode }): void
   /** Clear the live resize preview (drag left every slot, or ended). */
@@ -35,6 +41,7 @@ export interface DndStore<TEvent> {
     allDay?: boolean | undefined
     start?: string | undefined
     end?: string | undefined
+    resourceId?: ResourceId | undefined
   }): void
   /** Update the live preview as an outside item moves over slots/cells (single slot/day if no payload). */
   previewExternal(args: {
@@ -87,6 +94,14 @@ const EVENT_ATTR = 'data-bc-event'
  * nearest `[data-bc-event]` ancestor. Present only on the time-grid views today.
  */
 const RESIZE_ATTR = 'data-bc-resize'
+/**
+ * Attribute on a resource column (or any ancestor of a drop target) carrying the
+ * column's resource id. Read from the dropped cell's nearest `[data-bc-resource]`
+ * ancestor and reported back as the **landing** `resourceId` on a move / resize /
+ * external drop, so a resource grid can reassign the event to that resource.
+ * Absent in a resource-less grid.
+ */
+const RESOURCE_ATTR = 'data-bc-resource'
 /**
  * Drop-target attribute carrying the move target, by {@link MoveMode}:
  *
@@ -248,7 +263,12 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
       element,
       dropTargetForElements({
         element,
-        getData: () => ({ bcDropTarget: element.getAttribute(dropAttr) }),
+        getData: () => ({
+          bcDropTarget: element.getAttribute(dropAttr),
+          // The owning resource column (resource grids), read from the nearest
+          // ancestor; `null` in a plain grid. Reported as the landing resourceId.
+          bcResourceId: element.closest(`[${RESOURCE_ATTR}]`)?.getAttribute(RESOURCE_ATTR) ?? null,
+        }),
       }),
     )
   }
@@ -310,7 +330,11 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
       store.previewResize({ id, edge, target, mode })
     },
     onDrop({ source, location }) {
-      const target = location.current.dropTargets[0]?.data.bcDropTarget
+      const dropData = location.current.dropTargets[0]?.data
+      const target = dropData?.bcDropTarget
+      // Landing resource column (resource grids only); a DOM attr → always a string.
+      const rawResourceId = dropData?.bcResourceId
+      const resourceId = typeof rawResourceId === 'string' ? rawResourceId : undefined
       // A Pragmatic outside item (palette) creates an event; branch first.
       const external = source.data[EXTERNAL_DATA_KEY]
       if (external != null && typeof external === 'object') {
@@ -319,7 +343,7 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
           return
         }
         const { durationMinutes, allDay, start, end } = external as ExternalDragPayload
-        store.dropExternal({ target, mode, durationMinutes, allDay, start, end }) // clears the preview itself
+        store.dropExternal({ target, mode, durationMinutes, allDay, start, end, resourceId }) // clears the preview itself
         return
       }
       const id = source.data.bcEventId
@@ -331,10 +355,10 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
         return
       }
       if (edge === 'start' || edge === 'end') {
-        store.resizeEvent({ id, edge, target, mode }) // clears the preview itself
+        store.resizeEvent({ id, edge, target, mode, resourceId }) // clears the preview itself
         return
       }
-      store.moveEvent({ id, target, mode }) // clears the preview itself
+      store.moveEvent({ id, target, mode, resourceId }) // clears the preview itself
     },
   })
 
@@ -352,6 +376,8 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
     event.dataTransfer != null && Array.from(event.dataTransfer.types).includes(EXTERNAL_MIME)
   const slotInstant = (event: DragEvent): string | null =>
     (event.target as Element | null)?.closest<HTMLElement>(`[${dropAttr}]`)?.getAttribute(dropAttr) ?? null
+  const slotResourceId = (event: DragEvent): string | undefined =>
+    (event.target as Element | null)?.closest<HTMLElement>(`[${RESOURCE_ATTR}]`)?.getAttribute(RESOURCE_ATTR) ?? undefined
 
   // Only re-set the preview when the hovered slot changes (dragover fires rapidly).
   let lastPreviewInstant: string | null = null
@@ -390,6 +416,7 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
       allDay: payload?.allDay,
       start: payload?.start,
       end: payload?.end,
+      resourceId: slotResourceId(event),
     })
   }
   const onNativeDragLeave = (event: DragEvent): void => {

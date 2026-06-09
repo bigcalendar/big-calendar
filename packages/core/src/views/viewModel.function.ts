@@ -51,6 +51,8 @@ export function buildViewModel<TEvent, TResource = unknown>(args: {
           days,
           events,
           backgroundEvents,
+          resources,
+          resourceLayout: options.resourceLayout,
           dayStartMin: options.dayStartMin,
           dayEndMin: options.dayEndMin,
           step: options.step,

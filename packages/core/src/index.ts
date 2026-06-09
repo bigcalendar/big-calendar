@@ -80,7 +80,11 @@ export type { SlotMetrics, SlotRange } from './timegrid/slotMetrics.type'
 export { timeGridViewModel } from './timegrid/timeGrid.function'
 export type {
   PositionedEvent,
+  ResourceLayoutMode,
   TimeGridColumn,
+  TimeGridDayGroup,
+  TimeGridDayResourceCell,
+  TimeGridResourceGroup,
   TimeGridViewModel,
 } from './timegrid/timeGrid.type'
 

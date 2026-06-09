@@ -3,8 +3,9 @@ import type { Accessor, Accessors } from '../accessors/accessors.type'
 import type { DayLayoutAlgorithm, DayLayoutAlgorithmKey } from '../layout/layout.type'
 import type { SelectableMode, SlotSelectionDates } from '../selection/selection.type'
 import type { GetDrilldownView } from '../store/drilldown.function'
+import type { ResourceLayoutMode } from '../timegrid/timeGrid.type'
 import type { ViewRegistry } from '../views/viewRegistry.type'
-import type { EventId, ViewKey, VisibleRange } from './calendar.type'
+import type { EventId, ResourceId, ViewKey, VisibleRange } from './calendar.type'
 
 /**
  * Configuration accepted by {@link createCalendarStore}. Only the localizer is
@@ -67,6 +68,13 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
   weekEventLimit?: number | undefined
   /** Render multi-day events in the time columns rather than the all-day header. Defaults to false. */
   showMultiDayTimes?: boolean | undefined
+  /**
+   * Controls how resources are grouped in the time grid (day / week / work-week).
+   * - `'resource'` (default): one column-block per resource, spanning all visible days.
+   * - `'day'`: one column-block per day, with each resource as a sub-column.
+   * Only meaningful when `resources` is supplied.
+   */
+  resourceLayout?: ResourceLayoutMode | undefined
   /** Show every all-day event (ignore `allDayMaxRows`). Defaults to false. */
   showAllEvents?: boolean | undefined
   /** Whether slot selection is enabled (`true`/`false`/`'ignoreEvents'`). Defaults to false. */
@@ -149,7 +157,14 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
    * persist/rollback lifecycle entirely.
    */
   onEventDrop?:
-    | ((args: { event: TEvent; start: string; end: string; allDay: boolean }) => void)
+    | ((args: {
+        event: TEvent
+        start: string
+        end: string
+        allDay: boolean
+        /** Landing resource id (resource grids only); `undefined` otherwise. */
+        resourceId?: ResourceId | undefined
+      }) => void)
     | undefined
   /**
    * Whether a given event may be resized. A string reads a boolean field; a
@@ -169,7 +184,14 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
    * does **not** await it.
    */
   onEventResize?:
-    | ((args: { event: TEvent; start: string; end: string; allDay: boolean }) => void)
+    | ((args: {
+        event: TEvent
+        start: string
+        end: string
+        allDay: boolean
+        /** Landing resource id (resource grids only); `undefined` otherwise. */
+        resourceId?: ResourceId | undefined
+      }) => void)
     | undefined
 
   // --- drag/drop across the calendar boundary (5d) ---
@@ -189,7 +211,13 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
    * itself — you add it to your own `events`. Fires only when defined.
    */
   onDropFromOutside?:
-    | ((args: { start: string; end: string; allDay: boolean }) => void)
+    | ((args: {
+        start: string
+        end: string
+        allDay: boolean
+        /** Landing resource id (resource grids only); `undefined` otherwise. */
+        resourceId?: ResourceId | undefined
+      }) => void)
     | undefined
   /**
    * Fired when the user begins dragging an existing event (the body, not a resize

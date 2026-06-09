@@ -2,7 +2,7 @@ import type { DayLayoutAlgorithm, DayLayoutAlgorithmKey } from '../layout/layout
 import type { ViewKey } from '../types/calendar.type'
 import type { AgendaViewModel } from './agenda.type'
 import type { MonthViewModel } from './month.type'
-import type { TimeGridViewModel } from '../timegrid/timeGrid.type'
+import type { ResourceLayoutMode, TimeGridViewModel } from '../timegrid/timeGrid.type'
 
 /**
  * Tuning passed through to the per-view builders. All optional; each view uses
@@ -18,6 +18,7 @@ export interface ViewModelOptions {
   allDayMaxRows?: number | undefined
   showMultiDayTimes?: boolean | undefined
   weekEventLimit?: number | undefined
+  resourceLayout?: ResourceLayoutMode | undefined
 }
 
 /**

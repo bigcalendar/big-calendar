@@ -1,11 +1,21 @@
 import type { LocalizerContract } from '@big-calendar/localizer'
+import { wrapAccessor } from '../accessors/accessors.function'
 import type { Accessors } from '../accessors/accessors.type'
 import { resolveDayLayoutAlgorithm } from '../layout/dayLayout.function'
 import type { DayLayoutAlgorithm, DayLayoutAlgorithmKey, DayLayoutEvent } from '../layout/layout.type'
+import type { ResourceId } from '../types/calendar.type'
 import { datedEvents, rowSegments } from '../views/segments.function'
 import type { DatedEvent } from '../views/segments.function'
+import type { SegmentRows } from '../views/segments.type'
 import { createSlotMetrics } from './slotMetrics.function'
-import type { PositionedEvent, TimeGridColumn, TimeGridViewModel } from './timeGrid.type'
+import type {
+  PositionedEvent,
+  ResourceLayoutMode,
+  TimeGridColumn,
+  TimeGridDayGroup,
+  TimeGridResourceGroup,
+  TimeGridViewModel,
+} from './timeGrid.type'
 
 /**
  * Decide whether an event belongs in the all-day header rather than a time
@@ -24,10 +34,94 @@ function isAllDay<TEvent>(
   )
 }
 
+/** Shared per-column build inputs (everything constant across columns). */
+interface ColumnContext {
+  localizer: LocalizerContract
+  dayStartMin: number
+  dayEndMin: number
+  step: number
+  timeslots: number
+  algorithm: DayLayoutAlgorithm
+  minimumStartDifference: number
+}
+
+/**
+ * Lay out one day's column: position the timed items by the slot metrics, pack
+ * them with the chosen algorithm, and place the background events full-width
+ * behind. `resourceId` tags the column for the resource grid (`null` otherwise).
+ */
+function buildColumn<TEvent>(
+  ctx: ColumnContext,
+  date: string,
+  resourceId: ResourceId | null,
+  timedItems: DatedEvent<TEvent>[],
+  bgItems: DatedEvent<TEvent>[],
+): TimeGridColumn<TEvent> {
+  const { localizer, dayStartMin, dayEndMin, step, timeslots, algorithm, minimumStartDifference } = ctx
+  const min = localizer.getSlotDate({ date, minutesFromMidnight: dayStartMin })
+  const max = localizer.getSlotDate({ date, minutesFromMidnight: dayEndMin })
+  const metrics = createSlotMetrics({ localizer, min, max, step, timeslots })
+
+  const dayEvents = timedItems.filter((item) =>
+    localizer.inEventRange({
+      event: { start: item.start, end: item.end },
+      range: { start: min, end: max },
+    }),
+  )
+
+  const layoutEvents: DayLayoutEvent[] = dayEvents.map((item, index) => {
+    const range = metrics.getRange({ start: item.start, end: item.end })
+    return { id: index, start: range.start, end: range.end, top: range.top, height: range.height }
+  })
+
+  const boxes = algorithm({ events: layoutEvents, minimumStartDifference })
+
+  const events: PositionedEvent<TEvent>[] = []
+  for (const box of boxes) {
+    const item = dayEvents[box.id as number]
+    if (!item) continue
+    events.push({
+      event: item.event,
+      top: box.top,
+      height: box.height,
+      left: box.left,
+      width: box.width,
+      zIndex: box.zIndex,
+    })
+  }
+
+  // Background events sit full-width behind the foreground (no overlap packing).
+  const background: PositionedEvent<TEvent>[] = bgItems
+    .filter((item) =>
+      localizer.inEventRange({
+        event: { start: item.start, end: item.end },
+        range: { start: min, end: max },
+      }),
+    )
+    .map((item) => {
+      const range = metrics.getRange({ start: item.start, end: item.end })
+      return { event: item.event, top: range.top, height: range.height, left: 0, width: 1, zIndex: 0 }
+    })
+
+  return { date, resourceId, min, max, events, backgroundEvents: background }
+}
+
 /**
  * Build the time-grid view model for the day / week / work-week views: an
  * all-day header row plus one time column per visible day, with timed events
  * positioned by the slot metrics and packed by the chosen day-layout algorithm.
+ *
+ * When `resources` is supplied the grid splits per resource. `resourceLayout`
+ * controls the grouping order:
+ * - `'resource'` (default): one group per resource, each containing all visible
+ *   days — returned in `resources`; `dayGroups` is `null`.
+ * - `'day'`: one group per visible day, each containing per-resource cells with
+ *   a single-day column and day-scoped all-day segments — returned in
+ *   `dayGroups`; `resources` is `null`.
+ *
+ * Events whose resource matches none of the supplied resources are dropped; an
+ * event listing several resources appears under each. The flat `columns`/`allDay`
+ * are always empty when resources are present.
  *
  * Pure. `days` is the visible day list (1, 5 or 7 day-starts). The window each
  * day spans is `[dayStartMin, dayEndMin]` minutes from midnight (default the
@@ -39,6 +133,8 @@ export function timeGridViewModel<TEvent, TResource = unknown>(args: {
   days: string[]
   events: TEvent[]
   backgroundEvents?: TEvent[] | undefined
+  resources?: TResource[] | undefined
+  resourceLayout?: ResourceLayoutMode | undefined
   dayStartMin?: number | undefined
   dayEndMin?: number | undefined
   step?: number | undefined
@@ -53,6 +149,8 @@ export function timeGridViewModel<TEvent, TResource = unknown>(args: {
     days,
     events,
     backgroundEvents = [],
+    resources,
+    resourceLayout = 'resource',
     dayStartMin = 0,
     dayEndMin = 1440,
     step = 30,
@@ -64,6 +162,16 @@ export function timeGridViewModel<TEvent, TResource = unknown>(args: {
 
   const algorithm = resolveDayLayoutAlgorithm(dayLayoutAlgorithm)
   const minimumStartDifference = Math.ceil((step * timeslots) / 2)
+  const ctx: ColumnContext = {
+    localizer,
+    dayStartMin,
+    dayEndMin,
+    step,
+    timeslots,
+    algorithm,
+    minimumStartDifference,
+  }
+
   const items = datedEvents({ events, accessors })
   const bgItems = datedEvents({ events: backgroundEvents, accessors })
 
@@ -74,56 +182,69 @@ export function timeGridViewModel<TEvent, TResource = unknown>(args: {
     else timedItems.push(item)
   }
 
-  const allDay = rowSegments({ localizer, days, items: allDayItems, limit: allDayMaxRows })
+  // Resource grid: split every bucket per resource and build groups.
+  if (resources && resources.length > 0) {
+    const getResourceId = wrapAccessor(accessors.resourceId)
+    const getResourceTitle = wrapAccessor(accessors.resourceTitle)
+    const getEventResource = wrapAccessor(accessors.resource)
 
-  const columns: TimeGridColumn<TEvent>[] = days.map((date) => {
-    const min = localizer.getSlotDate({ date, minutesFromMidnight: dayStartMin })
-    const max = localizer.getSlotDate({ date, minutesFromMidnight: dayEndMin })
-    const metrics = createSlotMetrics({ localizer, min, max, step, timeslots })
+    const resourceIdsOf = (event: TEvent): ResourceId[] => {
+      const raw = getEventResource(event)
+      return raw == null ? [] : Array.isArray(raw) ? raw : [raw]
+    }
+    const belongsTo = (item: DatedEvent<TEvent>, id: ResourceId): boolean =>
+      resourceIdsOf(item.event).includes(id)
 
-    const dayEvents = timedItems.filter((item) =>
-      localizer.inEventRange({
-        event: { start: item.start, end: item.end },
-        range: { start: min, end: max },
-      }),
-    )
+    const emptyAllDay: SegmentRows<TEvent> = { levels: [], extra: [] }
 
-    const layoutEvents: DayLayoutEvent[] = dayEvents.map((item, index) => {
-      const range = metrics.getRange({ start: item.start, end: item.end })
-      return { id: index, start: range.start, end: range.end, top: range.top, height: range.height }
-    })
+    if (resourceLayout === 'day') {
+      // Day-major: one group per visible day, each containing one cell per resource.
+      const dayGroups: TimeGridDayGroup<TEvent>[] = days.map((date) => {
+        const cells = []
+        for (const resource of resources) {
+          const resourceId = getResourceId(resource)
+          if (resourceId == null) continue
+          const resourceTitle = getResourceTitle(resource) ?? ''
+          const timedHere = timedItems.filter((item) => belongsTo(item, resourceId))
+          const bgHere = bgItems.filter((item) => belongsTo(item, resourceId))
+          const allDayHere = allDayItems.filter((item) => belongsTo(item, resourceId))
+          cells.push({
+            resourceId,
+            resourceTitle,
+            column: buildColumn(ctx, date, resourceId, timedHere, bgHere),
+            // Single-day scope: segments always have left:1, span:1.
+            allDay: rowSegments({ localizer, days: [date], items: allDayHere, limit: allDayMaxRows }),
+          })
+        }
+        return { date, cells }
+      })
+      return { days, columns: [], allDay: emptyAllDay, resources: null, dayGroups }
+    }
 
-    const boxes = algorithm({ events: layoutEvents, minimumStartDifference })
-
-    const events: PositionedEvent<TEvent>[] = []
-    for (const box of boxes) {
-      const item = dayEvents[box.id as number]
-      if (!item) continue
-      events.push({
-        event: item.event,
-        top: box.top,
-        height: box.height,
-        left: box.left,
-        width: box.width,
-        zIndex: box.zIndex,
+    // Resource-major (default): one group per resource, each spanning all visible days.
+    const groups: TimeGridResourceGroup<TEvent>[] = []
+    for (const resource of resources) {
+      const resourceId = getResourceId(resource)
+      // A resource without an id can hold no events and can't be a drop target; skip it.
+      if (resourceId == null) continue
+      const resourceTitle = getResourceTitle(resource) ?? ''
+      const timedHere = timedItems.filter((item) => belongsTo(item, resourceId))
+      const bgHere = bgItems.filter((item) => belongsTo(item, resourceId))
+      const allDayHere = allDayItems.filter((item) => belongsTo(item, resourceId))
+      groups.push({
+        resourceId,
+        resourceTitle,
+        columns: days.map((date) => buildColumn(ctx, date, resourceId, timedHere, bgHere)),
+        allDay: rowSegments({ localizer, days, items: allDayHere, limit: allDayMaxRows }),
       })
     }
 
-    // Background events sit full-width behind the foreground (no overlap packing).
-    const background: PositionedEvent<TEvent>[] = bgItems
-      .filter((item) =>
-        localizer.inEventRange({
-          event: { start: item.start, end: item.end },
-          range: { start: min, end: max },
-        }),
-      )
-      .map((item) => {
-        const range = metrics.getRange({ start: item.start, end: item.end })
-        return { event: item.event, top: range.top, height: range.height, left: 0, width: 1, zIndex: 0 }
-      })
+    return { days, columns: [], allDay: emptyAllDay, resources: groups, dayGroups: null }
+  }
 
-    return { date, min, max, events, backgroundEvents: background }
-  })
+  // Plain grid (no resources): one column per day, one shared all-day row.
+  const allDay = rowSegments({ localizer, days, items: allDayItems, limit: allDayMaxRows })
+  const columns = days.map((date) => buildColumn(ctx, date, null, timedItems, bgItems))
 
-  return { days, columns, allDay }
+  return { days, columns, allDay, resources: null, dayGroups: null }
 }
