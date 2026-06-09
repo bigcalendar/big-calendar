@@ -165,7 +165,7 @@ as four sub-slices in one push (Cutter: "all four slices before push"). Two flag
     delegated HTML5 listeners (above). Cutter confirmed scope: same-page palette outside the grid, no OS/files,
     + wanted a slot highlight on hover (the single-slot `previewExternal` box supplies it).
 
-### Phase 5 — Task 5e: keyboard-accessible DnD (Cutter, 2026-06-08) ✓ (uncommitted — awaiting push confirm)
+### Phase 5 — Task 5e: keyboard-accessible DnD (Cutter, 2026-06-08) ✓ (commit 06cc9ba, pushed)
 Cutter scoped 5e via AskUserQuestion: **modal grab** (not direct-nudge), **move + resize**, **time-grid first**.
 Flagged + kept: pickup key = **Space** (Enter stays "open"), since a focused event already uses Enter/Space.
 - **core (5e-1)** — keyboard-grab controller in the store: `keyboardDrag` signal (`{id,start,end,allDay}|null`)
@@ -188,7 +188,7 @@ Flagged + kept: pickup key = **Space** (Enter stays "open"), since a focused eve
   Keyboard path tested in jsdom (real key events via Testing Library) — but **Cutter should still confirm the
   feel + announcements in Storybook** (`KeyboardDrag`).
 
-### Phase 5 — Task 5g: month keyboard DnD (Cutter, 2026-06-08) ✓ (uncommitted at time of writing)
+### Phase 5 — Task 5g: month keyboard DnD (Cutter, 2026-06-08) ✓ (commit 8e2afce, pushed)
 Cutter: "you can do DnD path of keyboard resizing events in month view." Extends the 5e modal grab to the
 month view. Scoped via AskUserQuestion: **move + resize**, **←→ = ±1 day / ↑↓ = ±1 week** (Shift = resize end).
 - **core** — `grabResize` now takes `{minutes?, days?}`: whole-day end resize clamped to a one-day minimum
@@ -205,7 +205,7 @@ month view. Scoped via AskUserQuestion: **move + resize**, **←→ = ±1 day / 
   jsdom drives the keys via real events — **Cutter to confirm feel + SR announcements in Storybook**
   (`MonthKeyboardDrag`).
 
-### Phase 5 — Task 5f: month drop-from-outside + month resize + pointer move preview (Cutter, 2026-06-08) ✓ (uncommitted at time of writing)
+### Phase 5 — Task 5f: month drop-from-outside + month resize + pointer move preview (Cutter, 2026-06-08) ✓ (commit 8e2afce, pushed)
 Cutter: "let's do month drop-from-outside and month multi-day resize, plus pointer move now." Three Phase-5
 tail follow-ups in one slice; scoped via AskUserQuestion + a payload clarification (see DECISIONS.md 2026-06-08
 follow-ups entry).
