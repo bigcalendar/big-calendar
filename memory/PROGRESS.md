@@ -689,10 +689,14 @@ See [[bigcal-selection-storybook-phase4]] (obligation satisfied).
 - ✅ **Format split: dayColumnHeader / dayHeader** — DONE (commit 6b1072a).
 - ✅ **Resource grid scroll architecture** — DONE (commit 3a4d118). Single 2-D scroll container; sticky
   `.bc-time-head`; frozen gutter via `position:sticky inset-inline-start:0`; subgrid column alignment.
-- **NEXT: timed→all-day promotion (one-way)** — drag a timed event from the time body into the all-day row
-  promotes it. All-day→timed demotion is NOT supported (Cutter, 2026-06-09 — see DECISIONS.md).
-  After that: dedicated `@big-calendar/react/dnd` entry, start-edge keyboard resize (Shift+Alt+arrow),
-  day-major week ordering (1c), month/keyboard DnD gating by isDraggable/isResizable.
+- ✅ **Timed→all-day promotion (one-way)** — DONE (commit a7a2284). `data-bc-allday` on allday-slot cells;
+  `ALLDAY_TARGET_ATTR` exported from dnd; promotion path in binder (canDrop blocks allday-row sources;
+  mode:'day'+promote:true on drop); `moveEvent.targetAllDay`; `store.moveEvent.promote`. +9 core / +5 dnd tests.
+  Story: `TimedToAllDayPromotion`; DragAndDrop.mdx section added.
+- **NEXT: dedicated `@big-calendar/react/dnd` entry** — export `useCalendarDnd` (and eventually other
+  DnD hooks/utilities) from a dedicated entry point `@big-calendar/react/dnd` so apps can opt in without
+  importing from the main barrel. After that: start-edge keyboard resize (Shift+Alt+arrow), day-major
+  week ordering (1c), month/keyboard DnD gating by isDraggable/isResizable.
 
 Exit criteria (roadmap §14): drop/resize/outside parity + keyboard DnD — **all met** (parity now across month +
 time-grid; keyboard DnD on the time-grid). Tail items (promotion, dnd entry, resize) are polish/completeness,
