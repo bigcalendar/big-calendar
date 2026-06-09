@@ -68,6 +68,7 @@ export type FormatKey =
   | 'monthYear'
   | 'monthHeader'
   | 'dayHeader'
+  | 'dayColumnHeader'
   | 'agendaDate'
   | 'agendaTime'
   | 'timeGutter'
