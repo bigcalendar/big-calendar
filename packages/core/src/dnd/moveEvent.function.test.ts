@@ -91,4 +91,27 @@ describe.each(LOCALIZER_CASES)('moveEvent [$name]', ({ create }) => {
       expect(moved.allDay).toBe(true)
     })
   })
+
+  describe('targetAllDay (timed→all-day promotion)', () => {
+    it("forces allDay:true on a 'time' move", () => {
+      const start = '2026-06-16T09:00:00.000Z'
+      const end = '2026-06-16T10:00:00.000Z'
+      const moved = moveEvent({ localizer, start, end, allDay: false, target: start, mode: 'time', targetAllDay: true })
+      expect(moved.allDay).toBe(true)
+    })
+
+    it("forces allDay:true on a 'day' move", () => {
+      const start = '2026-06-16T09:00:00.000Z'
+      const end = '2026-06-16T10:00:00.000Z'
+      const moved = moveEvent({ localizer, start, end, allDay: false, target: '2026-06-18T00:00:00.000Z', mode: 'day', targetAllDay: true })
+      expect(moved.allDay).toBe(true)
+    })
+
+    it('preserves allDay when targetAllDay is absent', () => {
+      const start = '2026-06-16T09:00:00.000Z'
+      const end = '2026-06-16T10:00:00.000Z'
+      const moved = moveEvent({ localizer, start, end, allDay: false, target: start, mode: 'time' })
+      expect(moved.allDay).toBe(false)
+    })
+  })
 })

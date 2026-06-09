@@ -29,6 +29,12 @@ export interface MoveEventArgs {
   target: string
   /** How `target` is interpreted; see {@link MoveMode}. */
   mode: MoveMode
+  /**
+   * When `true`, the result's `allDay` is forced to `true` regardless of the
+   * event's current value. Used for timed→all-day promotion (dragging a timed
+   * event from the time body into the all-day row).
+   */
+  targetAllDay?: boolean | undefined
 }
 
 /** The recomputed bounds emitted by {@link moveEvent}. */
@@ -46,17 +52,18 @@ export interface MovedEvent {
  *
  * Duration is preserved exactly: `'time'` moves keep the original span to the
  * millisecond; `'day'` moves shift both ends by whole days, so each end keeps its
- * time-of-day. `allDay` is **preserved** (a same-surface move) — cross-surface
- * timed↔all-day promotion is a separate, later concern.
+ * time-of-day. `allDay` is preserved for same-surface moves; pass `targetAllDay:
+ * true` to promote a timed event to all-day (timed→all-day, one-way only).
  */
-export function moveEvent({ localizer, start, end, allDay, target, mode }: MoveEventArgs): MovedEvent {
+export function moveEvent({ localizer, start, end, allDay, target, mode, targetAllDay }: MoveEventArgs): MovedEvent {
+  const resultAllDay = targetAllDay ?? allDay
   if (mode === 'time') {
     // Absolute snap: start = the dropped slot instant; end = start + duration.
     const durationMs = localizer.diff({ a: end, b: start, unit: 'millisecond' })
     return {
       start: target,
       end: localizer.add({ value: target, amount: durationMs, unit: 'millisecond' }),
-      allDay,
+      allDay: resultAllDay,
     }
   }
   // Whole-day shift: move both ends by the day delta, preserving time-of-day.
@@ -68,6 +75,6 @@ export function moveEvent({ localizer, start, end, allDay, target, mode }: MoveE
   return {
     start: localizer.add({ value: start, amount: dayDelta, unit: 'day' }),
     end: localizer.add({ value: end, amount: dayDelta, unit: 'day' }),
-    allDay,
+    allDay: resultAllDay,
   }
 }

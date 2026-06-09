@@ -260,7 +260,14 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    * A no-op when the id matches no event or no `onEventDrop` is configured. The
    * store does not mutate `events` — apply the change to your own data.
    */
-  moveEvent(args: { id: EventId; target: string; mode: MoveMode; resourceId?: ResourceId | undefined }): void
+  moveEvent(args: {
+    id: EventId
+    target: string
+    mode: MoveMode
+    resourceId?: ResourceId | undefined
+    /** When `true`, force `allDay: true` on the drop result (timed→all-day promotion). */
+    promote?: boolean | undefined
+  }): void
   /**
    * Update the live move preview ({@link CalendarStore.dragPreview}) to the bounds
    * a move would produce, without firing `onEventDrop`. Called by the DnD layer as

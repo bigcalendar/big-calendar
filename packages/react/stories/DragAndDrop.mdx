@@ -310,11 +310,34 @@ function. An event that returns `false` can't be picked up (or shows no resize h
 <CalendarProvider draggableAccessor={(e) => !e.locked} resizableAccessor={(e) => !e.fixed} ... />
 ```
 
+## Promoting a timed event to all-day
+
+Drag any **timed** event from the time grid and drop it onto the **all-day row** —
+the row that sits above the time slots. The event becomes a whole-day event on the
+dropped day: `onEventDrop` fires with `allDay: true` and the event's date shifted to
+that day (the time-of-day is preserved in `start`/`end` for your reference, but the
+`allDay` flag is what signals the change):
+
+```tsx
+onEventDrop={({ event, start, end, allDay }) => {
+  // allDay is `true` when dropped onto the all-day row.
+  setEvents(prev =>
+    prev.map(e => e.id === event.id ? { ...e, start, end, allDay } : e)
+  )
+}}
+```
+
+**One-way only.** You can promote a timed event to all-day, but you **cannot** drag
+an all-day event down into the time grid. An all-day event has no natural time of day
+to snap to; the right pattern is to let the user edit it in a dialog. The all-day row
+ignores drops from all-day events.
+
+See the **Views → TimeGridView → TimedToAllDayPromotion** story for a live demo.
+
 ## Not built yet
 
-Move, resize, drop-from-outside, drag-out, and keyboard drag are all wired for both
-the **month** and **time-grid** views today, and the **day** and **week** views
-support **resource columns** (resource-major) with cross-resource reassignment. The
-remaining follow-ups: a **day-major** week resource ordering, timed→all-day
-**promotion** (dropping a timed event onto the all-day row), and a dedicated
+Move, resize, drop-from-outside, drag-out, keyboard drag, and timed→all-day
+promotion are all wired for both the **month** and **time-grid** views today, and
+the **day** and **week** views support **resource columns** (resource-major). The
+remaining follow-ups: a **day-major** week resource ordering and a dedicated
 `@big-calendar/react/dnd` entry point.

@@ -477,4 +477,83 @@ describe('bindCalendarDnd', () => {
       expect(store.previewExternal).not.toHaveBeenCalled()
     })
   })
+
+  describe("timed→all-day promotion ('time' mode, data-bc-allday targets)", () => {
+    const DAY = '2026-06-16T00:00:00.000Z'
+    let allDayRow: HTMLElement
+    let allDayCellEl: HTMLElement
+    let timedEventEl: HTMLElement
+
+    beforeEach(() => {
+      draggableSpy.mockReset().mockImplementation(() => vi.fn())
+      dropSpy.mockReset().mockImplementation(() => vi.fn())
+      monitorSpy.mockReset().mockImplementation(() => vi.fn())
+      document.body.innerHTML = ''
+      root = document.createElement('div')
+      allDayRow = document.createElement('div')
+      allDayRow.className = 'bc-allday-row'
+      allDayCellEl = el({ 'data-bc-allday': DAY, 'data-date': DAY })
+      allDayRow.appendChild(allDayCellEl)
+      timedEventEl = el({ 'data-bc-event': '1' })
+      root.append(allDayRow, timedEventEl)
+      document.body.appendChild(root)
+    })
+
+    it("registers [data-bc-allday] cells as drop targets in 'time' mode", () => {
+      bindCalendarDnd({ root, store: makeStore(), mode: 'time' })
+      const allDayCfg = dropSpy.mock.calls.find((c) => c[0].element === allDayCellEl)?.[0]
+      expect(allDayCfg).toBeDefined()
+      expect(allDayCfg.getData().bcIsPromotion).toBe(true)
+      expect(allDayCfg.getData().bcAllDayTarget).toBe(DAY)
+    })
+
+    it("in 'day' mode registers the cell as a normal date target, not a promotion target", () => {
+      bindCalendarDnd({ root, store: makeStore(), mode: 'day' })
+      const allDayCfg = dropSpy.mock.calls.find((c) => c[0].element === allDayCellEl)?.[0]
+      // The cell has data-date so it's a regular day-mode drop target — no bcIsPromotion.
+      expect(allDayCfg).toBeDefined()
+      expect(allDayCfg.getData().bcIsPromotion).toBeUndefined()
+      expect(allDayCfg.getData().bcDropTarget).toBe(DAY)
+    })
+
+    it('canDrop rejects events inside .bc-allday-row (all-day events)', () => {
+      bindCalendarDnd({ root, store: makeStore(), mode: 'time' })
+      const allDayCfg = dropSpy.mock.calls.find((c) => c[0].element === allDayCellEl)![0]
+      // A timed event (not in the row) → accepted.
+      expect(allDayCfg.canDrop({ source: { element: timedEventEl } })).toBe(true)
+      // An all-day event (inside .bc-allday-row) → rejected.
+      const allDayEventEl = document.createElement('div')
+      allDayRow.appendChild(allDayEventEl)
+      expect(allDayCfg.canDrop({ source: { element: allDayEventEl } })).toBe(false)
+    })
+
+    it('on drop onto a promotion target calls store.moveEvent with mode:day and promote:true', () => {
+      const store = makeStore()
+      bindCalendarDnd({ root, store, mode: 'time' })
+      const { onDrop } = monitorSpy.mock.calls[0]![0]
+      onDrop({
+        source: { data: { bcEventId: '1' }, element: timedEventEl },
+        location: { current: { dropTargets: [{ data: { bcAllDayTarget: DAY, bcIsPromotion: true } }] } },
+      })
+      expect(store.moveEvent).toHaveBeenCalledWith({
+        id: '1',
+        target: DAY,
+        mode: 'day',
+        promote: true,
+        resourceId: undefined,
+      })
+    })
+
+    it('clears the preview when the drag moves over a promotion target', () => {
+      const store = makeStore()
+      bindCalendarDnd({ root, store, mode: 'time' })
+      const { onDropTargetChange } = monitorSpy.mock.calls[0]![0]
+      onDropTargetChange({
+        source: { data: { bcEventId: '1' } },
+        location: { current: { dropTargets: [{ data: { bcIsPromotion: true } }] } },
+      })
+      expect(store.clearDragPreview).toHaveBeenCalled()
+      expect(store.previewMove).not.toHaveBeenCalled()
+    })
+  })
 })

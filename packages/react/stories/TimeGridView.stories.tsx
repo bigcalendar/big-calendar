@@ -1,6 +1,7 @@
 import { Views } from '@big-calendar/core'
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { CalendarProvider, TimeGridView, Toolbar } from '../src'
+import { useRef, useState } from 'react'
+import { CalendarProvider, TimeGridView, Toolbar, useCalendarDnd } from '../src'
 import { CalendarStage, FOCUS, localizer, NOW, SelectionDemo } from './harness'
 import type { DemoEvent } from './demoEvents'
 import { demoEvents } from './demoEvents'
@@ -155,4 +156,49 @@ export const Selectable: Story = {
       </div>
     </SelectionDemo>
   ),
+}
+
+function PromotionGrid() {
+  const ref = useRef<HTMLDivElement>(null)
+  useCalendarDnd(ref)
+  return (
+    <div ref={ref} style={{ display: 'contents' }}>
+      <Toolbar />
+      <div className="bc-calendar">
+        <TimeGridView />
+      </div>
+    </div>
+  )
+}
+
+function PromotionDemo() {
+  const [events, setEvents] = useState<DemoEvent[]>(demoEvents)
+  return (
+    <CalendarStage>
+      <CalendarProvider<DemoEvent>
+        localizer={localizer}
+        getNow={() => NOW}
+        events={events}
+        defaultDate={FOCUS}
+        defaultView={Views.WEEK}
+        onEventDrop={({ event, start, end, allDay }) => {
+          setEvents((prev) =>
+            prev.map((e) => (e.id === event.id ? { ...e, start, end, allDay } : e)),
+          )
+        }}
+      >
+        <PromotionGrid />
+      </CalendarProvider>
+    </CalendarStage>
+  )
+}
+
+/**
+ * Drag any **timed** event from the time grid and drop it onto the **all-day row**
+ * (the row above the time slots). The event becomes a whole-day event on that day:
+ * `onEventDrop` fires with `allDay: true`. All-day events cannot be dragged down
+ * into the time grid (one-way promotion only).
+ */
+export const TimedToAllDayPromotion: Story = {
+  render: () => <PromotionDemo />,
 }

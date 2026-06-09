@@ -280,6 +280,7 @@ function TimeGridView<TEvent = unknown>() {
                   <div
                     className="bc-allday-slot"
                     data-date={dayGroup.date}
+                    data-bc-allday={dayGroup.date}
                     data-slot-index={di}
                     aria-describedby={descriptionIds.selection}
                   />
@@ -529,6 +530,7 @@ function TimeGridView<TEvent = unknown>() {
                             key={column.key}
                             className={column.isToday ? 'bc-allday-slot bc-today' : 'bc-allday-slot'}
                             data-date={column.day}
+                            data-bc-allday={column.day}
                             data-slot-index={di}
                             aria-describedby={descriptionIds.selection}
                           />
@@ -577,6 +579,7 @@ function TimeGridView<TEvent = unknown>() {
                     <div
                       className="bc-allday-slot"
                       data-date={group.columns[0]?.day}
+                      data-bc-allday={group.columns[0]?.day}
                       data-slot-index={0}
                       aria-describedby={descriptionIds.selection}
                     />
@@ -756,6 +759,7 @@ function TimeGridView<TEvent = unknown>() {
               key={column.key}
               className={column.isToday ? 'bc-allday-slot bc-today' : 'bc-allday-slot'}
               data-date={column.day}
+              data-bc-allday={column.day}
               data-slot-index={colIndex}
               tabIndex={allDayRoving.cellTabIndex(colIndex)}
               aria-describedby={descriptionIds.selection}

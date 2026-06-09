@@ -663,6 +663,13 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       store.moveEvent({ id: 1, target: '2026-06-16T13:00:00.000Z', mode: 'time', resourceId: 42 })
       expect(onEventDrop.mock.calls[0]![0].resourceId).toBe(42)
     })
+
+    it('promote:true forces allDay:true in onEventDrop (timed→all-day promotion)', () => {
+      const onEventDrop = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventDrop })
+      store.moveEvent({ id: 1, target: '2026-06-15T00:00:00.000Z', mode: 'day', promote: true })
+      expect(onEventDrop.mock.calls[0]![0].allDay).toBe(true)
+    })
   })
 
   describe('event resize (resizeEvent)', () => {

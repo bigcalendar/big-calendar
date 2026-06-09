@@ -103,6 +103,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     id: EventId,
     target: string,
     mode: MoveMode,
+    targetAllDay?: boolean,
   ): { event: TEvent; start: string; end: string; allDay: boolean } | null => {
     const event = findEvent(id)
     if (event == null) return null
@@ -116,6 +117,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       allDay: getEventAllDay(event) ?? false,
       target,
       mode,
+      targetAllDay,
     })
     return { event, ...moved }
   }
@@ -453,12 +455,12 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       return findEvent(id)
     },
 
-    moveEvent({ id, target, mode, resourceId }) {
+    moveEvent({ id, target, mode, resourceId, promote }) {
       // The drag is over: clear the live preview regardless of the outcome.
       dragPreview.value = null
       const drop = config.onEventDrop
       if (drop == null) return
-      const moved = computeMove(id, target, mode)
+      const moved = computeMove(id, target, mode, promote ? true : undefined)
       if (moved == null) return
       drop({ event: moved.event, start: moved.start, end: moved.end, allDay: moved.allDay, resourceId })
     },

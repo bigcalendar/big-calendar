@@ -18,7 +18,13 @@ export interface DndStore<TEvent> {
   /** Whether the event may be resized (`config.resizableAccessor`). */
   isResizable(event: TEvent): boolean
   /** Commit a move drop: core recomputes the bounds and fires `onEventDrop`. */
-  moveEvent(args: { id: EventId; target: string; mode: MoveMode; resourceId?: ResourceId | undefined }): void
+  moveEvent(args: {
+    id: EventId
+    target: string
+    mode: MoveMode
+    resourceId?: ResourceId | undefined
+    promote?: boolean | undefined
+  }): void
   /** Update the live move preview as a dragged event moves over slots/cells. */
   previewMove(args: { id: EventId; target: string; mode: MoveMode }): void
   /** Commit a resize drop: core recomputes the bounds and fires `onEventResize`. */
@@ -110,14 +116,21 @@ const RESOURCE_ATTR = 'data-bc-resource'
  *   event by whole days.
  * - `'time'` reads `data-bc-instant` — the time-grid slot's start instant; core
  *   snaps the event's start to it and keeps its duration.
- *
- * In `'time'` mode the all-day cells (which carry only `data-date`) are not drop
- * targets — timed↔all-day promotion is a later slice.
  */
 const DROP_ATTR: Record<MoveMode, string> = {
   day: 'data-date',
   time: 'data-bc-instant',
 }
+/**
+ * Attribute that marks a cell in the all-day row as a **promotion drop target**
+ * (timed→all-day, one-way). In `'time'` mode these cells are registered alongside
+ * the normal `data-bc-instant` slots so a timed event can be dropped there. Its
+ * value is the same ISO day-start as `data-date` on the same cell. All-day events
+ * (those rendered inside `.bc-allday-row`) are blocked from landing here via
+ * `canDrop` — ensuring the promotion is one-directional.
+ * Exported so the React adapter knows which attribute to stamp on all-day cells.
+ */
+export const ALLDAY_TARGET_ATTR = 'data-bc-allday'
 
 /**
  * Element-adapter data key a **Pragmatic** `draggable` palette item sets to mark
@@ -273,10 +286,34 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
     )
   }
 
+  // Bind an all-day row cell as a **promotion** drop target. Only available in
+  // `'time'` mode so timed events can be dragged into the all-day row. All-day
+  // events (elements inside `.bc-allday-row`) are blocked via `canDrop`.
+  const bindAllDayTarget = (element: HTMLElement): void => {
+    if (bindings.has(element)) return
+    bindings.set(
+      element,
+      dropTargetForElements({
+        element,
+        // Only timed events (NOT already-all-day row events) may land here.
+        canDrop: ({ source }) => (source.element as Element).closest('.bc-allday-row') == null,
+        getData: () => ({
+          bcAllDayTarget: element.getAttribute(ALLDAY_TARGET_ATTR),
+          bcIsPromotion: true,
+          bcResourceId: element.closest(`[${RESOURCE_ATTR}]`)?.getAttribute(RESOURCE_ATTR) ?? null,
+        }),
+      }),
+    )
+  }
+
   const scan = (): void => {
     root.querySelectorAll<HTMLElement>(`[${EVENT_ATTR}]`).forEach(bindDraggable)
     root.querySelectorAll<HTMLElement>(`[${RESIZE_ATTR}]`).forEach(bindResizeHandle)
     root.querySelectorAll<HTMLElement>(`[${dropAttr}]`).forEach(bindDropTarget)
+    // In 'time' mode also register all-day row cells as one-way promotion targets.
+    if (mode === 'time') {
+      root.querySelectorAll<HTMLElement>(`[${ALLDAY_TARGET_ATTR}]`).forEach(bindAllDayTarget)
+    }
   }
   scan()
 
@@ -299,7 +336,14 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
     // **resize** edge (true extent), and a plain **move** (the dragged event's
     // shifted bounds).
     onDropTargetChange({ source, location }) {
-      const target = location.current.dropTargets[0]?.data.bcDropTarget
+      const dropData0 = location.current.dropTargets[0]?.data
+      // A promotion target (all-day row cell in 'time' mode) has no meaningful
+      // time-body preview — just clear it so the time grid shows nothing.
+      if (dropData0?.bcIsPromotion === true) {
+        store.clearDragPreview()
+        return
+      }
+      const target = dropData0?.bcDropTarget
       // A Pragmatic outside item (palette) carries a readable payload mid-drag, so
       // its preview shows the true extent — in both modes (time + month).
       const external = source.data[EXTERNAL_DATA_KEY]
@@ -347,6 +391,16 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
         return
       }
       const id = source.data.bcEventId
+      // Timed→all-day promotion: timed event dropped onto the all-day row.
+      if (dropData?.bcIsPromotion === true) {
+        const allDayTarget = dropData.bcAllDayTarget
+        if (typeof id !== 'string' || typeof allDayTarget !== 'string') {
+          store.clearDragPreview()
+          return
+        }
+        store.moveEvent({ id, target: allDayTarget, mode: 'day', promote: true, resourceId }) // clears preview
+        return
+      }
       // A resize handle carries its edge; the event body does not — branch on it.
       const edge = source.data.bcResizeEdge
       if (typeof id !== 'string' || typeof target !== 'string') {
