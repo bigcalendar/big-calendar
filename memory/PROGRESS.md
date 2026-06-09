@@ -682,11 +682,21 @@ See [[bigcal-selection-storybook-phase4]] (obligation satisfied).
   modes. `MonthEventResize` + `MonthDropFromOutside` stories.
 - ✅ **5g — month keyboard DnD** — DONE (Task 5g entry up top). Same modal grab, day-granular (←→ day, ↑↓ week,
   Shift = resize end); `useKeyboardDnd({mode})` generalized; core `grabResize` gained `days`.
-- **NEXT: Phase 5 exit review + remaining tail** — resourceId in the drop payload, cross-surface timed↔all-day
-  promotion, a dedicated `@big-calendar/react/dnd` entry, start-edge keyboard resize.
+- ✅ **Step 1a — Day view resource columns + resourceId** — DONE (commits 08823ac, 3a4d118). Core view model
+  resource-aware; resourceId in all drop/selection payloads; DnD data-bc-resource; React day layout + stories.
+- ✅ **Step 1b — Week view resource-major (two-tier header + per-resource all-day)** — DONE (commit 3a4d118).
+  resource-major week ordering; selection scoped per resource+date.
+- ✅ **Format split: dayColumnHeader / dayHeader** — DONE (commit 6b1072a).
+- ✅ **Resource grid scroll architecture** — DONE (commit 3a4d118). Single 2-D scroll container; sticky
+  `.bc-time-head`; frozen gutter via `position:sticky inset-inline-start:0`; subgrid column alignment.
+- **NEXT: timed→all-day promotion (one-way)** — drag a timed event from the time body into the all-day row
+  promotes it. All-day→timed demotion is NOT supported (Cutter, 2026-06-09 — see DECISIONS.md).
+  After that: dedicated `@big-calendar/react/dnd` entry, start-edge keyboard resize (Shift+Alt+arrow),
+  day-major week ordering (1c), month/keyboard DnD gating by isDraggable/isResizable.
 
 Exit criteria (roadmap §14): drop/resize/outside parity + keyboard DnD — **all met** (parity now across month +
-time-grid; keyboard DnD on the time-grid). Exit review pending.
+time-grid; keyboard DnD on the time-grid). Tail items (promotion, dnd entry, resize) are polish/completeness,
+not blockers for the exit criteria. Exit review + Phase 6 planning pending.
 
 ## Earlier phases
 
