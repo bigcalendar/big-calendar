@@ -161,8 +161,8 @@ createLuxonLocalizer({ timeZone: 'America/Chicago' })
 ```
 
 **Default (when omitted):** resolved in this order:
-1. The first time zone in `Intl.Locale.getTimeZones()` for your resolved locale — this ties the default to the locale's region when a single region is implied (e.g. `'en-GB'` implies `Europe/London`).
-2. `Intl.DateTimeFormat().resolvedOptions().timeZone` — the browser or host's current time zone, used when the locale spans multiple time zones or when `getTimeZones()` is not available.
+1. `Intl.Locale.getTimeZones()` — but **only when it returns exactly one entry**. This covers locales whose region unambiguously implies a single time zone (e.g. `'en-GB'` → `Europe/London`, `'ja-JP'` → `Asia/Tokyo`). Locales that span many zones (like `'en-US'`) have more than one entry and fall through to step 2, so you never silently end up in an arbitrary zone.
+2. `Intl.DateTimeFormat().resolvedOptions().timeZone` — the browser or host's current time zone.
 
 When you supply `timeZone` explicitly it always wins, regardless of locale.
 
@@ -178,10 +178,27 @@ Controls the format of date strings the localizer _writes back out_ after doing
 math on them. This affects the strings you receive in callbacks like
 `onEventDrop`, and the strings stored internally.
 
-| Value | What it looks like | When to use it |
-|---|---|---|
-| `'utc'` (default) | `2026-07-03T16:00:00Z` | Most apps. UTC is unambiguous and easy to store. |
-| `'offset'` | `2026-07-03T12:00:00-04:00` | When you need the local wall-clock offset preserved in the string. |
+<table>
+  <thead>
+    <tr>
+      <th>Value</th>
+      <th>What it looks like</th>
+      <th>When to use it</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>'utc'</code> (default)</td>
+      <td><code>2026-07-03T16:00:00Z</code></td>
+      <td>Most apps. UTC is unambiguous and easy to store.</td>
+    </tr>
+    <tr>
+      <td><code>'offset'</code></td>
+      <td><code>2026-07-03T12:00:00-04:00</code></td>
+      <td>When you need the local wall-clock offset preserved in the string.</td>
+    </tr>
+  </tbody>
+</table>
 
 ```ts
 createLuxonLocalizer({ timeZone: 'America/New_York', output: 'offset' })
@@ -236,23 +253,92 @@ change — the rest keep their built-in defaults.
 
 The available roles are:
 
-| Role | Used for | Default options |
-|---|---|---|
-| `date` | Generic date display | `{ year: 'numeric', month: 'numeric', day: 'numeric' }` |
-| `time` | Generic time display | `{ hour: 'numeric', minute: '2-digit' }` |
-| `datetime` | Date + time together | year, month, day, hour, minute |
-| `weekday` | Full weekday name | `{ weekday: 'long' }` |
-| `weekdayShort` | Abbreviated weekday | `{ weekday: 'short' }` |
-| `dayOfMonth` | Just the day number | `{ day: 'numeric' }` |
-| `monthDay` | Month + day | `{ month: 'long', day: 'numeric' }` |
-| `monthYear` | Month + year | `{ month: 'long', year: 'numeric' }` |
-| `monthHeader` | Month view toolbar heading | `{ month: 'long', year: 'numeric' }` |
-| `dayHeader` | Day view toolbar heading | weekday, month, day |
-| `dayColumnHeader` | Per-column heading in week view | `{ weekday: 'short', day: '2-digit' }` |
-| `agendaDate` | Date column in agenda view | weekday short, month short, day |
-| `agendaTime` | Time column in agenda view | `{ hour: 'numeric', minute: '2-digit' }` |
-| `timeGutter` | Left-hand time labels in time grid | `{ hour: 'numeric', minute: '2-digit' }` |
-| `selectRange` | Tooltip shown while dragging a selection | `{ hour: 'numeric', minute: '2-digit' }` |
+<table>
+  <thead>
+    <tr>
+      <th>Role</th>
+      <th>Used for</th>
+      <th>Default options</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>date</code></td>
+      <td>Generic date display</td>
+      <td><code>{'{ year: \'numeric\', month: \'numeric\', day: \'numeric\' }'}</code></td>
+    </tr>
+    <tr>
+      <td><code>time</code></td>
+      <td>Generic time display</td>
+      <td><code>{'{ hour: \'numeric\', minute: \'2-digit\' }'}</code></td>
+    </tr>
+    <tr>
+      <td><code>datetime</code></td>
+      <td>Date + time together</td>
+      <td>year, month, day, hour, minute</td>
+    </tr>
+    <tr>
+      <td><code>weekday</code></td>
+      <td>Full weekday name</td>
+      <td><code>{'{ weekday: \'long\' }'}</code></td>
+    </tr>
+    <tr>
+      <td><code>weekdayShort</code></td>
+      <td>Abbreviated weekday</td>
+      <td><code>{'{ weekday: \'short\' }'}</code></td>
+    </tr>
+    <tr>
+      <td><code>dayOfMonth</code></td>
+      <td>Just the day number</td>
+      <td><code>{'{ day: \'numeric\' }'}</code></td>
+    </tr>
+    <tr>
+      <td><code>monthDay</code></td>
+      <td>Month + day</td>
+      <td><code>{'{ month: \'long\', day: \'numeric\' }'}</code></td>
+    </tr>
+    <tr>
+      <td><code>monthYear</code></td>
+      <td>Month + year</td>
+      <td><code>{'{ month: \'long\', year: \'numeric\' }'}</code></td>
+    </tr>
+    <tr>
+      <td><code>monthHeader</code></td>
+      <td>Month view toolbar heading</td>
+      <td><code>{'{ month: \'long\', year: \'numeric\' }'}</code></td>
+    </tr>
+    <tr>
+      <td><code>dayHeader</code></td>
+      <td>Day view toolbar heading</td>
+      <td>weekday, month, day</td>
+    </tr>
+    <tr>
+      <td><code>dayColumnHeader</code></td>
+      <td>Per-column heading in week view</td>
+      <td><code>{'{ weekday: \'short\', day: \'2-digit\' }'}</code></td>
+    </tr>
+    <tr>
+      <td><code>agendaDate</code></td>
+      <td>Date column in agenda view</td>
+      <td>weekday short, month short, day</td>
+    </tr>
+    <tr>
+      <td><code>agendaTime</code></td>
+      <td>Time column in agenda view</td>
+      <td><code>{'{ hour: \'numeric\', minute: \'2-digit\' }'}</code></td>
+    </tr>
+    <tr>
+      <td><code>timeGutter</code></td>
+      <td>Left-hand time labels in time grid</td>
+      <td><code>{'{ hour: \'numeric\', minute: \'2-digit\' }'}</code></td>
+    </tr>
+    <tr>
+      <td><code>selectRange</code></td>
+      <td>Tooltip shown while dragging a selection</td>
+      <td><code>{'{ hour: \'numeric\', minute: \'2-digit\' }'}</code></td>
+    </tr>
+  </tbody>
+</table>
 
 Each value is a plain `Intl.DateTimeFormat` options object. For example, to show
 24-hour time in the time gutter:
@@ -272,13 +358,36 @@ createLuxonLocalizer({
 
 ## Which localizer should I pick?
 
-| Situation | Use |
-|---|---|
-| Starting fresh with no date library | `localizer-temporal` |
-| Project already uses Luxon | `localizer-luxon` |
-| Need to support very old browsers where polyfill size matters | Either — both polyfill only what is needed |
-| Storing dates in a database and need the time zone in the string | Either, with `extendedZone: true` |
-| Need to build a custom integration with a different date library | [Write a custom localizer](/?path=/docs/core-custom-localizer--docs) |
+<table>
+  <thead>
+    <tr>
+      <th>Situation</th>
+      <th>Use</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Starting fresh with no date library</td>
+      <td><code>localizer-temporal</code></td>
+    </tr>
+    <tr>
+      <td>Project already uses Luxon</td>
+      <td><code>localizer-luxon</code></td>
+    </tr>
+    <tr>
+      <td>Need to support very old browsers where polyfill size matters</td>
+      <td>Either — both polyfill only what is needed</td>
+    </tr>
+    <tr>
+      <td>Storing dates in a database and need the time zone in the string</td>
+      <td>Either, with <code>extendedZone: true</code></td>
+    </tr>
+    <tr>
+      <td>Need to build a custom integration with a different date library</td>
+      <td><a href="/?path=/docs/core-custom-localizer--docs">Write a custom localizer</a></td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
@@ -304,9 +413,34 @@ the way in.
 What you get back depends on the `output` and `extendedZone` settings you
 chose:
 
-| `output` | `extendedZone` | Example output |
-|---|---|---|
-| `'utc'` (default) | `false` (default) | `2026-07-03T16:00:00Z` |
-| `'utc'` | `true` | `2026-07-03T16:00:00Z[America/New_York]` |
-| `'offset'` | `false` | `2026-07-03T12:00:00-04:00` |
-| `'offset'` | `true` | `2026-07-03T12:00:00-04:00[America/New_York]` |
+<table>
+  <thead>
+    <tr>
+      <th><code>output</code></th>
+      <th><code>extendedZone</code></th>
+      <th>Example output</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>'utc'</code> (default)</td>
+      <td><code>false</code> (default)</td>
+      <td><code>2026-07-03T16:00:00Z</code></td>
+    </tr>
+    <tr>
+      <td><code>'utc'</code></td>
+      <td><code>true</code></td>
+      <td><code>2026-07-03T16:00:00Z[America/New_York]</code></td>
+    </tr>
+    <tr>
+      <td><code>'offset'</code></td>
+      <td><code>false</code></td>
+      <td><code>2026-07-03T12:00:00-04:00</code></td>
+    </tr>
+    <tr>
+      <td><code>'offset'</code></td>
+      <td><code>true</code></td>
+      <td><code>2026-07-03T12:00:00-04:00[America/New_York]</code></td>
+    </tr>
+  </tbody>
+</table>

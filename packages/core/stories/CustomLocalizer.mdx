@@ -303,6 +303,46 @@ usually the right pattern. Without truncation, a 7.5-day diff could round up to
 space (e.g. `"2026-07-03"`) as midnight in `this.timeZone`. Do not let your
 library interpret it as local browser time.
 
+**Do not override `format`.** The base class already provides a complete
+`format()` implementation built on `Intl.DateTimeFormat`. It is not one of the
+ten primitives — you do not need to implement it, and you should not override
+it. Overriding `format` would bypass the `formats` option map (the one that
+lets consumers customise how dates appear in each part of the calendar) and
+break locale-aware display for everyone using your localizer.
+
+---
+
+## Why `Intl.DateTimeFormat` instead of format tokens?
+
+Many date libraries use a **token string** to describe how a date should look —
+something like `"MMM D, YYYY"` or `"HH:mm"`. Big Calendar deliberately does not
+use that approach. Here is why.
+
+**Tokens are not standard.** Every library invents its own set: Moment uses
+`DD`, Day.js uses `DD`, date-fns uses `dd`, Luxon uses `dd` for some things and
+`DD` for others. A format string that works in one library silently produces the
+wrong output in another. The calendar would have to know which library you chose
+just to format a date — which defeats the whole point of the localizer
+abstraction.
+
+**`Intl.DateTimeFormat` is built into the platform.** It ships in every modern
+browser and in Node.js with no extra code to download or bundle. You describe
+what you want (`{ month: 'long', day: 'numeric' }`) and the runtime formats it
+correctly — no library version to pin, no polyfill to ship for the formatter
+itself.
+
+**It is locale-aware by design.** A token string like `"MMM D"` will always
+produce `"Jul 3"` — English, always. `Intl.DateTimeFormat` with
+`{ month: 'short', day: 'numeric' }` produces `"3 juil."` in French, `"3 июл."` in
+Russian, and `"7월 3일"` in Korean — automatically, with no extra work from
+you or the consumer. It also handles right-to-left scripts, non-Gregorian
+calendars, and regional date ordering without any extra code.
+
+**The trade-off** is that `Intl.DateTimeFormat` options can feel more verbose
+than a token string. That is why the `formats` option map exists — consumers
+write the options object once, and the calendar reuses it everywhere that format
+role appears.
+
 ---
 
 ## Testing your localizer
