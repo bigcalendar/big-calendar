@@ -23,6 +23,7 @@ const config: StorybookConfig = {
       '@big-calendar/core': resolve(pkgs, 'core/src/index.ts'),
       '@big-calendar/dnd': resolve(pkgs, 'dnd/src/index.ts'),
       '@big-calendar/localizer': resolve(pkgs, 'localizer/src/index.ts'),
+      '@big-calendar/localizer-luxon': resolve(pkgs, 'localizer-luxon/src/index.ts'),
       '@big-calendar/localizer-temporal': resolve(pkgs, 'localizer-temporal/src/index.ts'),
       '@big-calendar/styles': resolve(pkgs, 'styles/src'),
     }
