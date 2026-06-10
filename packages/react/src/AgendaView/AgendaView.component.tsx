@@ -1,11 +1,4 @@
-import type { ComponentType } from 'react'
-import { useCalendarContext } from '../CalendarProvider'
-import type { AgendaDateProps, AgendaEmptyProps, AgendaEventProps } from '../components.type'
-import { agendaRowsStyle } from '../geometryStyles'
-import DefaultAgendaDate from '../DefaultAgendaDate'
-import DefaultAgendaEmpty from '../DefaultAgendaEmpty'
-import DefaultAgendaEvent from '../DefaultAgendaEvent'
-import { useAgendaRows } from '../useAgendaRows'
+import { useAgendaView } from '../useAgendaView'
 
 /**
  * The agenda view: a chronological list of days that have events. Reads the
@@ -14,19 +7,15 @@ import { useAgendaRows } from '../useAgendaRows'
  * `components.agenda`. Must render inside a {@link CalendarProvider}.
  */
 function AgendaView<TEvent = unknown>() {
-  const { components, messages } = useCalendarContext<TEvent>()
-  const rows = useAgendaRows<TEvent>()
+  const { rows, components, messages, root, header, body, getRowProps } = useAgendaView<TEvent>()
 
   if (rows === null) return null
 
-  const DateSlot: ComponentType<AgendaDateProps> = components.agenda?.date ?? DefaultAgendaDate
-  const EventSlot: ComponentType<AgendaEventProps<TEvent>> =
-    components.agenda?.event ?? DefaultAgendaEvent
-  const EmptySlot: ComponentType<AgendaEmptyProps> = components.agenda?.empty ?? DefaultAgendaEmpty
+  const { DateSlot, EventSlot, EmptySlot } = components
 
   return (
-    <div className="bc-agenda">
-      <div className="bc-agenda-header">
+    <div {...root}>
+      <div {...header}>
         <span className="bc-agenda-heading">{messages.date}</span>
         <span className="bc-agenda-heading">{messages.time}</span>
         <span className="bc-agenda-heading">{messages.event}</span>
@@ -34,9 +23,9 @@ function AgendaView<TEvent = unknown>() {
       {rows.length === 0 ? (
         <EmptySlot message={messages.noEventsInRange} />
       ) : (
-        <div className="bc-agenda-body">
+        <div {...body}>
           {rows.map((row) => (
-            <div key={row.day} className="bc-agenda-day" style={agendaRowsStyle(row.events.length)}>
+            <div key={row.day} {...getRowProps(row)}>
               <DateSlot day={row.day} label={row.label} />
               {row.events.map((item) => (
                 <EventSlot

@@ -78,6 +78,49 @@ export type { TooltipProps } from './Tooltip'
 export { Dialog } from './Dialog'
 export type { DialogProps } from './Dialog'
 export { useCalendarDnd } from './dnd/useCalendarDnd'
+export { useAgendaView } from './useAgendaView'
+export type {
+  AgendaRowProps,
+  AgendaViewComponents,
+  UseAgendaViewReturn,
+} from './useAgendaView'
+export { useMonthView } from './useMonthView'
+export type {
+  MonthDaySlotProps,
+  MonthGridProps,
+  MonthRootProps,
+  MonthSegmentButtonProps,
+  MonthShowMoreCellProps,
+  MonthViewComponents,
+  UseMonthViewReturn,
+} from './useMonthView'
+export { useTimeGridHeader } from './useTimeGridHeader'
+export type {
+  TimeGridAllDayRowProps,
+  TimeGridAllDaySegmentProps,
+  TimeGridAllDaySlotProps,
+  TimeGridHeaderComponents,
+  TimeGridResourceAllDayRowProps,
+  TimeGridResourceAllDaySlotProps,
+  TimeGridStackedSegmentProps,
+  UseTimeGridHeaderReturn,
+} from './useTimeGridHeader'
+export { useTimeGridBody } from './useTimeGridBody'
+export type {
+  TimeGridBgEventProps,
+  TimeGridBodyComponents,
+  TimeGridBodyRootProps,
+  TimeGridEventButtonProps,
+  TimeGridResourceBodyRootProps,
+  TimeGridResourceSlotProps,
+  TimeGridSlotProps,
+  UseTimeGridBodyReturn,
+} from './useTimeGridBody'
+export { useTimeGridView } from './useTimeGridView'
+export type {
+  TimeGridRootProps,
+  UseTimeGridViewReturn,
+} from './useTimeGridView'
 export type {
   AgendaComponents,
   AgendaDateProps,
