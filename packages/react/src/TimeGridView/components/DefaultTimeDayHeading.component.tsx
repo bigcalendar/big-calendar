@@ -1,3 +1,4 @@
+import clsx from 'clsx'
 import type { TimeDayHeadingProps } from '../../components.type'
 
 /**
@@ -5,7 +6,7 @@ import type { TimeDayHeadingProps } from '../../components.type'
  * the `bc-today` state class. Replace via `components.time.dayHeading`.
  */
 function DefaultTimeDayHeading({ label, isToday, onDrillDown }: TimeDayHeadingProps) {
-  const className = ['bc-day-heading', isToday && 'bc-today'].filter(Boolean).join(' ')
+  const className = clsx('bc-day-heading', isToday && 'bc-today')
   return (
     <button type="button" className={className} onClick={onDrillDown}>
       {label}

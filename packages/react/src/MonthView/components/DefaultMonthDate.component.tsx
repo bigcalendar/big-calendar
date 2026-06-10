@@ -1,3 +1,4 @@
+import clsx from 'clsx'
 import type { MonthDateProps } from '../../components.type'
 
 /**
@@ -6,9 +7,7 @@ import type { MonthDateProps } from '../../components.type'
  * `components.month.dateCell`.
  */
 function DefaultMonthDate({ label, isToday, isOffRange, onDrillDown }: MonthDateProps) {
-  const className = ['bc-date-cell', isToday && 'bc-today', isOffRange && 'bc-off-range']
-    .filter(Boolean)
-    .join(' ')
+  const className = clsx('bc-date-cell', isToday && 'bc-today', isOffRange && 'bc-off-range')
   return (
     <div className={className}>
       <button type="button" className="bc-date-number" onClick={onDrillDown}>

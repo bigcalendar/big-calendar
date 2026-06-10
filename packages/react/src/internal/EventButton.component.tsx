@@ -1,5 +1,6 @@
 import { wrapAccessor } from '@big-calendar/core'
 import type { ResizeEdge } from '@big-calendar/core'
+import clsx from 'clsx'
 import type { CSSProperties, KeyboardEvent, MouseEvent, PointerEvent, ReactNode } from 'react'
 import { useEffect, useRef } from 'react'
 import { useCalendarContext } from '../CalendarProvider'
@@ -150,9 +151,7 @@ export default function EventButton<TEvent>({
 
   const accessibleName = time ? `${title}, ${time}` : title
 
-  const buttonClass = [className, isGrabbed && 'bc-event-grabbed', isDraggable && 'bc-event-draggable']
-    .filter(Boolean)
-    .join(' ')
+  const buttonClass = clsx(className, isGrabbed && 'bc-event-grabbed', isDraggable && 'bc-event-draggable')
 
   return (
     <button

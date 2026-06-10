@@ -1,5 +1,6 @@
 import { createSlotMetrics } from '@big-calendar/core'
 import type { ResizeEdge, ResourceId } from '@big-calendar/core'
+import clsx from 'clsx'
 import type { ComponentType } from 'react'
 import { useCallback } from 'react'
 import { useCalendarContext } from '../CalendarProvider'
@@ -626,9 +627,7 @@ function TimeGridView<TEvent = unknown>() {
           </div>
           {groups.flatMap((group) =>
             group.columns.map((column) => {
-              const className = ['bc-day-column', column.isToday && 'bc-today']
-                .filter(Boolean)
-                .join(' ')
+              const className = clsx('bc-day-column', column.isToday && 'bc-today')
               return (
                 <div
                   key={column.key}
