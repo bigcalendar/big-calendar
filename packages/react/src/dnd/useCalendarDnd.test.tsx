@@ -3,9 +3,17 @@ import type { ViewKey } from '@big-calendar/core'
 import { render } from '@testing-library/react'
 import { useRef } from 'react'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { CalendarProvider } from '../CalendarProvider'
+import { CalendarProvider, useCalendarContext } from '../CalendarProvider'
+import { useSignalValue } from '../internal/useSignalValue'
 import { LOCALIZER_CASES } from '../testing/localizers'
 import { useCalendarDnd } from './useCalendarDnd'
+
+/** Reads store.dndEnabled and renders it as text — isolated from useCalendarDnd. */
+function DndEnabledDisplay() {
+  const { store } = useCalendarContext()
+  const enabled = useSignalValue(store.dndEnabled)
+  return <span data-testid="dnd-enabled">{String(enabled)}</span>
+}
 
 // Mock the optional controller so the hook's wiring is asserted deterministically
 // (the real one drives native drag events jsdom can't dispatch).
@@ -46,6 +54,19 @@ describe.each(LOCALIZER_CASES)('useCalendarDnd [$name]', ({ create }) => {
     return render(
       <CalendarProvider<Event> localizer={localizer} defaultDate={focus} view={view}>
         <Harness attach={attach} />
+      </CalendarProvider>,
+    )
+  }
+
+  // Separate render for dndEnabled-specific assertions — DndEnabledDisplay lives
+  // in a sibling so the signal write in Harness and the read are in different
+  // component instances, avoiding the act() update cascade.
+  function renderHookWithDisplay(props: { view?: ViewKey } = {}) {
+    const { view = Views.MONTH } = props
+    return render(
+      <CalendarProvider<Event> localizer={localizer} defaultDate={focus} view={view}>
+        <Harness />
+        <DndEnabledDisplay />
       </CalendarProvider>,
     )
   }
@@ -99,6 +120,22 @@ describe.each(LOCALIZER_CASES)('useCalendarDnd [$name]', ({ create }) => {
 
   it('tears the binding down on unmount', () => {
     const { unmount } = renderHook({ view: Views.MONTH })
+    unmount()
+    expect(cleanupSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('sets store.dndEnabled to true when the binding is active', () => {
+    const { getByTestId } = renderHookWithDisplay({ view: Views.MONTH })
+    expect(getByTestId('dnd-enabled').textContent).toBe('true')
+  })
+
+  it('leaves store.dndEnabled false when the view has no move support', () => {
+    const { getByTestId } = renderHookWithDisplay({ view: Views.AGENDA })
+    expect(getByTestId('dnd-enabled').textContent).toBe('false')
+  })
+
+  it('resets store.dndEnabled to false on unmount — cleanup spy confirms teardown ran', () => {
+    const { unmount } = renderHookWithDisplay({ view: Views.MONTH })
     unmount()
     expect(cleanupSpy).toHaveBeenCalledTimes(1)
   })

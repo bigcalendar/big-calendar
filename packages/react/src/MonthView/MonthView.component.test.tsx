@@ -1,11 +1,21 @@
 import { Views } from '@big-calendar/core'
 import { act, fireEvent, render, screen } from '@testing-library/react'
+import { useEffect } from 'react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
-import { CalendarProvider, useCalendarStore } from '../CalendarProvider'
+import { CalendarProvider, useCalendarContext, useCalendarStore } from '../CalendarProvider'
 import type { CalendarProviderProps } from '../CalendarProvider'
 import type { MonthEventProps } from '../components.type'
 import { LOCALIZER_CASES } from '../testing/localizers'
 import MonthView from './MonthView.component'
+
+function DndEnabler() {
+  const { store } = useCalendarContext()
+  useEffect(() => {
+    store.dndEnabled.value = true
+    return () => { store.dndEnabled.value = false }
+  }, [store])
+  return null
+}
 
 interface Event {
   id?: number
@@ -298,8 +308,24 @@ describe.each(LOCALIZER_CASES)('MonthView [$name]', ({ create }) => {
   })
 
   describe('multi-day resize handles + drag preview', () => {
-    it('renders both resize handles on a single-day segment', () => {
-      renderMonth()
+    function renderMonthWithDnd(extra?: Partial<CalendarProviderProps<Event>>) {
+      return render(
+        <CalendarProvider<Event>
+          localizer={localizer}
+          defaultDate={focus}
+          defaultView={Views.MONTH}
+          events={events}
+          getNow={() => NOW}
+          {...extra}
+        >
+          <DndEnabler />
+          <MonthView />
+        </CalendarProvider>,
+      )
+    }
+
+    it('renders both resize handles on a single-day segment when DnD is enabled', () => {
+      renderMonthWithDnd()
       const seg = screen.getByText('Standup').closest('.bc-segment') as HTMLElement
       expect(seg.querySelector('[data-bc-resize="start"]')).not.toBeNull()
       expect(seg.querySelector('[data-bc-resize="end"]')).not.toBeNull()
@@ -310,7 +336,7 @@ describe.each(LOCALIZER_CASES)('MonthView [$name]', ({ create }) => {
       const crossWeek: Event[] = [
         { id: 9, title: 'Trip', start: '2026-06-19T00:00:00.000Z', end: '2026-06-23T23:59:59.999Z' },
       ]
-      const { container } = renderMonth({ events: crossWeek })
+      const { container } = renderMonthWithDnd({ events: crossWeek })
       const starts = container.querySelectorAll('[data-bc-resize="start"]')
       const ends = container.querySelectorAll('[data-bc-resize="end"]')
       expect(starts.length).toBe(1)
@@ -319,8 +345,13 @@ describe.each(LOCALIZER_CASES)('MonthView [$name]', ({ create }) => {
       expect(starts[0]!.closest('.bc-segment')).not.toBe(ends[0]!.closest('.bc-segment'))
     })
 
+    it('omits resize handles when DnD is not enabled', () => {
+      const { container } = renderMonth()
+      expect(container.querySelector('[data-bc-resize]')).toBeNull()
+    })
+
     it('omits resize handles when the event is locked from resizing', () => {
-      const { container } = renderMonth({ resizableAccessor: () => false })
+      const { container } = renderMonthWithDnd({ resizableAccessor: () => false })
       expect(container.querySelector('[data-bc-resize]')).toBeNull()
     })
 

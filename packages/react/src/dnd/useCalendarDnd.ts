@@ -39,6 +39,11 @@ export function useCalendarDnd<TEvent = unknown, TResource = unknown>(
     if (root == null) return
     const mode = moveModeForView(view)
     if (mode == null) return
-    return bindCalendarDnd<TEvent>({ root, store, mode })
+    store.dndEnabled.value = true
+    const cleanup = bindCalendarDnd<TEvent>({ root, store, mode })
+    return () => {
+      cleanup()
+      store.dndEnabled.value = false
+    }
   }, [containerRef, store, view])
 }

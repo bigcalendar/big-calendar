@@ -22,6 +22,17 @@
     filter: brightness(0.96);
   }
 
+  /* Show a grab cursor only when DnD is active and the event opts in. */
+  .bc-event.bc-event-draggable,
+  .bc-segment.bc-event-draggable {
+    cursor: grab;
+  }
+
+  .bc-event.bc-event-draggable:active,
+  .bc-segment.bc-event-draggable:active {
+    cursor: grabbing;
+  }
+
   /* EventButton renders .bc-event / .bc-segment as real <button>s. Neutralize
      the native button chrome so they match the former skin (the box geometry +
      colors above still apply), and add a keyboard focus ring. */

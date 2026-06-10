@@ -88,8 +88,12 @@ export default function EventButton<TEvent>({
   const grab = useSignalValue(store.keyboardDrag)
   // String-compare so a numeric accessor id and a DOM-sourced id still match.
   const isGrabbed = id != null && grab != null && String(grab.id) === String(id)
-  // Resize handles render only for the requested edges and when the event allows it.
-  const edges: readonly ResizeEdge[] = resizeEdges != null && store.isResizable(event) ? resizeEdges : []
+  const dndActive = useSignalValue(store.dndEnabled)
+  // Resize handles render only when DnD is wired AND the event allows resize.
+  const edges: readonly ResizeEdge[] = resizeEdges != null && dndActive && store.isResizable(event) ? resizeEdges : []
+  // Draggable class enables the grab cursor; shown only when DnD is active and the
+  // event opts in (or opts in by default via the draggableAccessor).
+  const isDraggable = dndActive && store.isDraggable(event)
 
   // A pending single-click timer; a double-click cancels it before it fires.
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -146,10 +150,14 @@ export default function EventButton<TEvent>({
 
   const accessibleName = time ? `${title}, ${time}` : title
 
+  const buttonClass = [className, isGrabbed && 'bc-event-grabbed', isDraggable && 'bc-event-draggable']
+    .filter(Boolean)
+    .join(' ')
+
   return (
     <button
       type="button"
-      className={isGrabbed ? `${className} bc-event-grabbed` : className}
+      className={buttonClass}
       style={style}
       data-bc-event={id == null ? '' : String(id)}
       aria-selected={isSelected}

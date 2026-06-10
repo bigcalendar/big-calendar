@@ -1,10 +1,23 @@
 import { Views } from '@big-calendar/core'
 import { act, fireEvent, render } from '@testing-library/react'
+import { useEffect } from 'react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { CalendarProvider } from '../CalendarProvider'
+import { CalendarProvider, useCalendarContext } from '../CalendarProvider'
 import type { CalendarProviderProps } from '../CalendarProvider'
 import { LOCALIZER_CASES } from '../testing/localizers'
 import EventButton from './EventButton.component'
+
+/** Activates `store.dndEnabled` inside a CalendarProvider (simulates useCalendarDnd). */
+function DndEnabler() {
+  const { store } = useCalendarContext()
+  useEffect(() => {
+    store.dndEnabled.value = true
+    return () => {
+      store.dndEnabled.value = false
+    }
+  }, [store])
+  return null
+}
 
 interface Event {
   id?: number
@@ -207,6 +220,7 @@ describe('EventButton', () => {
   function renderWithHandles(
     extra?: Partial<CalendarProviderProps<Event>>,
     edges: readonly ('start' | 'end')[] = ['start', 'end'],
+    dnd = true,
   ) {
     const result = render(
       <CalendarProvider<Event>
@@ -216,6 +230,7 @@ describe('EventButton', () => {
         events={[event]}
         {...extra}
       >
+        {dnd && <DndEnabler />}
         <EventButton event={event} title="Standup" className="bc-event" resizeEdges={edges}>
           <span>content</span>
         </EventButton>
@@ -224,7 +239,7 @@ describe('EventButton', () => {
     return result.container
   }
 
-  it('renders the requested resize handles when the event is resizable', () => {
+  it('renders the requested resize handles when DnD is enabled and the event is resizable', () => {
     const container = renderWithHandles()
     expect(container.querySelector('[data-bc-resize="start"]')).not.toBeNull()
     expect(container.querySelector('[data-bc-resize="end"]')).not.toBeNull()
@@ -236,6 +251,11 @@ describe('EventButton', () => {
     expect(container.querySelector('[data-bc-resize="end"]')).not.toBeNull()
   })
 
+  it('omits resize handles when DnD is not enabled (even if the event is resizable)', () => {
+    const container = renderWithHandles(undefined, ['start', 'end'], false)
+    expect(container.querySelector('[data-bc-resize]')).toBeNull()
+  })
+
   it('omits resize handles when the event is not resizable', () => {
     const container = renderWithHandles({ resizableAccessor: () => false })
     expect(container.querySelector('[data-bc-resize]')).toBeNull()
@@ -244,5 +264,20 @@ describe('EventButton', () => {
   it('omits resize handles when resizeEdges is not set', () => {
     const { button } = renderButton()
     expect(button.querySelector('[data-bc-resize]')).toBeNull()
+  })
+
+  it('adds bc-event-draggable class when DnD is enabled and the event is draggable', () => {
+    const container = renderWithHandles()
+    expect(container.querySelector('.bc-event-draggable')).not.toBeNull()
+  })
+
+  it('omits bc-event-draggable class when DnD is not enabled', () => {
+    const container = renderWithHandles(undefined, ['start', 'end'], false)
+    expect(container.querySelector('.bc-event-draggable')).toBeNull()
+  })
+
+  it('omits bc-event-draggable class when the event is not draggable', () => {
+    const container = renderWithHandles({ draggableAccessor: () => false })
+    expect(container.querySelector('.bc-event-draggable')).toBeNull()
   })
 })

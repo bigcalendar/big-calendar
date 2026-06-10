@@ -140,6 +140,9 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   const keyboardDrag = signal<KeyboardDragState | null>(null)
   let grabMoved = false
   let grabResized = false
+  // False by default; set to true by the framework DnD hook when its bindings
+  // are active so UI components can suppress drag affordances when DnD isn't wired.
+  const dndEnabled = signal(false)
 
   const { drilldownView = Views.DAY, views: registry } = config
   const range = computed(() =>
@@ -413,6 +416,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     viewModel,
     dragPreview: dragPreview as ReadonlySignal<{ start: string; end: string } | null>,
     keyboardDrag: keyboardDrag as ReadonlySignal<KeyboardDragState | null>,
+    dndEnabled,
     localizer,
     accessors,
     getNow,

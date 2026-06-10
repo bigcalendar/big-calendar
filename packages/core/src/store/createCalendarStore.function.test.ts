@@ -1085,6 +1085,11 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       expect(store.dragPreview.value).toBeNull()
     })
 
+    it('dndEnabled defaults to false', () => {
+      const store = createCalendarStore<Event>({ localizer })
+      expect(store.dndEnabled.value).toBe(false)
+    })
+
     it('grabResize is a no-op when the grabbed event is not resizable', () => {
       const store = createCalendarStore<Event>({ localizer, events, resizableAccessor: () => false })
       store.grabEvent({ id: 1 })

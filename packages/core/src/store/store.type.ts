@@ -192,6 +192,15 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    * event and to announce each step via a live region.
    */
   readonly keyboardDrag: ReadonlySignal<KeyboardDragState | null>
+  /**
+   * Whether the DnD adapter is currently mounted and active. `false` by default;
+   * set to `true` by the framework DnD hook (e.g. `useCalendarDnd`) when it
+   * installs its bindings, and back to `false` when it tears them down.
+   *
+   * UI components read this to suppress drag affordances (resize handles, grab
+   * cursor) when DnD is not wired — avoiding false affordance for users.
+   */
+  readonly dndEnabled: Signal<boolean>
 
   // --- resolved config (stable for the store's lifetime) ---
   /** The localizer instance, reused everywhere. */
