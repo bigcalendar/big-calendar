@@ -84,8 +84,13 @@ export type FormatInput = FormatKey | Intl.DateTimeFormatOptions
 export interface LocalizerOptions {
   /** BCP-47 tag or Intl.Locale; defaults to the host's resolved locale. */
   locale?: string | Intl.Locale
-  /** IANA timezone; defaults to the host's resolved timezone. */
-  timezone?: string
+  /**
+   * IANA time zone identifier (e.g. `'America/New_York'`).
+   * Resolution order when omitted:
+   * 1. First entry of `Intl.Locale.getTimeZones()` for the resolved locale (when available).
+   * 2. `Intl.DateTimeFormat().resolvedOptions().timeZone` (browser/host default).
+   */
+  timeZone?: string
   /** `false` → RFC 3339 I/O; `true` → RFC 9557 (IANA bracket suffix) I/O. */
   extendedZone?: boolean
   /** `'utc'` → serialize the instant as `…Z` (default); `'offset'` → local `…±hh:mm`. */
@@ -110,7 +115,7 @@ export interface CompareArgs {
  */
 export interface LocalizerContract {
   readonly locale: Intl.Locale
-  readonly timezone: string
+  readonly timeZone: string
   readonly extendedZone: boolean
   readonly output: 'utc' | 'offset'
 

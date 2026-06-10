@@ -27,19 +27,19 @@ type DurationKey = (typeof DURATION_KEY)[DateTimeUnit]
 export class LuxonLocalizer extends Localizer<DateTime> {
   protected parse(value: string): DateTime {
     // RFC 9557: strip IANA bracket suffix, parse ISO with the extracted zone
-    // (to interpret wall-clock times correctly), then convert to this.timezone.
+    // (to interpret wall-clock times correctly), then convert to this.timeZone.
     if (value.includes('[')) {
       const match = value.match(/\[([^\]]+)\]/)
-      const zone = match?.[1] ?? this.timezone
+      const zone = match?.[1] ?? this.timeZone
       const clean = value.replace(/\[[^\]]+\]/, '')
-      return DateTime.fromISO(clean, { zone }).setZone(this.timezone)
+      return DateTime.fromISO(clean, { zone }).setZone(this.timeZone)
     }
     // Date-only (no T or space): treat as midnight in the localizer timezone.
     if (!/[T ]/.test(value)) {
-      return DateTime.fromISO(value, { zone: this.timezone }).startOf('day')
+      return DateTime.fromISO(value, { zone: this.timeZone }).startOf('day')
     }
     // Full ISO instant: parse preserving the embedded offset, then convert.
-    return DateTime.fromISO(value).setZone(this.timezone)
+    return DateTime.fromISO(value).setZone(this.timeZone)
   }
 
   protected serialize(dt: DateTime): string {

@@ -12,8 +12,8 @@ let temporal: TemporalLocalizer
 let luxon: LuxonLocalizer
 
 beforeAll(async () => {
-  temporal = await createTemporalLocalizer({ locale: 'en-US', timezone: 'UTC' })
-  luxon = createLuxonLocalizer({ locale: 'en-US', timezone: 'UTC' })
+  temporal = await createTemporalLocalizer({ locale: 'en-US', timeZone: 'UTC' })
+  luxon = createLuxonLocalizer({ locale: 'en-US', timeZone: 'UTC' })
 })
 
 describe('@big-calendar/localizer-temporal (dist) under Vitest/jsdom', () => {

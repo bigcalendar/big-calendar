@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { createTemporalLocalizer, type TemporalLocalizer } from './index'
 
-const NY = { locale: 'en-US', timezone: 'America/New_York' } as const
+const NY = { locale: 'en-US', timeZone: 'America/New_York' } as const
 const FRI = '2026-07-03T12:00:00-04:00' // Fri Jul 3 2026, EDT
 
 let loc: TemporalLocalizer

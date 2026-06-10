@@ -68,7 +68,7 @@ import { createCalendarStore } from '@big-calendar/core'
 // `await` because the polyfill may need to load first
 const localizer = await createTemporalLocalizer({
   locale: 'en-US',
-  timezone: 'America/New_York',
+  timeZone: 'America/New_York',
 })
 
 const store = createCalendarStore({ localizer, /* …other options */ })
@@ -104,7 +104,7 @@ import { createCalendarStore } from '@big-calendar/core'
 // synchronous — no await
 const localizer = createLuxonLocalizer({
   locale: 'en-US',
-  timezone: 'America/New_York',
+  timeZone: 'America/New_York',
 })
 
 const store = createCalendarStore({ localizer, /* …other options */ })
@@ -116,7 +116,7 @@ const store = createCalendarStore({ localizer, /* …other options */ })
 
 Both localizers accept the same set of options. None are required — the
 localizer will pick sensible defaults from your browser environment — but most
-real apps will want to set at least `locale` and `timezone` explicitly so that
+real apps will want to set at least `locale` and `timeZone` explicitly so that
 the calendar renders consistently for every user, regardless of where they are.
 
 ### `locale`
@@ -128,21 +128,26 @@ This controls how dates and times are formatted for display: which language,
 which calendar system, whether months come before or after days, and so on.
 
 ```ts
-// English as spoken in the United States
+// A BCP 47 string — the most common form
 createLuxonLocalizer({ locale: 'en-US' })
 
 // French as spoken in France
 createLuxonLocalizer({ locale: 'fr-FR' })
 
-// English with a 24-hour clock preference explicitly requested
+// English with a 24-hour clock preference baked in via a Unicode extension tag
 createLuxonLocalizer({ locale: 'en-US-u-hc-h23' })
+
+// An Intl.Locale object — useful when you've already constructed one elsewhere
+// in your app, or when you want to set options programmatically
+const myLocale = new Intl.Locale('en-US', { hourCycle: 'h23' })
+createLuxonLocalizer({ locale: myLocale })
 ```
 
 **Default:** the locale reported by the user's browser (`Intl.DateTimeFormat().resolvedOptions().locale`).
 
 ---
 
-### `timezone`
+### `timeZone`
 
 An [IANA time zone](https://www.iana.org/time-zones) name — the kind of string
 you find in a database like `'America/New_York'`, `'Europe/London'`, or
@@ -152,13 +157,17 @@ This tells the calendar which time zone to use for all wall-clock math: when
 does a day start, what time does an event appear at, and so on.
 
 ```ts
-createLuxonLocalizer({ timezone: 'America/Chicago' })
+createLuxonLocalizer({ timeZone: 'America/Chicago' })
 ```
 
-**Default:** the time zone reported by the user's browser (`Intl.DateTimeFormat().resolvedOptions().timeZone`).
+**Default (when omitted):** resolved in this order:
+1. The first time zone in `Intl.Locale.getTimeZones()` for your resolved locale — this ties the default to the locale's region when a single region is implied (e.g. `'en-GB'` implies `Europe/London`).
+2. `Intl.DateTimeFormat().resolvedOptions().timeZone` — the browser or host's current time zone, used when the locale spans multiple time zones or when `getTimeZones()` is not available.
+
+When you supply `timeZone` explicitly it always wins, regardless of locale.
 
 > **Tip for server-side rendering:** browser defaults are `undefined` on the
-> server. Always supply an explicit `timezone` (and usually an explicit `locale`)
+> server. Always supply an explicit `timeZone` (and usually an explicit `locale`)
 > when rendering on the server so the output matches what the client will render.
 
 ---
@@ -175,7 +184,7 @@ math on them. This affects the strings you receive in callbacks like
 | `'offset'` | `2026-07-03T12:00:00-04:00` | When you need the local wall-clock offset preserved in the string. |
 
 ```ts
-createLuxonLocalizer({ timezone: 'America/New_York', output: 'offset' })
+createLuxonLocalizer({ timeZone: 'America/New_York', output: 'offset' })
 // strings this localizer writes will look like: 2026-07-03T12:00:00-04:00
 ```
 
@@ -189,7 +198,7 @@ at the end of every date string it writes. This is the
 "bracketed IANA notation").
 
 ```ts
-createLuxonLocalizer({ timezone: 'America/New_York', extendedZone: true })
+createLuxonLocalizer({ timeZone: 'America/New_York', extendedZone: true })
 // strings look like: 2026-07-03T16:00:00Z[America/New_York]
 ```
 
@@ -251,7 +260,7 @@ Each value is a plain `Intl.DateTimeFormat` options object. For example, to show
 ```ts
 createLuxonLocalizer({
   locale: 'en-US',
-  timezone: 'America/New_York',
+  timeZone: 'America/New_York',
   formats: {
     timeGutter: { hour: '2-digit', minute: '2-digit', hour12: false },
     agendaTime: { hour: '2-digit', minute: '2-digit', hour12: false },
@@ -278,14 +287,14 @@ createLuxonLocalizer({
 The localizer is flexible about what it reads in. All of these are valid inputs:
 
 ```
-2026-07-03                        ← date only (treated as midnight in your timezone)
+2026-07-03                        ← date only (treated as midnight in your timeZone)
 2026-07-03T16:00:00Z              ← UTC instant
 2026-07-03T12:00:00-04:00         ← instant with explicit offset
 2026-07-03T16:00:00Z[America/New_York]  ← RFC 9557 with IANA bracket
 ```
 
 All four represent the same moment in time (noon in New York, 4 PM UTC, on July
-3rd 2026). The localizer normalizes any of these to its configured timezone on
+3rd 2026). The localizer normalizes any of these to its configured timeZone on
 the way in.
 
 ---

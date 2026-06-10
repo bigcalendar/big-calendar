@@ -131,23 +131,23 @@ class TestLocalizer extends Localizer<Date> {
   }
 }
 
-const base = { locale: 'en-US', timezone: 'UTC' } as const
+const base = { locale: 'en-US', timeZone: 'UTC' } as const
 const loc = new TestLocalizer(base)
 const WED = '2026-06-03T12:00:00.000Z' // Wednesday
 
 describe('Localizer base — construction', () => {
   it('applies explicit options', () => {
     expect(loc.locale.toString()).toBe('en-US')
-    expect(loc.timezone).toBe('UTC')
+    expect(loc.timeZone).toBe('UTC') // explicit option wins
     expect(loc.extendedZone).toBe(false)
     expect(loc.output).toBe('utc')
   })
 
-  it('resolves locale and timezone from the host when omitted', () => {
+  it('resolves locale and timeZone from the host when omitted', () => {
     const d = new TestLocalizer()
     expect(d.locale).toBeInstanceOf(Intl.Locale)
-    expect(typeof d.timezone).toBe('string')
-    expect(d.timezone.length).toBeGreaterThan(0)
+    expect(typeof d.timeZone).toBe('string')
+    expect(d.timeZone.length).toBeGreaterThan(0)
   })
 
   it('accepts an Intl.Locale instance directly', () => {
@@ -289,7 +289,7 @@ describe('Localizer base — slot and minute math', () => {
   })
 })
 
-describe('Localizer base — timezone and DST', () => {
+describe('Localizer base — timeZone and DST', () => {
   it('reports UTC offset as zero', () => {
     expect(loc.getTimezoneOffset(WED)).toBeCloseTo(0)
     expect(loc.getDstOffset({ start: WED, end: '2026-12-03T12:00:00.000Z' })).toBe(0)

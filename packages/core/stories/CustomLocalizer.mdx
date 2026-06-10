@@ -49,7 +49,7 @@ are strings, and all outputs are strings.
 ## Step-by-step example
 
 Here is a minimal localizer built on [Day.js](https://day.js.org/) with its
-UTC and timezone plugins. This is a simplified example to show the pattern —
+UTC and timeZone plugins. This is a simplified example to show the pattern —
 it does not handle every edge case a production implementation would need.
 
 ### 1. Install the base package
@@ -84,21 +84,21 @@ export class DayjsLocalizer extends Localizer<dayjs.Dayjs> {
 #### `parse(value: string): T`
 
 Turn an RFC 3339 string into your library's internal datetime, in your
-configured timezone. The base class calls this first whenever it needs to do
+configured timeZone. The base class calls this first whenever it needs to do
 anything with a string.
 
 ```ts
 protected parse(value: string): dayjs.Dayjs {
-  // Strip RFC 9557 brackets if present, then parse in our timezone.
+  // Strip RFC 9557 brackets if present, then parse in our timeZone.
   const clean = value.replace(/\[[^\]]+\]/, '')
 
   if (!/[T ]/.test(clean)) {
-    // Date-only (e.g. "2026-07-03"): treat as midnight in our timezone.
-    return dayjs.tz(clean, this.timezone).startOf('day')
+    // Date-only (e.g. "2026-07-03"): treat as midnight in our timeZone.
+    return dayjs.tz(clean, this.timeZone).startOf('day')
   }
 
-  // Full ISO string: parse the instant, then express it in our timezone.
-  return dayjs(clean).tz(this.timezone)
+  // Full ISO string: parse the instant, then express it in our timeZone.
+  return dayjs(clean).tz(this.timeZone)
 }
 ```
 
@@ -114,7 +114,7 @@ protected serialize(dt: dayjs.Dayjs): string {
       ? dt.format('YYYY-MM-DDTHH:mm:ssZ')  // local offset, e.g. -04:00
       : dt.utc().toISOString()             // UTC, e.g. 2026-07-03T16:00:00.000Z
 
-  return this.extendedZone ? `${body}[${this.timezone}]` : body
+  return this.extendedZone ? `${body}[${this.timeZone}]` : body
 }
 ```
 
@@ -131,7 +131,7 @@ protected toEpochMs(dt: dayjs.Dayjs): number {
 
 #### `getParts(dt: T): DateParts`
 
-The wall-clock fields for this instant in your configured timezone. The
+The wall-clock fields for this instant in your configured timeZone. The
 `weekday` field must follow ISO-8601 numbering: `1` = Monday, `7` = Sunday.
 
 > **Watch out:** many libraries use 0 = Sunday. Day.js `day()` is 0–6
@@ -249,7 +249,7 @@ import { createCalendarStore } from '@big-calendar/core'
 
 const localizer = createDayjsLocalizer({
   locale: 'en-US',
-  timezone: 'America/New_York',
+  timeZone: 'America/New_York',
 })
 
 const store = createCalendarStore({ localizer })
@@ -266,7 +266,7 @@ need to re-implement them:
 constructor(options: LocalizerOptions = {}) {
   super(options)
   // this.locale     → Intl.Locale
-  // this.timezone   → string (IANA zone)
+  // this.timeZone   → string (IANA zone)
   // this.extendedZone → boolean
   // this.output     → 'utc' | 'offset'
   // this.formats    → merged format map
@@ -290,9 +290,9 @@ convert in `getParts`.
 Some libraries (Day.js, Moment) use 0-based months (January = 0). Always
 convert in `getParts`.
 
-**`parse` must return a timezone-aware value.** The base class relies on wall-
+**`parse` must return a timeZone-aware value.** The base class relies on wall-
 clock fields from `getParts` to do things like "start of month" and "start of
-week". If your parsed datetime is floating (no timezone attached), those fields
+week". If your parsed datetime is floating (no timeZone attached), those fields
 will be wrong.
 
 **`diffUnits` must truncate toward zero.** `Math.trunc(a.diff(b, 'days'))` is
@@ -300,7 +300,7 @@ usually the right pattern. Without truncation, a 7.5-day diff could round up to
 8 days and break weekly navigation.
 
 **Date-only strings.** The `parse` method must treat a string with no `T` or
-space (e.g. `"2026-07-03"`) as midnight in `this.timezone`. Do not let your
+space (e.g. `"2026-07-03"`) as midnight in `this.timeZone`. Do not let your
 library interpret it as local browser time.
 
 ---
@@ -308,14 +308,14 @@ library interpret it as local browser time.
 ## Testing your localizer
 
 Write tests that call each primitive directly, and run the whole suite against
-a fixed `timezone` (e.g. `'UTC'`) and a fixed `locale` so results are the same
+a fixed `timeZone` (e.g. `'UTC'`) and a fixed `locale` so results are the same
 on every machine and in CI.
 
 A good baseline checklist:
 
 ```ts
 describe('MyLocalizer', () => {
-  const loc = createMyLocalizer({ locale: 'en-US', timezone: 'UTC', output: 'offset' })
+  const loc = createMyLocalizer({ locale: 'en-US', timeZone: 'UTC', output: 'offset' })
   const REF = '2026-07-03T12:00:00Z' // a known Friday in UTC
 
   it('round-trips a UTC string', () => {

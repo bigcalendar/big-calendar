@@ -16,7 +16,7 @@ export { demoEvents }
  * ready-to-use instance. Pinned to `en-US`/`UTC` and a fixed `NOW` so the grids,
  * today highlight, and now-indicator render deterministically.
  */
-export const localizer = await createTemporalLocalizer({ locale: 'en-US', timezone: 'UTC' })
+export const localizer = await createTemporalLocalizer({ locale: 'en-US', timeZone: 'UTC' })
 
 /** Frozen "now" so today/now-indicator placement is stable across runs. */
 export const NOW = '2026-06-15T12:00:00.000Z'

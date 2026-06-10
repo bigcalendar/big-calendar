@@ -9,7 +9,7 @@ import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
  * than a hand-rolled fake. Every suite using `describe.each(LOCALIZER_CASES)`
  * automatically covers both `temporal` and `luxon`.
  *
- * Determinism: tests pin an explicit `timezone` (default `UTC`) so output never
+ * Determinism: tests pin an explicit `timeZone` (default `UTC`) so output never
  * depends on the host. `Date` is never used for date math or assertions — only
  * to mint RFC-3339 primitive strings, and assertions read expected text back
  * from `localizer.format()`.
@@ -18,7 +18,7 @@ import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
 /** Options accepted by a localizer factory in the harness. */
 export interface TestLocalizerOptions {
   locale?: string
-  timezone?: string
+  timeZone?: string
 }
 
 /** One shipped localizer the suites must pass against. */
@@ -29,7 +29,7 @@ export interface LocalizerCase {
   create: (options?: TestLocalizerOptions) => Promise<LocalizerContract>
 }
 
-const DEFAULTS: Required<TestLocalizerOptions> = { locale: 'en-US', timezone: 'UTC' }
+const DEFAULTS: Required<TestLocalizerOptions> = { locale: 'en-US', timeZone: 'UTC' }
 
 export const LOCALIZER_CASES: LocalizerCase[] = [
   {

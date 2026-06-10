@@ -24,7 +24,7 @@ describe.each(LOCALIZER_CASES)('formatEventTime [$name]', ({ create }) => {
   let localizer: LocalizerContract
 
   beforeAll(async () => {
-    localizer = await create({ locale: 'en-US', timezone: 'UTC' })
+    localizer = await create({ locale: 'en-US', timeZone: 'UTC' })
   })
 
   it('formats a start–end range for timed events', () => {

@@ -37,13 +37,13 @@ export class TemporalLocalizer extends Localizer<Temporal.ZonedDateTime> {
 
   protected parse(value: string): Temporal.ZonedDateTime {
     if (value.includes('[')) {
-      return this.api.ZonedDateTime.from(value).toInstant().toZonedDateTimeISO(this.timezone)
+      return this.api.ZonedDateTime.from(value).toInstant().toZonedDateTimeISO(this.timeZone)
     }
     if (!/[T ]/.test(value)) {
-      // Date-only input: midnight in the localizer timezone.
-      return this.api.PlainDate.from(value).toZonedDateTime(this.timezone)
+      // Date-only input: midnight in the localizer timeZone.
+      return this.api.PlainDate.from(value).toZonedDateTime(this.timeZone)
     }
-    return this.api.Instant.from(value).toZonedDateTimeISO(this.timezone)
+    return this.api.Instant.from(value).toZonedDateTimeISO(this.timeZone)
   }
 
   protected serialize(dt: Temporal.ZonedDateTime): string {

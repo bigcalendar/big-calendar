@@ -26,8 +26,16 @@ function resolveLocale(input: LocalizerOptions['locale']): Intl.Locale {
   return new Intl.Locale(new Intl.DateTimeFormat().resolvedOptions().locale)
 }
 
-function resolveTimezone(input: string | undefined): string {
-  return input ?? new Intl.DateTimeFormat().resolvedOptions().timeZone
+function resolveTimeZone(locale: Intl.Locale, input: string | undefined): string {
+  // Resolution order:
+  // 1. Explicit option — always wins when provided.
+  // 2. First time zone from the locale's region list (Intl.Locale.getTimeZones,
+  //    Baseline 2024). Cast required: older TS lib types omit this method.
+  // 3. Browser/host default resolved time zone.
+  if (input != null) return input
+  const zones = (locale as { getTimeZones?: () => string[] }).getTimeZones?.()
+  if (zones != null && zones.length > 0) return zones[0]
+  return new Intl.DateTimeFormat().resolvedOptions().timeZone
 }
 
 /**
@@ -36,7 +44,7 @@ function resolveTimezone(input: string | undefined): string {
  * It implements the entire string-in / string-out {@link LocalizerContract} on
  * top of a small set of engine primitives (the `protected abstract` members),
  * which a subclass supplies using its date library of choice (Temporal, Luxon,
- * …). All locale/timezone/week logic and the `Intl`-based formatting live here
+ * …). All locale/timeZone/week logic and the `Intl`-based formatting live here
  * so every localizer behaves identically.
  *
  * `T` is the subclass's internal datetime representation; it never escapes the
@@ -44,7 +52,7 @@ function resolveTimezone(input: string | undefined): string {
  */
 export abstract class Localizer<T = unknown> implements LocalizerContract {
   readonly locale: Intl.Locale
-  readonly timezone: string
+  readonly timeZone: string
   readonly extendedZone: boolean
   readonly output: 'utc' | 'offset'
 
@@ -53,7 +61,7 @@ export abstract class Localizer<T = unknown> implements LocalizerContract {
 
   constructor(options: LocalizerOptions = {}) {
     this.locale = resolveLocale(options.locale)
-    this.timezone = resolveTimezone(options.timezone)
+    this.timeZone = resolveTimeZone(this.locale, options.timeZone)
     this.extendedZone = options.extendedZone ?? false
     this.output = options.output ?? 'utc'
     this.formats = { ...DEFAULT_FORMATS, ...(options.formats ?? {}) }
@@ -66,7 +74,7 @@ export abstract class Localizer<T = unknown> implements LocalizerContract {
 
   // ── engine primitives (supplied by the date-library subclass) ──────────────
 
-  /** Parse an RFC 3339/9557 string into the internal datetime, in `timezone`. */
+  /** Parse an RFC 3339/9557 string into the internal datetime, in `timeZone`. */
   protected abstract parse(value: string): T
   /**
    * Serialize back to RFC 3339, or RFC 9557 (IANA bracket) when `extendedZone`.
@@ -75,7 +83,7 @@ export abstract class Localizer<T = unknown> implements LocalizerContract {
   protected abstract serialize(dt: T): string
   /** Epoch milliseconds for the instant (used for compare/format). */
   protected abstract toEpochMs(dt: T): number
-  /** Wall-clock fields in `timezone` (weekday 1=Mon … 7=Sun). */
+  /** Wall-clock fields in `timeZone` (weekday 1=Mon … 7=Sun). */
   protected abstract getParts(dt: T): DateParts
   /** Add a signed amount of a unit (calendar-aware). */
   protected abstract addUnits(dt: T, amount: number, unit: DateTimeUnit): T
@@ -127,7 +135,7 @@ export abstract class Localizer<T = unknown> implements LocalizerContract {
   format({ value, format }: { value: string; format: FormatInput }): string {
     const options = typeof format === 'string' ? this.formats[format] : format
     const epoch = this.toEpochMs(this.parse(value))
-    return new Intl.DateTimeFormat(this.locale, { timeZone: this.timezone, ...options }).format(epoch)
+    return new Intl.DateTimeFormat(this.locale, { timeZone: this.timeZone, ...options }).format(epoch)
   }
 
   // ── comparison ───────────────────────────────────────────────────────────────
