@@ -1,7 +1,7 @@
 import type { ReactNode, SyntheticEvent } from 'react'
 import { useCallback, useId, useRef, useState } from 'react'
-import type { FloatingPlacement } from '../internal/floatingPosition'
-import { useFloatingAnchor } from '../internal/useFloatingAnchor'
+import type { FloatingPlacement } from '@big-calendar/core/utils'
+import { useFloatingAnchor } from '../useFloatingAnchor'
 
 /** The native `toggle` event of a popover element (no global type in older libs). */
 interface PopoverToggleEvent extends Event {

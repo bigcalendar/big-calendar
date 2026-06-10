@@ -1,6 +1,6 @@
 import { useCalendarContext } from '../CalendarProvider'
-import DefaultToolbar from './components/DefaultToolbar'
-import { useToolbarProps } from './hooks'
+import DefaultToolbar from '../DefaultToolbar'
+import { useToolbarProps } from '../useToolbarProps'
 
 /**
  * The calendar navigation toolbar. Resolves its props from context and renders

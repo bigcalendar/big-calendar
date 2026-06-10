@@ -84,6 +84,9 @@ importers:
       '@big-calendar/localizer':
         specifier: workspace:*
         version: link:../localizer
+      '@floating-ui/core':
+        specifier: ^1.7.5
+        version: 1.7.5
       '@preact/signals-core':
         specifier: ^1.14.2
         version: 1.14.2
@@ -146,9 +149,6 @@ importers:
       '@big-calendar/styles':
         specifier: workspace:*
         version: link:../styles
-      '@floating-ui/core':
-        specifier: ^1.7.5
-        version: 1.7.5
       '@preact/signals-core':
         specifier: ^1.14.2
         version: 1.14.2

@@ -225,3 +225,26 @@ The following are now first-class public exports (previously internal only, or n
 - **Navigation should be simple** — stories grouped by feature/component area, not one story per prop.
 - **Every story must include** the localizer globals (via `withLocalizerDecorator`), and locale/timezone selects (via globals).
 - **Styles MDX doc** — a dedicated `@big-calendar/styles` MDX page documenting every `.bc-*` class, nesting relationships, available CSS custom property overrides, and examples. This is a 7a deliverable; classes are stable enough to document now.
+
+---
+
+## 2026-06-10 — Utility functions to core/utils subpath; view hooks + useFloatingAnchor to public
+
+### Context
+During Phase 7a reassessment, all view-internal hooks and utility functions were identified as valid public API surface for custom component construction, and for future non-React framework implementations.
+
+### Utilities → `@big-calendar/core/utils` subpath
+
+- **Decision — `floatingPosition`, `formatEventTime`, and all geometry functions move from `@big-calendar/react`'s internal directory to a new `packages/core/src/utils/` directory, exported via a `@big-calendar/core/utils` subpath.**
+- **`@floating-ui/core` moves from `@big-calendar/react` dependencies to `@big-calendar/core` dependencies.** Every framework implementation will need it (transitively through core); the react package no longer owns it.
+- **Geometry return type:** `CSSVars = Readonly<Record<`--${string}`, string | number>>` (no React import in core). React provides a thin `geometryStyles.ts` wrapper that re-exports all geometry functions typed as `CSSProperties` for use in JSX `style={}` props.
+- **Storybook alias:** each `.storybook/main.ts` that aliased `@big-calendar/core` to source must also alias `@big-calendar/core/utils` to `core/src/utils/index.ts` explicitly (Vite exact-alias does not cover subpaths automatically).
+- **Why:** framework-agnostic utilities belong in core; future Vue/Angular packages get them via the same subpath without duplicating code.
+- **Rejected:** keeping geometry in react (would require every future framework package to re-implement the CSS bridge). Keeping floating-ui in react (same argument).
+
+### View-internal hooks → public in `@big-calendar/react`
+
+- **Decision — `useAgendaRows`, `useTimeGrid`, `useToolbarProps`, and `useFloatingAnchor` are promoted from view-internal `hooks/` directories to top-level `src/` files and exported from the public barrel.**
+- All exported types from these hooks (`AgendaRow`, `AgendaRowEvent`, `TimeGrid`, `TimeColumn`, `TimeAllDayRow`, etc.) are also exported publicly.
+- **Why:** custom view builders need access to the same resolved model data the built-in views use; without these hooks they'd have to duplicate significant logic.
+- **Rejected:** leaving them internal (would block any meaningful custom view implementation).

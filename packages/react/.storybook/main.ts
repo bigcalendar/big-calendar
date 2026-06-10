@@ -20,6 +20,7 @@ const config: StorybookConfig = {
     config.resolve ??= {}
     config.resolve.alias = {
       ...(config.resolve.alias as Record<string, string>),
+      '@big-calendar/core/utils': resolve(pkgs, 'core/src/utils/index.ts'),
       '@big-calendar/core': resolve(pkgs, 'core/src/index.ts'),
       '@big-calendar/dnd': resolve(pkgs, 'dnd/src/index.ts'),
       '@big-calendar/localizer': resolve(pkgs, 'localizer/src/index.ts'),

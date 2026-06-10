@@ -1,11 +1,11 @@
 import type { ComponentType } from 'react'
 import { useCalendarContext } from '../CalendarProvider'
 import type { AgendaDateProps, AgendaEmptyProps, AgendaEventProps } from '../components.type'
-import { agendaRowsStyle } from '../internal/geometry.function'
-import DefaultAgendaDate from './components/DefaultAgendaDate.component'
-import DefaultAgendaEmpty from './components/DefaultAgendaEmpty.component'
-import DefaultAgendaEvent from './components/DefaultAgendaEvent.component'
-import { useAgendaRows } from './hooks'
+import { agendaRowsStyle } from '../geometryStyles'
+import DefaultAgendaDate from '../DefaultAgendaDate'
+import DefaultAgendaEmpty from '../DefaultAgendaEmpty'
+import DefaultAgendaEvent from '../DefaultAgendaEvent'
+import { useAgendaRows } from '../useAgendaRows'
 
 /**
  * The agenda view: a chronological list of days that have events. Reads the

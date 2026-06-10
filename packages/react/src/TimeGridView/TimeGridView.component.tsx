@@ -11,7 +11,7 @@ import type {
   TimeLabelProps,
   TimeShowMoreProps,
 } from '../components.type'
-import EventButton from '../internal/EventButton.component'
+import EventButton from '../EventButton'
 import {
   dayCountStyle,
   eventBoxStyle,
@@ -20,19 +20,19 @@ import {
   selectionStyle,
   slotCountStyle,
   slotGroupStyle,
-} from '../internal/geometry.function'
-import type { Direction } from '../internal/useRovingSelection'
-import { useRovingSelection } from '../internal/useRovingSelection'
-import { useEventRoving } from '../internal/useEventRoving'
-import { useKeyboardDnd } from '../internal/useKeyboardDnd'
+} from '../geometryStyles'
+import type { Direction } from '../useRovingSelection'
+import { useRovingSelection } from '../useRovingSelection'
+import { useEventRoving } from '../useEventRoving'
+import { useKeyboardDnd } from '../useKeyboardDnd'
 import { useSignalValue } from '../internal/useSignalValue'
-import { useSlotSelection } from '../internal/useSlotSelection'
-import DefaultTimeAllDayEvent from './components/DefaultTimeAllDayEvent.component'
-import DefaultTimeDayHeading from './components/DefaultTimeDayHeading.component'
-import DefaultTimeEvent from './components/DefaultTimeEvent.component'
-import DefaultTimeLabel from './components/DefaultTimeLabel.component'
-import DefaultTimeShowMore from './components/DefaultTimeShowMore.component'
-import { useTimeGrid } from './hooks'
+import { useSlotSelection } from '../useSlotSelection'
+import DefaultTimeAllDayEvent from '../DefaultTimeAllDayEvent'
+import DefaultTimeDayHeading from '../DefaultTimeDayHeading'
+import DefaultTimeEvent from '../DefaultTimeEvent'
+import DefaultTimeLabel from '../DefaultTimeLabel'
+import DefaultTimeShowMore from '../DefaultTimeShowMore'
+import { useTimeGrid } from '../useTimeGrid'
 
 /** A timed event resizes from both edges (top + bottom); stable identity. */
 const TIMED_RESIZE_EDGES: readonly ResizeEdge[] = ['start', 'end']

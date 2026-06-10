@@ -8,19 +8,19 @@ import type {
   MonthShowMoreProps,
   MonthWeekdayProps,
 } from '../components.type'
-import EventButton from '../internal/EventButton.component'
-import { monthGridStyle, segmentStyle } from '../internal/geometry.function'
-import { useEventRoving } from '../internal/useEventRoving'
-import { useKeyboardDnd } from '../internal/useKeyboardDnd'
-import type { Direction } from '../internal/useRovingSelection'
-import { useRovingSelection } from '../internal/useRovingSelection'
+import EventButton from '../EventButton'
+import { monthGridStyle, segmentStyle } from '../geometryStyles'
+import { useEventRoving } from '../useEventRoving'
+import { useKeyboardDnd } from '../useKeyboardDnd'
+import type { Direction } from '../useRovingSelection'
+import { useRovingSelection } from '../useRovingSelection'
 import { useSignalValue } from '../internal/useSignalValue'
-import { useSlotSelection } from '../internal/useSlotSelection'
-import DefaultMonthDate from './components/DefaultMonthDate.component'
-import DefaultMonthEvent from './components/DefaultMonthEvent.component'
-import DefaultMonthShowMore from './components/DefaultMonthShowMore.component'
-import DefaultMonthWeekday from './components/DefaultMonthWeekday.component'
-import { useMonthWeeks } from './hooks'
+import { useSlotSelection } from '../useSlotSelection'
+import DefaultMonthDate from '../DefaultMonthDate'
+import DefaultMonthEvent from '../DefaultMonthEvent'
+import DefaultMonthShowMore from '../DefaultMonthShowMore'
+import DefaultMonthWeekday from '../DefaultMonthWeekday'
+import { useMonthWeeks } from '../useMonthWeeks'
 
 /**
  * The month view: a padded day grid split into week rows, with overlapping
