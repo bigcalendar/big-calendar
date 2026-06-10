@@ -1,23 +1,33 @@
 import { beforeAll, describe, expect, it } from 'vitest'
+import { createLuxonLocalizer, type LuxonLocalizer } from '@big-calendar/localizer-luxon'
 import { createTemporalLocalizer, type TemporalLocalizer } from '@big-calendar/localizer-temporal'
 
 /**
- * Step 0 of the localizer test retrofit: prove the built
- * `@big-calendar/localizer-temporal` package resolves under Vitest's node
- * environment — including its dynamic `temporal-polyfill` import — before any
- * suite is converted off the hand-rolled fake localizer.
+ * Proves both shipped localizer packages resolve correctly under Vitest's node
+ * environment — including Temporal's dynamic polyfill import — before tests
+ * that rely on the dual-localizer LOCALIZER_CASES harness run.
  */
 
-let loc: TemporalLocalizer
+let temporal: TemporalLocalizer
+let luxon: LuxonLocalizer
 
 beforeAll(async () => {
-  loc = await createTemporalLocalizer({ locale: 'en-US', timezone: 'UTC' })
+  temporal = await createTemporalLocalizer({ locale: 'en-US', timezone: 'UTC' })
+  luxon = createLuxonLocalizer({ locale: 'en-US', timezone: 'UTC' })
 })
 
 describe('@big-calendar/localizer-temporal (dist) under Vitest/node', () => {
   it('imports the package, loads the polyfill, and formats a value', () => {
     expect(
-      loc.format({ value: '2026-07-03T00:00:00Z', format: { hour: '2-digit', minute: '2-digit', hour12: false } }),
+      temporal.format({ value: '2026-07-03T00:00:00Z', format: { hour: '2-digit', minute: '2-digit', hour12: false } }),
+    ).toBe('00:00')
+  })
+})
+
+describe('@big-calendar/localizer-luxon (dist) under Vitest/node', () => {
+  it('imports the package and formats a value', () => {
+    expect(
+      luxon.format({ value: '2026-07-03T00:00:00Z', format: { hour: '2-digit', minute: '2-digit', hour12: false } }),
     ).toBe('00:00')
   })
 })

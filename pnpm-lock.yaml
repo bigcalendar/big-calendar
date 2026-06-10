@@ -88,6 +88,9 @@ importers:
         specifier: ^1.14.2
         version: 1.14.2
     devDependencies:
+      '@big-calendar/localizer-luxon':
+        specifier: workspace:*
+        version: link:../localizer-luxon
       '@big-calendar/localizer-temporal':
         specifier: workspace:*
         version: link:../localizer-temporal
@@ -156,6 +159,9 @@ importers:
       '@big-calendar/dnd':
         specifier: workspace:*
         version: link:../dnd
+      '@big-calendar/localizer-luxon':
+        specifier: workspace:*
+        version: link:../localizer-luxon
       '@big-calendar/localizer-temporal':
         specifier: workspace:*
         version: link:../localizer-temporal
