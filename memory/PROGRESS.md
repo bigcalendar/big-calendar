@@ -21,7 +21,7 @@
 
 ## ⚠ NEXT TASK
 
-**7a-3** — Storybook globals: create `packages/storybook-shared/` with `localeList.constant.ts` + `timeZoneList.constant.ts`; add globals + `withLocalizerDecorator` to storybook-core and storybook-react.
+**7a-5** — `src/` restructure — move internal hooks to top-level public folders; promote `AgendaEventButton` + all `Default*` components to public.
 
 ---
 
@@ -32,8 +32,9 @@
 | 7a-0 | Doc updates (DECISIONS.md, PROGRESS.md, DECISIONS-ARCHIVE.md, Upgrade_plan_prompt.md) | ✅ |
 | 7a-1 | Core: rename `config.views` → `config.viewDefinitions`; add `config.enabledViews`; expose `store.enabledViews` signal | ✅ |
 | 7a-2 | React: add `views?: ViewKey[]` to `CalendarProps`; update `useToolbarProps` to read `store.enabledViews`; update `Calendar` dispatch to check `components.views[viewModel.view]` for all views | ✅ |
-| **7a-3** | **Storybook globals — create `packages/storybook-shared/` with `localeList.constant.ts` + `timeZoneList.constant.ts`; add globals + `withLocalizerDecorator` to storybook-core and storybook-react** | ← next |
-| 7a-4 | `@big-calendar/styles` MDX documentation page — all `.bc-*` classes, nesting, CSS custom property overrides | — |
+| 7a-3 | Storybook globals — `packages/storybook-shared/` with locale/TZ constants + `withLocalizerDecorator`; wired into storybook-core and storybook-react | ✅ |
+| 7a-4 | `@big-calendar/styles` MDX documentation page — all `.bc-*` classes, nesting, CSS custom property overrides | ✅ |
+| **7a-5** | **`src/` restructure — move internal hooks to top-level public folders; promote `AgendaEventButton` + all `Default*` components to public** | ← next |
 | 7a-5 | `src/` restructure — move internal hooks to top-level public folders; promote `AgendaEventButton` + all `Default*` components to public | — |
 | 7a-6 | Hook extraction — `useMonthView`, `useTimeGridView` (split: `useTimeGridHeader` / `useTimeGridBody`), `useAgendaView`; element-spread pattern (className + data-* + handlers + refs + aria per group) | — |
 | 7a-7 | Build — multi-entry Vite config + wildcard `package.json` subpath exports | — |
@@ -44,7 +45,7 @@
 
 ## Reference
 
-Test counts (last green run — 7a-2): localizer: 45 · core: 477 · dnd: 36 · react: 343 · **total: 901**
+Test counts (last green run — live localizer switching): localizer: 45 · core: 479 · dnd: 36 · react: 343 · **total: 903**
 
 Coverage bar: **per-file** 85% branch / 95% function (not a global average).
 

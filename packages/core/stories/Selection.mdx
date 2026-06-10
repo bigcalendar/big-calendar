@@ -1,8 +1,11 @@
 import { Meta } from '@storybook/addon-docs/blocks'
 
-<Meta title="React/Selection" />
+<Meta title="Core/Selection" />
 
 # Slot selection
+
+> Code examples on this page use the **React adapter** (`@big-calendar/react`).
+> Every other framework adapter exposes the same props and emits identical payloads.
 
 **Slot selection** is how a user picks an empty time range or a span of days on the
 calendar — the gesture you would use to start creating a new event. It is completely
@@ -197,7 +200,7 @@ Selection is deliberately split across two packages so the *behaviour* is shared
     </tr>
     <tr>
       <td><strong>3. The adapter</strong> (DOM ↔ coordinates)</td>
-      <td><code>@big-calendar/react</code></td>
+      <td>framework package (e.g. <code>@big-calendar/react</code>)</td>
       <td>The only layer that touches the DOM. It maps pointer / keyboard / touch events to a slot coordinate (reading <code>data-slot-index</code> + <code>data-date</code> off the focused / hit cell — <strong>no pixel hit-testing</strong>), drives the FSM via <code>store.selection.*</code>, and reads <code>store.selection.range</code> + <code>store.selection.anchor</code> to paint the live <code>.bc-selection</code> overlay.</td>
     </tr>
   </tbody>

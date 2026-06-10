@@ -25,6 +25,7 @@ const config: StorybookConfig = {
       '@big-calendar/localizer': resolve(pkgs, 'localizer/src/index.ts'),
       '@big-calendar/localizer-luxon': resolve(pkgs, 'localizer-luxon/src/index.ts'),
       '@big-calendar/localizer-temporal': resolve(pkgs, 'localizer-temporal/src/index.ts'),
+      '@big-calendar/storybook-shared': resolve(pkgs, 'storybook-shared/src/index.ts'),
       '@big-calendar/styles': resolve(pkgs, 'styles/src'),
     }
     return config

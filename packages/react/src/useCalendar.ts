@@ -128,6 +128,11 @@ export function useCalendar<TEvent = unknown, TResource = unknown>(
     if (props.date !== undefined) store.date.value = props.date
   }, [props.date, store])
 
+  // Localizer swap: recomputes range/label/viewModel without unmounting.
+  useEffect(() => {
+    store.setLocalizer({ localizer: props.localizer })
+  }, [props.localizer, store])
+
   // Data inputs always reflect the latest props.
   useEffect(() => {
     store.events.value = props.events ?? []

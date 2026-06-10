@@ -42,6 +42,20 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       expect(store.enabledViews.value).toEqual(['month', 'week', 'work_week', 'day', 'agenda'])
     })
 
+    it('setLocalizer swaps the localizer and recomputes label + viewModel', async () => {
+      const store = createCalendarStore<Event>({ localizer, date: monday, view: Views.MONTH })
+      expect(store.localizer).toBe(localizer)
+      const labelBefore = store.label.value
+
+      const other = await create({ locale: 'fr-FR' })
+      store.setLocalizer({ localizer: other })
+
+      expect(store.localizer).toBe(other)
+      // The French locale formats month names differently from en-US, so the
+      // toolbar label must change.
+      expect(store.label.value).not.toBe(labelBefore)
+    })
+
     it('seeds state from a full config', () => {
       const events: Event[] = [{ id: 1, title: 'A', start: 's', end: 'e' }]
       const store = createCalendarStore<Event, { id: number }>({

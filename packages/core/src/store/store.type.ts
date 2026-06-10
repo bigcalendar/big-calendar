@@ -415,6 +415,12 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
   setBackgroundEvents(args: { events: TEvent[] }): void
   /** Replace the resource list. */
   setResources(args: { resources: TResource[] | undefined }): void
+  /**
+   * Swap the active localizer. All derived signals (`range`, `label`, `viewModel`)
+   * recompute immediately. Use this to support runtime locale / timezone switching
+   * without unmounting the calendar (e.g., a language-switcher in the host app).
+   */
+  setLocalizer(args: { localizer: LocalizerContract }): void
   /** Tear down: dispose any internal subscriptions. Safe to call more than once. */
   destroy(): void
 }

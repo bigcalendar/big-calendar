@@ -1,3 +1,4 @@
+import { useLocalizerContext } from '@big-calendar/storybook-shared'
 import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
@@ -15,6 +16,10 @@ export { demoEvents }
  * module load via top-level await — every story importing this gets the same
  * ready-to-use instance. Pinned to `en-US`/`UTC` and a fixed `NOW` so the grids,
  * today highlight, and now-indicator render deterministically.
+ *
+ * Inside Storybook, {@link CalendarStage} prefers the localizer supplied by
+ * `withLocalizerDecorator` via {@link useLocalizerContext}, so the toolbar
+ * globals (localizer type, locale, time zone) drive the calendar automatically.
  */
 export const localizer = await createTemporalLocalizer({ locale: 'en-US', timeZone: 'UTC' })
 
@@ -40,10 +45,11 @@ export type CalendarStageProps = Partial<CalendarProviderProps<DemoEvent>> & {
  * children, mirroring the eventual `<Calendar>` composition.
  */
 export function CalendarStage({ children, height = 800, rows = 'auto 1fr', ...props }: CalendarStageProps) {
+  const ctxLocalizer = useLocalizerContext()
   return (
     <div style={{ display: 'grid', gridTemplateRows: rows, blockSize: height, inlineSize: '100%' }}>
       <CalendarProvider<DemoEvent>
-        localizer={localizer}
+        localizer={ctxLocalizer ?? localizer}
         getNow={() => NOW}
         events={demoEvents}
         defaultDate={FOCUS}

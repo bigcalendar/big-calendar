@@ -1,5 +1,6 @@
 import { batch, computed, effect, signal } from '@preact/signals-core'
 import type { ReadonlySignal } from '@preact/signals-core'
+import type { LocalizerContract } from '@big-calendar/localizer'
 import { resolveAccessors, wrapAccessor } from '../accessors/accessors.function'
 import { moveEvent } from '../dnd/moveEvent.function'
 import type { MoveMode } from '../dnd/moveEvent.function'
@@ -32,10 +33,13 @@ const defaultGetNow = (): string => new Date().toISOString()
 export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   config: CalendarConfig<TEvent, TResource>,
 ): CalendarStore<TEvent, TResource> {
-  const { localizer } = config
-  if (localizer == null) {
+  if (config.localizer == null) {
     throw new Error('createCalendarStore: a `localizer` is required.')
   }
+  // Mutable signal so a new localizer can be swapped in after construction
+  // (e.g., when the user switches locale or localizer type at runtime). All
+  // computed signals read `localizerSignal.value` so they re-derive automatically.
+  const localizerSignal = signal<LocalizerContract>(config.localizer)
 
   const getNow = config.getNow ?? defaultGetNow
   const accessors = resolveAccessors<TEvent, TResource>(config.accessors)
@@ -82,7 +86,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     const end = getEventEnd(event)
     if (start == null || end == null) return null
     const resized = resizeEvent({
-      localizer,
+      localizer: localizerSignal.value,
       start,
       end,
       allDay: getEventAllDay(event) ?? false,
@@ -111,7 +115,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     const end = getEventEnd(event)
     if (start == null || end == null) return null
     const moved = moveEvent({
-      localizer,
+      localizer: localizerSignal.value,
       start,
       end,
       allDay: getEventAllDay(event) ?? false,
@@ -154,25 +158,25 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     return [...BUILTIN_VIEWS, ...customKeys]
   })
   const range = computed(() =>
-    viewRange({ localizer, date: date.value, view: view.value, length: config.length, registry }),
+    viewRange({ localizer: localizerSignal.value, date: date.value, view: view.value, length: config.length, registry }),
   )
 
   // Localized toolbar title for the active view + focus date. Computed here so
   // every framework adapter renders the identical label.
   const label = computed(() =>
-    viewLabel({ localizer, view: view.value, date: date.value, range: range.value, registry }),
+    viewLabel({ localizer: localizerSignal.value, view: view.value, date: date.value, range: range.value, registry }),
   )
 
   // Resolve the time-grid window once (config is stable). A midnight `max`
   // (00:00) means end-of-day → the full 1440-minute window.
-  const dayStartMin = config.min == null ? 0 : localizer.getMinutesFromMidnight(config.min)
+  const dayStartMin = config.min == null ? 0 : localizerSignal.value.getMinutesFromMidnight(config.min)
   const dayEndMin =
-    config.max == null ? 1440 : localizer.getMinutesFromMidnight(config.max) || 1440
+    config.max == null ? 1440 : localizerSignal.value.getMinutesFromMidnight(config.max) || 1440
   const allDayMaxRows = config.showAllEvents ? Infinity : (config.allDayMaxRows ?? Infinity)
 
   const viewModel = computed(() =>
     buildViewModel({
-      localizer,
+      localizer: localizerSignal.value,
       accessors,
       view: view.value,
       days: range.value.days,
@@ -219,7 +223,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     const slots = days.slice(from, to + 1)
     const start = slots[0] ?? date.value
     const last = slots[slots.length - 1] ?? start
-    return { start, end: localizer.endOf({ value: last, unit: 'day' }), slots, allDay: true }
+    return { start, end: localizerSignal.value.endOf({ value: last, unit: 'day' }), slots, allDay: true }
   }
 
   const translate = (slotRange: SelectionRange): Translated => {
@@ -238,7 +242,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       const slotDate = (index: number): string => {
         const dayIdx = dayOf(index)
         const day = days[dayIdx] ?? ctx.date
-        return localizer.getSlotDate({ date: day, minutesFromMidnight: dayStartMin + (index - dayIdx * slotCount) * step })
+        return localizerSignal.value.getSlotDate({ date: day, minutesFromMidnight: dayStartMin + (index - dayIdx * slotCount) * step })
       }
       const startDay = dayOf(slotRange.start)
       const endDay = dayOf(slotRange.end)
@@ -261,8 +265,8 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       const endMinutes = dayStartMin + (endInDay + 1) * step
       const end =
         endMinutes >= 1440
-          ? localizer.endOf({ value: endDayStr, unit: 'day' })
-          : localizer.getSlotDate({ date: endDayStr, minutesFromMidnight: endMinutes })
+          ? localizerSignal.value.endOf({ value: endDayStr, unit: 'day' })
+          : localizerSignal.value.getSlotDate({ date: endDayStr, minutesFromMidnight: endMinutes })
       // A drag that crosses day columns is an all-day span — but, unlike a
       // month/day selection, it keeps its instant start/end times.
       return { start: slots[0]!, end, slots, allDay: startDay !== endDay }
@@ -426,7 +430,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     keyboardDrag: keyboardDrag as ReadonlySignal<KeyboardDragState | null>,
     dndEnabled,
     enabledViews,
-    localizer,
+    get localizer() { return localizerSignal.value },
     accessors,
     getNow,
     step,
@@ -438,7 +442,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
 
     navigate({ direction, date: target }) {
       const next = navigateDate({
-        localizer,
+        localizer: localizerSignal.value,
         date: date.value,
         direction,
         view: view.value,
@@ -507,7 +511,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       dragPreview.value = null
       const report = config.onDropFromOutside
       if (report == null) return
-      const placed = placeExternalEvent({ localizer, target, mode, durationMinutes, allDay, start, end, step })
+      const placed = placeExternalEvent({ localizer: localizerSignal.value, target, mode, durationMinutes, allDay, start, end, step })
       report({ ...placed, resourceId })
     },
 
@@ -515,7 +519,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       // No event lookup: the outside item isn't in `events` yet. A missing
       // duration/template (native drag) previews a single slot (time) or the
       // dropped day (day) via the placement default.
-      const placed = placeExternalEvent({ localizer, target, mode, durationMinutes, start, end, step })
+      const placed = placeExternalEvent({ localizer: localizerSignal.value, target, mode, durationMinutes, start, end, step })
       dragPreview.value = { start: placed.start, end: placed.end }
     },
 
@@ -561,8 +565,8 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       const grab = keyboardDrag.value
       if (grab == null) return
       const shift = (value: string): string =>
-        localizer.add({
-          value: localizer.add({ value, amount: days, unit: 'day' }),
+        localizerSignal.value.add({
+          value: localizerSignal.value.add({ value, amount: days, unit: 'day' }),
           amount: minutes,
           unit: 'minute',
         })
@@ -581,20 +585,20 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       grabResized = true
 
       if (edge === 'start') {
-        const candidate = localizer.add({
-          value: localizer.add({ value: grab.start, amount: days, unit: 'day' }),
+        const candidate = localizerSignal.value.add({
+          value: localizerSignal.value.add({ value: grab.start, amount: days, unit: 'day' }),
           amount: minutes,
           unit: 'minute',
         })
         let start: string
         if (days !== 0) {
           // Whole-day resize (month): start can't go forward past end's day.
-          start = localizer.gt({ a: candidate, b: grab.end, unit: 'day' })
-            ? localizer.add({
+          start = localizerSignal.value.gt({ a: candidate, b: grab.end, unit: 'day' })
+            ? localizerSignal.value.add({
                 value: grab.start,
-                amount: localizer.diff({
-                  a: localizer.startOf({ value: grab.end, unit: 'day' }),
-                  b: localizer.startOf({ value: grab.start, unit: 'day' }),
+                amount: localizerSignal.value.diff({
+                  a: localizerSignal.value.startOf({ value: grab.end, unit: 'day' }),
+                  b: localizerSignal.value.startOf({ value: grab.start, unit: 'day' }),
                   unit: 'day',
                 }),
                 unit: 'day',
@@ -603,8 +607,8 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
         } else {
           // Slot resize (time grid): start can't cross within one slot of the end.
           start =
-            localizer.diff({ a: grab.end, b: candidate, unit: 'minute' }) < step
-              ? localizer.add({ value: grab.end, amount: -step, unit: 'minute' })
+            localizerSignal.value.diff({ a: grab.end, b: candidate, unit: 'minute' }) < step
+              ? localizerSignal.value.add({ value: grab.end, amount: -step, unit: 'minute' })
               : candidate
         }
         keyboardDrag.value = { ...grab, start }
@@ -612,8 +616,8 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
         return
       }
 
-      const candidate = localizer.add({
-        value: localizer.add({ value: grab.end, amount: days, unit: 'day' }),
+      const candidate = localizerSignal.value.add({
+        value: localizerSignal.value.add({ value: grab.end, amount: days, unit: 'day' }),
         amount: minutes,
         unit: 'minute',
       })
@@ -621,12 +625,12 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       if (days !== 0) {
         // Whole-day resize (month): keep the event at least one day long — clamp the
         // end back to the start's day (keeping its time-of-day) if it would go below.
-        end = localizer.lt({ a: candidate, b: grab.start, unit: 'day' })
-          ? localizer.add({
+        end = localizerSignal.value.lt({ a: candidate, b: grab.start, unit: 'day' })
+          ? localizerSignal.value.add({
               value: grab.end,
-              amount: localizer.diff({
-                a: localizer.startOf({ value: grab.start, unit: 'day' }),
-                b: localizer.startOf({ value: grab.end, unit: 'day' }),
+              amount: localizerSignal.value.diff({
+                a: localizerSignal.value.startOf({ value: grab.start, unit: 'day' }),
+                b: localizerSignal.value.startOf({ value: grab.end, unit: 'day' }),
                 unit: 'day',
               }),
               unit: 'day',
@@ -635,8 +639,8 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       } else {
         // Slot resize (time grid): never let the end cross within one slot of the start.
         end =
-          localizer.diff({ a: candidate, b: grab.start, unit: 'minute' }) < step
-            ? localizer.add({ value: grab.start, amount: step, unit: 'minute' })
+          localizerSignal.value.diff({ a: candidate, b: grab.start, unit: 'minute' }) < step
+            ? localizerSignal.value.add({ value: grab.start, amount: step, unit: 'minute' })
             : candidate
       }
       keyboardDrag.value = { ...grab, end }
@@ -701,6 +705,10 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
 
     setResources({ resources: nextResources }) {
       resources.value = nextResources
+    },
+
+    setLocalizer({ localizer: nextLocalizer }) {
+      localizerSignal.value = nextLocalizer
     },
 
     destroy() {

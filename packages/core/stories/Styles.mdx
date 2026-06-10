@@ -1,0 +1,603 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Styles/Guide" />
+
+# @big-calendar/styles
+
+The style layer for Big Calendar. It ships a single CSS file (or granular
+pieces you can pick from) that handles the reset, design tokens, layout, and
+visual skin for every built-in component. The React package reads these class
+names — it ships no CSS of its own.
+
+## Installing
+
+```bash
+yarn add @big-calendar/styles
+```
+
+Then import the full bundle once, near the top of your app:
+
+```ts
+import '@big-calendar/styles/index.css'
+```
+
+Or pick only what you need:
+
+```ts
+import '@big-calendar/styles/reset.css'
+import '@big-calendar/styles/tokens.css'
+import '@big-calendar/styles/layout.css'
+import '@big-calendar/styles/components/toolbar.css'
+import '@big-calendar/styles/components/month.css'
+import '@big-calendar/styles/components/timegrid.css'
+import '@big-calendar/styles/components/event.css'
+import '@big-calendar/styles/components/agenda.css'
+import '@big-calendar/styles/components/popover.css'
+import '@big-calendar/styles/components/selection.css'
+```
+
+---
+
+## Cascade layers
+
+CSS cascade layers let the browser know which styles are "base" (the library)
+and which are "yours" (the override). When two rules have the same specificity,
+the layer order decides which wins — layers declared later win. Big Calendar
+puts its styles in named layers so that your overrides *always* win, even if
+your selector is simple.
+
+The layer order is declared once at the top of `index.css`:
+
+```css
+@layer bc.reset, bc.tokens, bc.layout, bc.components, bc.theme, bc.overrides;
+```
+
+<table>
+  <thead>
+    <tr><th>Layer</th><th>What lives there</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>bc.reset</code></td><td>Scoped <code>box-sizing</code>, button/list/input resets, <code>font-family</code>/<code>color</code> base</td></tr>
+    <tr><td><code>bc.tokens</code></td><td>All <code>--bc-*</code> CSS custom property defaults (design tokens)</td></tr>
+    <tr><td><code>bc.layout</code></td><td>Grid/flex structural rules — no colors, just geometry</td></tr>
+    <tr><td><code>bc.components</code></td><td>Visual skin: colors, borders, hover states, typography</td></tr>
+    <tr><td><code>bc.theme</code></td><td>Reserved for a future official theme file (empty today)</td></tr>
+    <tr><td><code>bc.overrides</code></td><td>The slot for your own overrides — target it to always win</td></tr>
+  </tbody>
+</table>
+
+To override any rule without fighting specificity, put your CSS in
+`bc.overrides`:
+
+```css
+@layer bc.overrides {
+  .bc-toolbar {
+    padding: 1rem 1.5rem;
+  }
+}
+```
+
+Or put your styles **outside** all layers entirely — unlayered styles always
+beat layered ones, regardless of order:
+
+```css
+/* This wins over everything in any bc.* layer */
+.bc-toolbar {
+  padding: 1rem 1.5rem;
+}
+```
+
+---
+
+## Design tokens
+
+Every visual value is a CSS custom property, prefixed `--bc-*`. They are
+defined on `:where(.bc-calendar)` at zero specificity, so any rule that targets
+`.bc-calendar` directly overrides them:
+
+```css
+.bc-calendar {
+  --bc-color-event-bg: #8b5cf6; /* your purple brand color */
+}
+```
+
+### Colors — surfaces
+
+<table>
+  <thead>
+    <tr><th>Token</th><th>Default</th><th>What it colors</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>--bc-color-bg</code></td><td><code>Canvas</code></td><td>Calendar background</td></tr>
+    <tr><td><code>--bc-color-fg</code></td><td><code>CanvasText</code></td><td>Default text</td></tr>
+    <tr><td><code>--bc-color-muted</code></td><td>60% CanvasText → Canvas</td><td>Secondary labels (gutter times, weekday names)</td></tr>
+    <tr><td><code>--bc-color-border</code></td><td>20% CanvasText → Canvas</td><td>Grid lines, cell borders, button borders</td></tr>
+    <tr><td><code>--bc-color-slot-border</code></td><td>10% CanvasText → Canvas</td><td>Lighter half-hour slot lines</td></tr>
+    <tr><td><code>--bc-color-accent</code></td><td><code>AccentColor</code></td><td>Today highlight color, active toolbar button</td></tr>
+    <tr><td><code>--bc-color-accent-fg</code></td><td><code>AccentColorText</code></td><td>Text on top of <code>--bc-color-accent</code></td></tr>
+  </tbody>
+</table>
+
+`Canvas` and `CanvasText` are CSS system colors — they automatically switch
+between light and dark depending on the user's OS setting. That means the
+calendar adapts to dark mode for free, as long as you don't hard-code values.
+
+### Colors — calendar surfaces
+
+<table>
+  <thead>
+    <tr><th>Token</th><th>Default</th><th>What it colors</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>--bc-color-today-bg</code></td><td>10% AccentColor → Canvas</td><td>Today's date cell / time column background</td></tr>
+    <tr><td><code>--bc-color-offrange-bg</code></td><td>4% CanvasText → Canvas</td><td>Days outside the current month</td></tr>
+    <tr><td><code>--bc-color-hover-bg</code></td><td>8% CanvasText → Canvas</td><td>Toolbar button hover state</td></tr>
+  </tbody>
+</table>
+
+### Colors — events
+
+<table>
+  <thead>
+    <tr><th>Token</th><th>Default</th><th>What it colors</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>--bc-color-event-bg</code></td><td><code>#006deb</code></td><td>Event block fill</td></tr>
+    <tr><td><code>--bc-color-event-fg</code></td><td><code>#fff</code></td><td>Event text</td></tr>
+    <tr><td><code>--bc-color-event-border</code></td><td>80% AccentColor → CanvasText</td><td>Event border</td></tr>
+    <tr><td><code>--bc-color-bg-event-bg</code></td><td>18% AccentColor → Canvas</td><td>Background event fill</td></tr>
+    <tr><td><code>--bc-color-bg-event-opacity</code></td><td><code>0.5</code></td><td>Background event opacity</td></tr>
+  </tbody>
+</table>
+
+### Colors — now indicator and selection
+
+<table>
+  <thead>
+    <tr><th>Token</th><th>Default</th><th>What it colors</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>--bc-color-now</code></td><td>75% red → CanvasText</td><td>The current-time indicator line</td></tr>
+    <tr><td><code>--bc-color-selection-bg</code></td><td>50% event-bg → transparent</td><td>Drag-to-select highlight fill</td></tr>
+    <tr><td><code>--bc-color-selection-border</code></td><td>70% event-bg → CanvasText</td><td>Drag-to-select highlight border</td></tr>
+  </tbody>
+</table>
+
+### Colors — focus
+
+<table>
+  <thead>
+    <tr><th>Token</th><th>Default</th><th>What it colors</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>--bc-color-focus-ring</code></td><td><code>AccentColor</code></td><td>Keyboard focus outline</td></tr>
+  </tbody>
+</table>
+
+### Spacing
+
+A six-step scale built in `rem` units. Use these in your own overrides if you
+want consistent gaps.
+
+<table>
+  <thead>
+    <tr><th>Token</th><th>Value</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>--bc-space-0</code></td><td><code>0</code></td></tr>
+    <tr><td><code>--bc-space-1</code></td><td><code>0.25rem</code></td></tr>
+    <tr><td><code>--bc-space-2</code></td><td><code>0.5rem</code></td></tr>
+    <tr><td><code>--bc-space-3</code></td><td><code>0.75rem</code></td></tr>
+    <tr><td><code>--bc-space-4</code></td><td><code>1rem</code></td></tr>
+    <tr><td><code>--bc-space-5</code></td><td><code>1.5rem</code></td></tr>
+  </tbody>
+</table>
+
+### Typography
+
+<table>
+  <thead>
+    <tr><th>Token</th><th>Default</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>--bc-font-family</code></td><td><code>system-ui, -apple-system, Segoe UI, Roboto, sans-serif</code></td></tr>
+    <tr><td><code>--bc-font-size</code></td><td><code>0.875rem</code> (14px)</td></tr>
+    <tr><td><code>--bc-font-size-sm</code></td><td><code>0.75rem</code> (12px)</td></tr>
+    <tr><td><code>--bc-font-size-lg</code></td><td><code>1rem</code> (16px)</td></tr>
+    <tr><td><code>--bc-line-height</code></td><td><code>1.4</code></td></tr>
+    <tr><td><code>--bc-font-weight</code></td><td><code>400</code></td></tr>
+    <tr><td><code>--bc-font-weight-bold</code></td><td><code>600</code></td></tr>
+  </tbody>
+</table>
+
+### Borders and radius
+
+<table>
+  <thead>
+    <tr><th>Token</th><th>Default</th><th>Used for</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>--bc-border-width</code></td><td><code>1px</code></td><td>All borders</td></tr>
+    <tr><td><code>--bc-border</code></td><td><code>1px solid var(--bc-color-border)</code></td><td>Composed border shorthand</td></tr>
+    <tr><td><code>--bc-radius</code></td><td><code>0.375rem</code></td><td>Popover, dialog corners</td></tr>
+    <tr><td><code>--bc-radius-sm</code></td><td><code>0.25rem</code></td><td>Event and button corners</td></tr>
+  </tbody>
+</table>
+
+### Focus ring
+
+<table>
+  <thead>
+    <tr><th>Token</th><th>Default</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>--bc-focus-ring-width</code></td><td><code>2px</code></td></tr>
+    <tr><td><code>--bc-focus-ring-offset</code></td><td><code>2px</code></td></tr>
+    <tr><td><code>--bc-focus-ring</code></td><td><code>2px solid var(--bc-color-focus-ring)</code></td></tr>
+  </tbody>
+</table>
+
+### Density and sizing
+
+These tokens control how compact or spacious the calendar feels. They're the
+most common ones to tweak when fitting the calendar into a tight layout.
+
+<table>
+  <thead>
+    <tr><th>Token</th><th>Default</th><th>Controls</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>--bc-month-row-min</code></td><td><code>5.5rem</code></td><td>Minimum height of a month day cell</td></tr>
+    <tr><td><code>--bc-slot-height</code></td><td><code>1.5rem</code></td><td>Height of one time-grid row (one time step)</td></tr>
+    <tr><td><code>--bc-gutter-width</code></td><td><code>4rem</code></td><td>Width of the time labels column on the left</td></tr>
+    <tr><td><code>--bc-event-gap</code></td><td><code>1px</code></td><td>Gap between overlapping events in the same column</td></tr>
+    <tr><td><code>--bc-event-gutter</code></td><td><code>0.625rem</code></td><td>Reserved strip on the right edge of a column so you can start a slot selection next to a full-width event</td></tr>
+    <tr><td><code>--bc-now-width</code></td><td><code>2px</code></td><td>Thickness of the current-time line</td></tr>
+    <tr><td><code>--bc-segment-height</code></td><td><code>1.25rem</code></td><td>Height of one stacked event row in the month / all-day band</td></tr>
+    <tr><td><code>--bc-touch-target</code></td><td><code>2.75rem</code></td><td>Minimum hit-target size for touch (44 px WCAG minimum)</td></tr>
+  </tbody>
+</table>
+
+The calendar also responds to its own container width (not the viewport), so at
+narrow sizes `--bc-gutter-width` and `--bc-font-size` tighten automatically.
+
+### Elevation
+
+<table>
+  <thead>
+    <tr><th>Token</th><th>Default</th><th>Used for</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>--bc-shadow-popover</code></td><td><code>0 4px 16px …CanvasText 25%</code></td><td>Show-more popup, tooltip, dialog shadow</td></tr>
+  </tbody>
+</table>
+
+---
+
+## Class reference
+
+All classes are in the `bc-` namespace. They are added by the framework
+adapter (the React package); you do not write them yourself. They are documented
+here so you can target them in your own CSS.
+
+### Layout root
+
+```
+.bc-calendar          ← the sizing container; tokens and container queries root
+  .bc-viewport        ← inner scroll boundary; overflow: hidden
+```
+
+`.bc-calendar` must receive an explicit height from its parent. The React
+adapter renders it inside whatever element you give it.
+
+`.bc-toolbar` can appear **inside** or **outside** `.bc-calendar` — it gets the
+reset and base font either way.
+
+### Toolbar
+
+```
+.bc-toolbar           ← flex row; nav + label + view switcher
+  .bc-toolbar-group   ← flex group (Back/Forward buttons live here)
+  .bc-toolbar-label   ← the current range label ("June 2025")
+  button              ← navigation and view-switch buttons
+    [aria-pressed="true"] or .bc-active  ← the active view button
+```
+
+### Month view
+
+```
+.bc-month             ← grid; header row + body rows
+  .bc-month-header    ← the "Sun Mon Tue …" weekday names row
+    .bc-weekday       ← one weekday name cell
+      .bc-weekday-long   ← full name ("Sunday"); hidden below 34 rem
+      .bc-weekday-short  ← abbreviated ("Su"); hidden above 34 rem
+  .bc-month-grid      ← 7-column grid of week rows
+    .bc-month-week    ← one week row; subgrid so segments share column tracks
+      .bc-week-backgrounds    ← date cells layer (pointer-events: none)
+        .bc-date-cell         ← one day cell
+          .bc-date-number     ← the date number label (re-enables pointer-events)
+          [.bc-today]         ← modifier: today's cell
+          [.bc-off-range]     ← modifier: day outside the displayed month
+      .bc-month-slots         ← transparent hit-target layer for slot selection
+        .bc-month-slot        ← one per day; keyboard-focusable
+      .bc-week-events         ← segment rows layer
+        .bc-segment           ← one event segment (can span multiple day columns)
+          [.bc-event-draggable]  ← DnD is active for this segment
+          [.bc-selected] / [aria-selected="true"]  ← selected state
+          .bc-event-title     ← event title text
+          .bc-resize-handle.bc-resize-handle-start   ← left resize strip
+          .bc-resize-handle.bc-resize-handle-end     ← right resize strip
+        .bc-show-more-cell    ← overflow placeholder when events don't fit
+          .bc-show-more       ← the "+ N more" button
+```
+
+### Time-grid view (day / week / work-week)
+
+```
+.bc-time-grid                 ← 2-column grid (gutter | columns)
+  .bc-time-header             ← day heading row
+    .bc-time-header-gutter    ← top-left spacer cell
+    .bc-day-heading           ← one day name cell
+      [.bc-today]             ← modifier: today's heading
+  .bc-allday-row              ← all-day band above the scrollable slots
+    .bc-allday-label          ← "all-day" text label
+    .bc-allday-slots          ← transparent hit-targets (one per day)
+      .bc-allday-slot         ← one per day; keyboard-focusable
+        [.bc-today]           ← today highlight
+    .bc-allday-selection      ← overlay grid for the selection band
+    .bc-allday-segments       ← stacked all-day event segments (same as month)
+  .bc-time-body               ← scrollable slot area
+    .bc-time-gutter           ← time label column
+      .bc-time-label          ← one hour label
+    .bc-day-column            ← one day column; positioning context for events
+      [.bc-today]             ← today highlight
+      .bc-time-slots          ← absolute grid of per-slot hit targets
+        .bc-time-slot         ← one slot cell; keyboard-focusable
+      .bc-event               ← one timed event box
+        [.bc-event-draggable]
+        [.bc-selected] / [aria-selected="true"]
+        [.bc-event-grabbed]   ← keyboard drag: event is "in hand"
+        .bc-event-title
+        .bc-event-time
+        .bc-resize-handle.bc-resize-handle-start   ← top resize strip
+        .bc-resize-handle.bc-resize-handle-end     ← bottom resize strip
+      .bc-bg-event            ← background event (no pointer events)
+      .bc-now-indicator       ← current-time line
+```
+
+### Resource time-grid
+
+When you pass a `resources` array to `CalendarProvider`, the adapter wraps the
+time grid in additional containers and adds tier headers:
+
+```
+.bc-time-grid-resources          ← 2D scroll container; one column per resource×day
+  [.bc-time-grid-resources-day]  ← modifier: day view (wider columns)
+  .bc-time-head                  ← sticky header block (stays put on vertical scroll)
+    .bc-time-header              ← day-name or resource-title row
+      .bc-time-header-gutter     ← frozen top-left corner
+      .bc-resource-header        ← one resource title cell
+      .bc-day-heading            ← one day name (tiered week header only)
+    .bc-time-header-tiered       ← modifier: two-tier (resource name over day names)
+      .bc-resource-day-head      ← day-name subgrid cell inside the tier
+    .bc-allday-row               ← all-day band (inside the sticky head)
+      .bc-allday-resource        ← one resource's all-day lane
+        .bc-allday-slot          ← hit target (absolute, fills the lane)
+        .bc-allday-resource-stack   ← stacked flow of all-day segments
+      .bc-allday-resource-week   ← week variant: day sub-grid inside the lane
+        .bc-allday-resource-slots     ← transparent per-day hit targets
+        .bc-allday-resource-segments  ← per-day segment grid
+  .bc-time-body                  ← slot body (non-scrolling inside the container)
+    .bc-time-gutter              ← frozen inline-start time labels
+    .bc-day-column               ← one day/resource column (events positioned here)
+```
+
+### Agenda view
+
+```
+.bc-agenda                ← 3-column grid (date | time | event)
+  .bc-agenda-header       ← column heading row
+    .bc-agenda-heading    ← one heading cell ("Date", "Time", "Event")
+  .bc-agenda-body         ← scrollable day group area
+    .bc-agenda-day        ← one day's group of events
+      .bc-agenda-date     ← the date label (spans all rows in the group)
+      .bc-agenda-row      ← one event row (time | event columns)
+        .bc-agenda-time   ← event time label
+        .bc-agenda-event  ← event title (a <button> when a click handler is wired)
+    .bc-agenda-empty      ← "no events in range" placeholder
+```
+
+### Events and segments (visual surface)
+
+<table>
+  <thead>
+    <tr><th>Class</th><th>Where it appears</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>.bc-event</code></td><td>Timed event in the time-grid</td></tr>
+    <tr><td><code>.bc-segment</code></td><td>All-day or multi-day event in month / all-day row</td></tr>
+    <tr><td><code>.bc-bg-event</code></td><td>Background event (read-only shaded block)</td></tr>
+    <tr><td><code>.bc-event-title</code></td><td>Title text inside <code>.bc-event</code> or <code>.bc-segment</code></td></tr>
+    <tr><td><code>.bc-event-time</code></td><td>Start/end time text inside <code>.bc-event</code></td></tr>
+    <tr><td><code>.bc-event-draggable</code></td><td>Added by DnD when the event can be dragged</td></tr>
+    <tr><td><code>.bc-event-grabbed</code></td><td>Added by DnD during a keyboard drag</td></tr>
+    <tr><td><code>.bc-selected</code></td><td>Added when the event is "selected" (open detail panel)</td></tr>
+    <tr><td><code>.bc-resize-handle</code></td><td>Grab strip for resizing; also needs <code>.bc-resize-handle-start</code> or <code>.bc-resize-handle-end</code></td></tr>
+  </tbody>
+</table>
+
+### Selection and drag preview
+
+<table>
+  <thead>
+    <tr><th>Class</th><th>What it represents</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>.bc-selection</code></td><td>The highlight box drawn while a slot is being selected (time-grid and all-day)</td></tr>
+    <tr><td><code>.bc-selection-month</code></td><td>Month-view variant of the selection band</td></tr>
+    <tr><td><code>.bc-selection-allday</code></td><td>All-day-row variant of the selection band</td></tr>
+    <tr><td><code>.bc-drag-preview</code></td><td>Dashed preview box showing where a dragged event will land (time-grid)</td></tr>
+    <tr><td><code>.bc-drag-preview-month</code></td><td>Month-view variant of the drag preview</td></tr>
+  </tbody>
+</table>
+
+### Popovers, dialogs, and tooltips
+
+These use the native [Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API)
+and render in the browser's top layer, so they appear above everything else
+without `z-index` tricks.
+
+<table>
+  <thead>
+    <tr><th>Class</th><th>What it is</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>.bc-popover</code></td><td>Show-more popup (lists hidden events for a day)</td></tr>
+    <tr><td><code>.bc-popover-title</code></td><td>Heading inside the popup ("3 events")</td></tr>
+    <tr><td><code>.bc-popover-events</code></td><td><code>&lt;ul&gt;</code> inside the popup</td></tr>
+    <tr><td><code>.bc-dialog</code></td><td>Modal dialog (e.g. event detail)</td></tr>
+    <tr><td><code>.bc-tooltip</code></td><td>Short hover tooltip</td></tr>
+  </tbody>
+</table>
+
+### Utility
+
+<table>
+  <thead>
+    <tr><th>Class</th><th>What it does</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>.bc-sr-only</code></td><td>Visually hidden but announced by screen readers (keyboard instructions, live regions)</td></tr>
+  </tbody>
+</table>
+
+---
+
+## Geometry contract
+
+The framework adapter positions time-grid events and month segments by setting
+inline custom properties on the element itself. You can read these in your own
+CSS if you're building a custom event renderer.
+
+**Time-grid event** (inside a `.bc-day-column`):
+
+<table>
+  <thead>
+    <tr><th>Property</th><th>Type</th><th>Meaning</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>--bc-top</code></td><td>0–1</td><td>Fraction of the column height from the top</td></tr>
+    <tr><td><code>--bc-height</code></td><td>0–1</td><td>Fraction of the column height</td></tr>
+    <tr><td><code>--bc-left</code></td><td>0–1</td><td>Fraction of the column width from the left</td></tr>
+    <tr><td><code>--bc-width</code></td><td>0–1</td><td>Fraction of the column width</td></tr>
+    <tr><td><code>--bc-z</code></td><td>integer</td><td>Paint order (used for <code>z-index</code>)</td></tr>
+  </tbody>
+</table>
+
+**Month / all-day segment** (inside a `.bc-week-events` or `.bc-allday-segments`):
+
+<table>
+  <thead>
+    <tr><th>Property</th><th>Type</th><th>Meaning</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>--bc-seg-left</code></td><td>1-based integer</td><td>Start grid column</td></tr>
+    <tr><td><code>--bc-seg-span</code></td><td>integer</td><td>How many columns it spans</td></tr>
+    <tr><td><code>--bc-seg-row</code></td><td>1-based integer</td><td>Stack level (row within the segment grid)</td></tr>
+  </tbody>
+</table>
+
+**Now indicator** (inside a `.bc-day-column`):
+
+<table>
+  <thead>
+    <tr><th>Property</th><th>Type</th><th>Meaning</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>--bc-now-top</code></td><td>0–1</td><td>Fraction of the column height from the top</td></tr>
+  </tbody>
+</table>
+
+**Counts set on containers** (the adapter writes these; layout.css reads them):
+
+<table>
+  <thead>
+    <tr><th>Property</th><th>Set on</th><th>Meaning</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>--bc-day-count</code></td><td>time-header, allday-row, time-body</td><td>Number of day columns</td></tr>
+    <tr><td><code>--bc-week-count</code></td><td>month-grid</td><td>Number of week rows</td></tr>
+    <tr><td><code>--bc-slot-count</code></td><td>day-column</td><td>Number of time slots</td></tr>
+  </tbody>
+</table>
+
+---
+
+## Override recipes
+
+### Change the event color
+
+```css
+.bc-calendar {
+  --bc-color-event-bg: #8b5cf6;
+  --bc-color-event-fg: #fff;
+}
+```
+
+### Compact layout (dense scheduling grid)
+
+```css
+.bc-calendar {
+  --bc-slot-height: 1.25rem;
+  --bc-month-row-min: 4rem;
+  --bc-segment-height: 1.125rem;
+}
+```
+
+### Wider time gutter
+
+```css
+.bc-calendar {
+  --bc-gutter-width: 5rem;
+}
+```
+
+### Full dark mode (no OS dependency)
+
+```css
+.bc-calendar {
+  --bc-color-bg: #1a1a1a;
+  --bc-color-fg: #f0f0f0;
+  --bc-color-event-bg: #3b82f6;
+}
+```
+
+### Custom toolbar padding (in the override layer)
+
+```css
+@layer bc.overrides {
+  .bc-toolbar {
+    padding-block: var(--bc-space-3);
+    padding-inline: var(--bc-space-4);
+  }
+}
+```
+
+### Target a specific view
+
+All view roots are direct children of `.bc-viewport`, so you can scope to one
+view at a time:
+
+```css
+@layer bc.overrides {
+  /* Agenda only: bigger date column */
+  .bc-agenda-date {
+    min-inline-size: 8rem;
+  }
+
+  /* Month only: larger weekday names */
+  .bc-month-header .bc-weekday {
+    font-size: var(--bc-font-size-lg);
+  }
+}
+```
