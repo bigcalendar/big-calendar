@@ -1,0 +1,340 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Core/Custom localizer" />
+
+# Building a custom localizer
+
+Big Calendar ships two ready-made localizers (Temporal and Luxon — see
+[Localizers](/?path=/docs/core-localizers--docs)). If your project uses a
+different date library — or if you want to wrap a backend-specific date
+representation — you can write your own.
+
+A custom localizer is a TypeScript class that extends the abstract base class
+`Localizer` from `@big-calendar/localizer` and fills in a small set of
+engine-level operations. The base class uses those operations to implement the
+full public API — you write the low-level primitives, the base class gives you
+everything else for free.
+
+---
+
+## How it works
+
+Imagine the base class as a recipe book. It knows how to make every dish (format
+a date, add a month, figure out if two dates are on the same day, and so on),
+but every recipe calls for one ingredient it doesn't have: the raw date math for
+_your_ library. Your subclass supplies those ingredients, and the recipe book
+handles the rest.
+
+```
+Your subclass                     Base class (Localizer<T>)
+───────────────────────           ────────────────────────────────────────────
+parse("2026-07-03T16:00Z")   →    uses it for: format(), add(), startOf()…
+serialize(internalValue)     →    called whenever a string needs to go out
+toEpochMs(internalValue)     →    used for all comparisons (lt, gt, eq…)
+getParts(internalValue)      →    provides year/month/day/hour/minute/weekday
+addUnits(value, n, 'day')    →    used by add(), range(), startOfWeek()…
+startOfUnit(value, 'month')  →    used by startOf(), floor(), visibleDays()…
+endOfUnit(value, 'day')      →    used by endOf()
+diffUnits(a, b, 'day')       →    used by diff(), daySpan()
+withTime(value, {h, m, s})   →    used by getSlotDate()
+offsetMinutes(value)         →    used by getTimezoneOffset(), getDstOffset()
+```
+
+`T` is whatever type your date library uses internally (Luxon uses `DateTime`,
+Temporal uses `ZonedDateTime`). It never escapes — all inputs to your localizer
+are strings, and all outputs are strings.
+
+---
+
+## Step-by-step example
+
+Here is a minimal localizer built on [Day.js](https://day.js.org/) with its
+UTC and timezone plugins. This is a simplified example to show the pattern —
+it does not handle every edge case a production implementation would need.
+
+### 1. Install the base package
+
+```bash
+pnpm add @big-calendar/localizer
+```
+
+(Your date library goes in too, of course — in this example, `dayjs` and its
+plugins.)
+
+### 2. Create your class
+
+```ts
+import { Localizer } from '@big-calendar/localizer'
+import type { DateParts, DateTimeUnit, FixedUnit, TimeParts } from '@big-calendar/localizer'
+import dayjs from 'dayjs'
+import timezone from 'dayjs/plugin/timezone'
+import utc from 'dayjs/plugin/utc'
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
+
+// T is the internal type — Dayjs in this case.
+export class DayjsLocalizer extends Localizer<dayjs.Dayjs> {
+  // ...primitives go here (see below)
+}
+```
+
+### 3. Implement the ten primitives
+
+#### `parse(value: string): T`
+
+Turn an RFC 3339 string into your library's internal datetime, in your
+configured timezone. The base class calls this first whenever it needs to do
+anything with a string.
+
+```ts
+protected parse(value: string): dayjs.Dayjs {
+  // Strip RFC 9557 brackets if present, then parse in our timezone.
+  const clean = value.replace(/\[[^\]]+\]/, '')
+
+  if (!/[T ]/.test(clean)) {
+    // Date-only (e.g. "2026-07-03"): treat as midnight in our timezone.
+    return dayjs.tz(clean, this.timezone).startOf('day')
+  }
+
+  // Full ISO string: parse the instant, then express it in our timezone.
+  return dayjs(clean).tz(this.timezone)
+}
+```
+
+#### `serialize(dt: T): string`
+
+Turn your library's internal datetime back into an RFC 3339 string. The base
+class calls this whenever it needs to return a string to the outside world.
+
+```ts
+protected serialize(dt: dayjs.Dayjs): string {
+  const body =
+    this.output === 'offset'
+      ? dt.format('YYYY-MM-DDTHH:mm:ssZ')  // local offset, e.g. -04:00
+      : dt.utc().toISOString()             // UTC, e.g. 2026-07-03T16:00:00.000Z
+
+  return this.extendedZone ? `${body}[${this.timezone}]` : body
+}
+```
+
+#### `toEpochMs(dt: T): number`
+
+The number of milliseconds since January 1, 1970 UTC. The base class uses this
+for every comparison — it never compares strings directly.
+
+```ts
+protected toEpochMs(dt: dayjs.Dayjs): number {
+  return dt.valueOf()
+}
+```
+
+#### `getParts(dt: T): DateParts`
+
+The wall-clock fields for this instant in your configured timezone. The
+`weekday` field must follow ISO-8601 numbering: `1` = Monday, `7` = Sunday.
+
+> **Watch out:** many libraries use 0 = Sunday. Day.js `day()` is 0–6
+> (Sunday = 0). The mapping below converts it to the ISO convention.
+
+```ts
+protected getParts(dt: dayjs.Dayjs): DateParts {
+  const dayjsWeekday = dt.day() // 0 = Sun, 1 = Mon, …, 6 = Sat
+  const isoWeekday = dayjsWeekday === 0 ? 7 : dayjsWeekday  // 1 = Mon, 7 = Sun
+
+  return {
+    year: dt.year(),
+    month: dt.month() + 1, // Day.js months are 0-based; the contract is 1-based
+    day: dt.date(),
+    hour: dt.hour(),
+    minute: dt.minute(),
+    second: dt.second(),
+    millisecond: dt.millisecond(),
+    weekday: isoWeekday,
+  }
+}
+```
+
+#### `addUnits(dt: T, amount: number, unit: DateTimeUnit): T`
+
+Add (or subtract, when `amount` is negative) a number of calendar units.
+
+```ts
+// Map the contract's unit names to Day.js unit names.
+const DAYJS_UNIT: Record<DateTimeUnit, dayjs.ManipulateType> = {
+  year: 'year', month: 'month', week: 'week', day: 'day',
+  hour: 'hour', minute: 'minute', second: 'second', millisecond: 'millisecond',
+}
+
+protected addUnits(dt: dayjs.Dayjs, amount: number, unit: DateTimeUnit): dayjs.Dayjs {
+  return dt.add(amount, DAYJS_UNIT[unit])
+}
+```
+
+#### `startOfUnit(dt: T, unit: FixedUnit): T`
+
+Floor the datetime to the start of the given unit. Note that `'week'` is
+_not_ in the list — the base class handles week-start via `addUnits` and
+`firstDayOfWeek`, so you only need to handle the fixed units here.
+
+```ts
+protected startOfUnit(dt: dayjs.Dayjs, unit: FixedUnit): dayjs.Dayjs {
+  return dt.startOf(unit)
+}
+```
+
+#### `endOfUnit(dt: T, unit: FixedUnit): T`
+
+The last representable instant within the given unit. For a day this is
+`23:59:59.999`; for a month it is the last millisecond of the last day.
+
+```ts
+protected endOfUnit(dt: dayjs.Dayjs, unit: FixedUnit): dayjs.Dayjs {
+  return dt.endOf(unit)
+}
+```
+
+#### `diffUnits(a: T, b: T, unit: DateTimeUnit): number`
+
+The signed number of whole units from `b` to `a` (i.e. `a − b`), truncated
+toward zero.
+
+```ts
+protected diffUnits(a: dayjs.Dayjs, b: dayjs.Dayjs, unit: DateTimeUnit): number {
+  return Math.trunc(a.diff(b, DAYJS_UNIT[unit]))
+}
+```
+
+#### `withTime(dt: T, time: TimeParts): T`
+
+Replace just the time of day, keeping the date unchanged.
+
+```ts
+protected withTime(dt: dayjs.Dayjs, time: TimeParts): dayjs.Dayjs {
+  return dt
+    .hour(time.hour)
+    .minute(time.minute)
+    .second(time.second ?? 0)
+    .millisecond(time.millisecond ?? 0)
+}
+```
+
+#### `offsetMinutes(dt: T): number`
+
+The UTC offset at this instant, in minutes east of UTC. Positive for zones
+ahead of UTC (e.g. `+60` for `Europe/Paris` in winter), negative for zones
+behind UTC (e.g. `−240` for `America/New_York` in summer / EDT).
+
+```ts
+protected offsetMinutes(dt: dayjs.Dayjs): number {
+  return dt.utcOffset() // Day.js gives minutes east of UTC — matches the contract
+}
+```
+
+### 4. Export a factory function
+
+```ts
+import type { LocalizerOptions } from '@big-calendar/localizer'
+
+export function createDayjsLocalizer(options?: LocalizerOptions): DayjsLocalizer {
+  return new DayjsLocalizer(options)
+}
+```
+
+### 5. Use it
+
+```ts
+import { createDayjsLocalizer } from './DayjsLocalizer'
+import { createCalendarStore } from '@big-calendar/core'
+
+const localizer = createDayjsLocalizer({
+  locale: 'en-US',
+  timezone: 'America/New_York',
+})
+
+const store = createCalendarStore({ localizer })
+```
+
+---
+
+## The `LocalizerOptions` your base class handles for free
+
+When you extend `Localizer`, your constructor gets these for free — you do not
+need to re-implement them:
+
+```ts
+constructor(options: LocalizerOptions = {}) {
+  super(options)
+  // this.locale     → Intl.Locale
+  // this.timezone   → string (IANA zone)
+  // this.extendedZone → boolean
+  // this.output     → 'utc' | 'offset'
+  // this.formats    → merged format map
+  // this.firstDayOfWeek() → number (1–7)
+}
+```
+
+All formatting (`format()`), all comparisons (`lt`, `gt`, `eq`, …), all
+week-aware math (`startOfWeek`, `visibleDays`, …), and all slot math
+(`getSlotDate`, `getMinutesFromMidnight`, …) are already done for you.
+
+---
+
+## Things to watch out for
+
+**Weekday numbering.** The contract requires ISO-8601 weekday numbers:
+`1 = Monday`, `7 = Sunday`. Many libraries default to `0 = Sunday`. Always
+convert in `getParts`.
+
+**Month numbering.** The contract requires 1-based months (January = 1).
+Some libraries (Day.js, Moment) use 0-based months (January = 0). Always
+convert in `getParts`.
+
+**`parse` must return a timezone-aware value.** The base class relies on wall-
+clock fields from `getParts` to do things like "start of month" and "start of
+week". If your parsed datetime is floating (no timezone attached), those fields
+will be wrong.
+
+**`diffUnits` must truncate toward zero.** `Math.trunc(a.diff(b, 'days'))` is
+usually the right pattern. Without truncation, a 7.5-day diff could round up to
+8 days and break weekly navigation.
+
+**Date-only strings.** The `parse` method must treat a string with no `T` or
+space (e.g. `"2026-07-03"`) as midnight in `this.timezone`. Do not let your
+library interpret it as local browser time.
+
+---
+
+## Testing your localizer
+
+Write tests that call each primitive directly, and run the whole suite against
+a fixed `timezone` (e.g. `'UTC'`) and a fixed `locale` so results are the same
+on every machine and in CI.
+
+A good baseline checklist:
+
+```ts
+describe('MyLocalizer', () => {
+  const loc = createMyLocalizer({ locale: 'en-US', timezone: 'UTC', output: 'offset' })
+  const REF = '2026-07-03T12:00:00Z' // a known Friday in UTC
+
+  it('round-trips a UTC string', () => {
+    expect(loc.startOf({ value: REF, unit: 'day' })).toBe('2026-07-03T00:00:00+00:00')
+  })
+  it('adds a day', () => {
+    expect(loc.add({ value: REF, amount: 1, unit: 'day' })).toBe('2026-07-04T12:00:00+00:00')
+  })
+  it('diffs in days', () => {
+    expect(loc.diff({ a: '2026-07-10T12:00:00Z', b: REF, unit: 'day' })).toBe(7)
+  })
+  it('resolves the first visible day of a month', () => {
+    // July 2026 starts on a Wednesday; en-US week starts Sunday, so visible
+    // day 0 is June 28.
+    expect(loc.firstVisibleDay(REF)).toBe('2026-06-28T00:00:00+00:00')
+  })
+  // …and so on for each method
+})
+```
+
+For a complete reference of every method your localizer inherits and what it
+must return, see the `LocalizerContract` type in `@big-calendar/localizer`.
