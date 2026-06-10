@@ -22,8 +22,10 @@ export default meta
 
 type Story = StoryObj<typeof TimeGridView>
 
+const TIME_VIEWS = [Views.WEEK, Views.WORK_WEEK, Views.DAY]
+
 const render = (defaultView: (typeof Views)[keyof typeof Views]) => () => (
-  <CalendarStage defaultView={defaultView}>
+  <CalendarStage defaultView={defaultView} views={TIME_VIEWS}>
     <Toolbar />
     <div className="bc-calendar">
       <TimeGridView />
@@ -74,6 +76,7 @@ export const DayWithResources: Story = {
         resources={rooms}
         defaultDate={FOCUS}
         defaultView={Views.DAY}
+        views={TIME_VIEWS}
       >
         <Toolbar />
         <div className="bc-calendar">
@@ -102,6 +105,7 @@ export const WeekWithResources: Story = {
         resources={rooms}
         defaultDate={FOCUS}
         defaultView={Views.WEEK}
+        views={TIME_VIEWS}
       >
         <Toolbar />
         <div className="bc-calendar">
@@ -132,6 +136,7 @@ export const WeekWithResourcesDayMajor: Story = {
         resourceLayout="day"
         defaultDate={FOCUS}
         defaultView={Views.WEEK}
+        views={TIME_VIEWS}
       >
         <Toolbar />
         <div className="bc-calendar">
@@ -149,7 +154,7 @@ export const WeekWithResourcesDayMajor: Story = {
  */
 export const Selectable: Story = {
   render: () => (
-    <SelectionDemo defaultView={Views.WEEK}>
+    <SelectionDemo defaultView={Views.WEEK} views={TIME_VIEWS}>
       <Toolbar />
       <div className="bc-calendar">
         <TimeGridView />
@@ -181,6 +186,7 @@ function PromotionDemo() {
         events={events}
         defaultDate={FOCUS}
         defaultView={Views.WEEK}
+        views={TIME_VIEWS}
         onEventDrop={({ event, start, end, allDay }) => {
           setEvents((prev) =>
             prev.map((e) => (e.id === event.id ? { ...e, start, end, allDay } : e)),

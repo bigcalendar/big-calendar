@@ -113,7 +113,7 @@ describe.each(LOCALIZER_CASES)('Calendar [$name]', ({ create }) => {
   it('renders a registered custom view component for a kind:"custom" model', () => {
     const { container } = renderCalendar({
       defaultView: '3day',
-      views: threeDayRegistry,
+      viewDefinitions: threeDayRegistry,
       components: { views: { '3day': ThreeDayView } },
     })
     const custom = container.querySelector('.bc-3day')
@@ -125,8 +125,20 @@ describe.each(LOCALIZER_CASES)('Calendar [$name]', ({ create }) => {
     expect(container.querySelector('.bc-agenda')).toBeNull()
   })
 
+  it('renders a components.views override for a built-in view instead of the default', () => {
+    function OverrideMonth(props: CustomViewProps) {
+      void props
+      return <div data-testid="override-month">override</div>
+    }
+    const { container } = renderCalendar({
+      components: { views: { month: OverrideMonth } },
+    })
+    expect(container.querySelector('[data-testid="override-month"]')).toBeTruthy()
+    expect(container.querySelector('.bc-month')).toBeNull()
+  })
+
   it('renders nothing inside .bc-calendar when the custom view has no registered component', () => {
-    const { container } = renderCalendar({ defaultView: '3day', views: threeDayRegistry })
+    const { container } = renderCalendar({ defaultView: '3day', viewDefinitions: threeDayRegistry })
     const calendar = container.querySelector('.bc-calendar') as HTMLElement
     expect(calendar).toBeTruthy()
     expect(calendar.querySelector('.bc-3day')).toBeNull()

@@ -149,9 +149,21 @@ export const CustomView: Story = {
   render: () => (
     <CalendarStage
       defaultView="3day"
-      views={{ '3day': threeDayView }}
+      viewDefinitions={{ '3day': threeDayView }}
       components={{ views: { '3day': ThreeDayView } }}
     >
+      <Calendar />
+    </CalendarStage>
+  ),
+}
+
+/**
+ * Limit the toolbar to two views via the `views` prop. Only Month and Agenda
+ * buttons appear; Week / Work Week / Day are hidden.
+ */
+export const LimitedViews: Story = {
+  render: () => (
+    <CalendarStage defaultView={Views.MONTH} views={[Views.MONTH, Views.AGENDA]}>
       <Calendar />
     </CalendarStage>
   ),

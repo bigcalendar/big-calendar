@@ -1,4 +1,3 @@
-import { BUILTIN_VIEWS } from '@big-calendar/core'
 import type { NavigateDirection, ViewKey } from '@big-calendar/core'
 import { useCallback, useMemo } from 'react'
 import { useCalendarContext } from '../../CalendarProvider'
@@ -14,6 +13,7 @@ export default function useToolbarProps(): ToolbarProps {
   const { store, messages } = useCalendarContext()
   const label = useSignalValue(store.label)
   const view = useSignalValue(store.view)
+  const views = useSignalValue(store.enabledViews)
 
   const onNavigate = useCallback(
     (direction: NavigateDirection) => store.navigate({ direction }),
@@ -22,7 +22,7 @@ export default function useToolbarProps(): ToolbarProps {
   const onView = useCallback((next: ViewKey) => store.setView({ view: next }), [store])
 
   return useMemo(
-    () => ({ label, view, views: BUILTIN_VIEWS, messages, onNavigate, onView }),
-    [label, view, messages, onNavigate, onView],
+    () => ({ label, view, views, messages, onNavigate, onView }),
+    [label, view, views, messages, onNavigate, onView],
   )
 }

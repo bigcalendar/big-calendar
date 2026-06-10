@@ -21,7 +21,7 @@ type Story = StoryObj<typeof MonthView>
 
 export const Default: Story = {
   render: () => (
-    <CalendarStage defaultView={Views.MONTH}>
+    <CalendarStage defaultView={Views.MONTH} views={[Views.MONTH]}>
       <Toolbar />
       <div className="bc-calendar">
         <MonthView />
@@ -38,7 +38,7 @@ export const Default: Story = {
  */
 export const Selectable: Story = {
   render: () => (
-    <SelectionDemo defaultView={Views.MONTH}>
+    <SelectionDemo defaultView={Views.MONTH} views={[Views.MONTH]}>
       <Toolbar />
       <div className="bc-calendar">
         <MonthView />

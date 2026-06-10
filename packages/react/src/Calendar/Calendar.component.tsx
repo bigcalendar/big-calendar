@@ -27,19 +27,32 @@ function Calendar<TEvent = unknown, TResource = unknown>({
   const { store, components } = useCalendarContext<TEvent, TResource>()
   const viewModel = useSignalValue(store.viewModel)
 
-  // A registered custom view (core emits `kind: 'custom'`); render its component
-  // from `components.views`, or nothing when none is registered for the key.
-  const CustomView = viewModel.kind === 'custom' ? components.views?.[viewModel.view] : undefined
+  // A registered override for any view key (built-in or custom). When present
+  // it renders instead of the default view; the model passed is the kind-specific
+  // data field (e.g. `month` for month, `timeGrid` for time) so the override
+  // component receives the same data the default view would use.
+  const OverrideView = components.views?.[viewModel.view]
+  const overrideModel: unknown =
+    viewModel.kind === 'month'
+      ? viewModel.month
+      : viewModel.kind === 'time'
+        ? viewModel.timeGrid
+        : viewModel.kind === 'agenda'
+          ? viewModel.agenda
+          : viewModel.model
 
   return (
     <>
       {toolbar ? <Toolbar /> : null}
       <div className="bc-calendar">
-        {viewModel.kind === 'month' && <MonthView<TEvent> />}
-        {viewModel.kind === 'time' && <TimeGridView<TEvent> />}
-        {viewModel.kind === 'agenda' && <AgendaView<TEvent> />}
-        {viewModel.kind === 'custom' && CustomView && (
-          <CustomView view={viewModel.view} model={viewModel.model} />
+        {OverrideView ? (
+          <OverrideView view={viewModel.view} model={overrideModel} />
+        ) : (
+          <>
+            {viewModel.kind === 'month' && <MonthView<TEvent> />}
+            {viewModel.kind === 'time' && <TimeGridView<TEvent> />}
+            {viewModel.kind === 'agenda' && <AgendaView<TEvent> />}
+          </>
         )}
       </div>
     </>

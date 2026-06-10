@@ -158,6 +158,13 @@ describe.each(LOCALIZER_CASES)('useCalendar [$name]', ({ create }) => {
     expect(second).toHaveBeenCalledTimes(1)
   })
 
+  it('flows the views prop into store.enabledViews', () => {
+    const { result } = renderHook(() =>
+      useCalendar<Event>({ localizer, views: ['month', 'agenda'] }),
+    )
+    expect(result.current.enabledViews.value).toEqual(['month', 'agenda'])
+  })
+
   it('keeps a single store instance across rerenders and tears down on unmount', () => {
     const { result, rerender, unmount } = renderHook(() => useCalendar<Event>({ localizer }))
     const first = result.current

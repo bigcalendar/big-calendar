@@ -21,7 +21,7 @@ type Story = StoryObj<typeof AgendaView>
 
 export const Default: Story = {
   render: () => (
-    <CalendarStage defaultView={Views.AGENDA}>
+    <CalendarStage defaultView={Views.AGENDA} views={[Views.AGENDA]}>
       <Toolbar />
       <div className="bc-calendar">
         <AgendaView />

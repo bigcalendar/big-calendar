@@ -14,7 +14,7 @@ import { useEffect, useRef } from 'react'
  *   the store when they change.
  */
 export interface CalendarProps<TEvent = unknown, TResource = unknown>
-  extends Omit<CalendarConfig<TEvent, TResource>, 'view' | 'date'> {
+  extends Omit<CalendarConfig<TEvent, TResource>, 'view' | 'date' | 'enabledViews'> {
   /** Initial view (uncontrolled). Ignored when `view` is set. */
   defaultView?: ViewKey | undefined
   /** Initial focus date (uncontrolled). Ignored when `date` is set. */
@@ -23,6 +23,12 @@ export interface CalendarProps<TEvent = unknown, TResource = unknown>
   view?: ViewKey | undefined
   /** Controlled focus date (RFC 3339/9557). */
   date?: string | undefined
+  /**
+   * Which view keys to show in the toolbar and allow navigation to. Defaults to
+   * all built-in views plus any custom keys in `viewDefinitions`.
+   * Example: `views={['month', 'agenda']}` → only Month and Agenda are shown.
+   */
+  views?: ViewKey[] | undefined
   // Event-interaction callbacks (`onEventClick` / `onEventDoubleClick` /
   // `onEventRightClick` / `onEventMiddleClick` / `onEventSelect`) and slot
   // callbacks (`onSlot*`) are inherited from {@link CalendarConfig} — the shared,
@@ -50,6 +56,7 @@ export function useCalendar<TEvent = unknown, TResource = unknown>(
       ...props,
       view: props.view ?? props.defaultView,
       date: props.date ?? props.defaultDate,
+      enabledViews: props.views,
       onNavigate: (args) => propsRef.current.onNavigate?.(args),
       onView: (args) => propsRef.current.onView?.(args),
       onEventSelect: (args) => propsRef.current.onEventSelect?.(args),

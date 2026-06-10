@@ -69,6 +69,14 @@ describe.each(LOCALIZER_CASES)('Toolbar [$name]', ({ create }) => {
     expect(onNavigate).toHaveBeenCalledTimes(3)
   })
 
+  it('renders only the views listed in the views prop', () => {
+    renderToolbar({ views: ['month', 'agenda'] })
+    expect(screen.getByRole('button', { name: 'Month' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Agenda' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Week' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Day' })).toBeNull()
+  })
+
   it('renders a components.toolbar override instead of the default', () => {
     function CustomToolbar({ label }: ToolbarProps) {
       return <div data-testid="custom">{label}</div>
