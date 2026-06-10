@@ -21,7 +21,7 @@ export const DEFAULT_FORMATS: Record<FormatKey, Intl.DateTimeFormatOptions> = {
   // Day view's toolbar ("Sunday, June 14").
   dayColumnHeader: { weekday: 'short', day: '2-digit' },
   agendaDate: { weekday: 'short', month: 'short', day: 'numeric' },
-  agendaTime: { hour: 'numeric', minute: '2-digit' },
+  agendaTime: { hour: '2-digit', minute: '2-digit' },
   timeGutter: { hour: 'numeric', minute: '2-digit' },
-  selectRange: { hour: 'numeric', minute: '2-digit' },
+  selectRange: { hour: '2-digit', minute: '2-digit' },
 }
