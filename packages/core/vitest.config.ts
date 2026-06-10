@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
+    reporters: ['dot'],
     environment: 'node',
     include: ['src/**/*.{test,spec}.ts'],
     coverage: {
