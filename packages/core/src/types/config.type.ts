@@ -35,7 +35,15 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
    * collide with a built-in (`month`/`week`/`work_week`/`day`/`agenda`) are
    * ignored — the built-in wins.
    */
-  views?: ViewRegistry<TEvent, TResource> | undefined
+  viewDefinitions?: ViewRegistry<TEvent, TResource> | undefined
+  /**
+   * Which view keys are active in this calendar instance. Controls which Toolbar
+   * buttons appear and which views may be navigated to. Defaults to all built-in
+   * views plus any custom keys registered in `viewDefinitions`.
+   *
+   * Example: `['month', 'agenda']` → only Month and Agenda are rendered.
+   */
+  enabledViews?: ViewKey[] | undefined
   /** Initial focus date (RFC 3339/9557). Defaults to `getNow()`. */
   date?: string | undefined
   /** Accessor overrides merged over the v1-parity defaults. */

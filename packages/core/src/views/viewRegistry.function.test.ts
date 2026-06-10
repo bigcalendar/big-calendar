@@ -141,7 +141,7 @@ describe.each(LOCALIZER_CASES)('view registry [$name]', ({ create }) => {
         localizer,
         date: focus,
         view: '3day',
-        views: registry,
+        viewDefinitions: registry,
         events: [{ id: 1, title: 'A', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' }],
       })
 

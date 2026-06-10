@@ -144,7 +144,15 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   // are active so UI components can suppress drag affordances when DnD isn't wired.
   const dndEnabled = signal(false)
 
-  const { drilldownView = Views.DAY, views: registry } = config
+  const { drilldownView = Views.DAY, viewDefinitions: registry } = config
+
+  // Derived list of active view keys: explicit `enabledViews` config wins; otherwise
+  // all built-in keys + any custom keys registered in `viewDefinitions`.
+  const enabledViews = computed<ViewKey[]>(() => {
+    if (config.enabledViews != null) return config.enabledViews
+    const customKeys = registry != null ? (Object.keys(registry) as ViewKey[]) : []
+    return [...BUILTIN_VIEWS, ...customKeys]
+  })
   const range = computed(() =>
     viewRange({ localizer, date: date.value, view: view.value, length: config.length, registry }),
   )
@@ -417,6 +425,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     dragPreview: dragPreview as ReadonlySignal<{ start: string; end: string } | null>,
     keyboardDrag: keyboardDrag as ReadonlySignal<KeyboardDragState | null>,
     dndEnabled,
+    enabledViews,
     localizer,
     accessors,
     getNow,

@@ -84,7 +84,7 @@ export function buildViewModel<TEvent, TResource = unknown>(args: {
           }),
         }
       }
-      throw new Error(`buildViewModel: unknown view "${view}". Register it via the \`views\` config.`)
+      throw new Error(`buildViewModel: unknown view "${view}". Register it via the \`viewDefinitions\` config.`)
     }
   }
 }

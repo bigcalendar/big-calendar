@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest'
-import { Navigate, Views } from '../constants/views.constant'
+import { BUILTIN_VIEWS, Navigate, Views } from '../constants/views.constant'
 import { LOCALIZER_CASES } from '../testing/localizers'
 import type { CalendarConfig } from '../types/config.type'
 import { createCalendarStore } from './createCalendarStore.function'
@@ -39,6 +39,7 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       expect(store.resources.value).toBeUndefined()
       expect(store.localizer).toBe(localizer)
       expect(store.accessors.title).toBe('title')
+      expect(store.enabledViews.value).toEqual(['month', 'week', 'work_week', 'day', 'agenda'])
     })
 
     it('seeds state from a full config', () => {
@@ -1146,6 +1147,50 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       expect(store.isDraggable({ ...event, draggable: false })).toBe(false)
       // field absent → accessor resolves null → defaults to draggable
       expect(store.isDraggable(event)).toBe(true)
+    })
+  })
+
+  describe('enabledViews', () => {
+    it('defaults to all built-in views when enabledViews is not configured', () => {
+      const store = createCalendarStore<Event>({ localizer })
+      expect(store.enabledViews.value).toEqual(BUILTIN_VIEWS)
+    })
+
+    it('returns the explicit enabledViews list when configured', () => {
+      const store = createCalendarStore<Event>({
+        localizer,
+        enabledViews: [Views.MONTH, Views.AGENDA],
+      })
+      expect(store.enabledViews.value).toEqual([Views.MONTH, Views.AGENDA])
+    })
+
+    it('includes custom view keys from viewDefinitions when enabledViews is omitted', () => {
+      const stub = {
+        range: () => ({ firstVisibleDay: '', lastVisibleDay: '', days: [] }),
+        navigate: () => '',
+        label: () => '',
+        buildModel: () => null,
+      }
+      const store = createCalendarStore<Event>({
+        localizer,
+        viewDefinitions: { '3day': stub },
+      })
+      expect(store.enabledViews.value).toEqual([...BUILTIN_VIEWS, '3day'])
+    })
+
+    it('explicit enabledViews takes precedence over viewDefinitions keys', () => {
+      const stub = {
+        range: () => ({ firstVisibleDay: '', lastVisibleDay: '', days: [] }),
+        navigate: () => '',
+        label: () => '',
+        buildModel: () => null,
+      }
+      const store = createCalendarStore<Event>({
+        localizer,
+        viewDefinitions: { '3day': stub },
+        enabledViews: [Views.MONTH],
+      })
+      expect(store.enabledViews.value).toEqual([Views.MONTH])
     })
   })
 })

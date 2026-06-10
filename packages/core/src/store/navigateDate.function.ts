@@ -63,7 +63,7 @@ export function navigateDate(args: {
       // Custom view: defer the step to its registered definition.
       const definition = registry?.[view]
       if (definition) return definition.navigate({ localizer, date, direction, length })
-      throw new Error(`navigateDate: unknown view "${view}". Register it via the \`views\` config.`)
+      throw new Error(`navigateDate: unknown view "${view}". Register it via the \`viewDefinitions\` config.`)
     }
   }
 }

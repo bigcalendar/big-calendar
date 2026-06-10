@@ -76,7 +76,7 @@ export function viewRange(args: {
     default: {
       const definition = registry?.[view]
       if (definition) return definition.range({ localizer, date, length })
-      throw new Error(`viewRange: unknown view "${view}". Register it via the \`views\` config.`)
+      throw new Error(`viewRange: unknown view "${view}". Register it via the \`viewDefinitions\` config.`)
     }
   }
 }

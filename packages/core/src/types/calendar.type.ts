@@ -3,7 +3,7 @@ import type { BuiltinViewKey } from '../constants/views.constant'
 /**
  * A view identifier. The built-in keys (`month`/`week`/`work_week`/`day`/
  * `agenda`) keep their literal autocomplete; the `(string & {})` arm admits
- * custom view keys registered through the view registry (`views` config). The
+ * custom view keys registered through the view registry (`viewDefinitions` config). The
  * cost of this widening is that each core seam (`viewRange`/`navigateDate`/
  * `viewLabel`/`buildViewModel`) loses exhaustive-`switch` safety and needs a
  * runtime `default` that consults the registry (or throws for an unknown key).

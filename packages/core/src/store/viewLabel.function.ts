@@ -43,7 +43,7 @@ export function viewLabel({ localizer, view, date, range, registry }: ViewLabelA
     default: {
       const definition = registry?.[view]
       if (definition) return definition.label({ localizer, date, range })
-      throw new Error(`viewLabel: unknown view "${view}". Register it via the \`views\` config.`)
+      throw new Error(`viewLabel: unknown view "${view}". Register it via the \`viewDefinitions\` config.`)
     }
   }
 }

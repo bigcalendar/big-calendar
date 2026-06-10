@@ -84,7 +84,7 @@ export interface ViewDefinition<TEvent, TResource = unknown, TModel = unknown> {
 
 /**
  * Maps a custom view key to its {@link ViewDefinition}. Supplied on the config
- * as `views`. Keys that collide with a built-in are ignored (the built-in wins —
+ * as `viewDefinitions`. Keys that collide with a built-in are ignored (the built-in wins —
  * the registry is only consulted in each seam's `default` branch). `TModel` is
  * intentionally erased here (registration doesn't carry it); a view-component
  * recovers it via the definition object it owns.

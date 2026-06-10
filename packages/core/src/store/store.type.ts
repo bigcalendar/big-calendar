@@ -201,6 +201,13 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    * cursor) when DnD is not wired — avoiding false affordance for users.
    */
   readonly dndEnabled: Signal<boolean>
+  /**
+   * The ordered list of active view keys for this calendar instance. Derived from
+   * `config.enabledViews` when supplied, or all built-in views plus any custom
+   * keys registered in `config.viewDefinitions` when omitted. The Toolbar reads
+   * this to render only the enabled view buttons.
+   */
+  readonly enabledViews: ReadonlySignal<ViewKey[]>
 
   // --- resolved config (stable for the store's lifetime) ---
   /** The localizer instance, reused everywhere. */
