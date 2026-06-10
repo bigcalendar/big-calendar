@@ -1077,6 +1077,21 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       expect(store.keyboardDrag.value).toBeNull()
       expect(onEventDrop).not.toHaveBeenCalled()
     })
+
+    it('grabEvent returns false and starts nothing when the event is not draggable', () => {
+      const store = createCalendarStore<Event>({ localizer, events, draggableAccessor: () => false })
+      expect(store.grabEvent({ id: 1 })).toBe(false)
+      expect(store.keyboardDrag.value).toBeNull()
+      expect(store.dragPreview.value).toBeNull()
+    })
+
+    it('grabResize is a no-op when the grabbed event is not resizable', () => {
+      const store = createCalendarStore<Event>({ localizer, events, resizableAccessor: () => false })
+      store.grabEvent({ id: 1 })
+      const beforeEnd = store.keyboardDrag.value?.end
+      store.grabResize({ minutes: 30 })
+      expect(store.keyboardDrag.value?.end).toBe(beforeEnd)
+    })
   })
 
   describe('isResizable', () => {

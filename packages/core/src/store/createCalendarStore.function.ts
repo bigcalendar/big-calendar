@@ -529,6 +529,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     grabEvent({ id }) {
       const event = findEvent(id)
       if (event == null) return false
+      if (!isDraggable(event)) return false
       const start = getEventStart(event)
       const end = getEventEnd(event)
       if (start == null || end == null) return false
@@ -562,6 +563,8 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     grabResize({ minutes = 0, days = 0, edge = 'end' }) {
       const grab = keyboardDrag.value
       if (grab == null) return
+      const grabbedEvent = findEvent(grab.id)
+      if (grabbedEvent != null && !isResizable(grabbedEvent)) return
       grabResized = true
 
       if (edge === 'start') {
