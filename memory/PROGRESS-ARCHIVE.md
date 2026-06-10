@@ -5,6 +5,28 @@
 
 ---
 
+## Phase 5 tail entries (2026-06-09, continued)
+
+### Phase 5 tail — Task 1c: Day-major week ordering (`resourceLayout:'day'`) ✓ (commit 3a4d118)
+
+Implemented alongside 1b — landed in the same commit but was not marked done at the time. Core `timeGrid.function.ts` already had both `'resource'` and `'day'` modes from commit 08823ac (1a). The React `TimeGridView.component.tsx` renders the day-major layout (one group per visible day, each containing one cell per resource — two-tier header with day name spanning resource columns on row 1, resource names on row 2; per-(day × resource) all-day stacked lane; body columns in day-first order). Tests: 7 assertions in `TimeGridView.component.test.tsx` (`describe('with resources and resourceLayout:"day"')`). Storybook: `WeekWithResourcesDayMajor` story.
+
+---
+
+### Phase 5 tail — DnD gating: `grabEvent` / `grabResize` respect `isDraggable` / `isResizable` ✓ (commit f7ddafe)
+
+`grabEvent` now returns `false` immediately for non-draggable events (`isDraggable(event)` checked before reading start/end bounds), so the keyboard grab cannot start for events that opt out. `grabResize` is a no-op when the currently-grabbed event is not resizable (`isResizable` checked at the top via `findEvent(grab.id)`), so Shift+arrow keys during a keyboard grab cannot resize a non-resizable event. The Pragmatic pointer-DnD path was already gated via `canDrag` in `bindCalendarDnd`. Two new core tests cover both gates. core: 263.
+
+---
+
+### Phase 5 tail — Drag affordances gated on `store.dndEnabled` + `clsx` ✓ (commits 03f86cf, d399a1a)
+
+**Affordance gating (03f86cf):** Added `store.dndEnabled: Signal<boolean>` (default `false`) to `CalendarStore`. `useCalendarDnd` sets it `true` on mount and restores `false` on cleanup. `EventButton` now gates resize-handle DOM elements on `dndEnabled && isResizable(event)` — handles never appear when DnD is not wired. `EventButton` also applies `bc-event-draggable` when `dndEnabled && isDraggable(event)`; `event.css` maps that class to `cursor: grab` / `cursor: grabbing`. Result: no resize-handle grab-bars and no grab cursor when DnD is not installed or the event opts out. Tests: `EventButton` (new `DndEnabler` helper, expanded handle + draggable-class tests), `MonthView` (`renderMonthWithDnd` + "omits handles without dnd" test), `useCalendarDnd` (dndEnabled on/off assertions via separate `DndEnabledDisplay` child), core store (dndEnabled default=false). core: 264 · react: 215.
+
+**clsx (d399a1a):** Added `clsx` as a dep to `@big-calendar/react` and replaced all `.filter(Boolean).join(' ')` className compositions in `EventButton`, `TimeGridView`, `DefaultTimeDayHeading`, `DefaultMonthDate` with `clsx()` calls.
+
+---
+
 ## Phase 5 tail entries
 
 ### Phase 5 tail — format split: `dayColumnHeader` vs `dayHeader` (Cutter, 2026-06-09) ✓ (commit 6b1072a)
