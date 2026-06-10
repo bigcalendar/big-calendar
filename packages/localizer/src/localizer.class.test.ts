@@ -170,6 +170,28 @@ describe('Localizer base — formatting', () => {
   it('formats via explicit Intl options', () => {
     expect(loc.format({ value: WED, format: { hour: '2-digit', minute: '2-digit', hour12: false } })).toBe('12:00')
   })
+  it('formatDateRange produces a locale-aware range string', () => {
+    const start = '2026-06-03T00:00:00.000Z'
+    const end = '2026-06-05T00:00:00.000Z'
+    const opts = { month: 'short', day: 'numeric' } as const
+    const expected = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', ...opts })
+      .formatRange(new Date(start), new Date(end))
+    expect(loc.formatDateRange({ start, end, format: opts })).toBe(expected)
+  })
+  it('formatTimeRange concatenates start and end with an en-dash separator', () => {
+    const start = '2026-06-03T08:00:00.000Z'
+    const end = '2026-06-03T11:00:00.000Z'
+    const expected = `${loc.format({ value: start, format: 'time' })} – ${loc.format({ value: end, format: 'time' })}`
+    expect(loc.formatTimeRange({ start, end, format: 'time' })).toBe(expected)
+  })
+  it('formatTimeRange respects hour: 2-digit padding', () => {
+    const start = '2026-06-03T08:35:00.000Z'
+    const end = '2026-06-03T12:02:00.000Z'
+    const opts = { hour: '2-digit', minute: '2-digit' } as const
+    const result = loc.formatTimeRange({ start, end, format: opts })
+    // 2-digit preserves the leading zero (08:35, not 8:35); AM/PM still appended by en-US
+    expect(result).toBe('08:35 AM – 12:02 PM')
+  })
 })
 
 describe('Localizer base — comparison', () => {

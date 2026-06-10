@@ -44,12 +44,15 @@ describe.each(LOCALIZER_CASES)('AgendaView [$name]', ({ create }) => {
     renderAgenda()
     // Expected header/time read back from the real localizer (§5.5).
     const dateLabel = localizer.format({ value: focus, format: 'agendaDate' })
-    const from = localizer.format({ value: '2026-06-15T11:00:00.000Z', format: 'agendaTime' })
-    const to = localizer.format({ value: '2026-06-15T12:00:00.000Z', format: 'agendaTime' })
+    const timeRange = localizer.formatTimeRange({
+      start: '2026-06-15T11:00:00.000Z',
+      end: '2026-06-15T12:00:00.000Z',
+      format: 'agendaTime',
+    })
     expect(screen.getByText(dateLabel)).toBeTruthy()
     expect(screen.getByText('Standup')).toBeTruthy()
     // bare event → time range still formatted from start/end
-    expect(screen.getByText(`${from} – ${to}`)).toBeTruthy()
+    expect(screen.getByText(timeRange)).toBeTruthy()
   })
 
   it('renders the Date / Time / Event column header', () => {

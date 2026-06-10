@@ -16,11 +16,9 @@ export interface ViewLabelArgs {
   registry?: ViewRegistrySeams | undefined
 }
 
-/** "Jun 1 – Jun 7"-style label for a date span (both ends inclusive). */
+/** "Jun 1 – 7"-style label for a date span (both ends inclusive). */
 function spanLabel(localizer: LocalizerContract, start: string, end: string): string {
-  const from = localizer.format({ value: start, format: 'monthDay' })
-  const to = localizer.format({ value: end, format: 'monthDay' })
-  return `${from} – ${to}`
+  return localizer.formatDateRange({ start, end, format: 'monthDay' })
 }
 
 /**

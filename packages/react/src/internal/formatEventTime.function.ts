@@ -29,7 +29,6 @@ export function formatEventTime({
   format = 'agendaTime',
 }: FormatEventTimeArgs): string {
   if (allDay || start == null) return allDayLabel
-  const from = localizer.format({ value: start, format })
-  if (end == null) return from
-  return `${from} – ${localizer.format({ value: end, format })}`
+  if (end == null) return localizer.format({ value: start, format })
+  return localizer.formatTimeRange({ start, end, format })
 }

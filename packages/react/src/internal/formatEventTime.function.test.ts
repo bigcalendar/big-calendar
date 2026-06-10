@@ -29,7 +29,7 @@ describe.each(LOCALIZER_CASES)('formatEventTime [$name]', ({ create }) => {
 
   it('formats a start–end range for timed events', () => {
     const result = formatEventTime({ localizer, allDayLabel: ALL_DAY_LABEL, start: START, end: END, allDay: false })
-    const expected = `${localizer.format({ value: START, format: 'agendaTime' })} – ${localizer.format({ value: END, format: 'agendaTime' })}`
+    const expected = localizer.formatTimeRange({ start: START, end: END, format: 'agendaTime' })
     expect(result).toBe(expected)
   })
 

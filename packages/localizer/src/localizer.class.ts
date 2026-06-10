@@ -29,12 +29,16 @@ function resolveLocale(input: LocalizerOptions['locale']): Intl.Locale {
 function resolveTimeZone(locale: Intl.Locale, input: string | undefined): string {
   // Resolution order:
   // 1. Explicit option — always wins when provided.
-  // 2. First time zone from the locale's region list (Intl.Locale.getTimeZones,
-  //    Baseline 2024). Cast required: older TS lib types omit this method.
+  // 2. The locale's single implied time zone (Intl.Locale.getTimeZones, Baseline
+  //    2024) — only when the list has exactly one entry, meaning the locale's
+  //    region unambiguously implies one zone (e.g. 'en-GB' → Europe/London).
+  //    Multi-zone locales like 'en-US' fall through so the browser default is
+  //    used rather than an arbitrary first entry.
+  //    Cast required: older TS lib types omit this method.
   // 3. Browser/host default resolved time zone.
   if (input != null) return input
   const zones = (locale as { getTimeZones?: () => string[] }).getTimeZones?.()
-  if (zones != null && zones.length > 0) return zones[0]
+  if (zones?.length === 1) return zones[0]
   return new Intl.DateTimeFormat().resolvedOptions().timeZone
 }
 
@@ -136,6 +140,19 @@ export abstract class Localizer<T = unknown> implements LocalizerContract {
     const options = typeof format === 'string' ? this.formats[format] : format
     const epoch = this.toEpochMs(this.parse(value))
     return new Intl.DateTimeFormat(this.locale, { timeZone: this.timeZone, ...options }).format(epoch)
+  }
+
+  formatDateRange({ start, end, format }: { start: string; end: string; format: FormatInput }): string {
+    const options = typeof format === 'string' ? this.formats[format] : format
+    const dtf = new Intl.DateTimeFormat(this.locale, { timeZone: this.timeZone, ...options })
+    return dtf.formatRange(
+      new Date(this.toEpochMs(this.parse(start))),
+      new Date(this.toEpochMs(this.parse(end))),
+    )
+  }
+
+  formatTimeRange({ start, end, format }: { start: string; end: string; format: FormatInput }): string {
+    return `${this.format({ value: start, format })} – ${this.format({ value: end, format })}`
   }
 
   // ── comparison ───────────────────────────────────────────────────────────────

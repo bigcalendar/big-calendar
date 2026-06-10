@@ -121,6 +121,20 @@ export interface LocalizerContract {
 
   /** Human-facing formatting via a named role or explicit Intl options. */
   format(args: { value: string; format: FormatInput }): string
+  /**
+   * Locale-aware date/datetime range via `Intl.DateTimeFormat.formatRange`.
+   * Use for date or datetime spans (toolbar labels, day headers) where the
+   * browser can collapse repeated parts ("Jun 1 – 7" instead of "Jun 1 – Jun 7").
+   * Do NOT use for time-only ranges — `en-US` ignores `hour: '2-digit'` in
+   * `formatRange`, breaking the zero-padded alignment needed in time grids.
+   */
+  formatDateRange(args: { start: string; end: string; format: FormatInput }): string
+  /**
+   * Time range formatted as two individual `format()` calls joined by ` – `.
+   * Use for time-only displays (event times, time grid) where `hour: '2-digit'`
+   * must be respected ("08:35 – 12:02 PM") and consistent column alignment matters.
+   */
+  formatTimeRange(args: { start: string; end: string; format: FormatInput }): string
 
   // comparison
   lt(args: CompareArgs): boolean

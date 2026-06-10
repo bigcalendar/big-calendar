@@ -23,7 +23,7 @@ describe.each(LOCALIZER_CASES)('viewLabel [$name]', ({ create }) => {
   const monthLabel = (): string => localizer.format({ value: date, format: 'monthHeader' })
   const dayLabel = (): string => localizer.format({ value: date, format: 'dayHeader' })
   const span = (): string =>
-    `${localizer.format({ value: range.firstVisibleDay, format: 'monthDay' })} – ${localizer.format({ value: range.lastVisibleDay, format: 'monthDay' })}`
+    localizer.formatDateRange({ start: range.firstVisibleDay, end: range.lastVisibleDay, format: 'monthDay' })
 
   it('month → monthHeader of the focus date', () => {
     expect(viewLabel({ localizer, view: Views.MONTH, date, range })).toBe(monthLabel())
