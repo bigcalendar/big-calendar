@@ -13,6 +13,19 @@
     border-block-end: var(--bc-border);
   }
 
+  /* Plain time-grid header: each day heading carries the lane's leading border,
+     matching the body day columns. The `>` keeps this off the resource grid,
+     where `.bc-day-heading` is nested inside `.bc-resource-day-head` (not a
+     direct child) and that wrapper already owns the border. */
+  .bc-time-header > .bc-day-heading {
+    border-inline-start: var(--bc-border);
+  }
+
+  /* Plain time-grid all-day row: column dividers on each per-day hit cell. */
+  .bc-allday-slots > .bc-allday-slot {
+    border-inline-start: var(--bc-border);
+  }
+
   .bc-day-heading {
     padding: var(--bc-space-1);
     text-align: center;
@@ -96,18 +109,33 @@
   }
 
   /* The frozen gutter's trailing border (layout.css) owns the divider at the
-     gutter↔content line. The first content cell in each row therefore drops its
-     own leading border — otherwise the two stack and read thicker at rest, and
-     only the gutter's border stays put when the columns scroll under it. In this
-     layer (bc.components) so it outranks the leading-border rules wherever they
-     live. The `+ gutter` selectors catch the first body column, header title, and
-     day all-day lane; the two-tier rules catch the week header's first day-head
-     and the first all-day day cell, which sit on that same gutter line. */
-  .bc-time-grid-resources .bc-time-gutter + .bc-day-column,
+     gutter↔content line. The first content cell in each row must drop its own
+     leading border — otherwise the two stack and only the gutter's border stays
+     fixed while the columns scroll under it. Rules in bc.components to outrank
+     the leading-border rules wherever they live.
+
+     `.bc-time-grid` covers both plain and resource grids (shared gutter sticky).
+     Resource-specific suppressions retain `.bc-time-grid-resources` so they only
+     fire where those element types exist. */
+
+  /* Plain + resource: first body column after the gutter. */
+  .bc-time-grid .bc-time-gutter + .bc-day-column {
+    border-inline-start: none;
+  }
+
+  /* Plain grid only: first day heading and first all-day slot. */
+  .bc-time-header-gutter + .bc-day-heading,
+  .bc-allday-slots > .bc-allday-slot:first-child {
+    border-inline-start: none;
+  }
+
+  /* Resource grid only: first resource header and first resource all-day lane. */
   .bc-time-grid-resources .bc-time-header-gutter + .bc-resource-header,
   .bc-time-grid-resources .bc-allday-label + .bc-allday-resource {
     border-inline-start: none;
   }
+  /* Two-tier week: first day-head in the tiered header; first all-day slot in the
+     week lane's per-day sub-grid sits on the same gutter boundary. */
   .bc-time-grid-resources .bc-time-header-tiered .bc-resource-day-head:nth-child(3),
   .bc-time-grid-resources
     .bc-allday-label

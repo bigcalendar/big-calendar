@@ -127,6 +127,7 @@
   }
 
   .bc-date-number {
+    position: relative;
     pointer-events: auto;
   }
 
@@ -171,23 +172,45 @@
   }
 
   /* ── time grid (day / week / work_week) ──────────────────────────────── */
+  /* Single 2-D scroll container for all time-grid views. Column tracks with
+     minimum widths are owned here so all three inner rows share the same track
+     definitions via `subgrid`. `overflow: auto` scrolls horizontally when
+     columns hit their minimum floor, and vertically when the slot body is
+     taller than the visible area. */
   .bc-time-grid {
     display: grid;
-    grid-template-rows: auto auto 1fr;
-    grid-template-columns: var(--bc-gutter-width) 1fr;
+    grid-template-rows: auto auto;
+    grid-template-columns: var(--bc-gutter-width) repeat(var(--bc-day-count), minmax(var(--bc-col-min), 1fr));
     min-block-size: 0;
+    overflow: auto;
     /* Leave room below the grid's closing border (timegrid.css) so it isn't
        flush against the container edge. */
     margin-block-end: 2px;
   }
 
-  /* Header row: day names across the day columns (gutter spacer + columns). */
+  /* The sticky header band (day names + all-day row) sits in grid row 1 and
+     sticks to the block-start so it remains visible while the slot body
+     scrolls. Plain and resource grids both use this wrapper. */
+  .bc-time-grid > .bc-time-head {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-template-rows: auto auto;
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 3;
+    background: var(--bc-color-bg);
+  }
+
+  /* Inner header/allday/body rows inherit the outer grid's column tracks via
+     subgrid so the gutter column and all day columns stay aligned across rows
+     without duplicating the track definition. */
   .bc-time-header,
   .bc-allday-row,
   .bc-time-body {
     grid-column: 1 / -1;
     display: grid;
-    grid-template-columns: var(--bc-gutter-width) repeat(var(--bc-day-count), minmax(0, 1fr));
+    grid-template-columns: subgrid;
   }
 
   /* All-day header: segments stack like a month week across the day columns.
@@ -246,11 +269,11 @@
     pointer-events: none;
   }
 
-  /* Scrollable slot body. `pan-y` lets a finger scroll it vertically as normal;
-     a slot selection starts only after a touch long-press, which then captures
-     the pointer and suppresses scroll for the rest of the drag (useSlotSelection). */
+  /* Slot body: visible overflow so the outer `.bc-time-grid` scroll container
+     owns both axes. `pan-y` lets a finger scroll vertically; touch-based slot
+     selection starts only after a long-press that captures the pointer. */
   .bc-time-body {
-    overflow-y: auto;
+    overflow: visible;
     min-block-size: 0;
     touch-action: pan-y;
   }
@@ -287,9 +310,9 @@
   }
 
   /* ── resource time grid (day / week) ─────────────────────────────────
-     One column per resource (day) or per resource×day (week). Columns get a min
-     width (`--bc-resource-col-min`) so a wide grid scrolls horizontally rather
-     than crushing columns.
+     One column per resource (day) or per resource×day (week). Columns enforce the
+     same `--bc-col-min` as regular time-grid views so both scroll horizontally at
+     the same floor.
 
      The whole grid is a single 2-D scroll container: the parent owns the leaf-
      column tracks; the header + all-day "head" is sticky to the top (stays put on
@@ -300,52 +323,24 @@
     display: grid;
     grid-template-columns:
       var(--bc-gutter-width)
-      repeat(var(--bc-day-count), minmax(var(--bc-resource-col-min, 8rem), 1fr));
+      repeat(var(--bc-day-count), minmax(var(--bc-col-min), 1fr));
     /* head (auto) then body (natural, tall) — the container scrolls to reveal. */
     grid-template-rows: auto auto;
     overflow: auto;
   }
 
-  /* Day columns are full per-resource columns, so they get a roomier minimum than
-     the narrow week day-columns (which keep the 8rem default). */
+  /* Day columns are full per-resource columns (one resource per day, not one day
+     per week), so they get a roomier minimum to comfortably show day-long content. */
   .bc-time-grid-resources-day {
-    --bc-resource-col-min: 28rem;
+    --bc-col-min: var(--bc-col-min);
   }
 
-  .bc-time-grid-resources > .bc-time-head,
-  .bc-time-grid-resources > .bc-time-body {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: subgrid;
-  }
-
-  .bc-time-grid-resources > .bc-time-head {
-    grid-template-rows: auto auto; /* header row, all-day row */
-    position: sticky;
-    inset-block-start: 0;
-    z-index: 3;
-    background: var(--bc-color-bg);
-  }
-
-  .bc-time-grid-resources .bc-time-header,
-  .bc-time-grid-resources .bc-allday-row {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: subgrid;
-  }
-
-  /* The body no longer scrolls on its own (the container owns both axes); a nested
-     scroller would trap the gutter's sticky positioning. */
-  .bc-time-grid-resources .bc-time-body {
-    overflow: visible;
-  }
-
-  /* Frozen gutter: the time-label column stays pinned while columns scroll
-     horizontally; the head's gutter cells sit above it as the fixed corner. The
-     trailing border is a fixed divider from the scrolling area (the first column's
-     own leading border scrolls away), and `align-self: stretch` makes each cell's
-     opaque background fill its whole cell so scrolled content can't show through. */
-  .bc-time-grid-resources .bc-time-gutter {
+  /* Frozen gutter: the time-label column (and its header/all-day counterparts)
+     stay pinned at the inline-start while day columns scroll horizontally.
+     The trailing border is the fixed gutter/content divider; `align-self: stretch`
+     fills the cell's opaque background so scrolled content can't bleed through.
+     These rules cover both the plain and resource time-grid via `.bc-time-grid`. */
+  .bc-time-grid .bc-time-gutter {
     position: sticky;
     inset-inline-start: 0;
     z-index: 2;
@@ -353,8 +348,8 @@
     border-inline-end: var(--bc-border);
   }
 
-  .bc-time-grid-resources .bc-time-header-gutter,
-  .bc-time-grid-resources .bc-allday-label {
+  .bc-time-grid .bc-time-header-gutter,
+  .bc-time-grid .bc-allday-label {
     position: sticky;
     inset-inline-start: 0;
     z-index: 4;
@@ -462,11 +457,8 @@
      inner tier (row 2). The scroll architecture (sticky head, frozen gutter,
      subgrid) is identical to resource-major; only the header tiers differ. */
 
-  /* Day-major columns are full per-resource columns; give them the same roomier
-     minimum as resource-major day columns (8rem fits a resource label). */
-  .bc-time-grid-resources-day-major {
-    --bc-resource-col-min: 8rem;
-  }
+  /* Day-major columns are full per-resource columns — same `--bc-col-min` default
+     as regular time-grid date columns, no override needed. */
 
   /* Top-tier: day name spanning its resource columns. Shares the bold/centered
      base style from `.bc-resource-header` via the parent selector below, but

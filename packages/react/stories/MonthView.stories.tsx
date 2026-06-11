@@ -1,6 +1,6 @@
 import { Views } from '@big-calendar/core'
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { MonthView, Toolbar } from '../src'
+import { MonthView, TimeGridView, Toolbar } from '../src'
 import { CalendarStage, SelectionDemo } from './harness'
 
 const meta: Meta<typeof MonthView> = {
@@ -21,10 +21,11 @@ type Story = StoryObj<typeof MonthView>
 
 export const Default: Story = {
   render: () => (
-    <CalendarStage defaultView={Views.MONTH} views={[Views.MONTH]}>
+    <CalendarStage defaultView={Views.MONTH} views={[Views.MONTH, Views.DAY]}>
       <Toolbar />
       <div className="bc-calendar">
         <MonthView />
+        <TimeGridView />
       </div>
     </CalendarStage>
   ),
@@ -38,10 +39,11 @@ export const Default: Story = {
  */
 export const Selectable: Story = {
   render: () => (
-    <SelectionDemo defaultView={Views.MONTH} views={[Views.MONTH]}>
+    <SelectionDemo defaultView={Views.MONTH} views={[Views.MONTH, Views.DAY]}>
       <Toolbar />
       <div className="bc-calendar">
         <MonthView />
+        <TimeGridView />
       </div>
     </SelectionDemo>
   ),

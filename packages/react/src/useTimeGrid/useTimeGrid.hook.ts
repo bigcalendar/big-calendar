@@ -198,7 +198,6 @@ export function useTimeGrid<TEvent>(): TimeGrid<TEvent> | null {
     const id = wrapAccessor(accessors.id)
     const title = wrapAccessor(accessors.title)
     const start = wrapAccessor(accessors.start)
-    const end = wrapAccessor(accessors.end)
     const { days, columns, allDay, resources, dayGroups } = viewModel.timeGrid
 
     const headings: TimeDayHeading[] = days.map((day) => ({
@@ -240,7 +239,7 @@ export function useTimeGrid<TEvent>(): TimeGrid<TEvent> | null {
           localizer,
           allDayLabel: messages.allDay,
           start: start(placed.event),
-          end: end(placed.event),
+          end: null,
           allDay: false,
           format: 'time',
         }),

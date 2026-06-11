@@ -310,38 +310,40 @@ function TimeGridView<TEvent = unknown>() {
   return (
     <div style={getRootStyle(grid.headings.length)} {...root}>
       <div {...announcer}>{announcement}</div>
-      <div {...timeHeader}>
-        <div {...timeHeaderGutter} />
-        {grid.headings.map((heading) => (
-          <DayHeading key={heading.day} {...getHeadingProps(heading)} />
-        ))}
-      </div>
-
-      <div {...allDayRow}>
-        <div {...allDayLabel}>{hdrMessages.allDay}</div>
-        <div {...allDaySlots}>
-          {grid.columns.map((column, colIndex) => (
-            <div key={column.key} {...getAllDaySlotProps(column, colIndex)} />
+      <div {...timeHead}>
+        <div {...timeHeader}>
+          <div {...timeHeaderGutter} />
+          {grid.headings.map((heading) => (
+            <DayHeading key={heading.day} {...getHeadingProps(heading)} />
           ))}
         </div>
-        {allDaySelectionBand && (
-          <div {...allDaySelectionWrapper}>
-            <div {...allDaySelectionBand} />
+
+        <div {...allDayRow}>
+          <div {...allDayLabel}>{hdrMessages.allDay}</div>
+          <div {...allDaySlots}>
+            {grid.columns.map((column, colIndex) => (
+              <div key={column.key} {...getAllDaySlotProps(column, colIndex)} />
+            ))}
           </div>
-        )}
-        <div {...allDaySegments}>
-          {grid.allDay.segments.map((segment) => (
-            <EventButton key={segment.key} {...getAllDaySegmentProps(segment)}>
-              <AllDayEvent event={segment.event} title={segment.title} />
-            </EventButton>
-          ))}
-          {grid.allDay.extra !== null && (
-            <ShowMore
-              count={grid.allDay.extra.count}
-              label={hdrMessages.showMore(grid.allDay.extra.count)}
-              events={grid.allDay.extra.events}
-            />
+          {allDaySelectionBand && (
+            <div {...allDaySelectionWrapper}>
+              <div {...allDaySelectionBand} />
+            </div>
           )}
+          <div {...allDaySegments}>
+            {grid.allDay.segments.map((segment) => (
+              <EventButton key={segment.key} {...getAllDaySegmentProps(segment)}>
+                <AllDayEvent event={segment.event} title={segment.title} />
+              </EventButton>
+            ))}
+            {grid.allDay.extra !== null && (
+              <ShowMore
+                count={grid.allDay.extra.count}
+                label={hdrMessages.showMore(grid.allDay.extra.count)}
+                events={grid.allDay.extra.events}
+              />
+            )}
+          </div>
         </div>
       </div>
 

@@ -7,8 +7,8 @@ import type { TimeEventProps } from '../components.type'
 function DefaultTimeEvent({ title, time }: TimeEventProps<unknown>) {
   return (
     <>
-      <span className="bc-event-time">{time}</span>
       <span className="bc-event-title">{title}</span>
+      <span className="bc-event-time">{time}</span>
     </>
   )
 }

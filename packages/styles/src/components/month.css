@@ -30,10 +30,11 @@
   }
 
   .bc-date-number {
-    align-self: flex-end;
+    width: 100%;
     padding: var(--bc-space-1);
     font-size: var(--bc-font-size-sm);
     color: var(--bc-color-fg);
+    text-align: end;
   }
 
   .bc-date-cell.bc-today {

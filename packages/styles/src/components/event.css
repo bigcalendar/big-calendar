@@ -7,19 +7,34 @@
     background: var(--bc-color-event-bg);
     color: var(--bc-color-event-fg);
     padding-inline: var(--bc-space-1);
-    font-size: var(--bc-font-size-sm);
-    line-height: var(--bc-segment-height);
+    padding-block: var(--bc-space-1);
+    font-size: var(--bc-font-size-xs);
+    line-height: var(--bc-line-height);
+    min-height: calc(1em * var(--bc-line-height) + var(--bc-space-1) * 2);
     cursor: pointer;
   }
 
   .bc-event {
-    line-height: var(--bc-line-height);
-    padding-block: var(--bc-space-1);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.125rem;
+    overflow: hidden;
+  }
+
+  .bc-segment {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
   }
 
   .bc-event:hover,
   .bc-segment:hover {
-    filter: brightness(0.96);
+    background-color: var(--bc-color-event-hover-bg);
+  }
+
+  button.bc-event:disabled,
+  button.bc-segment:disabled {
+    opacity: 0.4;
   }
 
   /* Show a grab cursor only when DnD is active and the event opts in. */
@@ -66,6 +81,8 @@
   }
 
   .bc-event-title {
+    flex: 1 0 0;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -73,7 +90,8 @@
   }
 
   .bc-event-time {
-    font-size: var(--bc-font-size-sm);
+    flex-shrink: 0;
+    white-space: nowrap;
     opacity: 0.85;
   }
 

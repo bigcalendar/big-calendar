@@ -60,7 +60,9 @@ export function useCalendar<TEvent = unknown, TResource = unknown>(
       onNavigate: (args) => propsRef.current.onNavigate?.(args),
       onView: (args) => propsRef.current.onView?.(args),
       onEventSelect: (args) => propsRef.current.onEventSelect?.(args),
-      onDrillDown: (args) => propsRef.current.onDrillDown?.(args),
+      onDrillDown: props.onDrillDown
+        ? (args) => propsRef.current.onDrillDown?.(args)
+        : undefined,
       // Event interaction. Wrap-when-provided so core's `eventHandlers.has` (and
       // the per-handler presence flags) reflect what the app actually passed —
       // an omitted right/middle handler wires no listener at all. The wrapper

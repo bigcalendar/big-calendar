@@ -41,3 +41,14 @@ the one invoked.
 must be added to the wrapped overrides in `useCalendar.ts` (read via `propsRef.current`, wrap-when-provided).
 Pass-through via `...props` alone = a stale closure. Accessors (`draggableAccessor`, etc.) are typically pure
 and don't have this problem, but a function accessor that closes over changing state would.
+
+## CSS stacking: `position: relative` children intercept clicks intended for siblings
+
+**What didn't work:**
+1. Suspected `bc-week-events` (DOM 3, overlaying `bc-week-backgrounds` DOM 2) was blocking the click even with `pointer-events: none` — chased the wrong container.
+2. Applied the `useCalendar.hook.ts` `onDrillDown` wrap-when-provided fix to the `dist/` thinking Storybook used it — Storybook uses `src/` via `viteFinal` aliases, so the dist change was irrelevant for testing.
+3. Concluded drilldown was working but the story went blank (month-only story had no `TimeGridView` to render after drill to 'day') — this WAS also true and needed fixing, but was not the primary blocker.
+
+**What worked:** Adding `position: relative` to `.bc-date-number` in `layout.css`. Root cause: `bc-segment` has `position: relative` (needed as a resize-handle positioning context, set in `event.css`); `bc-month-slot` also has `position: relative` (for the keyboard focus ring). CSS paint-order puts **positioned elements (step 6)** above **non-positioned block/inline (steps 3–5)** in the same stacking context. `bc-date-number` had no `position`, so it was step 3–5 — visually below `bc-month-slot` (step 6, DOM 1), which intercepted every click. `bc-segment` worked because DOM order within step 6 put it (DOM 3) above `bc-month-slot` (DOM 1). Making `bc-date-number` `position: relative` places it at step 6 with a DOM-tree position (inside DOM-2 `bc-week-backgrounds`) above `bc-month-slot` (DOM-1) but below `bc-segment` (DOM-3).
+
+**Note for next time:** In overlapping CSS Grid layers (same `grid-row` / `grid-column`), **any element with `position: relative`** — even without a z-index — paints above ALL non-positioned siblings in the same stacking context regardless of DOM order. Check `position` on ALL elements in an overlap stack before debugging pointer-events. Also: Storybook `@big-calendar/react` stories import from `../src` — the `dist/` is never touched by Storybook.
