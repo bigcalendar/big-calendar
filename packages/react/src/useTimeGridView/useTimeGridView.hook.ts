@@ -13,8 +13,16 @@ import type { UseTimeGridHeaderReturn } from '../useTimeGridHeader'
 /** Callback ref accepted by roving hooks. */
 type CallbackRef = (node: HTMLElement | null) => void
 
+/** Element-spread props for the keyboard-DnD live-region `<div>`. */
+export interface TimeGridAnnouncerProps {
+  className: string
+  role: 'status'
+  'aria-live': 'polite'
+}
+
 /** Element-spread props for the outermost `.bc-time-grid` root `<div>`. */
 export interface TimeGridRootProps {
+  className: string
   ref: CallbackRef
   onKeyDownCapture: (e: KeyboardEvent<HTMLDivElement>) => void
   onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void
@@ -33,9 +41,13 @@ export interface UseTimeGridViewReturn<TEvent> {
    * (always mounted; empty string when idle).
    */
   announcement: string
+  /** Element-spread props for the keyboard-DnD announcer live-region `<div>`. */
+  announcer: TimeGridAnnouncerProps
   /**
-   * Root element-spread props (event-roving + keyboard-DnD handlers). Apply to
-   * the outermost `.bc-time-grid` `<div>` in every layout variant.
+   * Root element-spread props (className + event-roving + keyboard-DnD handlers).
+   * Apply to the outermost `.bc-time-grid` `<div>` in every layout variant.
+   * The `className` already encodes the layout variant (plain / resource-major /
+   * day-major) so do not set a separate class on the element.
    */
   root: TimeGridRootProps
   /**
@@ -48,6 +60,17 @@ export interface UseTimeGridViewReturn<TEvent> {
   header: UseTimeGridHeaderReturn<TEvent>
   /** All body-section state and element-spread groups. */
   body: UseTimeGridBodyReturn<TEvent>
+}
+
+function computeRootClassName(grid: TimeGrid<unknown> | null): string {
+  if (grid === null) return 'bc-time-grid'
+  if (grid.dayGroups !== null) return 'bc-time-grid bc-time-grid-resources bc-time-grid-resources-day-major'
+  if (grid.resources !== null) {
+    return grid.headings.length > 1
+      ? 'bc-time-grid bc-time-grid-resources bc-time-grid-resources-week'
+      : 'bc-time-grid bc-time-grid-resources bc-time-grid-resources-day'
+  }
+  return 'bc-time-grid'
 }
 
 /**
@@ -72,7 +95,9 @@ export function useTimeGridView<TEvent = unknown>(): UseTimeGridViewReturn<TEven
   return {
     grid,
     announcement: keyboardDnd.announcement,
+    announcer: { className: 'bc-sr-only', role: 'status' as const, 'aria-live': 'polite' as const },
     root: {
+      className: computeRootClassName(grid),
       ref: eventRoving.containerRef,
       onKeyDownCapture: keyboardDnd.onKeyDownCapture,
       onKeyDown: eventRoving.onKeyDown,

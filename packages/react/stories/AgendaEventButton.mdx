@@ -1,0 +1,56 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import * as AgendaEventButtonStories from './AgendaEventButton.stories'
+
+<Meta of={AgendaEventButtonStories} />
+
+# AgendaEventButton
+
+The **event title element** rendered inside each row of the agenda view.
+
+## Interactive vs. static
+
+`AgendaEventButton` checks whether the parent `CalendarProvider` has any event
+handlers registered. When at least one is provided — `onEventClick`,
+`onEventDoubleClick`, `onEventRightClick`, or `onEventMiddleClick` — the title
+renders as a real `<button>` styled to look like a clickable link. When there
+are no handlers, it renders as a plain, non-interactive `<span>`.
+
+You never configure `AgendaEventButton` directly. Wire or omit event handlers
+on `CalendarProvider` and the component adapts automatically.
+
+## Keyboard shortcuts
+
+When the button is interactive, these keyboard shortcuts are available:
+
+- **Enter** or **Space** → triggers `onEventClick`
+- **F2** → triggers `onEventDoubleClick`
+
+Click and double-click are disambiguated by a short timer so both never fire
+for the same gesture.
+
+## Replacing the event row
+
+To change how event rows look in the agenda, replace the entire `event` slot
+via `components.agenda.event` on `CalendarProvider`. Your component receives
+the raw event object, its resolved title, a formatted time string, and an
+`allDay` flag:
+
+```tsx
+<CalendarProvider
+  components={{
+    agenda: {
+      event: ({ title, time, allDay }) => (
+        <span>
+          {allDay ? 'All day' : time} — {title}
+        </span>
+      ),
+    },
+  }}
+>
+  ...
+</CalendarProvider>
+```
+
+Replacing the `event` slot replaces the whole row, including the time column
+and the button. If you only want to change the button appearance, leave the
+slot alone and use CSS to target `.bc-agenda-event`.

@@ -12,8 +12,8 @@
 - [x] Phase 4 — React MVP (CalendarProvider, views, top-layer UI, a11y)
 - [x] Phase 5 — DnD (`@big-calendar/dnd` + React: move/resize/outside/keyboard)
 - [x] Phase 6 — LuxonLocalizer (dual-localizer parity, `timeZone` rename)
-- [ ] **Phase 7a — API surface refactor** ← CURRENT
-- [ ] Phase 7b — Polish & 2.0.0 (React)
+- [x] **Phase 7a — API surface refactor**
+- [ ] **Phase 7b — Polish & 2.0.0 (React)** ← CURRENT
 - [ ] Phase 8 — Codemods (deferred until 7a API finalized)
 - [ ] Phase 9+ — Additional frameworks (Vue → Angular → Lit, one at a time)
 
@@ -21,7 +21,7 @@
 
 ## ⚠ NEXT TASK
 
-**7a-9** — Stories — MDX + interactive stories for each newly-public component/hook; all stories include `withLocalizerDecorator`.
+**Phase 7b** — Polish & 2.0.0 (React). Start with reviewing the public API surface, changelog, and any remaining documentation gaps before cutting the 2.0.0 release.
 
 ---
 
@@ -38,13 +38,13 @@
 | 7a-6 | Hook extraction — `useMonthView`, `useTimeGridView` (split: `useTimeGridHeader` / `useTimeGridBody`), `useAgendaView`; element-spread pattern (className + data-* + handlers + refs + aria per group) | ✅ |
 | 7a-7 | Build — multi-entry Vite config + wildcard `package.json` subpath exports | ✅ |
 | 7a-8 | Tests — update imports throughout; verify per-file coverage bars | ✅ |
-| **7a-9** | **Stories — MDX + interactive stories for each newly-public component/hook; all stories include `withLocalizerDecorator`** | ← next |
+| **7a-9** | **Stories — MDX + interactive stories for each newly-public component/hook; all stories include `withLocalizerDecorator`** | ✅ |
 
 ---
 
 ## Reference
 
-Test counts (last green run — 7a-8 coverage): localizer: 45 · core: 493 · dnd: 36 · react: 357 · **total: 931**
+Test counts (last green run — 7a-8 coverage): localizer: 45 · core: 493 · dnd: 36 · react: 357 · **total: 931** (7a-9 added stories only, no new tests)
 
 Coverage bar: **per-file** 85% branch / 95% function (not a global average).
 

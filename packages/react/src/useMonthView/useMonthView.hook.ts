@@ -77,6 +77,38 @@ export interface MonthShowMoreCellProps {
   style: CSSProperties
 }
 
+/** Element-spread props for the keyboard-DnD live-region `<div>`. */
+export interface MonthAnnouncerProps {
+  className: string
+  role: 'status'
+  'aria-live': 'polite'
+}
+
+/** Element-spread props for the weekday column-heading row `<div>`. */
+export interface MonthHeaderProps {
+  className: string
+}
+
+/** Element-spread props for each week row `<div>`. */
+export interface MonthWeekRowProps {
+  className: string
+}
+
+/** Element-spread props for the slot hit-target container inside a week row. */
+export interface MonthSlotsContainerProps {
+  className: string
+}
+
+/** Element-spread props for the background cells container inside a week row. */
+export interface MonthBackgroundsContainerProps {
+  className: string
+}
+
+/** Element-spread props for the events container inside a week row. */
+export interface MonthEventsContainerProps {
+  className: string
+}
+
 /** Return value of {@link useMonthView}. */
 export interface UseMonthViewReturn<TEvent> {
   /** Resolved month grid, or `null` when the active view is not the month. */
@@ -89,10 +121,22 @@ export interface UseMonthViewReturn<TEvent> {
   announcement: string
   /** Navigate to the given day. */
   drilldown: (date: string) => void
+  /** Element-spread props for the keyboard-DnD live-region `<div>`. */
+  announcer: MonthAnnouncerProps
   /** Element-spread props for the outermost `<div className="bc-month">`. */
   root: MonthRootProps
+  /** Element-spread props for the weekday column-heading row `<div>`. */
+  monthHeader: MonthHeaderProps
   /** Element-spread props for `<div className="bc-month-grid">`. */
   monthGrid: MonthGridProps
+  /** Element-spread props for each week row `<div>` (same for every row). */
+  weekRow: MonthWeekRowProps
+  /** Element-spread props for the slot hit-target container inside a week row. */
+  slotsContainer: MonthSlotsContainerProps
+  /** Element-spread props for the background cells container inside a week row. */
+  backgroundsContainer: MonthBackgroundsContainerProps
+  /** Element-spread props for the events container inside a week row. */
+  eventsContainer: MonthEventsContainerProps
   /**
    * Returns element-spread props for a `bc-month-slot` hit-target cell.
    * Call once per day cell inside a week loop.
@@ -185,6 +229,7 @@ export function useMonthView<TEvent = unknown>(): UseMonthViewReturn<TEvent> {
     },
     announcement: keyboardDnd.announcement,
     drilldown: (date: string) => store.drilldown({ date }),
+    announcer: { className: 'bc-sr-only', role: 'status' as const, 'aria-live': 'polite' as const },
     root: {
       className: 'bc-month',
       ref: eventRoving.containerRef,
@@ -192,6 +237,11 @@ export function useMonthView<TEvent = unknown>(): UseMonthViewReturn<TEvent> {
       onKeyDown: eventRoving.onKeyDown,
       onFocusCapture: eventRoving.onFocusCapture,
     },
+    monthHeader: { className: 'bc-month-header' },
+    weekRow: { className: 'bc-month-week' },
+    slotsContainer: { className: 'bc-month-slots' },
+    backgroundsContainer: { className: 'bc-week-backgrounds' },
+    eventsContainer: { className: 'bc-week-events' },
     monthGrid: {
       className: 'bc-month-grid',
       style: grid ? monthGridStyle(grid.weeks.length) : {},

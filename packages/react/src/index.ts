@@ -80,29 +80,55 @@ export type { DialogProps } from './Dialog'
 export { useCalendarDnd } from './dnd'
 export { useAgendaView } from './useAgendaView'
 export type {
+  AgendaHeadingCellProps,
   AgendaRowProps,
   AgendaViewComponents,
   UseAgendaViewReturn,
 } from './useAgendaView'
 export { useMonthView } from './useMonthView'
 export type {
+  MonthAnnouncerProps,
+  MonthBackgroundsContainerProps,
   MonthDaySlotProps,
+  MonthEventsContainerProps,
   MonthGridProps,
+  MonthHeaderProps,
   MonthRootProps,
   MonthSegmentButtonProps,
   MonthShowMoreCellProps,
+  MonthSlotsContainerProps,
   MonthViewComponents,
+  MonthWeekRowProps,
   UseMonthViewReturn,
 } from './useMonthView'
 export { useTimeGridHeader } from './useTimeGridHeader'
 export type {
+  TimeGridAllDayLabelProps,
+  TimeGridAllDayResourceStackProps,
   TimeGridAllDayRowProps,
   TimeGridAllDaySegmentProps,
-  TimeGridAllDaySlotProps,
+  TimeGridAllDaySegmentsProps,
+  TimeGridAllDaySelectionWrapperProps,
+  TimeGridAllDaySlotsProps,
+  TimeGridDayMajorAllDayResourceProps,
+  TimeGridDayMajorHeadingCellProps,
+  TimeGridDayMajorResourceCellProps,
   TimeGridHeaderComponents,
   TimeGridResourceAllDayRowProps,
   TimeGridResourceAllDaySlotProps,
+  TimeGridResourceDayAllDayProps,
+  TimeGridResourceDayHeadProps,
+  TimeGridResourceGroupTitleProps,
+  TimeGridResourceHeaderLabelProps,
+  TimeGridResourceSingleHeadProps,
+  TimeGridResourceWeekAllDayProps,
+  TimeGridResourceWeekAllDaySegmentsContainerProps,
+  TimeGridResourceWeekAllDaySlotsContainerProps,
   TimeGridStackedSegmentProps,
+  TimeGridTimeHeadProps,
+  TimeGridTimeHeaderGutterProps,
+  TimeGridTimeHeaderProps,
+  TimeGridAllDaySlotProps,
   UseTimeGridHeaderReturn,
 } from './useTimeGridHeader'
 export { useTimeGridBody } from './useTimeGridBody'
@@ -111,13 +137,16 @@ export type {
   TimeGridBodyComponents,
   TimeGridBodyRootProps,
   TimeGridEventButtonProps,
+  TimeGridGutterProps,
   TimeGridResourceBodyRootProps,
   TimeGridResourceSlotProps,
   TimeGridSlotProps,
+  TimeGridTimeSlotsContainerProps,
   UseTimeGridBodyReturn,
 } from './useTimeGridBody'
 export { useTimeGridView } from './useTimeGridView'
 export type {
+  TimeGridAnnouncerProps,
   TimeGridRootProps,
   UseTimeGridViewReturn,
 } from './useTimeGridView'

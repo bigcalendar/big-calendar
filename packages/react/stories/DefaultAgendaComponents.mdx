@@ -1,0 +1,69 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import * as DefaultAgendaStories from './DefaultAgendaComponents.stories'
+
+<Meta of={DefaultAgendaStories} />
+
+# Default Agenda Components
+
+These are the three slot components the agenda view renders by default. Every
+one of them can be replaced with your own component by passing it through
+`components.agenda` on `CalendarProvider`.
+
+## DefaultAgendaDate
+
+Renders the date label that appears at the start of a group of events for the
+same day. Receives the day string (RFC 3339) and a localized label.
+
+```tsx
+<CalendarProvider
+  components={{
+    agenda: {
+      date: ({ label }) => (
+        <strong style={{ color: 'steelblue' }}>{label}</strong>
+      ),
+    },
+  }}
+>
+```
+
+## DefaultAgendaEmpty
+
+Renders when the agenda has no events in its date range. Receives the
+localized "no events" message string.
+
+```tsx
+<CalendarProvider
+  components={{
+    agenda: {
+      empty: ({ message }) => (
+        <p style={{ fontStyle: 'italic' }}>{message}</p>
+      ),
+    },
+  }}
+>
+```
+
+## DefaultAgendaEvent
+
+Renders a single event row: a formatted time string on the left and the event
+title on the right. The title is an `AgendaEventButton` — a real `<button>`
+when event handlers are wired, or a `<span>` when they are not.
+
+To replace the whole row, pass `components.agenda.event`. Your component
+receives the raw event object, the resolved title, a formatted time string,
+and an `allDay` flag:
+
+```tsx
+<CalendarProvider
+  components={{
+    agenda: {
+      event: ({ title, time, allDay }) => (
+        <div>
+          <span>{allDay ? 'All day' : time}</span>
+          <span>{title}</span>
+        </div>
+      ),
+    },
+  }}
+>
+```

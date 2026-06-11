@@ -1,15 +1,15 @@
-import EventButton from '../EventButton'
-import { useMonthView } from '../useMonthView'
+import { Views } from '@big-calendar/core'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { EventButton, useMonthView, Toolbar } from '../src'
+import { CalendarStage } from './harness'
 
 /**
- * The month view: a padded day grid split into week rows, with overlapping
- * events laid out as day-column segments. Reads the month model from context and
- * renders nothing when the active view is not the month. Day-cell state
- * (today / off-range) and overflow come from the model; every slot
- * (`weekday` / `dateCell` / `event` / `showMore`) is overridable via
- * `components.month`. Must render inside a {@link CalendarProvider}.
+ * A custom month view written entirely with `useMonthView`. The hook returns
+ * all the data, element-spread props, and resolved component slots — this
+ * component is a near-pure render function on top of them. This is how
+ * `MonthView` itself is built.
  */
-function MonthView<TEvent = unknown>() {
+function CustomMonthView<TEvent = unknown>() {
   const {
     grid,
     components,
@@ -48,7 +48,6 @@ function MonthView<TEvent = unknown>() {
           const prevBand = getWeekPreviewBand(week)
           return (
             <div key={week.key} {...weekRow}>
-              {/* Non-overridable per-day hit targets for slot selection. */}
               <div {...slotsContainer}>
                 {week.days.map((cell, dayIndex) => (
                   <div key={cell.day} {...getDaySlotProps(cell, weekIndex, dayIndex)} />
@@ -96,4 +95,33 @@ function MonthView<TEvent = unknown>() {
   )
 }
 
-export default MonthView
+const meta: Meta = {
+  title: 'React/Hooks/useMonthView',
+  parameters: {
+    docs: {
+      description: {
+        component:
+          'Composes all logic for a custom month view: signal subscriptions, roving focus, keyboard DnD, slot selection, drag-preview geometry, and component slot resolution. The view component is a near-pure render function on top.',
+      },
+    },
+  },
+}
+export default meta
+
+type Story = StoryObj
+
+/**
+ * `CustomMonthView` is a complete month view implemented entirely with
+ * `useMonthView`. The built-in `MonthView` component is just this hook plus
+ * the same render function — you can copy it and change any part.
+ */
+export const Default: Story = {
+  render: () => (
+    <CalendarStage defaultView={Views.MONTH} views={[Views.MONTH]}>
+      <Toolbar />
+      <div className="bc-calendar">
+        <CustomMonthView />
+      </div>
+    </CalendarStage>
+  ),
+}

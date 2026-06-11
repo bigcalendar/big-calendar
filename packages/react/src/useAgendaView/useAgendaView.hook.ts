@@ -21,6 +21,11 @@ export interface AgendaRowProps {
   style: CSSProperties
 }
 
+/** Element-spread props for each column-heading `<span>` in the agenda header row. */
+export interface AgendaHeadingCellProps {
+  className: string
+}
+
 /** Return value of {@link useAgendaView}. */
 export interface UseAgendaViewReturn<TEvent> {
   /** Resolved rows, or `null` when the active view is not the agenda. */
@@ -33,6 +38,8 @@ export interface UseAgendaViewReturn<TEvent> {
   root: { className: string }
   /** Element-spread props for the sticky column-heading row. */
   header: { className: string }
+  /** Element-spread props for each column-heading `<span>` (date, time, event). */
+  headingCell: AgendaHeadingCellProps
   /** Element-spread props for the scrollable event list. */
   body: { className: string }
   /** Returns element-spread props for a day-group row. */
@@ -63,6 +70,7 @@ export function useAgendaView<TEvent = unknown>(): UseAgendaViewReturn<TEvent> {
     },
     root: { className: 'bc-agenda' },
     header: { className: 'bc-agenda-header' },
+    headingCell: { className: 'bc-agenda-heading' },
     body: { className: 'bc-agenda-body' },
     getRowProps: (row: AgendaRow<TEvent>): AgendaRowProps => ({
       className: 'bc-agenda-day',

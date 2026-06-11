@@ -1,0 +1,87 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import * as DefaultMonthStories from './DefaultMonthComponents.stories'
+
+<Meta of={DefaultMonthStories} />
+
+# Default Month Components
+
+These are the four slot components the month view renders by default. Replace
+any of them via `components.month` on `CalendarProvider`.
+
+## DefaultMonthWeekday
+
+Renders the column heading row at the top of the month grid — one per day of
+the week. Receives the full weekday name (e.g. "Monday") and an abbreviated
+form (e.g. "Mon"). The stylesheet shows whichever fits the calendar's current
+width. Replace via `components.month.weekday`.
+
+```tsx
+<CalendarProvider
+  components={{
+    month: {
+      weekday: ({ long, short }) => (
+        <abbr title={long}>{short}</abbr>
+      ),
+    },
+  }}
+>
+```
+
+## DefaultMonthDate
+
+Renders the date number in the top-left corner of each day cell. Receives
+`isToday` (adds the `bc-today` class) and `isOffRange` (dims days from
+adjacent months). Clicking calls `onDrillDown`, which navigates to the
+day view for that date. Replace via `components.month.dateCell`.
+
+```tsx
+<CalendarProvider
+  components={{
+    month: {
+      dateCell: ({ label, isToday, onDrillDown }) => (
+        <button onClick={onDrillDown} style={{ fontWeight: isToday ? 'bold' : 'normal' }}>
+          {label}
+        </button>
+      ),
+    },
+  }}
+>
+```
+
+## DefaultMonthEvent
+
+Renders a single event segment inside a week row. The surrounding
+`EventButton` handles click, drag, and resize — your component just needs
+to render the visible content. Receives the original event object and its
+resolved title. Replace via `components.month.event`.
+
+```tsx
+<CalendarProvider
+  components={{
+    month: {
+      event: ({ title }) => (
+        <span style={{ fontStyle: 'italic' }}>{title}</span>
+      ),
+    },
+  }}
+>
+```
+
+## DefaultMonthShowMore
+
+Renders the "+N more" overflow indicator that appears when a week row has more
+events than it can display. Clicking opens a `Popover` listing the overflowed
+events. Receives the count, a localized label, the day string, and the list of
+overflowed events. Replace via `components.month.showMore`.
+
+```tsx
+<CalendarProvider
+  components={{
+    month: {
+      showMore: ({ count, label }) => (
+        <button>{label}</button>
+      ),
+    },
+  }}
+>
+```

@@ -7,7 +7,7 @@ import { useAgendaView } from '../useAgendaView'
  * `components.agenda`. Must render inside a {@link CalendarProvider}.
  */
 function AgendaView<TEvent = unknown>() {
-  const { rows, components, messages, root, header, body, getRowProps } = useAgendaView<TEvent>()
+  const { rows, components, messages, root, header, headingCell, body, getRowProps } = useAgendaView<TEvent>()
 
   if (rows === null) return null
 
@@ -16,9 +16,9 @@ function AgendaView<TEvent = unknown>() {
   return (
     <div {...root}>
       <div {...header}>
-        <span className="bc-agenda-heading">{messages.date}</span>
-        <span className="bc-agenda-heading">{messages.time}</span>
-        <span className="bc-agenda-heading">{messages.event}</span>
+        <span {...headingCell}>{messages.date}</span>
+        <span {...headingCell}>{messages.time}</span>
+        <span {...headingCell}>{messages.event}</span>
       </div>
       {rows.length === 0 ? (
         <EmptySlot message={messages.noEventsInRange} />

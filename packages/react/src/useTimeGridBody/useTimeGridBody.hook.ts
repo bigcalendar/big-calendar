@@ -7,6 +7,7 @@ import type { TimeLabelProps, TimeEventProps } from '../components.type'
 import {
   eventBoxStyle,
   nowIndicatorStyle,
+  selectionStyle,
   slotCountStyle,
 } from '../geometryStyles'
 import { useRovingSelection } from '../useRovingSelection'
@@ -83,6 +84,16 @@ export interface TimeGridEventButtonProps<TEvent> {
   resizeEdges: readonly ResizeEdge[]
 }
 
+/** Element-spread props for the `.bc-time-gutter` time-label column `<div>`. */
+export interface TimeGridGutterProps {
+  className: string
+}
+
+/** Element-spread props for the `.bc-time-slots` slot container inside a day column. */
+export interface TimeGridTimeSlotsContainerProps {
+  className: string
+}
+
 /** Return value of {@link useTimeGridBody}. */
 export interface UseTimeGridBodyReturn<TEvent> {
   /** Resolved component slots for the body section. */
@@ -144,6 +155,26 @@ export interface UseTimeGridBodyReturn<TEvent> {
   getEventProps: (event: TimePositionedEvent<TEvent>) => TimeGridEventButtonProps<TEvent>
   /** Returns `<div>` props for the `.bc-now-indicator` line, or `null` when absent. */
   getNowIndicatorProps: (column: TimeColumn<TEvent>) => { className: string; style: CSSProperties } | null
+  /** Element-spread props for the `.bc-time-gutter` time-label column `<div>`. */
+  gutter: TimeGridGutterProps
+  /** Element-spread props for the `.bc-time-slots` slot container `<div>` inside each day column. */
+  timeSlotsContainer: TimeGridTimeSlotsContainerProps
+  /**
+   * Returns element-spread props for the `.bc-selection` `<div>` in the plain
+   * time-column path, or `null` when no selection overlaps the given column index.
+   */
+  getTimeSelectionDivProps: (colIndex: number) => { className: string; style: CSSProperties } | null
+  /**
+   * Returns element-spread props for the `.bc-selection` `<div>` in the
+   * resource/day-major path, or `null` when no selection matches the given
+   * resource + date pair.
+   */
+  getResourceSelectionDivProps: (resourceId: ResourceId, date: string) => { className: string; style: CSSProperties } | null
+  /**
+   * Returns element-spread props for the `.bc-drag-preview` `<div>`, or `null`
+   * when no preview is active or the column is not covered.
+   */
+  getPreviewDivProps: (column: { min: string; max: string }) => { className: string; style: CSSProperties } | null
 }
 
 /** Stable identity for the resize edge array on timed events. */
@@ -303,6 +334,62 @@ export function useTimeGridBody<TEvent = unknown>(
       return {
         className: 'bc-now-indicator',
         style: nowIndicatorStyle(column.nowTop),
+      }
+    },
+    gutter: { className: 'bc-time-gutter' },
+    timeSlotsContainer: { className: 'bc-time-slots' },
+    getTimeSelectionDivProps: (colIndex: number) => {
+      const slotCount = slotCountSafe
+      if (selRange === null || selAnchor?.mode !== 'time' || slotCount <= 0) return null
+      const startDay = Math.floor(selRange.start / slotCount)
+      const endDay = Math.floor(selRange.end / slotCount)
+      if (colIndex < startDay || colIndex > endDay) return null
+      const startSlot = selRange.start - startDay * slotCount
+      const endSlot = selRange.end - endDay * slotCount
+      let top: number
+      let bottom: number
+      if (startDay === endDay) {
+        top = startSlot
+        bottom = endSlot + 1
+      } else if (colIndex === startDay) {
+        top = startSlot
+        bottom = slotCount
+      } else if (colIndex === endDay) {
+        top = 0
+        bottom = endSlot + 1
+      } else {
+        top = 0
+        bottom = slotCount
+      }
+      return {
+        className: 'bc-selection',
+        style: selectionStyle({ top: top / slotCount, height: (bottom - top) / slotCount }),
+      }
+    },
+    getResourceSelectionDivProps: (resourceId: ResourceId, date: string) => {
+      const slotCount = slotCountSafe
+      if (selRange === null || selAnchor?.mode !== 'time' || slotCount <= 0) return null
+      if (selAnchor.resourceId == null || String(selAnchor.resourceId) !== String(resourceId)) return null
+      if (selAnchor.date !== date) return null
+      return {
+        className: 'bc-selection',
+        style: selectionStyle({ top: selRange.start / slotCount, height: (selRange.end - selRange.start + 1) / slotCount }),
+      }
+    },
+    getPreviewDivProps: (column: { min: string; max: string }) => {
+      if (dragPreview === null) return null
+      const metrics = createSlotMetrics({
+        localizer: store.localizer,
+        min: column.min,
+        max: column.max,
+        step: store.step,
+        timeslots: store.timeslots,
+      })
+      const range = metrics.getRange({ start: dragPreview.start, end: dragPreview.end })
+      if (range.height <= 0) return null
+      return {
+        className: 'bc-drag-preview',
+        style: selectionStyle({ top: range.top, height: range.height }),
       }
     },
   }

@@ -1,0 +1,105 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import * as DefaultTimeStories from './DefaultTimeComponents.stories'
+
+<Meta of={DefaultTimeStories} />
+
+# Default Time-Grid Components
+
+These are the five slot components the time-grid view (day / week / work-week)
+renders by default. Replace any of them via `components.time` on
+`CalendarProvider`.
+
+## DefaultTimeDayHeading
+
+Renders the heading for each day column in the time grid. Receives the day
+string, a localized label, `isToday` (adds `bc-today`), and `onDrillDown`.
+Replace via `components.time.dayHeading`.
+
+```tsx
+<CalendarProvider
+  components={{
+    time: {
+      dayHeading: ({ label, isToday, onDrillDown }) => (
+        <button onClick={onDrillDown} style={{ color: isToday ? 'blue' : 'inherit' }}>
+          {label}
+        </button>
+      ),
+    },
+  }}
+>
+```
+
+## DefaultTimeLabel
+
+Renders the time tick marks in the left gutter. Receives the slot time string
+and a localized label (e.g. "9 AM"). Replace via `components.time.timeLabel`.
+
+```tsx
+<CalendarProvider
+  components={{
+    time: {
+      timeLabel: ({ label }) => (
+        <small>{label}</small>
+      ),
+    },
+  }}
+>
+```
+
+## DefaultTimeEvent
+
+Renders the content inside a positioned event box. The enclosing `EventButton`
+handles click, drag, and resize — your component only needs to render the
+visible content. Receives the event object, its resolved title, and a formatted
+"start – end" time string. Replace via `components.time.event`.
+
+```tsx
+<CalendarProvider
+  components={{
+    time: {
+      event: ({ title, time }) => (
+        <div>
+          <strong>{title}</strong>
+          <span>{time}</span>
+        </div>
+      ),
+    },
+  }}
+>
+```
+
+## DefaultTimeAllDayEvent
+
+Renders an all-day event segment in the header's all-day row. Receives the
+event object and its resolved title. Replace via `components.time.allDayEvent`.
+
+```tsx
+<CalendarProvider
+  components={{
+    time: {
+      allDayEvent: ({ title }) => (
+        <span style={{ fontWeight: 'bold' }}>{title}</span>
+      ),
+    },
+  }}
+>
+```
+
+## DefaultTimeShowMore
+
+Renders the "+N more" overflow indicator in the all-day row when more events
+are stacked than can fit. Opens a `Popover` listing them. Receives the count,
+a localized label, and the overflowed events list. Replace via
+`components.time.showMore`.
+
+```tsx
+<CalendarProvider
+  components={{
+    time: {
+      showMore: ({ label }) => (
+        <button>{label}</button>
+      ),
+    },
+  }}
+>
+```
