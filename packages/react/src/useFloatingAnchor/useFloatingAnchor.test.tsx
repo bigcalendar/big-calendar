@@ -1,6 +1,6 @@
 import { fireEvent, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { useFloatingAnchor } from './useFloatingAnchor'
+import { useFloatingAnchor } from '.'
 
 /** Give an element a deterministic bounding rect (jsdom returns zeros). */
 function withRect(node: HTMLElement, rect: Partial<DOMRect>): HTMLElement {

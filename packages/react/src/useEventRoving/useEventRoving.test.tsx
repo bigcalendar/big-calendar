@@ -1,6 +1,6 @@
 import { act, fireEvent, render } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { useEventRoving } from './useEventRoving'
+import { useEventRoving } from '.'
 
 /** A view-root stand-in: a stray slot cell plus `count` event buttons. */
 function Surface({ count = 3 }: { count?: number }) {

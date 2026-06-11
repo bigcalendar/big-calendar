@@ -1,8 +1,8 @@
 import { wrapAccessor } from '@big-calendar/core'
 import { useMemo } from 'react'
-import type { ShowMoreEvent } from './components.type'
-import { useCalendarContext } from './CalendarProvider'
-import { useSignalValue } from './internal/useSignalValue'
+import type { ShowMoreEvent } from '../components.type'
+import { useCalendarContext } from '../CalendarProvider'
+import { useSignalValue } from '../internal/useSignalValue'
 
 /** A weekday column heading, resolved from the first week of the grid. */
 export interface MonthWeekday {

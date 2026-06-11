@@ -2,25 +2,25 @@ import { createSlotMetrics } from '@big-calendar/core'
 import type { ResourceId, ResizeEdge } from '@big-calendar/core'
 import type { ComponentType, CSSProperties, FocusEvent, KeyboardEvent, PointerEvent } from 'react'
 import { useCallback } from 'react'
-import { useCalendarContext } from './CalendarProvider'
-import type { TimeLabelProps, TimeEventProps } from './components.type'
+import { useCalendarContext } from '../CalendarProvider'
+import type { TimeLabelProps, TimeEventProps } from '../components.type'
 import {
   eventBoxStyle,
   nowIndicatorStyle,
   slotCountStyle,
-} from './geometryStyles'
-import { useRovingSelection } from './useRovingSelection'
-import type { Direction } from './useRovingSelection'
-import { useSignalValue } from './internal/useSignalValue'
-import { useSlotSelection } from './useSlotSelection'
-import DefaultTimeEvent from './DefaultTimeEvent'
-import DefaultTimeLabel from './DefaultTimeLabel'
+} from '../geometryStyles'
+import { useRovingSelection } from '../useRovingSelection'
+import type { Direction } from '../useRovingSelection'
+import { useSignalValue } from '../internal/useSignalValue'
+import { useSlotSelection } from '../useSlotSelection'
+import DefaultTimeEvent from '../DefaultTimeEvent'
+import DefaultTimeLabel from '../DefaultTimeLabel'
 import type {
   TimeBackgroundEvent,
   TimeColumn,
   TimeGrid,
   TimePositionedEvent,
-} from './useTimeGrid'
+} from '../useTimeGrid'
 
 /** Resolved component slots used by the body section. */
 export interface TimeGridBodyComponents<TEvent> {

@@ -6,7 +6,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CalendarProvider, useCalendarContext } from '../CalendarProvider'
 import { useSignalValue } from '../internal/useSignalValue'
 import { LOCALIZER_CASES } from '../testing/localizers'
-import { useCalendarDnd } from './useCalendarDnd'
+import { useCalendarDnd } from '.'
 
 /** Reads store.dndEnabled and renders it as text — isolated from useCalendarDnd. */
 function DndEnabledDisplay() {

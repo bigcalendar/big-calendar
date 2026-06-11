@@ -1,27 +1,27 @@
 import type { ResizeEdge } from '@big-calendar/core'
 import type { ComponentType, CSSProperties, FocusEvent, KeyboardEvent, PointerEvent } from 'react'
 import { useCallback } from 'react'
-import { useCalendarContext } from './CalendarProvider'
+import { useCalendarContext } from '../CalendarProvider'
 import type {
   MonthDateProps,
   MonthEventProps,
   MonthShowMoreProps,
   MonthWeekdayProps,
   ShowMoreEvent,
-} from './components.type'
-import { monthGridStyle, segmentStyle } from './geometryStyles'
-import { useEventRoving } from './useEventRoving'
-import { useKeyboardDnd } from './useKeyboardDnd'
-import type { Direction } from './useRovingSelection'
-import { useRovingSelection } from './useRovingSelection'
-import { useSignalValue } from './internal/useSignalValue'
-import { useSlotSelection } from './useSlotSelection'
-import DefaultMonthDate from './DefaultMonthDate'
-import DefaultMonthEvent from './DefaultMonthEvent'
-import DefaultMonthShowMore from './DefaultMonthShowMore'
-import DefaultMonthWeekday from './DefaultMonthWeekday'
-import { useMonthWeeks } from './useMonthWeeks'
-import type { MonthDayCell, MonthGrid, MonthSegmentCell, MonthWeekCell } from './useMonthWeeks'
+} from '../components.type'
+import { monthGridStyle, segmentStyle } from '../geometryStyles'
+import { useEventRoving } from '../useEventRoving'
+import { useKeyboardDnd } from '../useKeyboardDnd'
+import type { Direction } from '../useRovingSelection'
+import { useRovingSelection } from '../useRovingSelection'
+import { useSignalValue } from '../internal/useSignalValue'
+import { useSlotSelection } from '../useSlotSelection'
+import DefaultMonthDate from '../DefaultMonthDate'
+import DefaultMonthEvent from '../DefaultMonthEvent'
+import DefaultMonthShowMore from '../DefaultMonthShowMore'
+import DefaultMonthWeekday from '../DefaultMonthWeekday'
+import { useMonthWeeks } from '../useMonthWeeks'
+import type { MonthDayCell, MonthGrid, MonthSegmentCell, MonthWeekCell } from '../useMonthWeeks'
 
 /** Resolved component slots for the month view. */
 export interface MonthViewComponents<TEvent> {

@@ -1,8 +1,8 @@
 import { wrapAccessor } from '@big-calendar/core'
 import { formatEventTime } from '@big-calendar/core/utils'
 import { useMemo } from 'react'
-import { useCalendarContext } from './CalendarProvider'
-import { useSignalValue } from './internal/useSignalValue'
+import { useCalendarContext } from '../CalendarProvider'
+import { useSignalValue } from '../internal/useSignalValue'
 
 /** A resolved agenda event row (display fields read via accessors + localizer). */
 export interface AgendaRowEvent<TEvent> {

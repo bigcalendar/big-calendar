@@ -1,7 +1,7 @@
 import type { SelectionMode } from '@big-calendar/core'
 import { useCallback, useEffect, useRef } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
-import { useCalendarContext } from './CalendarProvider'
+import { useCalendarContext } from '../CalendarProvider'
 
 /** Movement past this many pixels turns a press into a drag (not a click). */
 const DRAG_THRESHOLD_PX = 4

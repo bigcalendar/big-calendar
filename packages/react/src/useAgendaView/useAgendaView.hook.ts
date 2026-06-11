@@ -1,12 +1,12 @@
 import type { ComponentType, CSSProperties } from 'react'
-import { useCalendarContext } from './CalendarProvider'
-import type { AgendaDateProps, AgendaEmptyProps, AgendaEventProps } from './components.type'
-import { agendaRowsStyle } from './geometryStyles'
-import DefaultAgendaDate from './DefaultAgendaDate'
-import DefaultAgendaEmpty from './DefaultAgendaEmpty'
-import DefaultAgendaEvent from './DefaultAgendaEvent'
-import { useAgendaRows } from './useAgendaRows'
-import type { AgendaRow } from './useAgendaRows'
+import { useCalendarContext } from '../CalendarProvider'
+import type { AgendaDateProps, AgendaEmptyProps, AgendaEventProps } from '../components.type'
+import { agendaRowsStyle } from '../geometryStyles'
+import DefaultAgendaDate from '../DefaultAgendaDate'
+import DefaultAgendaEmpty from '../DefaultAgendaEmpty'
+import DefaultAgendaEvent from '../DefaultAgendaEvent'
+import { useAgendaRows } from '../useAgendaRows'
+import type { AgendaRow } from '../useAgendaRows'
 
 /** Resolved component slots for the agenda view. */
 export interface AgendaViewComponents<TEvent> {

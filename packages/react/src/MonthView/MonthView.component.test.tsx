@@ -503,4 +503,73 @@ describe.each(LOCALIZER_CASES)('MonthView keyboard DnD [$name]', ({ create }) =>
     expect(btn.getAttribute('aria-grabbed')).toBeNull()
     expect(screen.getByRole('status').textContent).toMatch(/cancelled/i)
   })
+
+  it('ArrowLeft then Enter moves the event one day back via onEventDrop', () => {
+    const onEventDrop = vi.fn()
+    renderMonth({ onEventDrop })
+    const btn = screen.getByRole('button', { name: /Standup/ })
+    grab(btn)
+    press(btn, 'ArrowLeft')
+    press(btn, 'Enter')
+    expect(onEventDrop).toHaveBeenCalledTimes(1)
+    expect(onEventDrop.mock.calls[0]![0]).toMatchObject({
+      start: localizer.add({ value: one[0]!.start, amount: -1, unit: 'day' }),
+      end: localizer.add({ value: one[0]!.end, amount: -1, unit: 'day' }),
+    })
+  })
+
+  it('ArrowUp moves by a whole week backward', () => {
+    const onEventDrop = vi.fn()
+    renderMonth({ onEventDrop })
+    const btn = screen.getByRole('button', { name: /Standup/ })
+    grab(btn)
+    press(btn, 'ArrowUp')
+    press(btn, 'Enter')
+    expect(onEventDrop.mock.calls[0]![0]).toMatchObject({
+      start: localizer.add({ value: one[0]!.start, amount: -7, unit: 'day' }),
+    })
+  })
+
+  it('Shift+ArrowUp resizes the end edge back one week via onEventResize', () => {
+    const onEventResize = vi.fn()
+    // Use a 2-week event so the end has room to shrink by 7 days without clamping to start.
+    // The event spans 2 calendar weeks so it renders as 2 segments; grab the first one.
+    const twoWeek: Event[] = [
+      { id: 1, title: 'Standup', start: '2026-06-15T09:00:00.000Z', end: '2026-06-22T10:00:00.000Z' },
+    ]
+    render(
+      <CalendarProvider<Event>
+        localizer={localizer}
+        defaultDate="2026-06-15"
+        defaultView={Views.MONTH}
+        events={twoWeek}
+        onEventResize={onEventResize}
+      >
+        <MonthView />
+      </CalendarProvider>,
+    )
+    const btns = screen.getAllByRole('button', { name: /Standup/ })
+    grab(btns[0]!)
+    press(btns[0]!, 'ArrowUp', true) // Shift+↑ → grabResize({ days: -7 })
+    press(btns[0]!, 'Enter')
+    expect(onEventResize).toHaveBeenCalledTimes(1)
+    expect(onEventResize.mock.calls[0]![0]).toMatchObject({
+      start: twoWeek[0]!.start,
+      end: localizer.add({ value: twoWeek[0]!.end, amount: -7, unit: 'day' }),
+    })
+  })
+
+  it('Shift+ArrowDown grows the end edge one week via onEventResize', () => {
+    const onEventResize = vi.fn()
+    renderMonth({ onEventResize })
+    const btn = screen.getByRole('button', { name: /Standup/ })
+    grab(btn)
+    press(btn, 'ArrowDown', true) // Shift+↓ grows end by 7 days
+    press(btn, 'Enter')
+    expect(onEventResize).toHaveBeenCalledTimes(1)
+    expect(onEventResize.mock.calls[0]![0]).toMatchObject({
+      start: one[0]!.start,
+      end: localizer.add({ value: one[0]!.end, amount: 7, unit: 'day' }),
+    })
+  })
 })

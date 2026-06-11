@@ -2,7 +2,7 @@ import { wrapAccessor } from '@big-calendar/core'
 import type { EventId, MoveMode } from '@big-calendar/core'
 import { useCallback, useState } from 'react'
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
-import { useCalendarContext } from './CalendarProvider'
+import { useCalendarContext } from '../CalendarProvider'
 
 /** Options for {@link useKeyboardDnd}. */
 export interface KeyboardDndOptions {

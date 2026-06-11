@@ -1,17 +1,28 @@
+import { readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
 
-// Library build: ESM only, ES2024 target, all bare imports externalized so
-// packages never bundle each other or their peers.
+const SRC = resolve(import.meta.dirname, 'src')
+const SKIP_DIRS = new Set(['internal', 'testing'])
+
+// One entry per public src/<Name>/ directory.
+// The entry key uses the "<Name>/index" form so Vite's Rollup outputs
+// dist/<Name>/index.js, matching the package.json "./*" wildcard exactly.
+const subpathEntries = Object.fromEntries(
+  readdirSync(SRC, { withFileTypes: true })
+    .filter(d => d.isDirectory() && !SKIP_DIRS.has(d.name))
+    .map(d => [`${d.name}/index`, resolve(SRC, d.name, 'index.ts')])
+)
+
 export default defineConfig({
   build: {
     target: 'es2024',
     sourcemap: true,
     lib: {
       entry: {
-        index: resolve(import.meta.dirname, 'src/index.ts'),
-        dnd: resolve(import.meta.dirname, 'src/dnd/index.ts'),
+        index: resolve(SRC, 'index.ts'),
+        ...subpathEntries,
       },
       formats: ['es'],
     },

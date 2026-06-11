@@ -248,3 +248,78 @@ During Phase 7a reassessment, all view-internal hooks and utility functions were
 - All exported types from these hooks (`AgendaRow`, `AgendaRowEvent`, `TimeGrid`, `TimeColumn`, `TimeAllDayRow`, etc.) are also exported publicly.
 - **Why:** custom view builders need access to the same resolved model data the built-in views use; without these hooks they'd have to duplicate significant logic.
 - **Rejected:** leaving them internal (would block any meaningful custom view implementation).
+
+---
+
+## 2026-06-10 — Subfolder export pattern: file naming, barrel structure, and wildcard exports
+
+This is the canonical, enforced pattern for every public export in `packages/react`. Apply it without deviation when adding or restructuring exports.
+
+### File naming inside `src/<Name>/`
+
+- Hooks: `<Name>.hook.ts`
+- Components: `<Name>.component.tsx`
+- Utilities (no primary function/class): `<Name>.ts`
+- Tests co-located: `<Name>.test.ts` / `<Name>.component.test.tsx`
+- `internal/` and `testing/` directories at `src/` root are excluded from subpath entries (skipped by the Vite `readdirSync` discovery)
+
+### Barrel structure: `src/<Name>/index.ts`
+
+Each folder's `index.ts` follows this rule:
+- **Default export = the primary thing** (the hook, component, or main function the folder is named after)
+- **Named export = everything else** (types, secondary helpers, context objects)
+- The primary thing is also exported as a named export for convenience (both default and named point to the same value)
+
+Hook example (`useMonthView/index.ts`):
+```ts
+export * from './useMonthView.hook'             // all named exports (types, etc.)
+export { useMonthView as default } from './useMonthView.hook'  // default = the hook
+```
+
+Component example (`Calendar/index.ts`):
+```ts
+export { default as Calendar } from './Calendar.component'   // named
+export { default } from './Calendar.component'               // default = the component
+```
+
+Component with secondary exports (`CalendarProvider/index.ts`):
+```ts
+export { default as CalendarProvider } from './CalendarProvider.component'
+export type { CalendarProviderProps } from './CalendarProvider.component'
+export { CalendarContext } from './calendar.context'
+export type { CalendarContextValue } from './calendar.context'
+export { useCalendarContext } from './useCalendarContext'
+export { useCalendarStore } from './useCalendarStore'
+export { default } from './CalendarProvider.component'       // default = CalendarProvider
+```
+
+All type re-exports use `export type { ... }` (required by `verbatimModuleSyntax: true`).
+
+### `package.json` wildcard export
+
+```json
+"./*": {
+  "import": "./dist/*/index.js",
+  "types": "./dist/*/index.d.ts",
+  "default": "./dist/*/index.js"
+}
+```
+
+Each subpath maps to a **directory** under `dist/` (e.g. `@big-calendar/react/useMonthView` → `dist/useMonthView/index.js`). The earlier draft of this entry showed `./dist/*.js` (flat); the implemented form is directory-based (`./dist/*/index.js`).
+
+### Vite multi-entry config
+
+Entry keys use `"<Name>/index"` so Rollup outputs `dist/<Name>/index.js`:
+```ts
+const subpathEntries = Object.fromEntries(
+  readdirSync(SRC, { withFileTypes: true })
+    .filter(d => d.isDirectory() && !SKIP_DIRS.has(d.name))
+    .map(d => [`${d.name}/index`, resolve(SRC, d.name, 'index.ts')])
+)
+```
+
+`SKIP_DIRS = new Set(['internal', 'testing'])` — these are implementation details, not subpath entries.
+
+### Why
+
+A developer importing `@big-calendar/react/useMonthView` should be able to write either `import useMonthView from '...'` (default) or `import { useMonthView } from '...'` (named) — both are valid and refer to the same value. Types and secondary exports are always named. This keeps subpath imports predictable and consistent across every export in the package.

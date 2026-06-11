@@ -11,13 +11,15 @@
   },
   "sideEffects": false,
   "exports": {
+    "./package.json": "./package.json",
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
     },
-    "./dnd": {
-      "types": "./dist/dnd/index.d.ts",
-      "import": "./dist/dnd.js"
+    "./*": {
+      "import": "./dist/*/index.js",
+      "types": "./dist/*/index.d.ts",
+      "default": "./dist/*/index.js"
     }
   },
   "module": "./dist/index.js",

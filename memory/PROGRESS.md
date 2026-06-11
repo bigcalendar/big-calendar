@@ -21,7 +21,7 @@
 
 ## ⚠ NEXT TASK
 
-**7a-7** — Build — multi-entry Vite config + wildcard `package.json` subpath exports.
+**7a-9** — Stories — MDX + interactive stories for each newly-public component/hook; all stories include `withLocalizerDecorator`.
 
 ---
 
@@ -36,15 +36,15 @@
 | 7a-4 | `@big-calendar/styles` MDX documentation page — all `.bc-*` classes, nesting, CSS custom property overrides | ✅ |
 | 7a-5 | `src/` restructure — move internal hooks to top-level public folders; promote `AgendaEventButton` + all `Default*` components to public | ✅ |
 | 7a-6 | Hook extraction — `useMonthView`, `useTimeGridView` (split: `useTimeGridHeader` / `useTimeGridBody`), `useAgendaView`; element-spread pattern (className + data-* + handlers + refs + aria per group) | ✅ |
-| **7a-7** | **Build — multi-entry Vite config + wildcard `package.json` subpath exports** | ← next |
-| 7a-8 | Tests — update imports throughout; verify per-file coverage bars | — |
-| 7a-9 | Stories — MDX + interactive stories for each newly-public component/hook; all stories include `withLocalizerDecorator` | — |
+| 7a-7 | Build — multi-entry Vite config + wildcard `package.json` subpath exports | ✅ |
+| 7a-8 | Tests — update imports throughout; verify per-file coverage bars | ✅ |
+| **7a-9** | **Stories — MDX + interactive stories for each newly-public component/hook; all stories include `withLocalizerDecorator`** | ← next |
 
 ---
 
 ## Reference
 
-Test counts (last green run — 7a-6 hook extraction): localizer: 45 · core: 493 · dnd: 36 · react: 329 · **total: 903**
+Test counts (last green run — 7a-8 coverage): localizer: 45 · core: 493 · dnd: 36 · react: 357 · **total: 931**
 
 Coverage bar: **per-file** 85% branch / 95% function (not a global average).
 

@@ -1,10 +1,10 @@
 import { Views } from '@big-calendar/core'
 import { act, fireEvent, render } from '@testing-library/react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { CalendarProvider } from './CalendarProvider'
-import type { CalendarProviderProps } from './CalendarProvider'
-import { LOCALIZER_CASES } from './testing/localizers'
-import { useSlotSelection } from './useSlotSelection'
+import { CalendarProvider } from '../CalendarProvider'
+import type { CalendarProviderProps } from '../CalendarProvider'
+import { LOCALIZER_CASES } from '../testing/localizers'
+import { useSlotSelection } from '.'
 
 const DAY = '2026-06-15T00:00:00.000Z'
 const DOUBLE_CLICK_MS = 250

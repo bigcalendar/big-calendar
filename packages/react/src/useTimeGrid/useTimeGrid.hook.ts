@@ -2,9 +2,9 @@ import { createSlotMetrics, wrapAccessor } from '@big-calendar/core'
 import type { ResourceId } from '@big-calendar/core'
 import { formatEventTime } from '@big-calendar/core/utils'
 import { useMemo } from 'react'
-import type { ShowMoreEvent } from './components.type'
-import { useCalendarContext } from './CalendarProvider'
-import { useSignalValue } from './internal/useSignalValue'
+import type { ShowMoreEvent } from '../components.type'
+import { useCalendarContext } from '../CalendarProvider'
+import { useSignalValue } from '../internal/useSignalValue'
 
 /** A day column heading, with its resolved label and today state. */
 export interface TimeDayHeading {

@@ -1,7 +1,7 @@
 import type { SelectionMode } from '@big-calendar/core'
 import { useCallback, useRef, useState } from 'react'
 import type { FocusEvent as ReactFocusEvent, KeyboardEvent as ReactKeyboardEvent } from 'react'
-import { useCalendarContext } from './CalendarProvider'
+import { useCalendarContext } from '../CalendarProvider'
 
 /** A keyboard arrow direction over a selection surface. */
 export type Direction = 'up' | 'down' | 'left' | 'right'

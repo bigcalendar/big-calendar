@@ -2,8 +2,8 @@ import { Navigate, Views } from '@big-calendar/core'
 import type { ViewKey } from '@big-calendar/core'
 import { act, renderHook } from '@testing-library/react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
-import { LOCALIZER_CASES } from './testing/localizers'
-import { useCalendar } from './useCalendar'
+import { LOCALIZER_CASES } from '../testing/localizers'
+import { useCalendar } from '.'
 
 interface Event {
   id: number

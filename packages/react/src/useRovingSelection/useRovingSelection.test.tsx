@@ -1,11 +1,11 @@
 import { Views } from '@big-calendar/core'
 import { fireEvent, render } from '@testing-library/react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
-import { CalendarProvider } from './CalendarProvider'
-import type { CalendarProviderProps } from './CalendarProvider'
-import { LOCALIZER_CASES } from './testing/localizers'
-import type { Direction } from './useRovingSelection'
-import { useRovingSelection } from './useRovingSelection'
+import { CalendarProvider } from '../CalendarProvider'
+import type { CalendarProviderProps } from '../CalendarProvider'
+import { LOCALIZER_CASES } from '../testing/localizers'
+import type { Direction } from '.'
+import { useRovingSelection } from '.'
 
 const DAY = '2026-06-15T00:00:00.000Z'
 const { create } = LOCALIZER_CASES[0]!

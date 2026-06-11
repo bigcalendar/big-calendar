@@ -1,20 +1,20 @@
 import type { ComponentType, CSSProperties, FocusEvent, KeyboardEvent, PointerEvent } from 'react'
 import { useCallback } from 'react'
-import { useCalendarContext } from './CalendarProvider'
+import { useCalendarContext } from '../CalendarProvider'
 import type {
   TimeAllDayEventProps,
   TimeDayHeadingProps,
   TimeShowMoreProps,
-} from './components.type'
-import { segmentStyle } from './geometryStyles'
-import { useRovingSelection } from './useRovingSelection'
-import type { Direction } from './useRovingSelection'
-import { useSignalValue } from './internal/useSignalValue'
-import { useSlotSelection } from './useSlotSelection'
-import DefaultTimeAllDayEvent from './DefaultTimeAllDayEvent'
-import DefaultTimeDayHeading from './DefaultTimeDayHeading'
-import DefaultTimeShowMore from './DefaultTimeShowMore'
-import type { TimeAllDaySegment, TimeColumn, TimeDayHeading, TimeGrid } from './useTimeGrid'
+} from '../components.type'
+import { segmentStyle } from '../geometryStyles'
+import { useRovingSelection } from '../useRovingSelection'
+import type { Direction } from '../useRovingSelection'
+import { useSignalValue } from '../internal/useSignalValue'
+import { useSlotSelection } from '../useSlotSelection'
+import DefaultTimeAllDayEvent from '../DefaultTimeAllDayEvent'
+import DefaultTimeDayHeading from '../DefaultTimeDayHeading'
+import DefaultTimeShowMore from '../DefaultTimeShowMore'
+import type { TimeAllDaySegment, TimeColumn, TimeDayHeading, TimeGrid } from '../useTimeGrid'
 
 /** Resolved component slots used by the header section. */
 export interface TimeGridHeaderComponents<TEvent> {

@@ -238,6 +238,26 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
     delete (document as { elementFromPoint?: unknown }).elementFromPoint
   })
 
+  it('shows a full-height overlay on middle columns when a drag spans three or more days', () => {
+    const { container } = renderGrid({ defaultView: Views.WEEK, selectable: true })
+    // Anchor on day 0 slot 10, drag to day 2 slot 5 (global index 2*48+5 = 101).
+    const cells = container.querySelectorAll('.bc-time-slot')
+    document.elementFromPoint = () => cells[2 * 48 + 5] as Element
+
+    fireEvent.pointerDown(cells[10] as HTMLElement, { button: 0, clientX: 0, clientY: 0 })
+    fireEvent.pointerMove(window, { clientX: 400, clientY: 60 })
+
+    // Three overlay boxes: day 0 partial, day 1 full-height, day 2 partial.
+    const overlays = container.querySelectorAll('.bc-selection')
+    expect(overlays.length).toBe(3)
+    // Day 1 (middle) spans the full column: top=0, height=1.
+    expect((overlays[1] as HTMLElement).style.getPropertyValue('--bc-top')).toBe('0')
+    expect((overlays[1] as HTMLElement).style.getPropertyValue('--bc-height')).toBe('1')
+
+    fireEvent.pointerUp(window)
+    delete (document as { elementFromPoint?: unknown }).elementFromPoint
+  })
+
   it('selects whole days from the all-day row, painting a band and committing an all-day range', () => {
     const { fn: onSelectSlot, props: slotProps } = slotSpy()
     const { container } = renderGrid({ defaultView: Views.WEEK, selectable: true, ...slotProps })
@@ -505,6 +525,48 @@ describe.each(LOCALIZER_CASES)('TimeGridView keyboard DnD [$name]', ({ create })
     expect(onEventDrop).not.toHaveBeenCalled()
   })
 
+  it('ArrowUp then Enter moves the event one slot earlier via onEventDrop', () => {
+    const onEventDrop = vi.fn()
+    renderGrid({ onEventDrop, step: 30 })
+    const btn = screen.getByRole('button', { name: /Standup/ })
+    grab(btn)
+    press(btn, 'ArrowUp') // one slot earlier
+    press(btn, 'Enter')
+    expect(onEventDrop).toHaveBeenCalledTimes(1)
+    expect(onEventDrop.mock.calls[0]![0]).toMatchObject({
+      start: localizer.add({ value: timed[0]!.start, amount: -30, unit: 'minute' }),
+      end: localizer.add({ value: timed[0]!.end, amount: -30, unit: 'minute' }),
+    })
+  })
+
+  it('ArrowLeft then Enter moves the event one day earlier via onEventDrop', () => {
+    const onEventDrop = vi.fn()
+    renderGrid({ onEventDrop, step: 30 })
+    const btn = screen.getByRole('button', { name: /Standup/ })
+    grab(btn)
+    press(btn, 'ArrowLeft')
+    press(btn, 'Enter')
+    expect(onEventDrop).toHaveBeenCalledTimes(1)
+    expect(onEventDrop.mock.calls[0]![0]).toMatchObject({
+      start: localizer.add({ value: timed[0]!.start, amount: -1, unit: 'day' }),
+      end: localizer.add({ value: timed[0]!.end, amount: -1, unit: 'day' }),
+    })
+  })
+
+  it('ArrowRight then Enter moves the event one day later via onEventDrop', () => {
+    const onEventDrop = vi.fn()
+    renderGrid({ onEventDrop, step: 30 })
+    const btn = screen.getByRole('button', { name: /Standup/ })
+    grab(btn)
+    press(btn, 'ArrowRight')
+    press(btn, 'Enter')
+    expect(onEventDrop).toHaveBeenCalledTimes(1)
+    expect(onEventDrop.mock.calls[0]![0]).toMatchObject({
+      start: localizer.add({ value: timed[0]!.start, amount: 1, unit: 'day' }),
+      end: localizer.add({ value: timed[0]!.end, amount: 1, unit: 'day' }),
+    })
+  })
+
   describe('with resources (day view)', () => {
     interface ResEvent extends Event {
       resourceId?: string
@@ -569,6 +631,33 @@ describe.each(LOCALIZER_CASES)('TimeGridView keyboard DnD [$name]', ({ create })
       const r2Lane = container.querySelector<HTMLElement>('.bc-allday-resource[data-bc-resource="r2"]')!
       expect(r1Lane.textContent).toContain('Board holiday')
       expect(r2Lane.textContent).not.toContain('Board holiday')
+    })
+
+    it('shows a selection overlay in the anchored resource column during a drag', () => {
+      const { container } = render(
+        <CalendarProvider<ResEvent>
+          localizer={localizer}
+          defaultDate={focus}
+          defaultView={Views.DAY}
+          events={resEvents}
+          resources={resources}
+          getNow={() => NOW}
+          selectable
+        >
+          <TimeGridView />
+        </CalendarProvider>,
+      )
+      const r1Col = container.querySelector<HTMLElement>('.bc-day-column[data-bc-resource="r1"]')!
+      const slots = r1Col.querySelectorAll('.bc-time-slot')
+      document.elementFromPoint = () => slots[5] as Element
+
+      fireEvent.pointerDown(slots[2] as HTMLElement, { button: 0, clientX: 0, clientY: 0 })
+      fireEvent.pointerMove(window, { clientX: 0, clientY: 60 })
+
+      expect(r1Col.querySelector('.bc-selection')).not.toBeNull()
+
+      fireEvent.pointerUp(window)
+      delete (document as { elementFromPoint?: unknown }).elementFromPoint
     })
   })
 
@@ -637,6 +726,68 @@ describe.each(LOCALIZER_CASES)('TimeGridView keyboard DnD [$name]', ({ create })
       const r2Lane = container.querySelector<HTMLElement>('.bc-allday-resource-week[data-bc-resource="r2"]')!
       expect(r1Lane.textContent).toContain('Board holiday')
       expect(r2Lane.textContent).not.toContain('Board holiday')
+    })
+
+    it('overflows all-day events to the ShowMore indicator in resource-major week lanes', () => {
+      const { container } = render(
+        <CalendarProvider<ResEvent>
+          localizer={localizer}
+          defaultDate={focus}
+          defaultView={Views.WEEK}
+          events={resEvents}
+          resources={resources}
+          getNow={() => NOW}
+          allDayMaxRows={0}
+        >
+          <TimeGridView />
+        </CalendarProvider>,
+      )
+      // r1 has Board holiday — with allDayMaxRows=0 it should overflow to ShowMore.
+      const r1Lane = container.querySelector<HTMLElement>('.bc-allday-resource-week[data-bc-resource="r1"]')!
+      expect(r1Lane.querySelector('.bc-show-more')).toBeTruthy()
+    })
+
+    it('drills into a day when its heading is clicked (resource-major week)', () => {
+      const onDrillDown = vi.fn()
+      const { container } = render(
+        <CalendarProvider<ResEvent>
+          localizer={localizer}
+          defaultDate={focus}
+          defaultView={Views.WEEK}
+          events={resEvents}
+          resources={resources}
+          getNow={() => NOW}
+          onDrillDown={onDrillDown}
+        >
+          <TimeGridView />
+        </CalendarProvider>,
+      )
+      // There are 14 headings (7 days × 2 resources); click any one.
+      const heading = container.querySelectorAll<HTMLElement>('.bc-day-heading')[0]!
+      fireEvent.click(heading)
+      expect(onDrillDown).toHaveBeenCalledTimes(1)
+    })
+
+    it('renders background events in resource columns', () => {
+      const bgEvents: ResEvent[] = [
+        { id: 10, title: 'Busy', resourceId: 'r1', start: '2026-06-15T13:00:00.000Z', end: '2026-06-15T14:00:00.000Z' },
+      ]
+      const { container } = render(
+        <CalendarProvider<ResEvent>
+          localizer={localizer}
+          defaultDate={focus}
+          defaultView={Views.WEEK}
+          events={resEvents}
+          backgroundEvents={bgEvents}
+          resources={resources}
+          getNow={() => NOW}
+        >
+          <TimeGridView />
+        </CalendarProvider>,
+      )
+      // Background event appears in at least one r1 column for that day.
+      const r1Cols = Array.from(container.querySelectorAll<HTMLElement>('.bc-day-column[data-bc-resource="r1"]'))
+      expect(r1Cols.some((c) => c.querySelector('.bc-bg-event') !== null)).toBe(true)
     })
   })
 
@@ -722,6 +873,56 @@ describe.each(LOCALIZER_CASES)('TimeGridView keyboard DnD [$name]', ({ create })
       const r2Lanes = Array.from(container.querySelectorAll<HTMLElement>('.bc-allday-resource[data-bc-resource="r2"]'))
       expect(r1Lanes.some((l) => l.textContent?.includes('Board holiday'))).toBe(true)
       expect(r2Lanes.some((l) => l.textContent?.includes('Board holiday'))).toBe(false)
+    })
+
+    it('renders background events in day-major resource columns', () => {
+      const bgEvents: ResEvent[] = [
+        { id: 10, title: 'Busy', resourceId: 'r1', start: '2026-06-15T13:00:00.000Z', end: '2026-06-15T14:00:00.000Z' },
+      ]
+      const { container } = render(
+        <CalendarProvider<ResEvent>
+          localizer={localizer}
+          defaultDate={focus}
+          defaultView={Views.WEEK}
+          events={resEvents}
+          backgroundEvents={bgEvents}
+          resources={resources}
+          resourceLayout="day"
+          getNow={() => NOW}
+        >
+          <TimeGridView />
+        </CalendarProvider>,
+      )
+      expect(container.querySelector('.bc-bg-event')).toBeTruthy()
+    })
+
+    it('renders a dashed resize-preview box in a day-major resource column', () => {
+      let store!: CalendarStore<ResEvent>
+      function Capture() {
+        store = useCalendarContext<ResEvent>().store
+        return null
+      }
+      const { container } = render(
+        <CalendarProvider<ResEvent>
+          localizer={localizer}
+          defaultDate={focus}
+          defaultView={Views.WEEK}
+          events={resEvents}
+          resources={resources}
+          resourceLayout="day"
+          getNow={() => NOW}
+          onEventResize={() => {}}
+        >
+          <TimeGridView />
+          <Capture />
+        </CalendarProvider>,
+      )
+      expect(container.querySelector('.bc-drag-preview')).toBeNull()
+      // Resize Board mtg (id 1) end to 11:00 — preview covers 09:00–11:00.
+      act(() => store.previewResize({ id: 1, edge: 'end', target: '2026-06-15T11:00:00.000Z' }))
+      expect(container.querySelector('.bc-drag-preview')).not.toBeNull()
+      act(() => store.clearDragPreview())
+      expect(container.querySelector('.bc-drag-preview')).toBeNull()
     })
   })
 })

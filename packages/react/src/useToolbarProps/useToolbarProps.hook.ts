@@ -1,8 +1,8 @@
 import type { NavigateDirection, ViewKey } from '@big-calendar/core'
 import { useCallback, useMemo } from 'react'
-import { useCalendarContext } from './CalendarProvider'
-import type { ToolbarProps } from './components.type'
-import { useSignalValue } from './internal/useSignalValue'
+import { useCalendarContext } from '../CalendarProvider'
+import type { ToolbarProps } from '../components.type'
+import { useSignalValue } from '../internal/useSignalValue'
 
 /**
  * Build {@link ToolbarProps} from context: the live label + view (subscribed via
