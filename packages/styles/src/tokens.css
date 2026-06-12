@@ -4,11 +4,14 @@
  * (Canvas/CanvasText/AccentColor) so the calendar adapts to the host's light/dark
  * scheme out of the box; override any token to theme.
  *
- * Defined on `:where(.bc-calendar)` (zero specificity) so host overrides win
- * easily, inside the `bc.tokens` cascade layer.
+ * Defined on `:where(.bc-calendar)` AND `:where(:has(> .bc-calendar))` (both zero
+ * specificity) so host overrides win easily, inside the `bc.tokens` cascade layer.
+ * The `:has(> .bc-calendar)` selector matches the direct parent of the view
+ * container, making tokens available to sibling elements like `<Toolbar>`.
  */
 @layer bc.tokens {
-  :where(.bc-calendar) {
+  :where(.bc-calendar),
+  :where(:has(> .bc-calendar)) {
   /* ── color: surfaces ───────────────────────────────────────────────── */
   --bc-color-bg: Canvas;
   --bc-color-fg: CanvasText;
@@ -29,8 +32,9 @@
   --bc-color-event-fg: #fff;
   --bc-color-event-hover-bg: color-mix(in oklab, var(--bc-color-event-bg), CanvasText 30%);
   --bc-color-event-border: color-mix(in oklab, AccentColor 80%, CanvasText);
-  --bc-color-bg-event-bg: color-mix(in oklab, AccentColor 18%, Canvas);
-  --bc-color-bg-event-opacity: 0.5;
+  --bc-color-bg-event-bg: #BFC6FF;
+  --bc-color-bg-event-fg: #000000;
+  --bc-color-bg-event-border: color-mix(in oklab, var(--bc-color-bg-event-bg), CanvasText 25%);
 
   /* ── color: now indicator + selection ──────────────────────────────── */
   --bc-color-now: color-mix(in oklab, red 75%, CanvasText);

@@ -2,7 +2,7 @@
 @layer bc.components {
   .bc-event,
   .bc-segment {
-    border: var(--bc-border-width) solid var(--bc-color-event-border);
+    border: var(--bc-border-width) solid var(--bc-color-event-fg);
     border-radius: var(--bc-radius-sm);
     background: var(--bc-color-event-bg);
     color: var(--bc-color-event-fg);
@@ -77,7 +77,7 @@
   .bc-event-grabbed {
     opacity: 0.6;
     box-shadow: var(--bc-shadow-md, 0 4px 12px rgb(0 0 0 / 0.25));
-    z-index: 5;
+    z-index: 103;
   }
 
   .bc-event-title {
@@ -96,9 +96,20 @@
   }
 
   .bc-bg-event {
-    border-radius: var(--bc-radius-sm);
+    border-radius: 0;
+    border: var(--bc-border-width) solid var(--bc-color-bg-event-border);
     background: var(--bc-color-bg-event-bg);
-    opacity: var(--bc-color-bg-event-opacity);
+    color: var(--bc-color-bg-event-fg);
+  }
+
+  .bc-bg-event--start {
+    border-start-start-radius: var(--bc-radius-sm);
+    border-start-end-radius: var(--bc-radius-sm);
+  }
+
+  .bc-bg-event--end {
+    border-end-start-radius: var(--bc-radius-sm);
+    border-end-end-radius: var(--bc-radius-sm);
   }
 
   /* Time-grid resize handles: thin grab strips on a timed event's top/bottom

@@ -19,6 +19,19 @@ export interface PositionedEvent<TEvent> {
 }
 
 /**
+ * A background event segment placed in one day column. Geometry fractions are
+ * the same as `PositionedEvent`. `isStart`/`isEnd` flag whether the original
+ * event begins/ends on this column's date, controlling which corners are
+ * rounded when an event spans multiple day columns.
+ */
+export interface PositionedBgEvent<TEvent> extends PositionedEvent<TEvent> {
+  /** True when the original event's start date falls on this column's date. */
+  isStart: boolean
+  /** True when the original event's end date falls on this column's date. */
+  isEnd: boolean
+}
+
+/**
  * One day's time column: its window bounds and the events laid out in it. When
  * the grid has resources, `resourceId` is the resource this column belongs to
  * (the column is the intersection of one day and one resource); it is `null` in
@@ -32,8 +45,8 @@ export interface TimeGridColumn<TEvent> {
   max: string
   /** Foreground timed events, packed by the day-layout algorithm. */
   events: PositionedEvent<TEvent>[]
-  /** Background events, rendered full-width behind the foreground (`left: 0, width: 1`). */
-  backgroundEvents: PositionedEvent<TEvent>[]
+  /** Background events, packed by the same algorithm as foreground events. */
+  backgroundEvents: PositionedBgEvent<TEvent>[]
 }
 
 /**

@@ -117,7 +117,7 @@ describe.each(LOCALIZER_CASES)('timeGridViewModel [$name]', ({ create }) => {
     expect(model.columns.slice(1).every((c) => c.events.length === 0)).toBe(true)
   })
 
-  it('positions background events full-width behind the foreground', () => {
+  it('positions a lone background event full-width', () => {
     const model = timeGridViewModel({
       localizer,
       accessors,
@@ -132,6 +132,52 @@ describe.each(LOCALIZER_CASES)('timeGridViewModel [$name]', ({ create }) => {
     expect(bg[0]?.width).toBe(1)
     // foreground is unaffected
     expect(model.columns[0]?.events[0]?.event.id).toBe(1)
+  })
+
+  it('packs two overlapping background events side by side', () => {
+    const model = timeGridViewModel({
+      localizer,
+      accessors,
+      days: [day],
+      events: [],
+      backgroundEvents: [event(1, at(9), at(12)), event(2, at(10), at(13))],
+    })
+    const bg = model.columns[0]?.backgroundEvents ?? []
+    expect(bg).toHaveLength(2)
+    const lefts = bg.map((b) => b.left)
+    expect(new Set(lefts).size).toBe(2)
+  })
+
+  it('marks isStart/isEnd true for a single-day background event', () => {
+    const model = timeGridViewModel({
+      localizer,
+      accessors,
+      days: [day],
+      events: [],
+      backgroundEvents: [event(1, at(8), at(18))],
+    })
+    const bg = model.columns[0]?.backgroundEvents[0]
+    expect(bg?.isStart).toBe(true)
+    expect(bg?.isEnd).toBe(true)
+  })
+
+  it('marks isStart/isEnd correctly for a multi-day background event', () => {
+    const model = timeGridViewModel({
+      localizer,
+      accessors,
+      days: weekDays,
+      events: [],
+      backgroundEvents: [event(1, at(9), localizer.add({ value: at(17), amount: 2, unit: 'day' }))],
+    })
+    const col0 = model.columns[0]?.backgroundEvents[0]
+    const col1 = model.columns[1]?.backgroundEvents[0]
+    const col2 = model.columns[2]?.backgroundEvents[0]
+    expect(col0?.isStart).toBe(true)
+    expect(col0?.isEnd).toBe(false)
+    expect(col1?.isStart).toBe(false)
+    expect(col1?.isEnd).toBe(false)
+    expect(col2?.isStart).toBe(false)
+    expect(col2?.isEnd).toBe(true)
   })
 
   it('defaults background events to an empty list', () => {

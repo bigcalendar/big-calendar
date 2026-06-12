@@ -49,7 +49,7 @@ function TimeGridView<TEvent = unknown>() {
   } = header
 
   const {
-    components: { TimeLabel, EventSlot },
+    components: { TimeLabel, EventSlot, BgEventSlot },
     body: bodyRoot,
     resourceBody,
     gutter,
@@ -62,7 +62,7 @@ function TimeGridView<TEvent = unknown>() {
     getPreviewDivProps,
     getBgEventProps,
     getEventProps,
-    getNowIndicatorProps,
+    bodyNowIndicatorProps,
   } = body
 
   // ── day-major resource grid ───────────────────────────────────────────────
@@ -133,7 +133,6 @@ function TimeGridView<TEvent = unknown>() {
           {dayGroupsList.flatMap((dayGroup) =>
             dayGroup.cells.map((cell) => {
               const colProps = getColumnProps(cell.column)
-              const nowProps = getNowIndicatorProps(cell.column)
               const selDiv = getResourceSelectionDivProps(cell.resourceId, dayGroup.date)
               const prevDiv = getPreviewDivProps(cell.column)
               return (
@@ -155,20 +154,22 @@ function TimeGridView<TEvent = unknown>() {
                     ))}
                   </div>
                   {cell.column.backgroundEvents.map((bg) => (
-                    <div key={bg.key} {...getBgEventProps(bg)} />
+                    <div key={bg.key} {...getBgEventProps(bg)}>
+                      <BgEventSlot event={bg.event} title={bg.title} />
+                    </div>
                   ))}
                   {cell.column.events.map((event) => (
                     <EventButton key={event.key} {...getEventProps(event)}>
                       <EventSlot event={event.event} title={event.title} time={event.time} />
                     </EventButton>
                   ))}
-                  {nowProps && <div {...nowProps} />}
                   {selDiv && <div {...selDiv} />}
                   {prevDiv && <div {...prevDiv} />}
                 </div>
               )
             }),
           )}
+          {bodyNowIndicatorProps && <div {...bodyNowIndicatorProps} />}
         </div>
       </div>
     )
@@ -275,7 +276,6 @@ function TimeGridView<TEvent = unknown>() {
           {groups.flatMap((group) =>
             group.columns.map((column) => {
               const colProps = getColumnProps(column)
-              const nowProps = getNowIndicatorProps(column)
               const selDiv = getResourceSelectionDivProps(group.resourceId, column.day)
               return (
                 <div key={column.key} {...colProps} data-bc-resource={String(group.resourceId)}>
@@ -288,19 +288,21 @@ function TimeGridView<TEvent = unknown>() {
                     ))}
                   </div>
                   {column.backgroundEvents.map((bg) => (
-                    <div key={bg.key} {...getBgEventProps(bg)} />
+                    <div key={bg.key} {...getBgEventProps(bg)}>
+                      <BgEventSlot event={bg.event} title={bg.title} />
+                    </div>
                   ))}
                   {column.events.map((event) => (
                     <EventButton key={event.key} {...getEventProps(event)}>
                       <EventSlot event={event.event} title={event.title} time={event.time} />
                     </EventButton>
                   ))}
-                  {nowProps && <div {...nowProps} />}
                   {selDiv && <div {...selDiv} />}
                 </div>
               )
             }),
           )}
+          {bodyNowIndicatorProps && <div {...bodyNowIndicatorProps} />}
         </div>
       </div>
     )
@@ -355,7 +357,6 @@ function TimeGridView<TEvent = unknown>() {
         </div>
         {grid.columns.map((column, colIndex) => {
           const colProps = getColumnProps(column)
-          const nowProps = getNowIndicatorProps(column)
           const selDiv = getTimeSelectionDivProps(colIndex)
           const prevDiv = getPreviewDivProps(column)
           return (
@@ -366,19 +367,21 @@ function TimeGridView<TEvent = unknown>() {
                 ))}
               </div>
               {column.backgroundEvents.map((bg) => (
-                <div key={bg.key} {...getBgEventProps(bg)} />
+                <div key={bg.key} {...getBgEventProps(bg)}>
+                  <BgEventSlot event={bg.event} title={bg.title} />
+                </div>
               ))}
               {column.events.map((event) => (
                 <EventButton key={event.key} {...getEventProps(event)}>
                   <EventSlot event={event.event} title={event.title} time={event.time} />
                 </EventButton>
               ))}
-              {nowProps && <div {...nowProps} />}
               {selDiv && <div {...selDiv} />}
               {prevDiv && <div {...prevDiv} />}
             </div>
           )
         })}
+        {bodyNowIndicatorProps && <div {...bodyNowIndicatorProps} />}
       </div>
     </div>
   )

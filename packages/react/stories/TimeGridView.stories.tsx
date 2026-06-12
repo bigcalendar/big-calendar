@@ -208,3 +208,68 @@ function PromotionDemo() {
 export const TimedToAllDayPromotion: Story = {
   render: () => <PromotionDemo />,
 }
+
+/**
+ * Background events appear **behind** timed events in the time grid. They use no
+ * click or drag handlers — pointer events pass straight through to the slots and
+ * events underneath, so slot selection still works anywhere on their surface.
+ *
+ * Key behaviours to observe here:
+ * - A single-day background event has **both** top and bottom corners rounded
+ *   (`bc-bg-event--start` + `bc-bg-event--end`).
+ * - A multi-day background event is **clipped at midnight** on each column
+ *   boundary: the start column has top corners rounded only (`--start`), the
+ *   end column has bottom corners rounded only (`--end`), and middle columns
+ *   have no rounding.
+ * - Regular events (blue boxes) are always drawn **on top** of background events.
+ * - Slot selection passes through — try clicking or dragging across any of the
+ *   coloured background regions.
+ */
+export const BackgroundEvents: Story = {
+  render: () => (
+    <CalendarStage
+      defaultView={Views.WEEK}
+      views={TIME_VIEWS}
+      backgroundEvents={[
+        // Single-day: Mon Jun 15, top & bottom rounded.
+        { id: 1001, title: 'Deep work', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T12:00:00.000Z' },
+        // Multi-day: Tue Jun 16 → Thu Jun 18. Start column (Tue) gets top rounding,
+        // end column (Thu) gets bottom rounding, Wed column has none.
+        { id: 1002, title: 'Sprint focus', start: '2026-06-16T09:00:00.000Z', end: '2026-06-18T17:00:00.000Z' },
+        // Single-day: Fri Jun 19 afternoon, both corners rounded.
+        { id: 1003, title: 'Review window', start: '2026-06-19T13:00:00.000Z', end: '2026-06-19T17:00:00.000Z' },
+      ] as DemoEvent[]}
+    >
+      <Toolbar />
+      <div className="bc-calendar">
+        <TimeGridView />
+      </div>
+    </CalendarStage>
+  ),
+}
+
+/**
+ * Two background events that **overlap** on the same day are placed side by side
+ * using the same layout algorithm as regular timed events — each gets a fraction
+ * of the column width. Switch to the **Day** view and navigate to Monday Jun 15
+ * to see them clearly side by side. The foreground event (blue) still renders
+ * on top of both.
+ */
+export const OverlappingBackgroundEvents: Story = {
+  render: () => (
+    <CalendarStage
+      defaultView={Views.DAY}
+      views={TIME_VIEWS}
+      backgroundEvents={[
+        // These two blocks overlap 11:00–13:00 on Mon Jun 15, forcing side-by-side layout.
+        { id: 1004, title: 'Focus block A', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T13:00:00.000Z' },
+        { id: 1005, title: 'Focus block B', start: '2026-06-15T11:00:00.000Z', end: '2026-06-15T15:00:00.000Z' },
+      ] as DemoEvent[]}
+    >
+      <Toolbar />
+      <div className="bc-calendar">
+        <TimeGridView />
+      </div>
+    </CalendarStage>
+  ),
+}

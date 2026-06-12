@@ -68,13 +68,19 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--bc-space-2);
-    padding: var(--bc-space-2);
+    padding: 10px;
   }
 
   .bc-toolbar-group {
     display: flex;
     align-items: center;
-    gap: var(--bc-space-1);
+  }
+
+  @media (max-width: 420px) {
+    .bc-toolbar {
+      flex-direction: column;
+      align-items: center;
+    }
   }
 
   /* ── month view ──────────────────────────────────────────────────────── */
@@ -271,8 +277,11 @@
 
   /* Slot body: visible overflow so the outer `.bc-time-grid` scroll container
      owns both axes. `pan-y` lets a finger scroll vertically; touch-based slot
-     selection starts only after a long-press that captures the pointer. */
+     selection starts only after a long-press that captures the pointer.
+     `position: relative` makes it the containing block for the body-level
+     now-indicator, which spans gutter + all day columns via `inset-inline: 0`. */
   .bc-time-body {
+    position: relative;
     overflow: visible;
     min-block-size: 0;
     touch-action: pan-y;
@@ -295,7 +304,7 @@
 
   /* Transparent grid of real per-slot hit targets covering the column. It's the
      base layer for slot selection (pointer + keyboard); events paint above it.
-     Visual slot/hour lines stay on the column's gradient (components/timegrid). */
+     Visual slot/hour lines are the background-image gradient on .bc-day-column. */
   .bc-time-slots {
     position: absolute;
     inset: 0;
@@ -504,7 +513,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    z-index: 5;
+    z-index: 103;
     pointer-events: none;
     outline: var(--bc-focus-ring);
     outline-offset: calc(-1 * var(--bc-focus-ring-width));
@@ -533,15 +542,19 @@
   .bc-bg-event {
     z-index: 0;
     pointer-events: none;
+    /* pointer-events: none means the gutter is irrelevant — extend to the full column width. */
+    inset-inline-start: calc(var(--bc-left) * 100%);
+    inline-size: calc(var(--bc-width) * 100%);
   }
 
-  /* Now-indicator: a full-width line at a fraction down the column. */
+  /* Now-indicator: spans from the grid-side edge of the gutter to the far right. */
   .bc-now-indicator {
     position: absolute;
-    inset-inline: 0;
+    inset-inline-start: var(--bc-gutter-width);
+    inset-inline-end: 0;
     inset-block-start: calc(var(--bc-now-top) * 100%);
     block-size: var(--bc-now-width);
-    z-index: 3;
+    z-index: 102;
     pointer-events: none;
   }
 
@@ -552,7 +565,7 @@
     inset-block-start: calc(var(--bc-top) * 100%);
     block-size: calc(var(--bc-height) * 100%);
     inset-inline: 0;
-    z-index: 2;
+    z-index: 101;
     pointer-events: none;
   }
 

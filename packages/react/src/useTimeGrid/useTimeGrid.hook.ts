@@ -48,16 +48,26 @@ export interface TimePositionedEvent<TEvent> {
   zIndex: number
 }
 
-/** A background event filling its day column behind the foreground. */
+/** A background event segment placed in a day column. */
 export interface TimeBackgroundEvent<TEvent> {
   /** Stable React key. */
   key: string
   /** The original event object. */
   event: TEvent
+  /** Resolved title. */
+  title: string
   /** Distance from the column top, fraction `0..1`. */
   top: number
   /** Box height, fraction `0..1`. */
   height: number
+  /** Inline-start offset, fraction `0..1`. */
+  left: number
+  /** Box width, fraction `0..1`. */
+  width: number
+  /** True when the original event's start date is on this column's date. */
+  isStart: boolean
+  /** True when the original event's end date is on this column's date. */
+  isEnd: boolean
 }
 
 /** One day's time column: its events, background events, and now-line position. */
@@ -253,8 +263,13 @@ export function useTimeGrid<TEvent>(): TimeGrid<TEvent> | null {
       const backgroundEvents: TimeBackgroundEvent<TEvent>[] = column.backgroundEvents.map((placed, bgIndex) => ({
         key: `${keyBase}-bg-${bgIndex}-${String(id(placed.event) ?? '')}`,
         event: placed.event,
+        title: title(placed.event) ?? '',
         top: placed.top,
         height: placed.height,
+        left: placed.left,
+        width: placed.width,
+        isStart: placed.isStart,
+        isEnd: placed.isEnd,
       }))
 
       // One metrics build per column: its slot-start instants (drop targets) and,

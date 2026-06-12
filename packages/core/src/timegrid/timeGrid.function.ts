@@ -9,6 +9,7 @@ import type { DatedEvent } from '../views/segments.function'
 import type { SegmentRows } from '../views/segments.type'
 import { createSlotMetrics } from './slotMetrics.function'
 import type {
+  PositionedBgEvent,
   PositionedEvent,
   ResourceLayoutMode,
   TimeGridColumn,
@@ -90,18 +91,37 @@ function buildColumn<TEvent>(
     })
   }
 
-  // Background events sit full-width behind the foreground (no overlap packing).
-  const background: PositionedEvent<TEvent>[] = bgItems
-    .filter((item) =>
-      localizer.inEventRange({
-        event: { start: item.start, end: item.end },
-        range: { start: min, end: max },
-      }),
-    )
-    .map((item) => {
-      const range = metrics.getRange({ start: item.start, end: item.end })
-      return { event: item.event, top: range.top, height: range.height, left: 0, width: 1, zIndex: 0 }
+  // Background events are packed by the same overlap algorithm as foreground
+  // events so multiple overlapping bg events display side-by-side.
+  const bgDayEvents = bgItems.filter((item) =>
+    localizer.inEventRange({
+      event: { start: item.start, end: item.end },
+      range: { start: min, end: max },
+    }),
+  )
+
+  const bgLayoutEvents: DayLayoutEvent[] = bgDayEvents.map((item, index) => {
+    const range = metrics.getRange({ start: item.start, end: item.end })
+    return { id: index, start: range.start, end: range.end, top: range.top, height: range.height }
+  })
+
+  const bgBoxes = algorithm({ events: bgLayoutEvents, minimumStartDifference })
+
+  const background: PositionedBgEvent<TEvent>[] = []
+  for (const box of bgBoxes) {
+    const item = bgDayEvents[box.id as number]
+    if (!item) continue
+    background.push({
+      event: item.event,
+      top: box.top,
+      height: box.height,
+      left: box.left,
+      width: box.width,
+      zIndex: box.zIndex,
+      isStart: localizer.isSameDate({ a: item.start, b: date }),
+      isEnd: localizer.isSameDate({ a: item.end, b: date }),
     })
+  }
 
   return { date, resourceId, min, max, events, backgroundEvents: background }
 }

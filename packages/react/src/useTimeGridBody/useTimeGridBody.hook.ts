@@ -3,7 +3,7 @@ import type { ResourceId, ResizeEdge } from '@big-calendar/core'
 import type { ComponentType, CSSProperties, FocusEvent, KeyboardEvent, PointerEvent } from 'react'
 import { useCallback } from 'react'
 import { useCalendarContext } from '../CalendarProvider'
-import type { TimeLabelProps, TimeEventProps } from '../components.type'
+import type { TimeLabelProps, TimeEventProps, TimeBackgroundEventProps } from '../components.type'
 import {
   eventBoxStyle,
   nowIndicatorStyle,
@@ -14,6 +14,7 @@ import { useRovingSelection } from '../useRovingSelection'
 import type { Direction } from '../useRovingSelection'
 import { useSignalValue } from '../internal/useSignalValue'
 import { useSlotSelection } from '../useSlotSelection'
+import DefaultBackgroundEvent from '../DefaultBackgroundEvent/DefaultBackgroundEvent.component'
 import DefaultTimeEvent from '../DefaultTimeEvent'
 import DefaultTimeLabel from '../DefaultTimeLabel'
 import type {
@@ -27,6 +28,7 @@ import type {
 export interface TimeGridBodyComponents<TEvent> {
   TimeLabel: ComponentType<TimeLabelProps>
   EventSlot: ComponentType<TimeEventProps<TEvent>>
+  BgEventSlot: ComponentType<TimeBackgroundEventProps<TEvent>>
 }
 
 /** Callback ref accepted by roving hooks. */
@@ -155,6 +157,12 @@ export interface UseTimeGridBodyReturn<TEvent> {
   getEventProps: (event: TimePositionedEvent<TEvent>) => TimeGridEventButtonProps<TEvent>
   /** Returns `<div>` props for the `.bc-now-indicator` line, or `null` when absent. */
   getNowIndicatorProps: (column: TimeColumn<TEvent>) => { className: string; style: CSSProperties } | null
+  /**
+   * Element-spread props for a single `.bc-now-indicator` rendered as a direct
+   * child of the `.bc-time-body` div so it spans the full width (gutter + all
+   * day columns). `null` when today is not visible or outside the time window.
+   */
+  bodyNowIndicatorProps: { className: string; style: CSSProperties } | null
   /** Element-spread props for the `.bc-time-gutter` time-label column `<div>`. */
   gutter: TimeGridGutterProps
   /** Element-spread props for the `.bc-time-slots` slot container `<div>` inside each day column. */
@@ -225,10 +233,31 @@ export function useTimeGridBody<TEvent = unknown>(
 
   const bodyStyle = slotCountSafe > 0 ? slotCountStyle(slotCountSafe) : {}
 
+  // Find the now-top fraction from whichever column layout is active.
+  let bodyNowTop: number | null = null
+  for (const col of grid?.columns ?? []) {
+    if (col.nowTop !== null) { bodyNowTop = col.nowTop; break }
+  }
+  if (bodyNowTop === null && grid?.resources) {
+    outer: for (const r of grid.resources) {
+      for (const col of r.columns) {
+        if (col.nowTop !== null) { bodyNowTop = col.nowTop; break outer }
+      }
+    }
+  }
+  if (bodyNowTop === null && grid?.dayGroups) {
+    outer2: for (const g of grid.dayGroups) {
+      for (const cell of g.cells) {
+        if (cell.column?.nowTop != null) { bodyNowTop = cell.column.nowTop; break outer2 }
+      }
+    }
+  }
+
   return {
     components: {
       TimeLabel: components.time?.timeLabel ?? DefaultTimeLabel,
       EventSlot: (components.time?.event ?? DefaultTimeEvent) as ComponentType<TimeEventProps<TEvent>>,
+      BgEventSlot: (components.time?.backgroundEvent ?? DefaultBackgroundEvent) as ComponentType<TimeBackgroundEventProps<TEvent>>,
     },
     slotDescribedBy: descriptionIds.selection,
     body: {
@@ -311,10 +340,15 @@ export function useTimeGridBody<TEvent = unknown>(
       const range = metrics.getRange({ start: dragPreview.start, end: dragPreview.end })
       return range.height > 0 ? { top: range.top, height: range.height } : null
     },
-    getBgEventProps: (bg: TimeBackgroundEvent<TEvent>): TimeGridBgEventProps => ({
-      className: 'bc-bg-event',
-      style: eventBoxStyle({ top: bg.top, height: bg.height, left: 0, width: 1, zIndex: 0 }),
-    }),
+    getBgEventProps: (bg: TimeBackgroundEvent<TEvent>): TimeGridBgEventProps => {
+      const classes = ['bc-bg-event']
+      if (bg.isStart) classes.push('bc-bg-event--start')
+      if (bg.isEnd) classes.push('bc-bg-event--end')
+      return {
+        className: classes.join(' '),
+        style: eventBoxStyle({ top: bg.top, height: bg.height, left: bg.left, width: bg.width, zIndex: 0 }),
+      }
+    },
     getEventProps: (event: TimePositionedEvent<TEvent>): TimeGridEventButtonProps<TEvent> => ({
       className: 'bc-event',
       style: eventBoxStyle({
@@ -336,6 +370,9 @@ export function useTimeGridBody<TEvent = unknown>(
         style: nowIndicatorStyle(column.nowTop),
       }
     },
+    bodyNowIndicatorProps: bodyNowTop !== null
+      ? { className: 'bc-now-indicator', style: nowIndicatorStyle(bodyNowTop) }
+      : null,
     gutter: { className: 'bc-time-gutter' },
     timeSlotsContainer: { className: 'bc-time-slots' },
     getTimeSelectionDivProps: (colIndex: number) => {

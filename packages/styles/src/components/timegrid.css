@@ -60,24 +60,37 @@
     border-block-start: var(--bc-border);
   }
 
-  /* Slot boundary lines drawn as repeating gradients behind each column. The
-     hour lines (one per group of --bc-slots-per-group slots) paint on top in the
-     standard border color; the lighter half-hour slot lines sit beneath, so each
-     30-minute slot shows a faint divider while the hour boundary reads stronger. */
+  /* isolation: isolate makes each column its own stacking context so that the
+     ::after grid line overlay (z-index: -1) renders above the column's own
+     background but below all positioned event children (z-index: 0+). Without
+     isolation, z-index: -1 escapes to the nearest ancestor stacking context and
+     disappears behind the page background. */
   .bc-day-column {
     border-inline-start: var(--bc-border);
+    isolation: isolate;
+  }
+
+  /* Slot boundary lines as a repeating-gradient on ::after. z-index: -1 keeps
+     the lines below event boxes so they don't draw over event content.
+     pointer-events: none ensures all hit targets below remain clickable. */
+  .bc-day-column::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
     background-image:
       repeating-linear-gradient(
         to bottom,
-        var(--bc-color-border) 0,
-        var(--bc-color-border) var(--bc-border-width),
+        color-mix(in oklab, CanvasText 30%, Canvas) 0,
+        color-mix(in oklab, CanvasText 30%, Canvas) var(--bc-border-width),
         transparent var(--bc-border-width),
         transparent calc(var(--bc-slot-height) * var(--bc-slots-per-group, 1))
       ),
       repeating-linear-gradient(
         to bottom,
-        var(--bc-color-slot-border) 0,
-        var(--bc-color-slot-border) var(--bc-border-width),
+        color-mix(in oklab, CanvasText 15%, Canvas) 0,
+        color-mix(in oklab, CanvasText 15%, Canvas) var(--bc-border-width),
         transparent var(--bc-border-width),
         transparent var(--bc-slot-height)
       );

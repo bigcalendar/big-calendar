@@ -133,6 +133,8 @@ export interface TimeComponents<TEvent> {
   allDayEvent?: ComponentType<TimeAllDayEventProps<TEvent>>
   /** The "+N more" overflow indicator for the all-day row. */
   showMore?: ComponentType<TimeShowMoreProps<TEvent>>
+  /** Content rendered inside a background event box. Replace via `components.time.backgroundEvent`. */
+  backgroundEvent?: ComponentType<TimeBackgroundEventProps<TEvent>>
 }
 
 /** Props for a day column heading. */
@@ -163,6 +165,14 @@ export interface TimeEventProps<TEvent> {
   title: string
   /** Formatted "start – end" time. */
   time: string
+}
+
+/** Props for a background event box (time-grid only). */
+export interface TimeBackgroundEventProps<TEvent> {
+  /** The original event object. */
+  event: TEvent
+  /** Resolved event title. */
+  title: string
 }
 
 /** Props for an all-day event segment. */
