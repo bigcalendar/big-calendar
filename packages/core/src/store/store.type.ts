@@ -202,6 +202,14 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    */
   readonly dndEnabled: Signal<boolean>
   /**
+   * The dynamically measured maximum event rows per week in the month grid.
+   * Written by the React layer's `useMonthRowMeasure` hook when no static
+   * `weekEventLimit` is configured. Defaults to `Infinity` (unlimited).
+   * `viewModel` reads this via `config.weekEventLimit ?? measuredWeekLimit.value`
+   * so the static prop always wins when supplied.
+   */
+  readonly measuredWeekLimit: Signal<number>
+  /**
    * The ordered list of active view keys for this calendar instance. Derived from
    * `config.enabledViews` when supplied, or all built-in views plus any custom
    * keys registered in `config.viewDefinitions` when omitted. The Toolbar reads

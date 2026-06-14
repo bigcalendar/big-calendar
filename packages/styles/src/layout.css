@@ -227,7 +227,7 @@
     /* A consistent baseline height across every time-grid view, so the all-day
        strip reads as a band rather than collapsing to its content. Grows past
        this when more segment rows stack. Overridable via the var. */
-    min-block-size: var(--bc-allday-row-min-height, 4rem);
+    min-block-size: var(--bc-allday-row-min-height, 6rem);
     /* Selectable surface (all-day day-mode drag) — same touch-action rationale
        as `.bc-month-grid` / `.bc-time-body`. */
     touch-action: pan-y;

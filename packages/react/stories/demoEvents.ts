@@ -17,11 +17,17 @@ export interface DemoEvent {
 }
 
 /**
- * Three months of demo events (April – July 2026) centred on the Storybook
- * focus date (2026-06-15, a Monday). Covers all-day blocks, multi-day spans,
- * recurring standups, weekly syncs, sprint ceremonies, and one-off meetings so
- * every view — day, week, work-week, month, agenda, and both resource layouts —
- * looks realistically busy.
+ * Demo events centred on the Storybook focus date (2026-06-15, a Monday).
+ * Covers April–July 2026 as the main body, plus two DST-boundary weeks and
+ * overlapping-timeslot clusters.
+ *
+ * DST weeks (navigate to these to validate timezone rendering):
+ *   • Week of Mar 9 2026 — US spring forward was Mar 8 (02:00 EST → 03:00 EDT)
+ *   • Week of Nov 2 2026 — US fall back was Nov 1 (02:00 EDT → 01:00 EST)
+ *   Switch the Storybook timezone global to "America/New_York" to see DST effects.
+ *
+ * Overlapping-timeslot clusters are on Jun 15–18 (focus week). Navigate to
+ * any of those days in the Day view to see the side-by-side overlap layout.
  *
  * Events with a `resourceId` route to a specific room in resource views.
  * Events without one appear in plain-grid, month, and agenda views only.
@@ -236,4 +242,60 @@ export const demoEvents: DemoEvent[] = [
   { id: 168, title: 'Vendor review',        start: '2026-07-30T11:00:00.000Z', end: '2026-07-30T12:00:00.000Z', resourceId: 'mtg2' },
   { id: 169, title: 'Standup',              start: '2026-07-31T09:30:00.000Z', end: '2026-07-31T09:45:00.000Z', resourceId: 'mtg3' },
   { id: 170, title: 'July all-hands',       start: '2026-07-31T16:00:00.000Z', end: '2026-07-31T17:30:00.000Z', resourceId: 'annex' },
+
+  // ── Overlapping timeslot clusters (focus week Jun 15–18) ────────────────────
+  // Jun 15: three events compete for 09:30–11:30 alongside the existing standup + team sync
+  { id: 171, title: 'Sync with design',     start: '2026-06-15T09:30:00.000Z', end: '2026-06-15T10:45:00.000Z' },
+  { id: 172, title: 'Budget walkthrough',   start: '2026-06-15T10:00:00.000Z', end: '2026-06-15T11:30:00.000Z' },
+  // Jun 16: overlap with new-hire orientation (10:00–12:00)
+  { id: 173, title: 'Tech screening',       start: '2026-06-16T10:00:00.000Z', end: '2026-06-16T11:00:00.000Z' },
+  { id: 174, title: 'Platform review',      start: '2026-06-16T10:30:00.000Z', end: '2026-06-16T12:30:00.000Z' },
+  // Jun 17: three-way afternoon overlap around the 1:1 with Morgan (14:00–14:30)
+  { id: 175, title: 'Code review',          start: '2026-06-17T14:00:00.000Z', end: '2026-06-17T15:00:00.000Z' },
+  { id: 176, title: 'Release prep',         start: '2026-06-17T14:15:00.000Z', end: '2026-06-17T15:30:00.000Z' },
+  // Jun 18: overlap with design review (11:00–12:30) and roadmap planning (14:00–15:30)
+  { id: 177, title: 'Incident post-mortem', start: '2026-06-18T11:00:00.000Z', end: '2026-06-18T12:30:00.000Z' },
+  { id: 178, title: 'Lunch Q&A',            start: '2026-06-18T11:30:00.000Z', end: '2026-06-18T13:00:00.000Z' },
+  { id: 179, title: 'Product standup',      start: '2026-06-18T14:00:00.000Z', end: '2026-06-18T14:45:00.000Z' },
+
+  // ── DST: US spring forward Mar 8 2026 (02:00 EST → 03:00 EDT at 07:00 UTC) ─
+  // Multi-day spanning the transition weekend
+  { id: 180, title: 'Q1 wrap-up',           allDay: true, start: '2026-03-06T00:00:00.000Z', end: '2026-03-09T00:00:00.000Z' },
+  // Spans the 07:00 UTC spring-forward moment: 01:30 EST → 03:30 EDT in New York
+  { id: 181, title: 'Early release window', start: '2026-03-08T06:30:00.000Z', end: '2026-03-08T08:30:00.000Z' },
+  // Workweek Mar 9–13 (all times in EDT = UTC-4; 09:30 EDT = 13:30 UTC)
+  { id: 182, title: 'Standup',              start: '2026-03-09T13:30:00.000Z', end: '2026-03-09T13:45:00.000Z', resourceId: 'mtg3' },
+  { id: 183, title: 'Q1 results review',    start: '2026-03-09T14:00:00.000Z', end: '2026-03-09T15:30:00.000Z', resourceId: 'board' },
+  { id: 184, title: 'Design sync',          start: '2026-03-09T14:00:00.000Z', end: '2026-03-09T15:00:00.000Z' },
+  { id: 185, title: 'Standup',              start: '2026-03-10T13:30:00.000Z', end: '2026-03-10T13:45:00.000Z', resourceId: 'mtg3' },
+  { id: 186, title: '1:1 with Morgan',      start: '2026-03-10T18:00:00.000Z', end: '2026-03-10T18:30:00.000Z', resourceId: 'mtg1' },
+  { id: 187, title: 'Standup',              start: '2026-03-11T13:30:00.000Z', end: '2026-03-11T13:45:00.000Z', resourceId: 'mtg3' },
+  { id: 188, title: 'Sprint 16 planning',   start: '2026-03-11T17:00:00.000Z', end: '2026-03-11T20:00:00.000Z', resourceId: 'board' },
+  { id: 189, title: 'Vendor call',          start: '2026-03-11T17:00:00.000Z', end: '2026-03-11T18:00:00.000Z' },
+  { id: 190, title: 'Standup',              start: '2026-03-12T13:30:00.000Z', end: '2026-03-12T13:45:00.000Z', resourceId: 'mtg3' },
+  { id: 191, title: 'Architecture review',  start: '2026-03-12T15:00:00.000Z', end: '2026-03-12T16:30:00.000Z', resourceId: 'training' },
+  { id: 192, title: 'API design session',   start: '2026-03-12T15:30:00.000Z', end: '2026-03-12T17:00:00.000Z' },
+  { id: 193, title: 'Standup',              start: '2026-03-13T13:30:00.000Z', end: '2026-03-13T13:45:00.000Z', resourceId: 'mtg3' },
+  { id: 194, title: 'Sprint 16 demo',       start: '2026-03-13T19:00:00.000Z', end: '2026-03-13T20:00:00.000Z', resourceId: 'annex' },
+
+  // ── DST: US fall back Nov 1 2026 (02:00 EDT → 01:00 EST at 06:00 UTC) ──────
+  // Multi-day spanning the transition weekend
+  { id: 195, title: 'JS World recap',       allDay: true, start: '2026-10-30T00:00:00.000Z', end: '2026-11-03T00:00:00.000Z' },
+  // Two events at the same local clock time, 1 hour apart in UTC (the repeated 01:00–02:00 EDT/EST hour)
+  { id: 196, title: 'Overnight deploy (EDT)', start: '2026-11-01T05:00:00.000Z', end: '2026-11-01T06:00:00.000Z' },
+  { id: 197, title: 'Overnight deploy (EST)', start: '2026-11-01T06:00:00.000Z', end: '2026-11-01T07:00:00.000Z' },
+  // Workweek Nov 2–6 (all times in EST = UTC-5; 09:30 EST = 14:30 UTC)
+  { id: 198, title: 'Standup',              start: '2026-11-02T14:30:00.000Z', end: '2026-11-02T14:45:00.000Z', resourceId: 'mtg3' },
+  { id: 199, title: 'Team sync',            start: '2026-11-02T15:00:00.000Z', end: '2026-11-02T16:00:00.000Z', resourceId: 'board' },
+  { id: 200, title: 'Q4 kickoff',           start: '2026-11-02T15:00:00.000Z', end: '2026-11-02T16:30:00.000Z' },
+  { id: 201, title: 'Standup',              start: '2026-11-03T14:30:00.000Z', end: '2026-11-03T14:45:00.000Z', resourceId: 'mtg3' },
+  { id: 202, title: '1:1 with Morgan',      start: '2026-11-03T19:00:00.000Z', end: '2026-11-03T19:30:00.000Z', resourceId: 'mtg1' },
+  { id: 203, title: 'Standup',              start: '2026-11-04T14:30:00.000Z', end: '2026-11-04T14:45:00.000Z', resourceId: 'mtg3' },
+  { id: 204, title: 'Sprint 27 planning',   start: '2026-11-04T18:00:00.000Z', end: '2026-11-04T21:00:00.000Z', resourceId: 'board' },
+  { id: 205, title: 'Roadmap review',       start: '2026-11-04T18:00:00.000Z', end: '2026-11-04T19:30:00.000Z' },
+  { id: 206, title: 'Standup',              start: '2026-11-05T14:30:00.000Z', end: '2026-11-05T14:45:00.000Z', resourceId: 'mtg3' },
+  { id: 207, title: 'Tech debt review',     start: '2026-11-05T16:00:00.000Z', end: '2026-11-05T17:30:00.000Z', resourceId: 'training' },
+  { id: 208, title: 'Platform planning',    start: '2026-11-05T16:30:00.000Z', end: '2026-11-05T18:00:00.000Z' },
+  { id: 209, title: 'Standup',              start: '2026-11-06T14:30:00.000Z', end: '2026-11-06T14:45:00.000Z', resourceId: 'mtg3' },
+  { id: 210, title: 'Sprint 27 demo',       start: '2026-11-06T20:00:00.000Z', end: '2026-11-06T21:00:00.000Z', resourceId: 'annex' },
 ]

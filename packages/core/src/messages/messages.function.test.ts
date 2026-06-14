@@ -16,7 +16,7 @@ describe('resolveMessages', () => {
     const messages = resolveMessages({ today: 'Hoy', next: 'Siguiente' })
     expect(messages.today).toBe('Hoy')
     expect(messages.next).toBe('Siguiente')
-    expect(messages.previous).toBe('Back') // untouched default
+    expect(messages.previous).toBe('Previous') // untouched default
   })
 
   it('accepts a custom showMore formatter', () => {

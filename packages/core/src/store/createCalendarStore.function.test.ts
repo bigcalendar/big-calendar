@@ -1207,4 +1207,54 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       expect(store.enabledViews.value).toEqual([Views.MONTH])
     })
   })
+
+  describe('measuredWeekLimit', () => {
+    it('defaults to Infinity', () => {
+      const store = createCalendarStore<Event>({ localizer })
+      expect(store.measuredWeekLimit.value).toBe(Infinity)
+    })
+
+    it('writing measuredWeekLimit recomputes the month view model limit when no static weekEventLimit is set', () => {
+      const events: Event[] = [
+        { id: 1, title: 'A', start: '2026-06-01T09:00:00.000Z', end: '2026-06-01T10:00:00.000Z' },
+        { id: 2, title: 'B', start: '2026-06-01T11:00:00.000Z', end: '2026-06-01T12:00:00.000Z' },
+        { id: 3, title: 'C', start: '2026-06-01T13:00:00.000Z', end: '2026-06-01T14:00:00.000Z' },
+      ]
+      const store = createCalendarStore<Event>({ localizer, date: monday, view: Views.MONTH, events })
+      const viewModelBefore = store.viewModel.value
+      expect(viewModelBefore.kind).toBe('month')
+      if (viewModelBefore.kind !== 'month') return
+
+      // All 3 events on June 1 fit at Infinity — no overflow.
+      const weekWithJune1 = viewModelBefore.month.weeks.find((w) => w.days.some((d) => d.startsWith('2026-06-01')))
+      expect(weekWithJune1?.extra).toHaveLength(0)
+
+      // Constrain to 1 row — 2 events should overflow.
+      store.measuredWeekLimit.value = 1
+      const viewModelAfter = store.viewModel.value
+      expect(viewModelAfter.kind).toBe('month')
+      if (viewModelAfter.kind !== 'month') return
+      const weekAfter = viewModelAfter.month.weeks.find((w) => w.days.some((d) => d.startsWith('2026-06-01')))
+      expect(weekAfter?.levels).toHaveLength(1)
+      expect(weekAfter?.extra.length).toBeGreaterThan(0)
+    })
+
+    it('static weekEventLimit in config overrides measuredWeekLimit', () => {
+      const events: Event[] = [
+        { id: 1, title: 'A', start: '2026-06-01T09:00:00.000Z', end: '2026-06-01T10:00:00.000Z' },
+        { id: 2, title: 'B', start: '2026-06-01T11:00:00.000Z', end: '2026-06-01T12:00:00.000Z' },
+      ]
+      const store = createCalendarStore<Event>({
+        localizer, date: monday, view: Views.MONTH, events, weekEventLimit: 1,
+      })
+      // measuredWeekLimit set to a large value — static config still wins.
+      store.measuredWeekLimit.value = 100
+      const vm = store.viewModel.value
+      expect(vm.kind).toBe('month')
+      if (vm.kind !== 'month') return
+      const week = vm.month.weeks.find((w) => w.days.some((d) => d.startsWith('2026-06-01')))
+      expect(week?.levels).toHaveLength(1)
+      expect(week?.extra.length).toBeGreaterThan(0)
+    })
+  })
 })

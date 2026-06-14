@@ -60,14 +60,21 @@
     grid-column: var(--bc-seg-left) / span var(--bc-seg-span);
     grid-row: var(--bc-seg-row);
     min-inline-size: 0;
+    /* position: relative lifts this into the positioned-elements stacking layer
+       (same as .bc-segment), so DOM order places it above the .bc-month-slot
+       cells that share the same grid area — those cells are also position:relative
+       and otherwise cover the show-more button, eating its pointer events. */
+    position: relative;
     pointer-events: auto;
   }
 
   .bc-show-more {
-    margin-inline: var(--bc-event-gap);
+    display: block;
+    inline-size: 100%;
+    padding-inline: 3px;
     font-size: var(--bc-font-size-sm);
     color: var(--bc-color-accent);
-    text-align: start;
+    text-align: end;
     pointer-events: auto;
   }
 }

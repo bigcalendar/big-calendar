@@ -70,8 +70,6 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
   max?: string | undefined
   /** Day-layout algorithm for overlapping timed events: a built-in key or a custom fn. Defaults to `overlap`. */
   dayLayoutAlgorithm?: DayLayoutAlgorithmKey | DayLayoutAlgorithm | undefined
-  /** Max rows in the all-day header before events overflow. Defaults to unlimited. */
-  allDayMaxRows?: number | undefined
   /** Max event rows per week in the month grid before events overflow into "+N more". Defaults to unlimited. */
   weekEventLimit?: number | undefined
   /** Render multi-day events in the time columns rather than the all-day header. Defaults to false. */
@@ -83,7 +81,7 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
    * Only meaningful when `resources` is supplied.
    */
   resourceLayout?: ResourceLayoutMode | undefined
-  /** Show every all-day event (ignore `allDayMaxRows`). Defaults to false. */
+  /** Show every all-day event (override the 2-row limit). Defaults to false. */
   showAllEvents?: boolean | undefined
   /** Whether slot selection is enabled (`true`/`false`/`'ignoreEvents'`). Defaults to false. */
   selectable?: SelectableMode | undefined

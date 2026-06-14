@@ -77,9 +77,13 @@
 
   /* ── density / sizing ──────────────────────────────────────────────── */
   /* Minimum height of a month day cell. */
-  --bc-month-row-min: 5.5rem;
+  --bc-month-row-min: 8.25rem;
   /* Height of one time-grid slot row (a `step` of minutes). */
-  --bc-slot-height: 1.5rem;
+  --bc-slot-height: 2.25rem;
+  /* Minimum height of the all-day row in the time grid. Sized for 2 event rows
+     plus one empty segment row, so there is always a visible, reachable hit
+     target to create new all-day events even when both rows are fully occupied. */
+  --bc-allday-row-min-height: calc(3 * var(--bc-segment-height));
   /* Width of the time-grid time gutter (inline-start labels column). */
   --bc-gutter-width: 9ch;
   /* Minimum width for each date column in all time-grid views. */
@@ -93,7 +97,7 @@
   /* Thickness of the now-indicator line. */
   --bc-now-width: 2px;
   /* Height of a single stacked event row in the month / all-day grid. */
-  --bc-segment-height: 1.5rem;
+  --bc-segment-height: 2.25rem;
   /* Minimum hit-target size for discrete controls on coarse pointers (touch),
      applied via `@media (pointer: coarse)` in components/coarse-pointer.css.
      2.75rem = 44px, the WCAG 2.5.5 / platform touch-target floor (plan §7.7). */

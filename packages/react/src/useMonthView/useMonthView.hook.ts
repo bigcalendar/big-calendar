@@ -1,13 +1,13 @@
 import type { ResizeEdge } from '@big-calendar/core'
 import type { ComponentType, CSSProperties, FocusEvent, KeyboardEvent, PointerEvent } from 'react'
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
+import { useMonthRowMeasure } from '../useMonthRowMeasure'
 import { useCalendarContext } from '../CalendarProvider'
 import type {
   MonthDateProps,
   MonthEventProps,
   MonthShowMoreProps,
   MonthWeekdayProps,
-  ShowMoreEvent,
 } from '../components.type'
 import { monthGridStyle, segmentStyle } from '../geometryStyles'
 import { useEventRoving } from '../useEventRoving'
@@ -166,12 +166,7 @@ export interface UseMonthViewReturn<TEvent> {
     cell: MonthDayCell<TEvent>,
     dayIndex: number,
     moreRow: number,
-  ) => (MonthShowMoreCellProps & {
-    count: number
-    label: string
-    day: string
-    events: ShowMoreEvent<TEvent>[]
-  }) | null
+  ) => (MonthShowMoreCellProps & MonthShowMoreProps<TEvent>) | null
 }
 
 /**
@@ -216,12 +211,24 @@ export function useMonthView<TEvent = unknown>(): UseMonthViewReturn<TEvent> {
   const eventRoving = useEventRoving()
   const keyboardDnd = useKeyboardDnd<TEvent>({ mode: 'day' })
 
+  const gridElRef = useRef<HTMLElement | null>(null)
+  const mergedGridRef = useCallback(
+    (node: HTMLElement | null) => {
+      gridElRef.current = node
+      roving.containerRef(node)
+    },
+    [roving.containerRef],
+  )
+  useMonthRowMeasure({ gridRef: gridElRef, weekCount: grid?.weeks.length ?? 0, store })
+
+  const EventSlot = (components.month?.event ?? DefaultMonthEvent) as ComponentType<MonthEventProps<TEvent>>
+
   return {
     grid,
     components: {
       Weekday: components.month?.weekday ?? DefaultMonthWeekday,
       DateCell: components.month?.dateCell ?? DefaultMonthDate,
-      EventSlot: (components.month?.event ?? DefaultMonthEvent) as ComponentType<MonthEventProps<TEvent>>,
+      EventSlot,
       ShowMore: (components.month?.showMore ?? DefaultMonthShowMore) as ComponentType<MonthShowMoreProps<TEvent>>,
     },
     messages: {
@@ -245,7 +252,7 @@ export function useMonthView<TEvent = unknown>(): UseMonthViewReturn<TEvent> {
     monthGrid: {
       className: 'bc-month-grid',
       style: grid ? monthGridStyle(grid.weeks.length) : {},
-      ref: roving.containerRef,
+      ref: mergedGridRef,
       onPointerDown: onSlotPointerDown,
       onKeyDown: roving.onKeyDown,
       onFocusCapture: roving.onFocusCapture,
@@ -312,6 +319,7 @@ export function useMonthView<TEvent = unknown>(): UseMonthViewReturn<TEvent> {
         label: messages.showMore(cell.extra.count),
         day: cell.day,
         events: cell.extra.events,
+        EventSlot,
       }
     },
   }

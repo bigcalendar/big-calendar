@@ -47,7 +47,7 @@ export type CalendarStageProps = Partial<CalendarProviderProps<DemoEvent>> & {
 export function CalendarStage({ children, height = 800, rows = 'auto 1fr', ...props }: CalendarStageProps) {
   const ctxLocalizer = useLocalizerContext()
   return (
-    <div style={{ display: 'grid', gridTemplateRows: rows, blockSize: height, inlineSize: '100%' }}>
+    <div style={{ display: 'grid', gridTemplateRows: rows, rowGap: '0.5rem', blockSize: height, inlineSize: '100%' }}>
       <CalendarProvider<DemoEvent>
         localizer={ctxLocalizer ?? localizer}
         getNow={() => NOW}

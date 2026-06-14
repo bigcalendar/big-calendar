@@ -110,12 +110,26 @@ export interface TimeAllDaySegment<TEvent> {
   row: number
 }
 
+/** One per-column overflow indicator in the all-day header. */
+export interface TimeAllDayExtra<TEvent> {
+  /** 1-based column index in the day-column grid (matches the segment `left`). */
+  col: number
+  /** Number of events that didn't fit the row limit in this column. */
+  count: number
+  /** The overflowed events, for display inside the ShowMore popover. */
+  events: ShowMoreEvent<TEvent>[]
+}
+
 /** The all-day header row: placed segments plus any overflow. */
 export interface TimeAllDayRow<TEvent> {
   /** Events placed into stack levels. */
   segments: TimeAllDaySegment<TEvent>[]
-  /** Overflow indicator, or `null` when nothing spilled past the limit. */
-  extra: { count: number; events: ShowMoreEvent<TEvent>[] } | null
+  /**
+   * One entry per day column that has overflow events, or `null` when nothing
+   * spilled past the limit. Each entry positions one ShowMore indicator in the
+   * correct day column.
+   */
+  extra: TimeAllDayExtra<TEvent>[] | null
 }
 
 /**
@@ -310,16 +324,21 @@ export function useTimeGrid<TEvent>(): TimeGrid<TEvent> | null {
           row: rowIndex + 1,
         })),
       )
-      const extra =
-        rows.extra.length > 0
-          ? {
-              count: rows.extra.length,
-              events: rows.extra.map((segment, extraIndex) => ({
-                key: `${keyBase}-extra-${extraIndex}-${String(id(segment.event) ?? '')}`,
-                event: segment.event,
-                title: title(segment.event) ?? '',
-              })),
-            }
+      // Group overflow segments by their starting column so each day column that
+      // has more events than the row limit gets its own ShowMore indicator.
+      const extraByCol = new Map<number, ShowMoreEvent<TEvent>[]>()
+      rows.extra.forEach((segment, extraIndex) => {
+        const entry = extraByCol.get(segment.left) ?? []
+        entry.push({
+          key: `${keyBase}-extra-${extraIndex}-${String(id(segment.event) ?? '')}`,
+          event: segment.event,
+          title: title(segment.event) ?? '',
+        })
+        extraByCol.set(segment.left, entry)
+      })
+      const extra: TimeAllDayExtra<TEvent>[] | null =
+        extraByCol.size > 0
+          ? [...extraByCol.entries()].map(([col, events]) => ({ col, count: events.length, events }))
           : null
       return { segments, extra }
     }

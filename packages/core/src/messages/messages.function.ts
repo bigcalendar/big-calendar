@@ -10,7 +10,7 @@ export const DEFAULT_MESSAGES: Messages = {
   work_week: 'Work Week',
   day: 'Day',
   month: 'Month',
-  previous: 'Back',
+  previous: 'Previous',
   next: 'Next',
   yesterday: 'Yesterday',
   tomorrow: 'Tomorrow',

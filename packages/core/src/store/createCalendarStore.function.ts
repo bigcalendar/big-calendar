@@ -147,6 +147,9 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   // False by default; set to true by the framework DnD hook when its bindings
   // are active so UI components can suppress drag affordances when DnD isn't wired.
   const dndEnabled = signal(false)
+  // Written by the React layer's useMonthRowMeasure when no static weekEventLimit
+  // is configured. Defaults to Infinity so an unmeasured grid shows all events.
+  const measuredWeekLimit = signal<number>(Infinity)
 
   const { drilldownView = Views.DAY, viewDefinitions: registry } = config
 
@@ -172,7 +175,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   const dayStartMin = config.min == null ? 0 : localizerSignal.value.getMinutesFromMidnight(config.min)
   const dayEndMin =
     config.max == null ? 1440 : localizerSignal.value.getMinutesFromMidnight(config.max) || 1440
-  const allDayMaxRows = config.showAllEvents ? Infinity : (config.allDayMaxRows ?? Infinity)
+  const allDayMaxRows = config.showAllEvents ? Infinity : 2
 
   const viewModel = computed(() =>
     buildViewModel({
@@ -193,7 +196,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
         dayLayoutAlgorithm: config.dayLayoutAlgorithm,
         allDayMaxRows,
         showMultiDayTimes: config.showMultiDayTimes,
-        weekEventLimit: config.weekEventLimit,
+        weekEventLimit: config.weekEventLimit ?? measuredWeekLimit.value,
         resourceLayout: config.resourceLayout,
       },
     }),
@@ -429,6 +432,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     dragPreview: dragPreview as ReadonlySignal<{ start: string; end: string } | null>,
     keyboardDrag: keyboardDrag as ReadonlySignal<KeyboardDragState | null>,
     dndEnabled,
+    measuredWeekLimit,
     enabledViews,
     get localizer() { return localizerSignal.value },
     accessors,

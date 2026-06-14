@@ -12,6 +12,11 @@
     background: var(--bc-color-bg);
     color: var(--bc-color-fg);
     box-shadow: var(--bc-shadow-popover);
+    /* Viewport constraint via the CSS variable written by positionFloating's size
+       middleware. Using a variable (not an inline max-block-size) lets subclasses
+       override with min() without being beaten by inline-style specificity. */
+    max-block-size: var(--bc-float-avail-h, 100vh);
+    overflow-y: auto;
   }
 
   .bc-popover:popover-open {
@@ -25,6 +30,28 @@
 
   .bc-popover-title {
     font-weight: var(--bc-font-weight-bold);
+  }
+
+  /* Month show-more popup: tighter padding, content-driven height (overrides the
+     UA's [popover]{inset:0} which would stretch the panel to the viewport
+     bottom), 300px cap with scroll, and explicit grid placement reset.
+     The show-more cell carries --bc-seg-left/span/row as inline styles; CSS
+     custom properties inherit, so without the reset every EventButton inside the
+     popover lands on the same explicit grid position and stacks invisibly. */
+  .bc-show-more-popover {
+    padding: 3px;
+    block-size: max-content;
+    max-block-size: min(300px, var(--bc-float-avail-h, 100vh));
+    overflow-y: auto;
+  }
+
+  .bc-show-more-popover .bc-segment {
+    grid-column: auto;
+    grid-row: auto;
+    /* Match the month grid's segment height (set there via grid-auto-rows on
+       .bc-week-events). In the popover the rows are auto-sized, so we enforce
+       the same floor directly on the item. */
+    min-block-size: var(--bc-segment-height);
   }
 
   .bc-popover-events {

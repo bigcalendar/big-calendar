@@ -110,13 +110,15 @@ function TimeGridView<TEvent = unknown>() {
                         <AllDayEvent event={segment.event} title={segment.title} />
                       </EventButton>
                     ))}
-                    {cell.allDay.extra !== null && (
+                    {cell.allDay.extra !== null && cell.allDay.extra.map((item) => (
                       <ShowMore
-                        count={cell.allDay.extra.count}
-                        label={hdrMessages.showMore(cell.allDay.extra.count)}
-                        events={cell.allDay.extra.events}
+                        key={`extra-${item.col}`}
+                        count={item.count}
+                        label={hdrMessages.showMore(item.count)}
+                        events={item.events}
+                        EventSlot={AllDayEvent}
                       />
-                    )}
+                    ))}
                   </div>
                 </div>
               )),
@@ -230,13 +232,16 @@ function TimeGridView<TEvent = unknown>() {
                           <AllDayEvent event={segment.event} title={segment.title} />
                         </EventButton>
                       ))}
-                      {group.allDay.extra !== null && (
-                        <ShowMore
-                          count={group.allDay.extra.count}
-                          label={hdrMessages.showMore(group.allDay.extra.count)}
-                          events={group.allDay.extra.events}
-                        />
-                      )}
+                      {group.allDay.extra !== null && group.allDay.extra.map((item) => (
+                        <div key={`extra-${item.col}`} style={{ gridColumn: item.col, position: 'relative', pointerEvents: 'none' }}>
+                          <ShowMore
+                            count={item.count}
+                            label={hdrMessages.showMore(item.count)}
+                            events={item.events}
+                            EventSlot={AllDayEvent}
+                          />
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))
@@ -254,13 +259,15 @@ function TimeGridView<TEvent = unknown>() {
                           <AllDayEvent event={segment.event} title={segment.title} />
                         </EventButton>
                       ))}
-                      {group.allDay.extra !== null && (
+                      {group.allDay.extra !== null && group.allDay.extra.map((item) => (
                         <ShowMore
-                          count={group.allDay.extra.count}
-                          label={hdrMessages.showMore(group.allDay.extra.count)}
-                          events={group.allDay.extra.events}
+                          key={`extra-${item.col}`}
+                          count={item.count}
+                          label={hdrMessages.showMore(item.count)}
+                          events={item.events}
+                          EventSlot={AllDayEvent}
                         />
-                      )}
+                      ))}
                     </div>
                   </div>
                 ))}
@@ -338,13 +345,16 @@ function TimeGridView<TEvent = unknown>() {
                 <AllDayEvent event={segment.event} title={segment.title} />
               </EventButton>
             ))}
-            {grid.allDay.extra !== null && (
-              <ShowMore
-                count={grid.allDay.extra.count}
-                label={hdrMessages.showMore(grid.allDay.extra.count)}
-                events={grid.allDay.extra.events}
-              />
-            )}
+            {grid.allDay.extra !== null && grid.allDay.extra.map((item) => (
+              <div key={`extra-${item.col}`} style={{ gridColumn: item.col, position: 'relative', pointerEvents: 'none' }}>
+                <ShowMore
+                  count={item.count}
+                  label={hdrMessages.showMore(item.count)}
+                  events={item.events}
+                  EventSlot={AllDayEvent}
+                />
+              </div>
+            ))}
           </div>
         </div>
       </div>

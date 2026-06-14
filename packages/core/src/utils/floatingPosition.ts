@@ -85,12 +85,16 @@ export async function positionFloating(
       offset(options?.offset ?? 4),
       flip(),
       shift({ padding: 8 }),
-      // Keep a large popover within the viewport (it scrolls instead of overflowing).
+      // Keep a large popover within the viewport. Available dimensions are written
+      // as CSS custom properties (not direct inline styles) so class-level rules
+      // can reference them with min() — e.g. min(300px, var(--bc-float-avail-h)).
+      // A direct inline max-block-size would override class rules regardless of
+      // cascade, preventing per-component height caps from taking effect.
       size({
         padding: 8,
         apply: ({ availableWidth, availableHeight, elements }) => {
           elements.floating.style.maxInlineSize = `${Math.max(0, availableWidth)}px`
-          elements.floating.style.maxBlockSize = `${Math.max(0, availableHeight)}px`
+          elements.floating.style.setProperty('--bc-float-avail-h', `${Math.max(0, availableHeight)}px`)
         },
       }),
     ],

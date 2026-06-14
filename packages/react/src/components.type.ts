@@ -119,6 +119,11 @@ export interface MonthShowMoreProps<TEvent> {
   day: string
   /** The overflowed events, for listing in a popover. */
   events: ReadonlyArray<ShowMoreEvent<TEvent>>
+  /**
+   * The configured month event slot component. Use this to render each
+   * overflowed event so the popover's events match the month grid's styling.
+   */
+  EventSlot: ComponentType<MonthEventProps<TEvent>>
 }
 
 /** Time-grid (day / week / work-week) slot overrides. */
@@ -191,6 +196,11 @@ export interface TimeShowMoreProps<TEvent> {
   label: string
   /** The overflowed events, for listing in a popover. */
   events: ReadonlyArray<ShowMoreEvent<TEvent>>
+  /**
+   * The configured all-day event slot component. Use this to render each
+   * overflowed event so the popover's events match the all-day strip's styling.
+   */
+  EventSlot: ComponentType<TimeAllDayEventProps<TEvent>>
 }
 
 /** Agenda-view slot overrides. */

@@ -131,6 +131,15 @@ const DROP_ATTR: Record<MoveMode, string> = {
  * Exported so the React adapter knows which attribute to stamp on all-day cells.
  */
 export const ALLDAY_TARGET_ATTR = 'data-bc-allday'
+/**
+ * Attribute stamped on the all-day segment containers (`.bc-allday-segments`,
+ * `.bc-allday-resource-segments`, `.bc-allday-resource-stack`). Used in `'time'`
+ * mode as a **fallback** promotion drop target so timed events can be dropped
+ * when the pointer is over an existing all-day event button rather than over
+ * an empty slot cell. `getData` resolves the target day by pointer X position.
+ * Exported so the React adapter knows which containers to mark.
+ */
+export const ALLDAY_SEGMENTS_ATTR = 'data-bc-allday-segments'
 
 /**
  * Element-adapter data key a **Pragmatic** `draggable` palette item sets to mark
@@ -306,13 +315,61 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
     )
   }
 
+  // Bind an all-day segments container as a **fallback** promotion drop target.
+  // Pragmatic DnD resolves targets by walking up the DOM from the element under
+  // the pointer. When the pointer is over an existing all-day EventButton the
+  // individual slot cells ([data-bc-allday]) are siblings, not ancestors, so they
+  // are never found. Registering the segments container (the EventButton's direct
+  // parent) ensures a drop target is always found. getData resolves the target day
+  // by scanning sibling/ancestor subtrees for [data-bc-allday] cells and finding
+  // the one whose X bounds contain the current pointer position.
+  const bindAllDaySegments = (element: HTMLElement): void => {
+    if (bindings.has(element)) return
+    bindings.set(
+      element,
+      dropTargetForElements({
+        element,
+        canDrop: ({ source }) => (source.element as Element).closest('.bc-allday-row') == null,
+        getData: ({ input }) => {
+          // Walk up from this container's parent until we find [data-bc-allday] cells.
+          let ancestor: Element | null = element.parentElement
+          let slots: HTMLElement[] = []
+          while (ancestor !== null && slots.length === 0) {
+            slots = Array.from(ancestor.querySelectorAll<HTMLElement>(`[${ALLDAY_TARGET_ATTR}]`))
+            if (slots.length === 0) ancestor = ancestor.parentElement
+          }
+          let target: string | null = null
+          if (slots.length === 1) {
+            // Single-day stacked layout: only one possible day.
+            target = slots[0].getAttribute(ALLDAY_TARGET_ATTR)
+          } else {
+            for (const slot of slots) {
+              const rect = slot.getBoundingClientRect()
+              if (input.clientX >= rect.left && input.clientX < rect.right) {
+                target = slot.getAttribute(ALLDAY_TARGET_ATTR)
+                break
+              }
+            }
+          }
+          return {
+            bcAllDayTarget: target,
+            bcIsPromotion: true,
+            bcResourceId: element.closest(`[${RESOURCE_ATTR}]`)?.getAttribute(RESOURCE_ATTR) ?? null,
+          }
+        },
+      }),
+    )
+  }
+
   const scan = (): void => {
     root.querySelectorAll<HTMLElement>(`[${EVENT_ATTR}]`).forEach(bindDraggable)
     root.querySelectorAll<HTMLElement>(`[${RESIZE_ATTR}]`).forEach(bindResizeHandle)
     root.querySelectorAll<HTMLElement>(`[${dropAttr}]`).forEach(bindDropTarget)
-    // In 'time' mode also register all-day row cells as one-way promotion targets.
+    // In 'time' mode also register all-day row cells as one-way promotion targets,
+    // plus the segment containers as fallback targets for drops over event buttons.
     if (mode === 'time') {
       root.querySelectorAll<HTMLElement>(`[${ALLDAY_TARGET_ATTR}]`).forEach(bindAllDayTarget)
+      root.querySelectorAll<HTMLElement>(`[${ALLDAY_SEGMENTS_ATTR}]`).forEach(bindAllDaySegments)
     }
   }
   scan()

@@ -132,13 +132,14 @@ describe.each(LOCALIZER_CASES)('MonthView [$name]', ({ create }) => {
     const { container } = renderMonth({ weekEventLimit: 1 })
     const showMore = container.querySelector('.bc-show-more') as HTMLElement
     // The trigger drives a native popover; nothing is listed until it opens.
-    expect(container.querySelectorAll('.bc-popover-event').length).toBe(0)
+    expect(container.querySelectorAll('.bc-popover .bc-segment').length).toBe(0)
 
     const panel = document.getElementById(showMore.getAttribute('aria-controls') ?? '')
     if (!panel) throw new Error('popover panel not found')
     fireEvent(panel, Object.assign(new Event('toggle'), { newState: 'open' }))
 
-    expect(container.querySelectorAll('.bc-popover-event').length).toBe(2)
+    // Overflowed events render as EventButton (.bc-segment) inside the popover.
+    expect(container.querySelectorAll('.bc-popover .bc-segment').length).toBe(2)
     expect(screen.getAllByText('Review').length).toBeGreaterThan(0)
   })
 

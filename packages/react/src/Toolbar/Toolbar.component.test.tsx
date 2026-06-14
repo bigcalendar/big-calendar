@@ -35,7 +35,7 @@ describe.each(LOCALIZER_CASES)('Toolbar [$name]', ({ create }) => {
   it('renders today/prev/next, the localized label, and a button per view', () => {
     renderToolbar()
     expect(screen.getByRole('button', { name: 'Today' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Previous' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Next' })).toBeTruthy()
     // month label uses the monthHeader role on the focus date
     expect(screen.getByText(monthLabel)).toBeTruthy()
@@ -61,9 +61,9 @@ describe.each(LOCALIZER_CASES)('Toolbar [$name]', ({ create }) => {
     const next = localizer.add({ value: FOCUS, amount: 1, unit: 'month' })
     fireEvent.click(screen.getByRole('button', { name: 'Next' }))
     expect(onNavigate).toHaveBeenLastCalledWith({ date: next, view: Views.MONTH })
-    // Back steps from the current (post-Next) focus date.
+    // Previous steps from the current (post-Next) focus date.
     const back = localizer.add({ value: next, amount: -1, unit: 'month' })
-    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Previous' }))
     expect(onNavigate).toHaveBeenLastCalledWith({ date: back, view: Views.MONTH })
     fireEvent.click(screen.getByRole('button', { name: 'Today' }))
     expect(onNavigate).toHaveBeenCalledTimes(3)

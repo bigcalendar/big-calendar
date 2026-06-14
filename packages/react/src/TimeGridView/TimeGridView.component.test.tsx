@@ -27,6 +27,7 @@ const events: Event[] = [
   { id: 3, title: 'Holiday', allDay: true, ...allDayBounds },
   // bare all-day event: no id/title → exercises the all-day accessor fallbacks
   { allDay: true, ...allDayBounds },
+  { id: 4, title: 'Conference', allDay: true, ...allDayBounds },
 ]
 const backgroundEvents: Event[] = [
   { id: 10, title: 'Busy', start: '2026-06-15T13:00:00.000Z', end: '2026-06-15T14:00:00.000Z' },
@@ -393,27 +394,27 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
   })
 
   it('overflows all-day events past the row limit into the default "+N more" indicator', () => {
-    const { container } = renderGrid({ allDayMaxRows: 0 })
-    // both all-day events spill past the zero-row limit
-    expect((container.querySelector('.bc-show-more') as HTMLElement).textContent).toBe('+2 more')
+    // 3 all-day events, limit=2 → 1 overflows
+    const { container } = renderGrid()
+    expect((container.querySelector('.bc-show-more') as HTMLElement).textContent).toBe('+1 more')
   })
 
   it('lists the overflowed all-day events in the show-more popover when opened', () => {
-    const { container } = renderGrid({ allDayMaxRows: 0 })
+    // 3 all-day events, limit=2 → 1 overflows into the popover
+    const { container } = renderGrid()
     const showMore = container.querySelector('.bc-show-more') as HTMLElement
-    expect(container.querySelectorAll('.bc-popover-event').length).toBe(0)
+    expect(container.querySelectorAll('.bc-popover .bc-segment').length).toBe(0)
 
     const panel = document.getElementById(showMore.getAttribute('aria-controls') ?? '')
     if (!panel) throw new Error('popover panel not found')
     fireEvent(panel, Object.assign(new Event('toggle'), { newState: 'open' }))
 
-    expect(container.querySelectorAll('.bc-popover-event').length).toBe(2)
+    expect(container.querySelectorAll('.bc-popover .bc-segment').length).toBe(1)
     expect(screen.getAllByText('Holiday').length).toBeGreaterThan(0)
   })
 
   it('honors slot overrides (dayHeading / timeLabel / event / allDayEvent / showMore)', () => {
     renderGrid({
-      allDayMaxRows: 1,
       components: {
         time: {
           dayHeading: ({ label }) => <div data-testid="custom-heading">{label}</div>,
@@ -428,8 +429,8 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
     expect(screen.getAllByTestId('custom-label').length).toBe(24)
     // three timed events (Standup, Review, the bare one)
     expect(screen.getAllByTestId('custom-event').length).toBe(3)
-    // one all-day segment fits the single row; the other overflows
-    expect(screen.getAllByTestId('custom-allday').length).toBe(1)
+    // two all-day segments fit the two rows; the third overflows
+    expect(screen.getAllByTestId('custom-allday').length).toBe(2)
     expect(screen.getByTestId('custom-more').textContent).toBe('+1 more')
   })
 })
@@ -677,6 +678,8 @@ describe.each(LOCALIZER_CASES)('TimeGridView keyboard DnD [$name]', ({ create })
       { id: 1, title: 'Board mtg', resourceId: 'r1', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' },
       { id: 2, title: 'Class', resourceId: 'r2', start: '2026-06-15T11:00:00.000Z', end: '2026-06-15T12:00:00.000Z' },
       { id: 3, title: 'Board holiday', resourceId: 'r1', allDay: true, ...allDayBounds },
+      { id: 4, title: 'Board conf', resourceId: 'r1', allDay: true, ...allDayBounds },
+      { id: 5, title: 'Board off', resourceId: 'r1', allDay: true, ...allDayBounds },
     ]
 
     function renderResourceWeek() {
@@ -737,12 +740,11 @@ describe.each(LOCALIZER_CASES)('TimeGridView keyboard DnD [$name]', ({ create })
           events={resEvents}
           resources={resources}
           getNow={() => NOW}
-          allDayMaxRows={0}
         >
           <TimeGridView />
         </CalendarProvider>,
       )
-      // r1 has Board holiday — with allDayMaxRows=0 it should overflow to ShowMore.
+      // r1 has 3 all-day events; limit=2 → 1 overflows to ShowMore.
       const r1Lane = container.querySelector<HTMLElement>('.bc-allday-resource-week[data-bc-resource="r1"]')!
       expect(r1Lane.querySelector('.bc-show-more')).toBeTruthy()
     })

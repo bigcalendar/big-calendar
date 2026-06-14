@@ -36,6 +36,12 @@ export interface PopoverProps {
   placement?: FloatingPlacement
   /** Panel class name (default `bc-popover`). */
   className?: string
+  /**
+   * When `true`, the panel's `inline-size` is set to match the trigger's
+   * rendered width on each placement run (e.g. a show-more popover that should
+   * span the same column as the day cell it belongs to).
+   */
+  sameWidth?: boolean
 }
 
 /**
@@ -48,7 +54,7 @@ export interface PopoverProps {
  * overflow/stacking. Positioning falls back to `@floating-ui/core` rather than
  * CSS Anchor Positioning, which is not yet cross-engine (§7.5).
  */
-function Popover({ trigger, children, placement = 'bottom-start', className = 'bc-popover' }: PopoverProps) {
+function Popover({ trigger, children, placement = 'bottom-start', className = 'bc-popover', sameWidth }: PopoverProps) {
   const id = useId()
   const [open, setOpen] = useState(false)
   const anchorRef = useRef<HTMLElement | null>(null)
@@ -64,7 +70,7 @@ function Popover({ trigger, children, placement = 'bottom-start', className = 'b
   }
 
   // Position (and keep positioned) while open.
-  useFloatingAnchor(open, anchorRef, panelRef, placement)
+  useFloatingAnchor(open, anchorRef, panelRef, placement, sameWidth)
 
   return (
     <>

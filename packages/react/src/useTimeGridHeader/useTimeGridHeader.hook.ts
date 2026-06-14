@@ -56,6 +56,7 @@ export interface TimeGridAllDaySlotsProps {
 /** Element-spread props for the `.bc-allday-segments` segment container (plain path). */
 export interface TimeGridAllDaySegmentsProps {
   className: string
+  'data-bc-allday-segments': ''
 }
 
 /** Element-spread props for the `.bc-allday-selection` selection wrapper (plain path). */
@@ -71,6 +72,7 @@ export interface TimeGridResourceHeaderLabelProps {
 /** Element-spread props for a `.bc-allday-resource-stack` `<div>` inside a resource allday cell. */
 export interface TimeGridAllDayResourceStackProps {
   className: string
+  'data-bc-allday-segments': ''
 }
 
 /** Element-spread props for a single-day resource column header `<div>`. */
@@ -177,6 +179,7 @@ export interface TimeGridResourceWeekAllDaySlotsContainerProps {
 export interface TimeGridResourceWeekAllDaySegmentsContainerProps {
   className: string
   style: CSSProperties
+  'data-bc-allday-segments': ''
 }
 
 /** Factory return props for a resource-day (single-column) allday cell. */
@@ -381,10 +384,10 @@ export function useTimeGridHeader<TEvent = unknown>(
       : { className: 'bc-time-header-gutter', 'aria-hidden': true },
     allDayLabel: { className: 'bc-allday-label' },
     allDaySlots: { className: 'bc-allday-slots' },
-    allDaySegments: { className: 'bc-allday-segments' },
+    allDaySegments: { className: 'bc-allday-segments', 'data-bc-allday-segments': '' as const },
     allDaySelectionWrapper: { className: 'bc-allday-selection' },
     resourceHeaderLabel: { className: 'bc-resource-header-label' },
-    allDayResourceStack: { className: 'bc-allday-resource-stack' },
+    allDayResourceStack: { className: 'bc-allday-resource-stack', 'data-bc-allday-segments': '' as const },
     resourceSingleHead: { className: 'bc-header bc-resource-header', role: 'columnheader' },
     allDayRow: {
       className: 'bc-allday-row',
@@ -467,6 +470,7 @@ export function useTimeGridHeader<TEvent = unknown>(
     getResourceWeekAllDaySegmentsContainerProps: (): TimeGridResourceWeekAllDaySegmentsContainerProps => ({
       className: 'bc-allday-resource-segments',
       style: { gridTemplateColumns: dayCols },
+      'data-bc-allday-segments': '',
     }),
     getResourceDayAllDayProps: (isToday: boolean, resourceId: string | number): TimeGridResourceDayAllDayProps => ({
       className: isToday ? 'bc-allday-resource bc-today' : 'bc-allday-resource',
