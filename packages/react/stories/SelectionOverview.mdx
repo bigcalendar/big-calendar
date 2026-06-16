@@ -1,0 +1,224 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import LinkTo from '@storybook/addon-links/react'
+
+<Meta title="Selection/Overview" />
+
+# Selection
+
+Big Calendar supports two kinds of user interactions with the grid: **slot selection** (clicking or dragging to indicate a time range) and **event interaction** (clicking an event). Both are opt-in and controlled — the calendar reports what happened and you decide what to do with it.
+
+## Enabling selection
+
+Add `selectable` to `CalendarProvider`:
+
+```tsx
+<CalendarProvider selectable ...>
+```
+
+Without it, clicking and dragging the grid produces no callbacks. Event clicks still fire regardless of `selectable`.
+
+## Slot callbacks
+
+When `selectable` is on, four slot callbacks are available.
+
+### `onSlotClick`
+
+Fires when the user **clicks a single slot** (one time cell in the time grid, or one day in the month grid).
+
+```tsx
+onSlotClick={({ start, end, slots, allDay }) => {
+  // start / end  — ISO strings bounding the clicked slot
+  // slots        — array containing the slot start (length 1 for a click)
+  // allDay       — true when the click was on a whole-day cell
+}}
+```
+
+### `onSlotDoubleClick`
+
+Same shape as `onSlotClick`, fires on a **double-click**.
+
+```tsx
+onSlotDoubleClick={({ start, end, slots, allDay }) => {
+  // Same payload as onSlotClick
+}}
+```
+
+### `onSlotSelect`
+
+Fires when the user **drags across slots** to select a range. In the time grid, dragging down a column selects time slots. In the month grid, dragging across cells selects whole days.
+
+```tsx
+onSlotSelect={({ start, end, slots, allDay }) => {
+  // start / end  — ISO strings bounding the full selection
+  // slots        — every slot boundary touched during the drag
+  // allDay       — true when dragging whole days (month grid, or cross-day time drag)
+}}
+```
+
+### `onSlotSelecting`
+
+Fires **on every step of a drag** as the selection grows — before it is committed. Use it to preview a future action in real time, or return `false` to block the selection from extending into a time that shouldn't be selectable.
+
+```tsx
+onSlotSelecting={({ start, end, allDay }) => {
+  // Called continuously as the user drags.
+  // Return false to stop the selection here.
+  if (isBlockedTime(start, end)) return false
+}}
+```
+
+Returning `false` cancels the in-progress selection entirely. Returning `true`, `undefined`, or nothing allows it to continue.
+
+---
+
+A common pattern across the commit callbacks is to open a "create event" dialog:
+
+```tsx
+<CalendarProvider
+  selectable
+  onSlotSelect={({ start, end, allDay }) => {
+    setNewEvent({ start, end, allDay })
+    setDialogOpen(true)
+  }}
+>
+```
+
+## The selection payload
+
+All four slot callbacks receive the same core fields. Some fields are only present in certain situations — fields that don't apply are **omitted entirely** from the payload object (never set to `null` or `undefined`).
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Type</th><th>When present</th><th>What it means</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>start</code></td>
+      <td><code>string</code></td>
+      <td>Always</td>
+      <td>ISO start of the selection.</td>
+    </tr>
+    <tr>
+      <td><code>end</code></td>
+      <td><code>string</code></td>
+      <td>Always</td>
+      <td>
+        ISO end of the selection. For time-slot selections this is the <em>exclusive</em> end (the
+        instant the next slot begins). For whole-day selections it is end-of-day.
+      </td>
+    </tr>
+    <tr>
+      <td><code>slots</code></td>
+      <td><code>string[]</code></td>
+      <td>Commit callbacks only</td>
+      <td>The ISO start of every slot or day touched by the selection, in order.</td>
+    </tr>
+    <tr>
+      <td><code>allDay</code></td>
+      <td><code>boolean</code></td>
+      <td>Always</td>
+      <td>
+        <code>true</code> for whole-day spans (month grid clicks/drags, or a time-grid drag that
+        crosses into a second day column). <code>false</code> for a within-day timed selection.
+      </td>
+    </tr>
+    <tr>
+      <td><code>resourceId</code></td>
+      <td><code>string | number</code></td>
+      <td>Resource grids only</td>
+      <td>
+        Which resource column the selection started in. Omitted on grids with no resources configured.
+        Pass it to your create-event handler to pre-assign the new event to the right resource.
+      </td>
+    </tr>
+    <tr>
+      <td><code>backgroundEvents</code></td>
+      <td><code>TEvent[]</code></td>
+      <td>When any background event overlaps</td>
+      <td>
+        Background events whose time range intersects the selection. On resource grids, only events
+        belonging to the selected resource (plus events with no resource assignment) are included.
+        Omitted entirely when nothing overlaps — check for its presence before using it.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+> `onSlotSelecting` does not receive `slots` (the selection hasn't been committed yet), but it does
+> receive `resourceId` and `backgroundEvents` under the same rules as the commit callbacks.
+
+## Background events in selections
+
+When your calendar has `backgroundEvents` configured and `selectable` is on, every slot callback payload includes a `backgroundEvents` field listing the background events that overlap the selection. The field is **omitted entirely** when nothing overlaps. This gives you three distinct states to enforce scheduling rules — for example, preventing users from creating events outside designated focus blocks:
+
+```tsx
+import { getContainingBgEvents } from '@big-calendar/core'
+
+onSlotSelect={(selection) => {
+  const { backgroundEvents } = selection
+
+  if (!backgroundEvents) {
+    // ① No overlap — selection is entirely outside every background event
+    alert('Please schedule within a focus block')
+    return
+  }
+
+  const containers = getContainingBgEvents({ selection })
+
+  if (containers.length > 0) {
+    // ② Fully contained — selection sits completely inside at least one background event
+    openCreateDialog(selection)
+  } else {
+    // ③ Partial overlap — selection crosses the edge of a background event
+    alert('Your selection must fit completely within a focus block')
+  }
+}}
+```
+
+`getContainingBgEvents` is exported from `@big-calendar/core`. It works directly with the `backgroundEvents` already on the payload — no need to pass the full list separately. On a resource grid, `backgroundEvents` is pre-filtered to the selected resource's column; background events with no resource assignment are always included.
+
+If your event objects use different field names for the dates, pass custom accessors:
+
+```tsx
+const containers = getContainingBgEvents({
+  selection,
+  bgStartAccessor: (ev) => ev.startsAt,
+  bgEndAccessor:   (ev) => ev.endsAt,
+})
+```
+
+For a full walkthrough see <LinkTo title="Background Events/Overview" story="docs">Background Events → Overview</LinkTo>.
+
+## Long press on touch devices
+
+On touch screens, a "long press" (hold without lifting the finger) triggers slot selection instead of requiring a drag. The delay defaults to **250ms**. Adjust it with `longPressThreshold`:
+
+```tsx
+<CalendarProvider selectable longPressThreshold={400} ...>
+```
+
+Setting it to `0` effectively disables long-press.
+
+## What is selectable per view
+
+<table>
+  <thead><tr><th>View</th><th>Click</th><th>Double-click</th><th>Drag-select</th></tr></thead>
+  <tbody>
+    <tr><td>Month</td><td>Day cell</td><td>Day cell</td><td>Day cells across days</td></tr>
+    <tr><td>Week / Work Week</td><td>Time slot</td><td>Time slot</td><td>Time slots down a column or across days</td></tr>
+    <tr><td>Day</td><td>Time slot</td><td>Time slot</td><td>Time slots down the column</td></tr>
+    <tr><td>Agenda</td><td>—</td><td>—</td><td>—</td></tr>
+  </tbody>
+</table>
+
+The agenda view has no grid to select. Event clicks in the agenda still fire — see <LinkTo title="Events/Overview" story="docs">Events → Overview</LinkTo> for the event callback reference.
+
+## See it in action
+
+The <LinkTo title="Selection/Selectable" story="Selectable">Selection → Selectable</LinkTo> story lets you toggle `selectable` on/off and switch views. Every gesture's full payload appears in the **Actions** panel at the bottom of the Storybook window.
+
+To see `backgroundEvents` in the payload, visit the <LinkTo title="Background Events/With Background Events" story="Selectable With Background Events">Background Events → Selectable With Background Events</LinkTo> story — it combines slot selection with background events so you can watch the payload update in the Actions panel as you drag.
+
+## See also
+
+<LinkTo title="Events/Overview" story="docs">Events → Overview</LinkTo> covers `onEventClick`, `onEventDoubleClick`, `onEventRightClick`, and `onEventMiddleClick` — the callbacks that fire when a user interacts with an event block, independent of slot selection.

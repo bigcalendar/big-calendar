@@ -94,7 +94,25 @@ describe.each(LOCALIZER_CASES)('monthViewModel [$name]', ({ create }) => {
     expect(weeks[0]?.levels).toHaveLength(2)
   })
 
-  it('overflows past the week limit into extra', () => {
+  it('shows all events when count equals the limit (no overflow, no show-more row reserved)', () => {
+    const { weeks } = monthViewModel({
+      localizer,
+      accessors,
+      days: monthDays,
+      weekEventLimit: 2,
+      events: [
+        event(1, '2026-06-03T09:00:00.000Z', '2026-06-03T10:00:00.000Z'),
+        event(2, '2026-06-03T11:00:00.000Z', '2026-06-03T12:00:00.000Z'),
+      ],
+    })
+    expect(weeks[0]?.levels).toHaveLength(2)
+    expect(weeks[0]?.extra).toHaveLength(0)
+  })
+
+  it('overflows past the week limit into extra using two-pass (show-more fits within the space)', () => {
+    // weekEventLimit=2 means 2 total rows. With 3 events: first pass (limit=2) fills
+    // 2 levels + 1 extra → overflow detected → re-run with limit=1 so show-more sits
+    // in row 2 (within the declared space). Final: 1 level visible, 2 in extra.
     const { weeks } = monthViewModel({
       localizer,
       accessors,
@@ -106,9 +124,8 @@ describe.each(LOCALIZER_CASES)('monthViewModel [$name]', ({ create }) => {
         event(3, '2026-06-03T13:00:00.000Z', '2026-06-03T14:00:00.000Z'),
       ],
     })
-    expect(weeks[0]?.levels).toHaveLength(2)
-    expect(weeks[0]?.extra).toHaveLength(1)
-    expect(weeks[0]?.extra[0]?.event.id).toBe(3)
+    expect(weeks[0]?.levels).toHaveLength(1)
+    expect(weeks[0]?.extra).toHaveLength(2)
   })
 
   it('skips events whose start or end does not resolve', () => {

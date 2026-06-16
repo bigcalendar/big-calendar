@@ -500,6 +500,23 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       expect(store.selection.range.value).toBeNull()
     })
 
+    it('includes resourceId in onSlotSelecting args when the selection has one, omits it when absent', () => {
+      const onSlotSelecting = vi.fn()
+      const store = createCalendarStore<Event>({
+        localizer,
+        date: monday,
+        view: Views.DAY,
+        selectable: true,
+        onSlotSelecting,
+      })
+      // With resourceId
+      store.selection.start({ slot: 2, date: monday, mode: 'time', resourceId: 'room-a' })
+      expect(onSlotSelecting.mock.calls[0]![0].resourceId).toBe('room-a')
+      // Without resourceId — field must be absent (not just undefined)
+      store.selection.start({ slot: 2, date: monday, mode: 'time' })
+      expect(onSlotSelecting.mock.calls[1]![0]).not.toHaveProperty('resourceId')
+    })
+
     it('routes a click to onSlotClick and a double-click to onSlotDoubleClick, each a single slot', () => {
       const onSlotClick = vi.fn()
       const onSlotDoubleClick = vi.fn()
@@ -580,6 +597,118 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       store.selection.start({ slot: 1, date: monday, mode: 'time' })
       store.navigate({ direction: Navigate.NEXT })
       expect(store.selection.range.value).toBeNull()
+    })
+
+    it('includes intersecting background events in the committed selection payload', () => {
+      const bgEvent: Event = {
+        id: 2001,
+        title: 'Block',
+        start: '2026-06-15T09:00:00.000Z',
+        end: '2026-06-15T12:00:00.000Z',
+      }
+      const onSlotSelect = vi.fn()
+      const store = createCalendarStore<Event>({
+        localizer,
+        date: monday,
+        view: Views.DAY,
+        selectable: true,
+        onSlotSelect,
+        backgroundEvents: [bgEvent],
+      })
+      // slot 20 = 600 min (10:00), slot 22 = 660 min (11:00), exclusive end = 690 min (11:30)
+      store.selection.start({ slot: 20, date: monday, mode: 'time' })
+      store.selection.to({ slot: 22 })
+      store.selection.complete()
+      // bgEvent 09:00–12:00 overlaps selection [10:00, 11:30) → included
+      expect(onSlotSelect.mock.calls[0]![0].backgroundEvents).toEqual([bgEvent])
+    })
+
+    it('omits backgroundEvents from the payload when no background events intersect', () => {
+      const bgEvent: Event = {
+        id: 2002,
+        title: 'Afternoon block',
+        start: '2026-06-15T14:00:00.000Z',
+        end: '2026-06-15T17:00:00.000Z',
+      }
+      const onSlotSelect = vi.fn()
+      const store = createCalendarStore<Event>({
+        localizer,
+        date: monday,
+        view: Views.DAY,
+        selectable: true,
+        onSlotSelect,
+        backgroundEvents: [bgEvent],
+      })
+      store.selection.start({ slot: 20, date: monday, mode: 'time' })
+      store.selection.to({ slot: 22 })
+      store.selection.complete()
+      // bgEvent 14:00–17:00 does not overlap [10:00, 11:30)
+      expect(onSlotSelect.mock.calls[0]![0]).not.toHaveProperty('backgroundEvents')
+    })
+
+    it('pre-filters background events by resourceId and keeps events with no resource', () => {
+      type REvent = Event & { resourceId?: string }
+      const bgRoomA: REvent = {
+        id: 2003,
+        title: 'Room A block',
+        start: '2026-06-15T09:00:00.000Z',
+        end: '2026-06-15T12:00:00.000Z',
+        resourceId: 'room-a',
+      }
+      const bgRoomB: REvent = {
+        id: 2004,
+        title: 'Room B block',
+        start: '2026-06-15T09:00:00.000Z',
+        end: '2026-06-15T12:00:00.000Z',
+        resourceId: 'room-b',
+      }
+      const bgGlobal: REvent = {
+        id: 2005,
+        title: 'Global block',
+        start: '2026-06-15T09:00:00.000Z',
+        end: '2026-06-15T12:00:00.000Z',
+      }
+      const onSlotClick = vi.fn()
+      const store = createCalendarStore<REvent>({
+        localizer,
+        date: monday,
+        view: Views.DAY,
+        selectable: true,
+        onSlotClick,
+        backgroundEvents: [bgRoomA, bgRoomB, bgGlobal],
+      })
+      // Click in room-a's column; slot 20 = 10:00, all three bg events overlap
+      store.selection.click({ slot: 20, date: monday, mode: 'time', resourceId: 'room-a' })
+      const payload = onSlotClick.mock.calls[0]![0]
+      // room-a matched, room-b excluded, global (no resourceId) always included
+      expect(payload.backgroundEvents).toEqual([bgRoomA, bgGlobal])
+    })
+
+    it('includes backgroundEvents in onSlotSelecting args during a live drag', () => {
+      const bgEvent: Event = {
+        id: 2006,
+        title: 'Block',
+        start: '2026-06-15T09:00:00.000Z',
+        end: '2026-06-15T12:00:00.000Z',
+      }
+      const onSlotSelecting = vi.fn()
+      const store = createCalendarStore<Event>({
+        localizer,
+        date: monday,
+        view: Views.DAY,
+        selectable: true,
+        onSlotSelecting,
+        backgroundEvents: [bgEvent],
+      })
+      // .start() fires the initial veto check with single-slot range [10:00, 10:30)
+      store.selection.start({ slot: 20, date: monday, mode: 'time' })
+      // bgEvent 09:00–12:00 overlaps [10:00, 10:30) → backgroundEvents included
+      expect(onSlotSelecting).toHaveBeenCalledWith({
+        start: slot(600),
+        end: slot(630),
+        allDay: false,
+        backgroundEvents: [bgEvent],
+      })
     })
   })
 
@@ -785,6 +914,44 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       store.resizeEvent({ id: 1, edge: 'start', target: '2026-06-15T08:30:00.000Z', resourceId: 7 })
       expect(onEventResize.mock.calls[0]![0].resourceId).toBe(7)
     })
+
+    it('includes backgroundEvents in onEventDrop payload when the new position overlaps one', () => {
+      const bgEvent: Event = { id: 99, title: 'Focus', start: '2026-06-16T12:00:00.000Z', end: '2026-06-16T15:00:00.000Z' }
+      const onEventDrop = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventDrop, backgroundEvents: [bgEvent] })
+      // Move event to 13:00 on Jun 16 — lands inside the focus block
+      store.moveEvent({ id: 1, target: '2026-06-16T13:00:00.000Z', mode: 'time' })
+      expect(onEventDrop.mock.calls[0]![0].backgroundEvents).toEqual([bgEvent])
+    })
+
+    it('omits backgroundEvents from onEventDrop payload when the new position does not overlap any', () => {
+      const bgEvent: Event = { id: 99, title: 'Focus', start: '2026-06-16T12:00:00.000Z', end: '2026-06-16T15:00:00.000Z' }
+      const onEventDrop = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventDrop, backgroundEvents: [bgEvent] })
+      // Move event to 09:00 on Jun 16 — outside the focus block
+      store.moveEvent({ id: 1, target: '2026-06-16T09:00:00.000Z', mode: 'time' })
+      expect(onEventDrop.mock.calls[0]![0]).not.toHaveProperty('backgroundEvents')
+    })
+
+    it('includes backgroundEvents in onEventResize payload when the resized bounds overlap one', () => {
+      const bgEvent: Event = { id: 99, title: 'Focus', start: '2026-06-15T11:00:00.000Z', end: '2026-06-15T14:00:00.000Z' }
+      const onEventResize = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventResize, backgroundEvents: [bgEvent], step: 30 })
+      // Resize end to 12:00 — new bounds 09:00–12:00 overlap the focus block at 11:00
+      store.resizeEvent({ id: 1, edge: 'end', target: '2026-06-15T12:00:00.000Z' })
+      expect(onEventResize.mock.calls[0]![0].backgroundEvents).toEqual([bgEvent])
+    })
+
+    it('includes backgroundEvents in grabCommit payload when the committed position overlaps one', () => {
+      const bgEvent: Event = { id: 99, title: 'Focus', start: '2026-06-15T10:00:00.000Z', end: '2026-06-15T12:00:00.000Z' }
+      const onEventDrop = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, events, onEventDrop, backgroundEvents: [bgEvent], step: 30 })
+      store.grabEvent({ id: 1 })
+      // Step the event forward 1 hour (into the focus block)
+      store.grabMove({ minutes: 60 })
+      store.grabCommit()
+      expect(onEventDrop.mock.calls[0]![0].backgroundEvents).toEqual([bgEvent])
+    })
   })
 
   describe('drop-from-outside (dropExternal / previewExternal)', () => {
@@ -885,6 +1052,24 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       const store = createCalendarStore<Event>({ localizer, onDropFromOutside, step: 30 })
       store.dropExternal({ target, durationMinutes: 60, resourceId: 3 })
       expect(onDropFromOutside.mock.calls[0]![0].resourceId).toBe(3)
+    })
+
+    it('includes backgroundEvents in onDropFromOutside payload when the drop overlaps one', () => {
+      const bgEvent: Event = { id: 99, title: 'Focus', start: '2026-06-15T08:00:00.000Z', end: '2026-06-15T12:00:00.000Z' }
+      const onDropFromOutside = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, onDropFromOutside, backgroundEvents: [bgEvent], step: 30 })
+      // Drop at 09:00 with 60-min duration → 09:00–10:00, inside the focus block
+      store.dropExternal({ target, durationMinutes: 60 })
+      expect(onDropFromOutside.mock.calls[0]![0].backgroundEvents).toEqual([bgEvent])
+    })
+
+    it('omits backgroundEvents from onDropFromOutside payload when the drop does not overlap any', () => {
+      const bgEvent: Event = { id: 99, title: 'Focus', start: '2026-06-15T13:00:00.000Z', end: '2026-06-15T17:00:00.000Z' }
+      const onDropFromOutside = vi.fn()
+      const store = createCalendarStore<Event>({ localizer, onDropFromOutside, backgroundEvents: [bgEvent], step: 30 })
+      // Drop at 09:00 with 60-min duration → 09:00–10:00, outside the afternoon focus block
+      store.dropExternal({ target, durationMinutes: 60 })
+      expect(onDropFromOutside.mock.calls[0]![0]).not.toHaveProperty('backgroundEvents')
     })
   })
 
@@ -1229,8 +1414,9 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       const weekWithJune1 = viewModelBefore.month.weeks.find((w) => w.days.some((d) => d.startsWith('2026-06-01')))
       expect(weekWithJune1?.extra).toHaveLength(0)
 
-      // Constrain to 1 row — 2 events should overflow.
-      store.measuredWeekLimit.value = 1
+      // Constrain to 2 rows — two-pass fires (limit=2 → 2 levels + 1 extra → re-run
+      // limit=1) so the show-more button fits in row 2. Result: 1 level, 2 extra.
+      store.measuredWeekLimit.value = 2
       const viewModelAfter = store.viewModel.value
       expect(viewModelAfter.kind).toBe('month')
       if (viewModelAfter.kind !== 'month') return
@@ -1243,11 +1429,13 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       const events: Event[] = [
         { id: 1, title: 'A', start: '2026-06-01T09:00:00.000Z', end: '2026-06-01T10:00:00.000Z' },
         { id: 2, title: 'B', start: '2026-06-01T11:00:00.000Z', end: '2026-06-01T12:00:00.000Z' },
+        { id: 3, title: 'C', start: '2026-06-01T13:00:00.000Z', end: '2026-06-01T14:00:00.000Z' },
       ]
       const store = createCalendarStore<Event>({
-        localizer, date: monday, view: Views.MONTH, events, weekEventLimit: 1,
+        localizer, date: monday, view: Views.MONTH, events, weekEventLimit: 2,
       })
       // measuredWeekLimit set to a large value — static config still wins.
+      // Two-pass: limit=2 → 2 levels + 1 extra → re-run limit=1 → 1 level, 2 extra.
       store.measuredWeekLimit.value = 100
       const vm = store.viewModel.value
       expect(vm.kind).toBe('month')

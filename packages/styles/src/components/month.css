@@ -35,6 +35,7 @@
     font-size: var(--bc-font-size-sm);
     color: var(--bc-color-fg);
     text-align: end;
+    block-size: 1.75rem;
   }
 
   .bc-date-cell.bc-today {
@@ -69,12 +70,14 @@
   }
 
   .bc-show-more {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
     inline-size: 100%;
+    block-size: 100%;
     padding-inline: 3px;
     font-size: var(--bc-font-size-sm);
     color: var(--bc-color-accent);
-    text-align: end;
     pointer-events: auto;
   }
 }

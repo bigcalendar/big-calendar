@@ -57,6 +57,29 @@ const preview: Preview = {
   parameters: {
     layout: 'fullscreen',
     controls: { expanded: true },
+    options: {
+      storySort: {
+        order: [
+          'Introduction',
+          'Calendar',
+          ['Standard', 'Views', 'Custom Views', 'Toolbar', 'Custom Components'],
+          'Events',
+          ['Overview', 'Event Callbacks'],
+          'Selection',
+          ['Overview', 'Selectable'],
+          'Drag & Drop',
+          ['Overview', 'Event Drag & Drop', 'Drop from Outside'],
+          'Resources',
+          ['Overview', 'With Resources'],
+          'Background Events',
+          ['Overview', 'With Background Events'],
+          'Advanced',
+          ['Headless API', 'useMonthView', 'useTimeGridView', 'useAgendaView'],
+          'Primitives',
+          ['Popover', 'Dialog', 'Tooltip'],
+        ],
+      },
+    },
   },
 }
 

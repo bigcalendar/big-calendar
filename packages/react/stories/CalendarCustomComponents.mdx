@@ -1,0 +1,247 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import LinkTo from '@storybook/addon-links/react'
+
+<Meta title="Calendar/Custom Components" />
+
+# Custom Components
+
+Every visual piece of the calendar is replaceable via the `components` prop on `CalendarProvider`. Pass a component — or a plain function, which is the same thing in React — for any slot you want to override.
+
+More specific (per-view) slots always take precedence over shared ones. You can override as many or as few as you like; unset slots use the built-in defaults.
+
+```tsx
+<CalendarProvider
+  components={{
+    toolbar: MyToolbar,
+    month: {
+      event: MyMonthEvent,
+    },
+    time: {
+      event: MyTimeEvent,
+    },
+  }}
+>
+```
+
+---
+
+## Shared slot
+
+### `toolbar`
+
+Replaces the navigation toolbar. See <LinkTo title="Calendar/Toolbar" story="docs">Calendar → Toolbar</LinkTo> for the full props reference and usage example.
+
+---
+
+## Month view slots (`components.month`)
+
+### `weekday`
+
+A column heading in the weekday header row (Sun, Mon, Tue, …).
+
+```tsx
+function MyWeekday({ day, long, short }: MonthWeekdayProps) {
+  return <abbr title={long}>{short}</abbr>
+}
+```
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>day</code></td><td><code>string</code></td><td>Day-start ISO string for the representative day.</td></tr>
+    <tr><td><code>long</code></td><td><code>string</code></td><td>Full weekday name ("Monday").</td></tr>
+    <tr><td><code>short</code></td><td><code>string</code></td><td>Abbreviated name ("Mon").</td></tr>
+  </tbody>
+</table>
+
+### `dateCell`
+
+The date header inside a day cell — the number, today/off-range state, and drill-down handler.
+
+```tsx
+function MyDateCell({ label, isToday, isOffRange, onDrillDown }: MonthDateProps) {
+  return (
+    <button onClick={onDrillDown} aria-label={`Drill down to ${label}`}>
+      {label}
+    </button>
+  )
+}
+```
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>day</code></td><td><code>string</code></td><td>Day-start ISO string.</td></tr>
+    <tr><td><code>label</code></td><td><code>string</code></td><td>Localized day-of-month number.</td></tr>
+    <tr><td><code>isToday</code></td><td><code>boolean</code></td><td>Whether this day is today.</td></tr>
+    <tr><td><code>isOffRange</code></td><td><code>boolean</code></td><td>Whether this day belongs to an adjacent month.</td></tr>
+    <tr><td><code>onDrillDown</code></td><td><code>() =&gt; void</code></td><td>Navigate into this day.</td></tr>
+  </tbody>
+</table>
+
+### `event`
+
+A single event segment within a week row.
+
+```tsx
+function MyMonthEvent({ event, title }: MonthEventProps<MyEvent>) {
+  return <span style={{ color: event.color }}>{title}</span>
+}
+```
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>event</code></td><td><code>TEvent</code></td><td>Your original event object.</td></tr>
+    <tr><td><code>title</code></td><td><code>string</code></td><td>Resolved event title.</td></tr>
+  </tbody>
+</table>
+
+### `showMore`
+
+The "+N more" overflow indicator shown when a week row exceeds `weekEventLimit`.
+
+```tsx
+function MyShowMore({ count, label, events, EventSlot }: MonthShowMoreProps<MyEvent>) {
+  return <details><summary>{label}</summary>{events.map(e => <EventSlot key={e.key} {...e} />)}</details>
+}
+```
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>count</code></td><td><code>number</code></td><td>How many events overflowed.</td></tr>
+    <tr><td><code>label</code></td><td><code>string</code></td><td>Localized label ("+2 more").</td></tr>
+    <tr><td><code>day</code></td><td><code>string</code></td><td>Day-start string of the overflow anchor.</td></tr>
+    <tr><td><code>events</code></td><td><code>ReadonlyArray&lt;ShowMoreEvent&lt;TEvent&gt;&gt;</code></td><td>The hidden events.</td></tr>
+    <tr><td><code>EventSlot</code></td><td><code>ComponentType</code></td><td>The configured month event slot — use it to render each hidden event consistently.</td></tr>
+  </tbody>
+</table>
+
+---
+
+## Time-grid slots (`components.time`)
+
+### `dayHeading`
+
+The day column heading (date label + today state + drill-down).
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>day</code></td><td><code>string</code></td><td>Day-start ISO string.</td></tr>
+    <tr><td><code>label</code></td><td><code>string</code></td><td>Localized heading label.</td></tr>
+    <tr><td><code>isToday</code></td><td><code>boolean</code></td><td>Whether this column is today.</td></tr>
+    <tr><td><code>onDrillDown</code></td><td><code>() =&gt; void</code></td><td>Navigate into this day.</td></tr>
+  </tbody>
+</table>
+
+### `timeLabel`
+
+A labelled time in the left gutter ("9 AM", "9:30").
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>time</code></td><td><code>string</code></td><td>Slot time relative to day start.</td></tr>
+    <tr><td><code>label</code></td><td><code>string</code></td><td>Localized label.</td></tr>
+  </tbody>
+</table>
+
+### `event`
+
+A timed event box in a day column.
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>event</code></td><td><code>TEvent</code></td><td>Your original event object.</td></tr>
+    <tr><td><code>title</code></td><td><code>string</code></td><td>Resolved title.</td></tr>
+    <tr><td><code>time</code></td><td><code>string</code></td><td>Formatted "start – end" range.</td></tr>
+  </tbody>
+</table>
+
+### `allDayEvent`
+
+An event segment in the all-day row above the time grid.
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>event</code></td><td><code>TEvent</code></td><td>Your original event object.</td></tr>
+    <tr><td><code>title</code></td><td><code>string</code></td><td>Resolved title.</td></tr>
+  </tbody>
+</table>
+
+### `showMore`
+
+The "+N more" overflow indicator in the all-day row (shown when more than 2 all-day events fall on a single day).
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>count</code></td><td><code>number</code></td><td>How many events overflowed.</td></tr>
+    <tr><td><code>label</code></td><td><code>string</code></td><td>Localized label.</td></tr>
+    <tr><td><code>events</code></td><td><code>ReadonlyArray&lt;ShowMoreEvent&lt;TEvent&gt;&gt;</code></td><td>The hidden events.</td></tr>
+    <tr><td><code>EventSlot</code></td><td><code>ComponentType</code></td><td>The configured all-day event slot.</td></tr>
+  </tbody>
+</table>
+
+### `backgroundEvent`
+
+Content rendered inside a background event box. Background event boxes pass pointer events through to the slots below — this slot lets you label or style them.
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>event</code></td><td><code>TEvent</code></td><td>Your original event object.</td></tr>
+    <tr><td><code>title</code></td><td><code>string</code></td><td>Resolved title.</td></tr>
+  </tbody>
+</table>
+
+---
+
+## Agenda view slots (`components.agenda`)
+
+### `date`
+
+The date label for a day group.
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>day</code></td><td><code>string</code></td><td>Day-start ISO string.</td></tr>
+    <tr><td><code>label</code></td><td><code>string</code></td><td>Localized date label.</td></tr>
+  </tbody>
+</table>
+
+### `event`
+
+A single event row.
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>event</code></td><td><code>TEvent</code></td><td>Your original event object.</td></tr>
+    <tr><td><code>title</code></td><td><code>string</code></td><td>Resolved title.</td></tr>
+    <tr><td><code>time</code></td><td><code>string</code></td><td>Formatted time or all-day label.</td></tr>
+    <tr><td><code>allDay</code></td><td><code>boolean</code></td><td>Whether the event is all-day.</td></tr>
+  </tbody>
+</table>
+
+### `empty`
+
+The empty state shown when no events fall in the agenda's range.
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>message</code></td><td><code>string</code></td><td>Localized "no events in range" string.</td></tr>
+  </tbody>
+</table>
+
+---
+
+## Custom view components (`components.views`)
+
+For custom views registered via `viewDefinitions`, provide the React component here keyed by the same view key. See <LinkTo title="Calendar/Custom Views" story="docs">Calendar → Custom Views</LinkTo>.

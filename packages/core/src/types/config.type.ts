@@ -168,8 +168,10 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
         start: string
         end: string
         allDay: boolean
-        /** Landing resource id (resource grids only); `undefined` otherwise. */
+        /** Landing resource id (resource grids only); omitted on resource-less grids. */
         resourceId?: ResourceId | undefined
+        /** Background events overlapping the new bounds. Omitted when none intersect. */
+        backgroundEvents?: TEvent[]
       }) => void)
     | undefined
   /**
@@ -195,8 +197,10 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
         start: string
         end: string
         allDay: boolean
-        /** Landing resource id (resource grids only); `undefined` otherwise. */
+        /** Landing resource id (resource grids only); omitted on resource-less grids. */
         resourceId?: ResourceId | undefined
+        /** Background events overlapping the new bounds. Omitted when none intersect. */
+        backgroundEvents?: TEvent[]
       }) => void)
     | undefined
 
@@ -221,8 +225,10 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
         start: string
         end: string
         allDay: boolean
-        /** Landing resource id (resource grids only); `undefined` otherwise. */
+        /** Landing resource id (resource grids only); omitted on resource-less grids. */
         resourceId?: ResourceId | undefined
+        /** Background events overlapping the drop bounds. Omitted when none intersect. */
+        backgroundEvents?: TEvent[]
       }) => void)
     | undefined
   /**
@@ -244,22 +250,30 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
    * the FSM's slot indices to dates before calling.
    */
   onSlotSelecting?:
-    | ((args: { start: string; end: string; allDay: boolean }) => boolean | void)
+    | ((args: {
+        start: string
+        end: string
+        allDay: boolean
+        /** Resource column the selection started in. Omitted on resource-less grids. */
+        resourceId?: ResourceId
+        /** Background events overlapping the live selection range. Omitted when none. */
+        backgroundEvents?: TEvent[]
+      }) => boolean | void)
     | undefined
   /**
    * Fired when a single slot/day is clicked. Receives ISO date strings; see
    * {@link SlotSelectionDates} for the `end` convention.
    */
-  onSlotClick?: ((selection: SlotSelectionDates) => void) | undefined
+  onSlotClick?: ((selection: SlotSelectionDates<TEvent>) => void) | undefined
   /**
    * Fired when a single slot/day is double-clicked. Receives ISO date strings.
    */
-  onSlotDoubleClick?: ((selection: SlotSelectionDates) => void) | undefined
+  onSlotDoubleClick?: ((selection: SlotSelectionDates<TEvent>) => void) | undefined
   /**
    * Fired when a multi-slot range is committed (a pointer drag, or a keyboard
    * Shift+Arrow range). Receives ISO date strings; see {@link SlotSelectionDates}.
    */
-  onSlotSelect?: ((selection: SlotSelectionDates) => void) | undefined
+  onSlotSelect?: ((selection: SlotSelectionDates<TEvent>) => void) | undefined
   /** Fired when the visible range changes (date or view change), not on init. */
   onRangeChange?: ((args: { range: VisibleRange; view: ViewKey }) => void) | undefined
   /**

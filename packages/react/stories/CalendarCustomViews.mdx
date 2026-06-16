@@ -1,0 +1,111 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import LinkTo from '@storybook/addon-links/react'
+
+<Meta title="Calendar/Custom Views" />
+
+# Custom Views
+
+Big Calendar lets you register your own view alongside the built-ins. A custom view has two parts: a **view definition** (pure core logic — no React) and a **React component** that renders the model the definition builds.
+
+## The view definition
+
+Use `defineView` from `@big-calendar/core` to create a type-safe definition. You supply four functions:
+
+```ts
+import { defineView, Navigate } from '@big-calendar/core'
+
+interface ThreeDayModel {
+  days: string[]          // ISO day-start strings
+  eventCount: number
+}
+
+const threeDayView = defineView<MyEvent>()({
+  // What date range is visible given the focus date?
+  range: ({ localizer, date }) => {
+    const start = localizer.startOf({ value: date, unit: 'day' })
+    const end   = localizer.add({ value: start, amount: 2, unit: 'day' })
+    return { firstVisibleDay: start, lastVisibleDay: end, days: localizer.range({ start, end, unit: 'day' }) }
+  },
+
+  // Where does Prev/Next navigate to?
+  navigate: ({ localizer, date, direction }) =>
+    localizer.add({ value: date, amount: direction === Navigate.NEXT ? 3 : -3, unit: 'day' }),
+
+  // What does the toolbar label say?
+  label: ({ localizer, range }) =>
+    `${localizer.format({ value: range.firstVisibleDay, format: 'monthDay' })} – ` +
+    `${localizer.format({ value: range.lastVisibleDay, format: 'monthDay' })}`,
+
+  // Build the model your React component will receive as `model`.
+  buildModel: ({ days, events }): ThreeDayModel => ({
+    days,
+    eventCount: events.length,
+  }),
+})
+```
+
+`defineView` is called twice — `defineView<TEvent>()({ ... })` — so TypeScript can infer `TEvent` separately from the `buildModel` return type. The result is fully typed end-to-end.
+
+## The React component
+
+Your component receives `{ view, model }`. Cast `model` to the type you produced in `buildModel`:
+
+```tsx
+import type { CustomViewProps } from '@big-calendar/react'
+
+function ThreeDayView({ model }: CustomViewProps) {
+  const { days, eventCount } = model as ThreeDayModel
+  return (
+    <div style={{ padding: '1rem' }}>
+      <p>{eventCount} event{eventCount === 1 ? '' : 's'} in this range</p>
+      <ul>
+        {days.map((day) => <li key={day}>{day}</li>)}
+      </ul>
+    </div>
+  )
+}
+```
+
+## Registering the view
+
+Pass the definition to `viewDefinitions` and the React component to `components.views`, both keyed by the same string:
+
+```tsx
+<CalendarProvider
+  defaultView="3day"
+  viewDefinitions={{ '3day': threeDayView }}
+  components={{ views: { '3day': ThreeDayView } }}
+>
+  <Calendar />
+</CalendarProvider>
+```
+
+To include it in the toolbar's view switcher, add the key to `views`:
+
+```tsx
+<CalendarProvider
+  views={['month', 'week', '3day']}
+  defaultView="3day"
+  viewDefinitions={{ '3day': threeDayView }}
+  components={{ views: { '3day': ThreeDayView } }}
+>
+```
+
+## What `buildModel` receives
+
+`buildModel` runs inside the core engine whenever the focus date or events change. It receives:
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>localizer</code></td><td><code>Localizer</code></td><td>The active localizer for formatting and arithmetic.</td></tr>
+    <tr><td><code>date</code></td><td><code>string</code></td><td>The current focus date.</td></tr>
+    <tr><td><code>days</code></td><td><code>string[]</code></td><td>The visible day-start strings (from <code>range</code>).</td></tr>
+    <tr><td><code>events</code></td><td><code>TEvent[]</code></td><td>Events that fall within the visible range.</td></tr>
+    <tr><td><code>range</code></td><td><code>&#123; firstVisibleDay, lastVisibleDay, days &#125;</code></td><td>The resolved range object.</td></tr>
+  </tbody>
+</table>
+
+## See it in action
+
+The <LinkTo title="Calendar/Standard" story="Standard">Calendar → Standard</LinkTo> story's source contains a working `ThreeDayView` example. Switch to the `CustomView` export to see it rendered.

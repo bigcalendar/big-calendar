@@ -23,8 +23,9 @@ function computeLimit(gridEl: HTMLElement, weekCount: number): number {
 
   if (!isFinite(segmentHeight) || segmentHeight <= 0) return Infinity
 
-  // Reserve one row for the "+N more" button so it fits inside the cell.
-  return Math.max(1, Math.floor((rowHeight - headerHeight) / segmentHeight) - 1)
+  // Return the full row count. monthViewModel reserves one row for the "+N more"
+  // button only when overflow actually occurs (two-pass), so no -1 here.
+  return Math.max(1, Math.floor((rowHeight - headerHeight) / segmentHeight))
 }
 
 /**

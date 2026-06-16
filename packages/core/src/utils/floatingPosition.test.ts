@@ -32,9 +32,10 @@ describe('positionFloating', () => {
     expect(typeof position.x).toBe('number')
     expect(typeof position.y).toBe('number')
     expect(position.placement).toBeTruthy()
-    // The size middleware constrains the floating element to the viewport.
+    // maxInlineSize is set directly; availableHeight goes to --bc-float-avail-h so
+    // class-level min() rules can reference it without being overridden by inline styles.
     expect(floating.style.maxInlineSize).toMatch(/px$/)
-    expect(floating.style.maxBlockSize).toMatch(/px$/)
+    expect(floating.style.getPropertyValue('--bc-float-avail-h')).toMatch(/px$/)
   })
 
   it('honors an explicit placement + offset and reuses the cached module', async () => {

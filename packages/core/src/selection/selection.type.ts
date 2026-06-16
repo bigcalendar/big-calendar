@@ -45,8 +45,12 @@ export type SelectionMode = 'time' | 'day'
  * public shape emitted to `onSlotClick` / `onSlotDoubleClick` / `onSlotSelect`.
  * (`core` never exposes JS `Date`.) How the selection was produced is encoded by
  * **which** callback fires, so this payload no longer carries an `action` field.
+ *
+ * `TEvent` is the host app's event type. When the selected range overlaps one or
+ * more background events the matching events are included in `backgroundEvents`;
+ * the field is **omitted entirely** when there are no matches.
  */
-export interface SlotSelectionDates {
+export interface SlotSelectionDates<TEvent = unknown> {
   /** Start of the first selected slot/day (ISO). */
   start: string
   /**
@@ -71,4 +75,11 @@ export interface SlotSelectionDates {
    * the chosen resource.
    */
   resourceId?: ResourceId | undefined
+  /**
+   * Background events whose time range overlaps the selection, pre-filtered to
+   * the selection's resource when `resourceId` is present. Background events with
+   * no resource assignment are always included regardless of `resourceId`.
+   * Omitted when no background events intersect the selection.
+   */
+  backgroundEvents?: TEvent[]
 }

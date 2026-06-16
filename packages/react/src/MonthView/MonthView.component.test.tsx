@@ -113,14 +113,15 @@ describe.each(LOCALIZER_CASES)('MonthView [$name]', ({ create }) => {
   })
 
   it('overflows events past weekEventLimit into the default "+N more" indicator', () => {
-    const { container } = renderMonth({ weekEventLimit: 1 })
-    // one event fits the single allowed row; the other two overflow
+    // weekEventLimit=2: first pass (limit=2) fills 2 levels + 1 extra → two-pass
+    // re-runs with limit=1 → 1 event visible, 2 in extra → show "+2 more".
+    const { container } = renderMonth({ weekEventLimit: 2 })
     const showMore = container.querySelector('.bc-show-more') as HTMLElement
     expect(showMore.textContent).toBe('+2 more')
   })
 
   it('places the "+N more" indicator in the overflowing day cell, not the week start', () => {
-    const { container } = renderMonth({ weekEventLimit: 1 })
+    const { container } = renderMonth({ weekEventLimit: 2 })
     const cells = container.querySelectorAll('.bc-show-more-cell')
     // All three events are on Jun 15 (Monday), so exactly one cell overflows…
     expect(cells.length).toBe(1)
@@ -129,7 +130,7 @@ describe.each(LOCALIZER_CASES)('MonthView [$name]', ({ create }) => {
   })
 
   it('lists the overflowed events in the show-more popover when opened', () => {
-    const { container } = renderMonth({ weekEventLimit: 1 })
+    const { container } = renderMonth({ weekEventLimit: 2 })
     const showMore = container.querySelector('.bc-show-more') as HTMLElement
     // The trigger drives a native popover; nothing is listed until it opens.
     expect(container.querySelectorAll('.bc-popover .bc-segment').length).toBe(0)
@@ -145,7 +146,7 @@ describe.each(LOCALIZER_CASES)('MonthView [$name]', ({ create }) => {
 
   it('honors slot overrides (weekday / dateCell / event / showMore)', () => {
     renderMonth({
-      weekEventLimit: 1,
+      weekEventLimit: 2,
       components: {
         month: {
           weekday: ({ short }) => <div data-testid="custom-weekday">{short}</div>,

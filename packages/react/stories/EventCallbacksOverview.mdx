@@ -1,0 +1,114 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import LinkTo from '@storybook/addon-links/react'
+
+<Meta title="Events/Overview" />
+
+# Event Callbacks
+
+Big Calendar fires callbacks when a user interacts with an event block — clicking, double-clicking, right-clicking, or middle-clicking. These fire on **any** view and do **not** require `selectable` to be enabled. They are completely independent of slot selection.
+
+## The callbacks
+
+### `onEventClick`
+
+Fires when the user **single-clicks** an event. Receives the raw event object from your `events` array — the exact same value you passed in, with no wrapping.
+
+```tsx
+<CalendarProvider
+  onEventClick={(event) => {
+    setEditingEvent(event)
+    setDrawerOpen(true)
+  }}
+>
+```
+
+### `onEventDoubleClick`
+
+Same as `onEventClick`, fires on a **double-click**.
+
+```tsx
+<CalendarProvider
+  onEventDoubleClick={(event) => {
+    openFullEditor(event)
+  }}
+>
+```
+
+### `onEventRightClick`
+
+Fires on a **right-click**. Receives two arguments: the event object and the browser `MouseEvent`. The browser's native context menu still appears unless you call `e.preventDefault()`.
+
+```tsx
+<CalendarProvider
+  onEventRightClick={(event, e) => {
+    e.preventDefault()  // suppress the browser context menu
+    setContextMenu({ event, x: e.clientX, y: e.clientY })
+  }}
+>
+```
+
+### `onEventMiddleClick`
+
+Fires on a **middle-click** (scroll-wheel button press). Same two-argument signature as `onEventRightClick`. Useful for opening an event in a new tab without disrupting the calendar.
+
+```tsx
+<CalendarProvider
+  onEventMiddleClick={(event, e) => {
+    e.preventDefault()
+    window.open(`/events/${event.id}`, '_blank')
+  }}
+>
+```
+
+## Payload reference
+
+<table>
+  <thead>
+    <tr><th>Callback</th><th>Arguments</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>onEventClick</code></td>
+      <td><code>(event: TEvent)</code></td>
+      <td>Your original event object — no wrapper.</td>
+    </tr>
+    <tr>
+      <td><code>onEventDoubleClick</code></td>
+      <td><code>(event: TEvent)</code></td>
+      <td>Same as <code>onEventClick</code>.</td>
+    </tr>
+    <tr>
+      <td><code>onEventRightClick</code></td>
+      <td><code>(event: TEvent, domEvent: MouseEvent)</code></td>
+      <td>
+        Call <code>domEvent.preventDefault()</code> to suppress the browser context menu.
+      </td>
+    </tr>
+    <tr>
+      <td><code>onEventMiddleClick</code></td>
+      <td><code>(event: TEvent, domEvent: MouseEvent)</code></td>
+      <td>
+        Some browsers and pointer devices suppress middle-click inside iframes — test in
+        your own app if it does not trigger in Storybook's canvas.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+## Combining with slot selection
+
+Event callbacks and slot selection coexist without any conflict. Add `selectable` to `CalendarProvider` to enable slot callbacks alongside event callbacks:
+
+```tsx
+<CalendarProvider
+  selectable
+  onSlotSelect={({ start, end }) => openCreateDialog({ start, end })}
+  onEventClick={(event) => openEditDialog(event)}
+>
+```
+
+See <LinkTo title="Selection/Overview" story="docs">Selection → Overview</LinkTo> for the full slot callback reference.
+
+## See it in action
+
+The <LinkTo title="Events/Event Callbacks" story="Event Callbacks">Events → Event Callbacks</LinkTo> story has all four callbacks wired to the **Actions** panel. Click any event to see the full event object logged. Use the **Controls** panel to switch views.

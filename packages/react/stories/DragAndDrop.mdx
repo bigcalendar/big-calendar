@@ -1,220 +1,201 @@
 import { Meta } from '@storybook/addon-docs/blocks'
+import LinkTo from '@storybook/addon-links/react'
 
-<Meta title="React/Drag and drop/Guide" />
+<Meta title="Drag & Drop/Overview" />
 
-# Drag and drop — moving events
+# Drag & Drop
 
-Dragging an event to a new day (or, later, a new time) is really an **edit** of that
-event. Big Calendar splits this into clear jobs so each part stays simple:
+Dragging an event to a new day or slot is really an **edit** of that event. Big Calendar splits this into clear jobs:
 
-- **`@big-calendar/core`** does the **date-math** — given where you dropped the event,
-  it works out the event's new start/end (keeping its duration).
-- **`@big-calendar/dnd`** does the **pointer work** — it turns the browser drag into
-  "this event was dropped here" using the optional
-  [Pragmatic Drag and Drop](https://atlassian.design/components/pragmatic-drag-and-drop/about)
-  library.
-- **You** do the **saving** — the calendar tells you the proposed change; your code
-  writes it to your data (and to your server).
+- **`@big-calendar/core`** does the **date math** — given where you dropped the event, it works out the new start/end (keeping its duration).
+- **`@big-calendar/dnd`** does the **pointer work** — it turns the browser drag into "this event was dropped here" using [Pragmatic Drag and Drop](https://atlassian.design/components/pragmatic-drag-and-drop/about).
+- **You** do the **saving** — the calendar tells you the proposed change; your code writes it to your data.
 
-This is the same idea as a controlled `<input>`: the calendar shows what you give it
-and tells you what the user did, but **you own the data**.
+This is the same idea as a controlled `<input>`: the calendar shows what you give it and tells you what the user did, but **you own the data**.
 
-## Turning it on
-
-Install the optional package and call the hook with a ref around your calendar:
+## Installation
 
 ```bash
 pnpm add @big-calendar/dnd
 ```
 
+## Turning it on
+
+Wrap your calendar in a div, pass the ref to `useCalendarDnd`, and wire the `onEventDrop` callback:
+
 ```tsx
-import { useRef } from 'react'
-import { Calendar, CalendarProvider } from '@big-calendar/react'
-import { useCalendarDnd } from '@big-calendar/react/dnd'  // dedicated DnD entry
+import { useRef, useState } from 'react'
+import { Calendar, CalendarProvider, useCalendarDnd } from '@big-calendar/react'
 
 function DraggableCalendar() {
   const ref = useRef(null)
-  useCalendarDnd(ref) // enables drag-to-move for everything inside `ref`
+  useCalendarDnd(ref)
   return (
-    <div ref={ref}>
+    <div ref={ref} style={{ display: 'contents' }}>
       <Calendar />
     </div>
   )
 }
-```
 
-`useCalendarDnd` is exported from the dedicated **`@big-calendar/react/dnd`** subpath so
-apps that don't use DnD can exclude it cleanly. It is also re-exported from the main
-`@big-calendar/react` barrel for convenience — both imports work.
-
-`useCalendarDnd` must be **inside** a `CalendarProvider`. It enables moving in the
-**month** view (whole-day shifts) and the **time-grid** week / day / work-week views
-(the start snaps to the dropped slot, keeping the event's duration). The agenda view has
-no move.
-
-## What `onEventDrop` gives you
-
-When the user drops an event, the calendar calls `onEventDrop` with the **original**
-event plus the **proposed** new bounds:
-
-```ts
-onEventDrop={({ event, start, end, allDay }) => {
-  // `event`            → the original event object, untouched
-  // `start`/`end`      → the proposed new times, as ISO strings
-  // `allDay`           → whether it's now a whole-day event
-}}
-```
-
-Two things to notice, both on purpose:
-
-1. **It's a report, not a change.** The calendar never edits your `events`. It can't,
-   really — it reads your events through *accessors* (which are read-only), so it has no
-   way to write `start`/`end` back into your particular event shape. You do that.
-2. **You get the original event**, so undoing a change is trivial.
-
-## The simple case
-
-If you don't need a server round-trip, just apply the new bounds to your state:
-
-```tsx
-const [events, setEvents] = useState(initialEvents)
-
-<CalendarProvider events={events}
-  onEventDrop={({ event, start, end, allDay }) =>
-    setEvents(prev =>
-      prev.map(e => (e.id === event.id ? { ...e, start, end, allDay } : e)),
-    )
-  }
->
-```
-
-## The real case: async save with rollback
-
-Usually a move has to be saved to a server, and that can fail. The standard pattern is
-**optimistic update + rollback**: move the event right away so the UI feels instant,
-then save; if the save fails, put it back.
-
-```tsx
-const [events, setEvents] = useState(initialEvents)
-
-const onEventDrop = ({ event, start, end, allDay }) => {
-  const previous = events // remember the state to roll back to
-
-  // 1. optimistic update — show the move immediately
-  setEvents(prev =>
-    prev.map(e => (e.id === event.id ? { ...e, start, end, allDay } : e)),
+function App() {
+  const [events, setEvents] = useState(myEvents)
+  return (
+    <CalendarProvider
+      events={events}
+      onEventDrop={({ event, start, end, allDay }) =>
+        setEvents(prev => prev.map(e => e.id === event.id ? { ...e, start, end, allDay } : e))
+      }
+    >
+      <DraggableCalendar />
+    </CalendarProvider>
   )
-
-  // 2. save; the calendar does NOT await this — the lifecycle is yours
-  saveEvent(event.id, { start, end, allDay }).catch(() => {
-    // 3. on failure, roll back to the original state
-    setEvents(previous)
-  })
 }
 ```
 
-Your handler can be `async`. The calendar never waits on it and never holds a copy of
-your data, so there is exactly one source of truth: your `events` state. See the
-**Drag and drop → AsyncSaveWithRollback** story for a runnable version (with a checkbox
-that forces the save to fail).
+`useCalendarDnd` must be **inside** a `CalendarProvider`.
+
+## What `onEventDrop` gives you
+
+```ts
+onEventDrop={({ event, start, end, allDay }) => {
+  // event       — your original event object, untouched
+  // start / end — the proposed new times, as ISO strings
+  // allDay      — whether it's now a whole-day event
+}}
+```
+
+Two things worth noting:
+
+1. **It's a report, not a change.** The calendar never edits your events. You apply the new bounds.
+2. **You get the original event**, so undoing is trivial.
 
 ## Resizing
 
-In the **time-grid** views, hovering a timed event reveals a grab bar on its top and
-bottom edge. Dragging an edge to another slot resizes the event: the dragged edge snaps
-to the slot, the other edge stays put, and (like move) you can drag past a day boundary
-to grow the event across midnight. The event is clamped to a one-slot minimum so it can
-never collapse. While you drag, a dashed **live preview** box shows the proposed new
-size so you're not guessing from the pointer alone.
+In **time-grid** views, hovering a timed event reveals grab bars on its top and bottom edges. Drag an edge to resize — the dragged edge snaps to the slot, the other stays put. A dashed live preview shows the proposed size while you drag.
 
-In the **month** grid the same idea applies by whole days: hovering a segment reveals a
-grab strip on its **leading** and **trailing** edge, and dragging an edge to another day
-grows or shrinks the event by whole days (the time of day is kept; the event can't drop
-below one day). If an event spans more than one week row, the leading handle sits on its
-first row and the trailing handle on its last — and dragging an edge across the week
-boundary just works, because the drop target is an absolute day. A highlighted day-cell
-band previews the proposed span.
+In the **month** grid, hovering a segment reveals leading and trailing grab strips. Drag to grow or shrink by whole days. For events spanning multiple week rows, the leading handle sits on the first row and the trailing on the last.
 
-The same dashed/highlighted preview also follows a **move** (not just a resize), so you
-can see where an event will land before you let go.
-
-Resize reports through `onEventResize`, which has the **exact same shape** as
-`onEventDrop` — so apply (and roll back) it the same way:
+Resize reports through `onEventResize`, which has the **exact same shape** as `onEventDrop`:
 
 ```tsx
-// Both reports are { event, start, end, allDay } — one handler covers them.
 const apply = ({ event, start, end, allDay }) =>
-  setEvents(prev => prev.map(e => (e.id === event.id ? { ...e, start, end, allDay } : e)))
+  setEvents(prev => prev.map(e => e.id === event.id ? { ...e, start, end, allDay } : e))
 
 <CalendarProvider events={events} onEventDrop={apply} onEventResize={apply}>
 ```
 
-See the **Drag and drop → WeekEventResize** story for a runnable version.
+## Async save with rollback
+
+The standard real-world pattern: move the event immediately (optimistic update), then save; if the save fails, put it back.
+
+```tsx
+const onEventDrop = async ({ event, start, end, allDay }) => {
+  const previous = events   // snapshot before the move
+
+  setEvents(prev => prev.map(e => e.id === event.id ? { ...e, start, end, allDay } : e))
+
+  try {
+    await saveEvent(event.id, { start, end, allDay })
+  } catch {
+    setEvents(previous)     // rollback on failure
+  }
+}
+```
+
+The calendar never awaits your handler and never holds a copy of your data — there is exactly one source of truth.
+
+## Background events in drag and drop
+
+When `backgroundEvents` are configured, every drop and resize callback includes a `backgroundEvents` field listing background events whose time range overlaps the new bounds. The field is **omitted entirely** when nothing overlaps. This gives you three distinct states to work with:
+
+```tsx
+import { getContainingBgEvents } from '@big-calendar/core'
+
+onEventDrop={(args) => {
+  const { event, start, end, allDay, backgroundEvents } = args
+
+  if (!backgroundEvents) {
+    // ① No overlap — event landed entirely outside every background event
+    alert('Please drop the event within an available block')
+    return
+  }
+
+  const containers = getContainingBgEvents({ selection: args })
+
+  if (containers.length > 0) {
+    // ② Fully contained — event fits completely inside at least one background event
+    setEvents(prev => prev.map(e => e.id === event.id ? { ...e, start, end, allDay } : e))
+  } else {
+    // ③ Partial overlap — event crosses the edge of a background event
+    alert('Please drop the event completely within an available block')
+  }
+}}
+```
+
+`getContainingBgEvents` accepts the drop args object directly as `selection` — it reads `start`, `end`, and `backgroundEvents` from it. `onEventResize` and `onDropFromOutside` follow the exact same pattern. On resource grids, only background events for the same resource column are included; background events with no resource assignment are always included.
+
+See the <LinkTo title="Background Events/With Background Events" story="Drag And Drop With Background Events">Background Events → Drag And Drop With Background Events</LinkTo> story for a live demo.
+
+## Locking events
+
+Use `draggableAccessor` to control which events can be dragged, and `resizableAccessor` for which can be resized. Each takes a field name or a function:
+
+```tsx
+<CalendarProvider
+  draggableAccessor={(e) => !e.locked}
+  resizableAccessor={(e) => !e.fixed}
+  ...
+/>
+```
+
+An event returning `false` from `draggableAccessor` cannot be picked up. A `false` from `resizableAccessor` hides its resize handles.
+
+## Promoting a timed event to all-day
+
+Drag any **timed** event from the time grid and drop it onto the **all-day row** above the time slots. The event becomes a whole-day event on the dropped day: `onEventDrop` fires with `allDay: true`.
+
+**One-way only.** You can promote a timed event to all-day, but you cannot drag an all-day event down into the time grid — an all-day event has no natural time of day to snap to.
 
 ## Dropping items from outside the calendar
 
-You can drag something from **outside** the calendar — a palette of "event
-templates", an unscheduled-task list — onto a time-grid slot to create a new
-event there. A drop is a **create**, so it reports through a new callback,
-`onDropFromOutside`, and (like every other report) *you* add the event:
+Drag something from outside the calendar — a palette of event templates, an unscheduled task list — onto a time-grid slot or month day. This fires `onDropFromOutside` and **you** create the new event:
 
 ```tsx
-const [events, setEvents] = useState(initialEvents)
-
-<CalendarProvider events={events}
+<CalendarProvider
   onDropFromOutside={({ start, end, allDay }) =>
-    setEvents(prev => [...prev, { id: crypto.randomUUID(), title: 'New event', start, end, allDay }])
+    setEvents(prev => [...prev, { id: crypto.randomUUID(), title: 'New', start, end, allDay }])
   }
 >
 ```
 
-The dropped item describes itself with a small **payload** — its
-`durationMinutes` (and optionally `allDay`) — which core turns into the new
-event's `start`/`end` at the dropped slot. There are two ways to carry it,
-depending on what your drag source is:
+The drag source carries a **payload** describing the event to create. There are two ways to deliver it:
 
-- **A native `draggable="true"` element.** Set the payload as JSON on the
-  `EXTERNAL_MIME` data type in `onDragStart`:
+**Native `draggable` element** — write the payload as JSON under `EXTERNAL_MIME` in `onDragStart`:
 
-  ```tsx
-  import { EXTERNAL_MIME } from '@big-calendar/dnd'
+```tsx
+import { EXTERNAL_MIME } from '@big-calendar/dnd'
 
-  <div draggable
-    onDragStart={(e) => e.dataTransfer.setData(EXTERNAL_MIME, JSON.stringify({ durationMinutes: 60 }))}
-  >1-hour focus block</div>
-  ```
+<div draggable
+  onDragStart={(e) =>
+    e.dataTransfer.setData(EXTERNAL_MIME, JSON.stringify({ durationMinutes: 60 }))
+  }
+>
+  1-hour block
+</div>
+```
 
-- **A [Pragmatic](https://atlassian.design/components/pragmatic-drag-and-drop/about)
-  `draggable`.** Put the payload under the `EXTERNAL_DATA_KEY` key in
-  `getInitialData` (`{ bcExternal: { durationMinutes: 60 } }`).
+**Pragmatic draggable** — put the payload under `EXTERNAL_DATA_KEY` in `getInitialData`:
+```ts
+getInitialData: () => ({ bcExternal: { durationMinutes: 60 } })
+```
 
-One difference between them matters for feedback: a **native** drag keeps its
-payload hidden until the drop (a browser security rule), so the live preview can
-only show a **single landing slot** while you drag — the real duration appears
-when you release. A **Pragmatic** drag exposes its payload throughout, so the
-preview shows the event's full proposed size as you move. Either way, the drop
-itself is exact. See the **Drag and drop → DropFromOutside** story.
+On the **month grid**, a payload with no `start`/`end` becomes a whole-day event. A payload with a `start`/`end` template is re-dated to the dropped day (time-of-day is preserved).
 
-### Dropping onto the month grid
-
-You can also drop onto the **month** grid, where a day cell has no time of its own,
-so the payload decides what gets created:
-
-- a payload with **no** `start`/`end` becomes a **whole-day** event on the dropped
-  day (a `durationMinutes` is ignored here — there's no slot to place it in);
-- a payload carrying a `start`/`end` **template** keeps its time-of-day and is
-  **re-dated** to the dropped day — a "9–10am standup" template dropped on the 14th
-  becomes 9–10am on the 14th, preserving the duration.
-
-A highlighted day-cell band previews where the new event will land. See the
-**Drag and drop → MonthDropFromOutside** story.
+See the <LinkTo title="Drag & Drop/Drop from Outside" story="Drop from Outside">Drag & Drop → Drop from Outside</LinkTo> story for a live demo.
 
 ## Dragging events out of the calendar
 
-The reverse also works: drag an event **out** to a dropzone you own (an
-"unschedule" bin, a different list). Every event automatically exposes its data
-on the native `dataTransfer` under the `EVENT_MIME` type, so a plain HTML5
-dropzone can read it — no calendar code on the receiving side:
+Every event automatically exposes its data on the native `dataTransfer` under the `EVENT_MIME` type, so any HTML5 dropzone outside the calendar can receive it:
 
 ```tsx
 import { EVENT_MIME } from '@big-calendar/dnd'
@@ -222,140 +203,48 @@ import { EVENT_MIME } from '@big-calendar/dnd'
 <div
   onDragOver={(e) => e.preventDefault()}
   onDrop={(e) => {
-    const { id, title } = JSON.parse(e.dataTransfer.getData(EVENT_MIME))
+    const { id } = JSON.parse(e.dataTransfer.getData(EVENT_MIME))
     setEvents(prev => prev.filter(ev => String(ev.id) !== id))
   }}
->🗑 Unschedule</div>
+>
+  Unschedule bin
+</div>
 ```
 
-`onEventDragStart` fires as the drag begins (it receives the event), handy for a
-status line or to highlight valid drop zones. See the **Drag and drop →
-DragOutToUnschedule** story.
+`onEventDragStart` fires when a drag begins (useful for highlighting valid drop zones).
 
-## Keyboard drag and drop
+## Keyboard drag
 
-Everything above works **without a mouse**, so the calendar stays usable for
-keyboard and screen-reader users. Tab to an event, press **Space** to pick it up
-(again to drop), and use the arrows — the step sizes match the surface:
+All drag operations work without a mouse:
 
-**Time-grid** (week / day):
+**Time-grid (week / day):**
 
 <table>
-  <thead>
-    <tr><th>Key</th><th>Action</th></tr>
-  </thead>
+  <thead><tr><th>Key</th><th>Action</th></tr></thead>
   <tbody>
-    <tr><td><strong>Space</strong></td><td>pick the event up (and again to drop)</td></tr>
-    <tr><td><strong>↑ / ↓</strong></td><td>move it one slot earlier / later</td></tr>
-    <tr><td><strong>← / →</strong></td><td>move it to the previous / next day</td></tr>
-    <tr><td><strong>Shift + ↑ / ↓</strong></td><td>shrink / grow the <strong>end</strong> edge by one slot</td></tr>
-    <tr><td><strong>Shift + Alt + ↑ / ↓</strong></td><td>grow / shrink the <strong>start</strong> edge by one slot</td></tr>
-    <tr><td><strong>Enter</strong> / <strong>Escape</strong></td><td>drop / cancel</td></tr>
+    <tr><td><strong>Space</strong></td><td>Pick up / drop the event</td></tr>
+    <tr><td><strong>↑ / ↓</strong></td><td>Move one slot earlier / later</td></tr>
+    <tr><td><strong>← / →</strong></td><td>Move to the previous / next day</td></tr>
+    <tr><td><strong>Shift + ↑ / ↓</strong></td><td>Shrink / grow the end edge by one slot</td></tr>
+    <tr><td><strong>Shift + Alt + ↑ / ↓</strong></td><td>Grow / shrink the start edge by one slot</td></tr>
+    <tr><td><strong>Enter / Escape</strong></td><td>Drop / cancel</td></tr>
   </tbody>
 </table>
 
-**Month** (whole days):
+**Month (whole days):**
 
 <table>
-  <thead>
-    <tr><th>Key</th><th>Action</th></tr>
-  </thead>
+  <thead><tr><th>Key</th><th>Action</th></tr></thead>
   <tbody>
-    <tr><td><strong>Space</strong></td><td>pick the event up (and again to drop)</td></tr>
-    <tr><td><strong>← / →</strong></td><td>move it ±1 day</td></tr>
-    <tr><td><strong>↑ / ↓</strong></td><td>move it ±1 week</td></tr>
-    <tr><td><strong>Shift + ← / →</strong></td><td>shrink / grow the <strong>end</strong> edge by a day</td></tr>
-    <tr><td><strong>Shift + ↑ / ↓</strong></td><td>shrink / grow the <strong>end</strong> edge by a week</td></tr>
-    <tr><td><strong>Shift + Alt + ← / →</strong></td><td>grow / shrink the <strong>start</strong> edge by a day</td></tr>
-    <tr><td><strong>Shift + Alt + ↑ / ↓</strong></td><td>grow / shrink the <strong>start</strong> edge by a week</td></tr>
-    <tr><td><strong>Enter</strong> / <strong>Escape</strong></td><td>drop / cancel</td></tr>
+    <tr><td><strong>Space</strong></td><td>Pick up / drop the event</td></tr>
+    <tr><td><strong>← / →</strong></td><td>Move ±1 day</td></tr>
+    <tr><td><strong>↑ / ↓</strong></td><td>Move ±1 week</td></tr>
+    <tr><td><strong>Shift + ← / →</strong></td><td>Shrink / grow the end edge by a day</td></tr>
+    <tr><td><strong>Shift + ↑ / ↓</strong></td><td>Shrink / grow the end edge by a week</td></tr>
+    <tr><td><strong>Shift + Alt + ← / →</strong></td><td>Grow / shrink the start edge by a day</td></tr>
+    <tr><td><strong>Shift + Alt + ↑ / ↓</strong></td><td>Grow / shrink the start edge by a week</td></tr>
+    <tr><td><strong>Enter / Escape</strong></td><td>Drop / cancel</td></tr>
   </tbody>
 </table>
 
-While the event is "in hand" it dims and a preview shows where it will land — a
-dashed box in the time grid, a highlighted day-cell band in the month grid — and
-every step is announced through a polite live region (e.g. _"Standup, Tue 16
-9:30 AM to 10:30 AM"_ in the time grid, _"Standup, Jun 16"_ in the month).
-Dropping fires the **same** `onEventDrop` / `onEventResize` you already wired for
-the mouse, so there's nothing extra to handle. (Enter still **opens** an event;
-Space is what picks it up.) Keyboard drag is wired on the **month and time-grid**
-views.
-
-## Resource columns and cross-resource drag
-
-Give the calendar a `resources` array and the **day** and **week** views
-automatically split into per-resource columns — a "rooms" / "people" schedule.
-The day view gives each resource one column under a single-tier title header; the
-week view gives each resource a **two-tier** header (its title spanning that
-resource's day columns, with the day names beneath) and lays the columns out
-**resource-major** (all of one resource's days, then the next resource). Each
-event lands in its resource's column via the `resource` accessor (which reads
-`resourceId` by default), and each resource gets its own all-day lane:
-
-```tsx
-<CalendarProvider
-  events={events}
-  resources={[{ id: 'board', title: 'Board room' }, { id: 'training', title: 'Training room' }]}
-  // event.resourceId decides the column; override with `resourceAccessor` if your field differs
-/>
-```
-
-Dragging an event into a **different** resource's column is a real edit, so the
-move/resize/drop callbacks now also report the **landing** `resourceId` — the
-column you dropped onto:
-
-```tsx
-onEventDrop={({ event, start, end, allDay, resourceId }) => {
-  // `resourceId` is the column dropped onto (undefined in a resource-less grid).
-  // It's a report: you reassign the event to that resource in your own data.
-  setEvents(prev => prev.map(e => (e.id === event.id ? { ...e, start, end, allDay, resourceId } : e)))
-}}
-```
-
-The same `resourceId` rides along on `onEventResize`, `onDropFromOutside`, and the
-slot-selection callbacks (`onSlotClick` / `onSlotSelect`), so a create-on-select
-or drop-to-create also knows the chosen resource. See the **Views → TimeGridView →
-DayWithResources** and **WeekWithResources** stories. (A **day-major** week
-ordering — days outer, resources nested within each day — is still in progress.)
-
-## Locking individual events
-
-Use `draggableAccessor` to decide which events may be **dragged**, and
-`resizableAccessor` to decide which may be **resized** — each takes a field name or a
-function. An event that returns `false` can't be picked up (or shows no resize handles):
-
-```tsx
-<CalendarProvider draggableAccessor={(e) => !e.locked} resizableAccessor={(e) => !e.fixed} ... />
-```
-
-## Promoting a timed event to all-day
-
-Drag any **timed** event from the time grid and drop it onto the **all-day row** —
-the row that sits above the time slots. The event becomes a whole-day event on the
-dropped day: `onEventDrop` fires with `allDay: true` and the event's date shifted to
-that day (the time-of-day is preserved in `start`/`end` for your reference, but the
-`allDay` flag is what signals the change):
-
-```tsx
-onEventDrop={({ event, start, end, allDay }) => {
-  // allDay is `true` when dropped onto the all-day row.
-  setEvents(prev =>
-    prev.map(e => e.id === event.id ? { ...e, start, end, allDay } : e)
-  )
-}}
-```
-
-**One-way only.** You can promote a timed event to all-day, but you **cannot** drag
-an all-day event down into the time grid. An all-day event has no natural time of day
-to snap to; the right pattern is to let the user edit it in a dialog. The all-day row
-ignores drops from all-day events.
-
-See the **Views → TimeGridView → TimedToAllDayPromotion** story for a live demo.
-
-## Not built yet
-
-Move, resize, drop-from-outside, drag-out, keyboard drag, and timed→all-day
-promotion are all wired for both the **month** and **time-grid** views today, and
-the **day** and **week** views support **resource columns** (resource-major). The
-remaining follow-ups: a **day-major** week resource ordering and a dedicated
-`@big-calendar/react/dnd` entry point.
+While an event is "in hand" it dims, a preview shows where it will land, and each step is announced through a live region for screen readers. Dropping fires the same `onEventDrop` / `onEventResize` callbacks — no extra wiring required.

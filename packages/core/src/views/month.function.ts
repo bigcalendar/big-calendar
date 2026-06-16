@@ -26,8 +26,16 @@ export function monthViewModel<TEvent, TResource = unknown>(args: {
   const weeks: MonthWeek<TEvent>[] = []
   for (let i = 0; i < days.length; i += 7) {
     const weekDays = days.slice(i, i + 7)
-    const { levels, extra } = rowSegments({ localizer, days: weekDays, items, limit: weekEventLimit })
-    weeks.push({ days: weekDays, levels, extra })
+    // First pass: try to fit all events within the limit.
+    const firstPass = rowSegments({ localizer, days: weekDays, items, limit: weekEventLimit })
+    if (firstPass.extra.length > 0) {
+      // Overflow exists: re-run with limit − 1 so the show-more button occupies
+      // the last available row rather than spilling outside the physical space.
+      const { levels, extra } = rowSegments({ localizer, days: weekDays, items, limit: weekEventLimit - 1 })
+      weeks.push({ days: weekDays, levels, extra })
+    } else {
+      weeks.push({ days: weekDays, levels: firstPass.levels, extra: firstPass.extra })
+    }
   }
 
   return { weeks }

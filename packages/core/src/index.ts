@@ -36,6 +36,7 @@ export type { Messages } from './messages/messages.type'
 
 export { createSelection } from './selection/selection.function'
 export type { SelectionController } from './selection/selection.function'
+export { getContainingBgEvents } from './selection/containment.function'
 export { moveEvent } from './dnd/moveEvent.function'
 export type { MoveEventArgs, MovedEvent, MoveMode } from './dnd/moveEvent.function'
 export { resizeEvent } from './dnd/resizeEvent.function'

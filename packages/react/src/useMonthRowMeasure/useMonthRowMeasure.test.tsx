@@ -121,7 +121,8 @@ describe('useMonthRowMeasure', () => {
 
     // Grid: 5 rows × 200px = 1000px total.
     // Events container: paddingBlockStart=40px (header), gridAutoRows=30px (segment).
-    // available = 200 - 40 = 160px; rows = floor(160/30) = 5; limit = 5 - 1 = 4.
+    // available = 200 - 40 = 160px; rows = floor(160/30) = 5; limit = 5.
+    // No -1: monthViewModel handles show-more row reservation via two-pass.
     vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
       height: 1000, width: 0, top: 0, left: 0, bottom: 0, right: 0, x: 0, y: 0,
       toJSON: () => ({}),
@@ -135,7 +136,7 @@ describe('useMonthRowMeasure', () => {
     const ro = MockResizeObserver.instances[0]!
     act(() => { ro.fire() })
 
-    expect(store.measuredWeekLimit.value).toBe(4)
+    expect(store.measuredWeekLimit.value).toBe(5)
   })
 
   it('clamps limit to at least 1 when available space is very small', () => {

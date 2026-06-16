@@ -164,7 +164,7 @@
   .bc-week-events {
     grid-auto-rows: var(--bc-segment-height);
     /* Clear the date-number line that sits at the top of each cell. */
-    padding-block-start: calc(var(--bc-segment-height) + var(--bc-space-1));
+    padding-block-start: var(--bc-segment-height);
     pointer-events: none;
   }
 

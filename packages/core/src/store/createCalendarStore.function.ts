@@ -9,7 +9,7 @@ import { resizeEvent } from '../dnd/resizeEvent.function'
 import type { ResizeEdge } from '../dnd/resizeEvent.function'
 import { BUILTIN_VIEWS, Views } from '../constants/views.constant'
 import { createSelection } from '../selection/selection.function'
-import type { SelectionMode, SelectionRange } from '../selection/selection.type'
+import type { SelectionMode, SelectionRange, SlotSelectionDates } from '../selection/selection.type'
 import type { EventId, ResourceId, ViewKey } from '../types/calendar.type'
 import type { CalendarConfig } from '../types/config.type'
 import { buildViewModel } from '../views/viewModel.function'
@@ -69,6 +69,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   const getEventEnd = wrapAccessor(accessors.end)
   const getEventAllDay = wrapAccessor(accessors.allDay)
   const getEventTitle = wrapAccessor(accessors.title)
+  const getEventResource = wrapAccessor(accessors.resource)
   /**
    * Resolve an event by id and run the resize math, or `null` when the id matches
    * no event or the event lacks bounds. Shared by `resizeEvent` (commit) and
@@ -204,6 +205,25 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
 
   // ── slot selection ──────────────────────────────────────────────────────
   // The FSM works in slot-index space; the store captures the anchor day + mode
+  // Returns background events whose time range overlaps [start, end], pre-filtered
+  // to the given resourceId when present. Events with no resource assignment are
+  // treated as global and always included. Returns an empty array when none match.
+  const bgIntersecting = (start: string, end: string, resourceId: ResourceId | undefined): TEvent[] =>
+    backgroundEvents.value.filter((ev) => {
+      const s = getEventStart(ev)
+      const e = getEventEnd(ev)
+      if (s == null || e == null) return false
+      if (!localizerSignal.value.inEventRange({ event: { start: s, end: e }, range: { start, end } })) return false
+      if (resourceId != null) {
+        const r = getEventResource(ev)
+        if (r != null) {
+          const ids = Array.isArray(r) ? r : [r]
+          if (!ids.includes(resourceId)) return false
+        }
+      }
+      return true
+    })
+
   // (set when a drag/click starts) and translates committed indices back to ISO
   // dates for the public callbacks. `'day'` indices map straight into the visible
   // day list. `'time'` indices are **global** (`dayIndex*slotCount + slot`) so a
@@ -283,14 +303,29 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     onSelecting: config.onSlotSelecting
       ? (slotRange) => {
           const { start, end, allDay } = translate(slotRange)
-          return config.onSlotSelecting!({ start, end, allDay })
+          const resourceId = selectionAnchor.value?.resourceId
+          const bg = bgIntersecting(start, end, resourceId)
+          const args: {
+            start: string
+            end: string
+            allDay: boolean
+            resourceId?: ResourceId
+            backgroundEvents?: TEvent[]
+          } = { start, end, allDay }
+          if (resourceId != null) args.resourceId = resourceId
+          if (bg.length > 0) args.backgroundEvents = bg
+          return config.onSlotSelecting!(args)
         }
       : undefined,
     // Route the committed slot selection to the per-gesture callback. The
     // internal FSM keeps an `action` to disambiguate; the public payload doesn't.
     onSelect: (selection) => {
       const { start, end, slots, allDay } = translate(selection)
-      const payload = { start, end, slots, allDay, resourceId: selectionAnchor.value?.resourceId }
+      const resourceId = selectionAnchor.value?.resourceId
+      const bg = bgIntersecting(start, end, resourceId)
+      const payload: SlotSelectionDates<TEvent> = { start, end, slots, allDay }
+      if (resourceId != null) payload.resourceId = resourceId
+      if (bg.length > 0) payload.backgroundEvents = bg
       if (selection.action === 'click') config.onSlotClick?.(payload)
       else if (selection.action === 'doubleClick') config.onSlotDoubleClick?.(payload)
       else config.onSlotSelect?.(payload)
@@ -483,7 +518,14 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       if (drop == null) return
       const moved = computeMove(id, target, mode, promote ? true : undefined)
       if (moved == null) return
-      drop({ event: moved.event, start: moved.start, end: moved.end, allDay: moved.allDay, resourceId })
+      const bg = bgIntersecting(moved.start, moved.end, resourceId)
+      const args: {
+        event: TEvent; start: string; end: string; allDay: boolean
+        resourceId?: ResourceId; backgroundEvents?: TEvent[]
+      } = { event: moved.event, start: moved.start, end: moved.end, allDay: moved.allDay }
+      if (resourceId != null) args.resourceId = resourceId
+      if (bg.length > 0) args.backgroundEvents = bg
+      drop(args)
     },
 
     previewMove({ id, target, mode }) {
@@ -498,7 +540,14 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       if (report == null) return
       const resized = computeResize(id, edge, target, mode)
       if (resized == null) return
-      report({ event: resized.event, start: resized.start, end: resized.end, allDay: resized.allDay, resourceId })
+      const bg = bgIntersecting(resized.start, resized.end, resourceId)
+      const args: {
+        event: TEvent; start: string; end: string; allDay: boolean
+        resourceId?: ResourceId; backgroundEvents?: TEvent[]
+      } = { event: resized.event, start: resized.start, end: resized.end, allDay: resized.allDay }
+      if (resourceId != null) args.resourceId = resourceId
+      if (bg.length > 0) args.backgroundEvents = bg
+      report(args)
     },
 
     previewResize({ id, edge, target, mode = 'time' }) {
@@ -516,7 +565,14 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       const report = config.onDropFromOutside
       if (report == null) return
       const placed = placeExternalEvent({ localizer: localizerSignal.value, target, mode, durationMinutes, allDay, start, end, step })
-      report({ ...placed, resourceId })
+      const bg = bgIntersecting(placed.start, placed.end, resourceId)
+      const args: {
+        start: string; end: string; allDay: boolean
+        resourceId?: ResourceId; backgroundEvents?: TEvent[]
+      } = { ...placed }
+      if (resourceId != null) args.resourceId = resourceId
+      if (bg.length > 0) args.backgroundEvents = bg
+      report(args)
     },
 
     previewExternal({ target, mode = 'time', durationMinutes, start, end }) {
@@ -658,9 +714,16 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       if (grab == null) return
       const event = findEvent(grab.id)
       if (event == null) return
-      const payload = { event, start: grab.start, end: grab.end, allDay: grab.allDay }
+      const bg = bgIntersecting(grab.start, grab.end, undefined)
       // A move carries both ends (so a move-then-resize is fully expressed by
       // onEventDrop); a pure resize reports through onEventResize.
+      const payload: { event: TEvent; start: string; end: string; allDay: boolean; backgroundEvents?: TEvent[] } = {
+        event,
+        start: grab.start,
+        end: grab.end,
+        allDay: grab.allDay,
+      }
+      if (bg.length > 0) payload.backgroundEvents = bg
       if (grabMoved) config.onEventDrop?.(payload)
       else if (grabResized) config.onEventResize?.(payload)
     },

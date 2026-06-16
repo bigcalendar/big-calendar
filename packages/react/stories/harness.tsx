@@ -1,7 +1,6 @@
 import { useLocalizerContext } from '@big-calendar/storybook-shared'
 import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
 import type { ReactNode } from 'react'
-import { useState } from 'react'
 import { CalendarProvider } from '../src'
 import type { CalendarProviderProps } from '../src'
 import type { DemoEvent } from './demoEvents'
@@ -44,7 +43,7 @@ export type CalendarStageProps = Partial<CalendarProviderProps<DemoEvent>> & {
  * and `getNow`. Stories pass `<Toolbar/>` + a `.bc-calendar` view wrapper as
  * children, mirroring the eventual `<Calendar>` composition.
  */
-export function CalendarStage({ children, height = 800, rows = 'auto 1fr', ...props }: CalendarStageProps) {
+export function CalendarStage({ children, height = '100dvh', rows = 'auto 1fr', ...props }: CalendarStageProps) {
   const ctxLocalizer = useLocalizerContext()
   return (
     <div style={{ display: 'grid', gridTemplateRows: rows, rowGap: '0.5rem', blockSize: height, inlineSize: '100%' }}>
@@ -61,57 +60,3 @@ export function CalendarStage({ children, height = 800, rows = 'auto 1fr', ...pr
   )
 }
 
-/**
- * A {@link CalendarStage} pre-wired for exercising slot/event selection:
- * `selectable` is on and the callbacks — slot (`onSlotClick` / `onSlotDoubleClick`
- * / `onSlotSelect`) and event (`onEventClick`, `onEventDoubleClick`, plus
- * `onEventRightClick` / `onEventMiddleClick`) — feed a live read-out below the
- * view so you can see what each gesture emits without opening the console. Switch `view` to **Agenda** to
- * see the same event handlers drive its link-styled title buttons. Pass the
- * `<Toolbar/>` + `.bc-calendar` view as children, like {@link CalendarStage}.
- * Any prop (e.g. `selectable={false}`) can be overridden.
- */
-export function SelectionDemo({ children, ...props }: CalendarStageProps) {
-  const [log, setLog] = useState(
-    'Drag across slots to select a range · click or double-click a slot · click an event.',
-  )
-  return (
-    // The calendar and the read-out are separate siblings, so a growing payload
-    // never steals height from the calendar (which keeps its own fixed size).
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-      <CalendarStage
-        selectable
-        onSlotClick={(selection) => setLog(`onSlotClick\n${JSON.stringify(selection, null, 2)}`)}
-        onSlotDoubleClick={(selection) => setLog(`onSlotDoubleClick\n${JSON.stringify(selection, null, 2)}`)}
-        onSlotSelect={(selection) => setLog(`onSlotSelect\n${JSON.stringify(selection, null, 2)}`)}
-        onEventClick={(event) => setLog(`onEventClick\n${JSON.stringify(event, null, 2)}`)}
-        onEventDoubleClick={(event) => setLog(`onEventDoubleClick\n${JSON.stringify(event, null, 2)}`)}
-        onEventRightClick={(event, e) => {
-          e.preventDefault() // replace the native context menu with our read-out
-          setLog(`onEventRightClick\n${JSON.stringify(event, null, 2)}`)
-        }}
-        onEventMiddleClick={(event) => setLog(`onEventMiddleClick\n${JSON.stringify(event, null, 2)}`)}
-        {...props}
-      >
-        {children}
-      </CalendarStage>
-      <pre
-        aria-label="Last selection event"
-        style={{
-          margin: 0,
-          padding: '0.5rem 0.75rem',
-          border: '1px solid var(--bc-color-border, #d4d4d8)',
-          borderRadius: '4px',
-          fontSize: '0.75rem',
-          lineHeight: 1.4,
-          whiteSpace: 'pre-wrap',
-          // Fixed height with its own scroll: the read-out never reflows the page.
-          blockSize: '9rem',
-          overflow: 'auto',
-        }}
-      >
-        {log}
-      </pre>
-    </div>
-  )
-}
