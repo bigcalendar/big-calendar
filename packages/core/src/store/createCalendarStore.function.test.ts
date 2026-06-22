@@ -350,8 +350,8 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
         localizer,
         date: monday,
         view: Views.DAY,
-        min: '2026-06-15T08:00:00.000Z',
-        max: '2026-06-15T18:00:00.000Z',
+        min: { hour: 8 },
+        max: { hour: 18 },
         events: [{ id: 1, title: 'e1', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' }],
       })
       const vm = store.viewModel.value

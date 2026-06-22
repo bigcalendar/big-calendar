@@ -374,8 +374,8 @@ describe.each(LOCALIZER_CASES)('TimeGridView [$name]', ({ create }) => {
   it('omits the now-line when now falls outside the visible time window', () => {
     // window 13:00–14:00, but NOW is 12:00 → before the column, so no line
     const { container } = renderGrid({
-      min: '2026-06-15T13:00:00.000Z',
-      max: '2026-06-15T14:00:00.000Z',
+      min: { hour: 13 },
+      max: { hour: 14 },
     })
     expect(screen.getByText(heading).classList.contains('bc-today')).toBe(true)
     expect(container.querySelector('.bc-now-indicator')).toBeNull()

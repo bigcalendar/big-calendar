@@ -11,6 +11,7 @@ import { BUILTIN_VIEWS, Views } from '../constants/views.constant'
 import { createSelection } from '../selection/selection.function'
 import type { SelectionMode, SelectionRange, SlotSelectionDates } from '../selection/selection.type'
 import type { EventId, ResourceId, ViewKey } from '../types/calendar.type'
+import type { DayLayoutAlgorithm, DayLayoutAlgorithmKey } from '../layout/layout.type'
 import type { CalendarConfig } from '../types/config.type'
 import { buildViewModel } from '../views/viewModel.function'
 import { resolveDrilldownView } from './drilldown.function'
@@ -171,12 +172,13 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     viewLabel({ localizer: localizerSignal.value, view: view.value, date: date.value, range: range.value, registry }),
   )
 
-  // Resolve the time-grid window once (config is stable). A midnight `max`
-  // (00:00) means end-of-day → the full 1440-minute window.
-  const dayStartMin = config.min == null ? 0 : localizerSignal.value.getMinutesFromMidnight(config.min)
+  // Resolve the time-grid window once (config is stable). An omitted or
+  // midnight `max` (hour:0, minute:0) means end-of-day → full 1440-min window.
+  const dayStartMin = config.min == null ? 0 : config.min.hour * 60 + (config.min.minute ?? 0)
   const dayEndMin =
-    config.max == null ? 1440 : localizerSignal.value.getMinutesFromMidnight(config.max) || 1440
+    config.max == null ? 1440 : (config.max.hour * 60 + (config.max.minute ?? 0)) || 1440
   const allDayMaxRows = config.showAllEvents ? Infinity : 2
+  const dayLayoutAlgorithm = signal<DayLayoutAlgorithmKey | DayLayoutAlgorithm | undefined>(config.dayLayoutAlgorithm)
 
   const viewModel = computed(() =>
     buildViewModel({
@@ -194,7 +196,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
         timeslots,
         dayStartMin,
         dayEndMin,
-        dayLayoutAlgorithm: config.dayLayoutAlgorithm,
+        dayLayoutAlgorithm: dayLayoutAlgorithm.value,
         allDayMaxRows,
         showMultiDayTimes: config.showMultiDayTimes,
         weekEventLimit: config.weekEventLimit ?? measuredWeekLimit.value,
@@ -396,7 +398,13 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
           initialized = true
           return
         }
-        onRangeChange({ range: current, view: view.value })
+        onRangeChange({
+          range: {
+            start: localizerSignal.value.startOf({ value: current.firstVisibleDay, unit: 'day' }),
+            end: localizerSignal.value.endOf({ value: current.lastVisibleDay, unit: 'day' }),
+          },
+          view: view.value,
+        })
       }),
     )
   }
@@ -468,6 +476,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     keyboardDrag: keyboardDrag as ReadonlySignal<KeyboardDragState | null>,
     dndEnabled,
     measuredWeekLimit,
+    dayLayoutAlgorithm,
     enabledViews,
     get localizer() { return localizerSignal.value },
     accessors,

@@ -5,7 +5,18 @@ import type { SelectableMode, SlotSelectionDates } from '../selection/selection.
 import type { GetDrilldownView } from '../store/drilldown.function'
 import type { ResourceLayoutMode } from '../timegrid/timeGrid.type'
 import type { ViewRegistry } from '../views/viewRegistry.type'
-import type { EventId, ResourceId, ViewKey, VisibleRange } from './calendar.type'
+import type { EventId, ResourceId, ViewKey } from './calendar.type'
+
+/**
+ * A wall-clock time of day used to configure the visible time-grid window.
+ * `hour` is 0–23; `minute` defaults to 0 when omitted.
+ */
+export interface PlainTimeInput {
+  /** Hour of day, 0–23. */
+  hour: number
+  /** Minute of hour, 0–59. Defaults to 0 when omitted. */
+  minute?: number
+}
 
 /**
  * Configuration accepted by {@link createCalendarStore}. Only the localizer is
@@ -59,15 +70,18 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
   /** Slots per labelled group. Defaults to 2. */
   timeslots?: number | undefined
   /**
-   * Start of the visible time window as a datetime string; only its
-   * time-of-day is used. Defaults to midnight (start of day).
+   * Start of the visible time window. Defaults to start of day (midnight).
+   * Example: `{ hour: 8 }` starts the grid at 8:00 AM.
+   * Events that begin before this time are still rendered; they are clipped at the top.
    */
-  min?: string | undefined
+  min?: PlainTimeInput | undefined
   /**
-   * End of the visible time window as a datetime string; only its time-of-day
-   * is used. A midnight (`00:00`) time means end-of-day. Defaults to end of day.
+   * End of the visible time window. Defaults to end of day (midnight = full day).
+   * Example: `{ hour: 23 }` ends the grid at 11:00 PM — the last visible slot begins
+   * before that boundary; 11:00 PM itself is never shown as a label.
+   * Events that run past this time are clipped at the bottom.
    */
-  max?: string | undefined
+  max?: PlainTimeInput | undefined
   /** Day-layout algorithm for overlapping timed events: a built-in key or a custom fn. Defaults to `overlap`. */
   dayLayoutAlgorithm?: DayLayoutAlgorithmKey | DayLayoutAlgorithm | undefined
   /** Max event rows per week in the month grid before events overflow into "+N more". Defaults to unlimited. */
@@ -275,7 +289,7 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
    */
   onSlotSelect?: ((selection: SlotSelectionDates<TEvent>) => void) | undefined
   /** Fired when the visible range changes (date or view change), not on init. */
-  onRangeChange?: ((args: { range: VisibleRange; view: ViewKey }) => void) | undefined
+  onRangeChange?: ((args: { range: { start: string; end: string }; view: ViewKey }) => void) | undefined
   /**
    * Fired when a drilldown is requested. When provided, the store delegates
    * entirely to this callback (it will not change view/date itself).

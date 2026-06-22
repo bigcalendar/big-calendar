@@ -222,23 +222,24 @@ These props control the Week, Work Week, and Day views. They have no effect on t
     </tr>
     <tr>
       <td><code>min</code></td>
-      <td><code>string</code></td>
+      <td><code>&#123; hour: number; minute?: number &#125;</code></td>
       <td>Start of day</td>
       <td>
-        The earliest time shown in the time grid, as an ISO datetime string. Only the
-        time-of-day portion is used — the date part is ignored. For example,
-        <code>"2000-01-01T08:00:00Z"</code> starts the grid at 8 AM. Events that begin before
-        this time are still rendered; they are just clipped at the top.
+        The earliest time shown in the time grid. <code>hour</code> is 0–23;
+        <code>minute</code> defaults to <code>0</code> when omitted. For example,
+        <code>&#123; hour: 8 &#125;</code> starts the grid at 8:00 AM. Events that begin
+        before this time are still rendered; they are clipped at the top.
       </td>
     </tr>
     <tr>
       <td><code>max</code></td>
-      <td><code>string</code></td>
+      <td><code>&#123; hour: number; minute?: number &#125;</code></td>
       <td>End of day</td>
       <td>
-        The latest time shown, as an ISO datetime string. A time of midnight
-        (<code>00:00</code>) means "end of day" (23:59:59). Events that run past this time
-        are clipped at the bottom.
+        The latest time shown. <code>&#123; hour: 23 &#125;</code> ends the grid at
+        11:00 PM — all slots up to (but not including) that boundary are visible.
+        <code>&#123; hour: 0 &#125;</code> means end of day (full 24-hour grid).
+        Events that run past this time are clipped at the bottom.
       </td>
     </tr>
     <tr>
