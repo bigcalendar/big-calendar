@@ -12,7 +12,14 @@ interface PopoverToggleEvent extends Event {
 export interface PopoverTriggerProps {
   /** Callback ref so the popover can anchor to the trigger. */
   ref: (node: HTMLElement | null) => void
-  /** Wires the button to the panel via the native Popover API (`popovertarget`). */
+  /**
+   * Wires the element to the panel via the native HTML Popover API.
+   *
+   * **Must be spread onto a `<button>` or `<input type="button">`.**
+   * The browser only honours `popovertarget` on those element types — spreading
+   * these props onto a `<div role="button">` (or any other element) silently
+   * does nothing and the popover will never open.
+   */
   popoverTarget: string
   /** The panel behaves like a dialog for assistive tech. */
   'aria-haspopup': 'dialog'

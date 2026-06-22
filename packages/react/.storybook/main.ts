@@ -29,6 +29,11 @@ const config: StorybookConfig = {
       '@big-calendar/storybook-shared': resolve(pkgs, 'storybook-shared/src/index.ts'),
       '@big-calendar/styles': resolve(pkgs, 'styles/src'),
     }
+    // STORYBOOK_SITE_BASE is set in CI to the GitHub Pages root (e.g. /big-calendar/).
+    // This instance mounts under the /react/ subpath in the composed site.
+    // Local dev leaves this unset so the instance stays at /.
+    const siteBase = process.env.STORYBOOK_SITE_BASE
+    config.base = siteBase ? `${siteBase}react/` : '/'
     return config
   },
 }

@@ -1,0 +1,105 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/useFloatingAnchor" />
+
+# `useFloatingAnchor`
+
+Keeps a top-layer floating element positioned against an anchor element while it is
+open, repositioning automatically on scroll and window resize.
+
+`Popover` and `Tooltip` both use this hook internally. It is exported so you can wire
+the same positioning behaviour into a **custom top-layer surface** — for example, a
+custom event details panel that uses the native Popover API or a modal `<dialog>`.
+
+---
+
+## When to use this
+
+Use `useFloatingAnchor` when you:
+
+- Have an anchor element (a button, an event box, a date cell).
+- Have a floating element that uses the native `popover` attribute or `<dialog>` (so it renders in the browser's top layer).
+- Want the floating element to stay aligned to the anchor as the page scrolls or the window resizes.
+
+If you just need to compute a position once — without the React lifecycle management — use `positionFloating` directly (see [Event Time Utilities](?path=/docs/utilities-event-time--docs)).
+
+---
+
+## Signature
+
+```ts
+useFloatingAnchor(
+  open:        boolean,
+  anchorRef:   RefObject<HTMLElement | null>,
+  floatingRef: RefObject<HTMLElement | null>,
+  placement?:  FloatingPlacement,
+  sameWidth?:  boolean,
+): void
+```
+
+The hook returns nothing. It manages positioning as a side effect.
+
+---
+
+## Parameters
+
+<table>
+  <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>open</code></td><td><code>boolean</code></td><td>Whether the floating element is currently visible. The hook is a no-op while <code>false</code> — no listeners, no positioning.</td></tr>
+    <tr><td><code>anchorRef</code></td><td><code>RefObject&lt;HTMLElement | null&gt;</code></td><td>A ref attached to the anchor element the floating element should align to.</td></tr>
+    <tr><td><code>floatingRef</code></td><td><code>RefObject&lt;HTMLElement | null&gt;</code></td><td>A ref attached to the floating element itself.</td></tr>
+    <tr><td><code>placement</code></td><td><code>FloatingPlacement</code></td><td>Preferred placement (e.g. <code>'bottom-start'</code>). The engine may flip to the opposite side if the preferred side clips the viewport. See <a href="?path=/docs/utilities-event-time--docs">positionFloating</a> for the full list of placement values.</td></tr>
+    <tr><td><code>sameWidth</code></td><td><code>boolean</code></td><td>When <code>true</code>, sets the floating element's <code>inline-size</code> to match the anchor's rendered width on each positioning run. Useful for dropdowns or popovers that should span the same column as their trigger.</td></tr>
+  </tbody>
+</table>
+
+---
+
+## Usage example
+
+```tsx
+import { useRef, useState } from 'react'
+import { useFloatingAnchor } from '@big-calendar/react'
+
+function EventDetailsPanel({ event, title, anchorRef }) {
+  const [open, setOpen] = useState(false)
+  const panelRef = useRef(null)
+
+  useFloatingAnchor(open, anchorRef, panelRef, 'bottom-start')
+
+  return (
+    <>
+      <button onClick={() => setOpen((v) => !v)}>
+        {title}
+      </button>
+      {open && (
+        <div ref={panelRef} popover="auto" style={{ position: 'fixed', margin: 0 }}>
+          <h3>{title}</h3>
+          <p>{String(event.start)} – {String(event.end)}</p>
+          <button onClick={() => setOpen(false)}>Close</button>
+        </div>
+      )}
+    </>
+  )
+}
+```
+
+### What happens on each positioning run
+
+1. `positionFloating` (from `@big-calendar/core/utils`) is called with the anchor and
+   floating elements and the requested placement.
+2. The result `{ x, y }` is applied as `position: fixed; inset-inline-start: Xpx; inset-block-start: Ypx`.
+3. The browser's UA stylesheet for `[popover]` sets `inset: 0` on all four sides by
+   default. The hook resets `inset-block-end` and `inset-inline-end` to `auto` on
+   every run so they do not stretch the panel to the viewport edge.
+4. `window` `scroll` and `resize` listeners repeat the run while `open` is `true`,
+   then remove themselves when `open` becomes `false` or the component unmounts.
+
+---
+
+## Relationship to `Popover` and `Tooltip`
+
+`Popover` and `Tooltip` both call `useFloatingAnchor` and handle open/close state,
+trigger wiring, and ARIA attributes for you. Use them directly unless you need a
+surface that does not fit either of those patterns.

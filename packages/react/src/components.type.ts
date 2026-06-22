@@ -109,7 +109,26 @@ export interface MonthEventProps<TEvent> {
   title: string
 }
 
-/** Props for a week's "+N more" overflow indicator. */
+/**
+ * Props for a week's "+N more" overflow indicator.
+ *
+ * When building a custom show-more component that opens a popover, three
+ * things are required for it to behave identically to the default:
+ *
+ * 1. **Trigger must be a `<button>`** — the `Popover` component uses the
+ *    native HTML Popover API (`popovertarget`), which only works on `<button>`
+ *    and `<input type="button">` elements. Spreading trigger props onto a
+ *    `<div>` (even with `role="button"`) silently does nothing.
+ *
+ * 2. **Wrap `EventSlot` in `EventButton`** — `EventSlot` is the inner visual
+ *    only. Wrap it in `<EventButton className="bc-segment" resizeEdges={[]}>` to
+ *    get the card styling, background colour, and event click handlers.
+ *
+ * 3. **Use `className="bc-popover bc-show-more-popover"`** on `Popover` — the
+ *    `bc-show-more-popover` class provides the height cap, scroll, and the grid
+ *    reset that prevents `EventButton` children stacking invisibly on top of
+ *    each other at the inherited grid position.
+ */
 export interface MonthShowMoreProps<TEvent> {
   /** How many events overflowed the week's row limit. */
   count: number
@@ -120,8 +139,9 @@ export interface MonthShowMoreProps<TEvent> {
   /** The overflowed events, for listing in a popover. */
   events: ReadonlyArray<ShowMoreEvent<TEvent>>
   /**
-   * The configured month event slot component. Use this to render each
-   * overflowed event so the popover's events match the month grid's styling.
+   * The configured month event slot component. Wrap each event in
+   * `<EventButton className="bc-segment" resizeEdges={[]}>` and render
+   * `EventSlot` as its child so the popover events match the month grid.
    */
   EventSlot: ComponentType<MonthEventProps<TEvent>>
 }
@@ -189,6 +209,22 @@ export interface TimeAllDayEventProps<TEvent> {
 }
 
 /** Props for the all-day row's "+N more" overflow indicator. */
+/**
+ * Props for the time-grid all-day row's "+N more" overflow indicator.
+ *
+ * The same three requirements as {@link MonthShowMoreProps} apply here:
+ * the `Popover` trigger must be a real `<button>`, `EventSlot` must be wrapped
+ * in `<EventButton className="bc-segment" resizeEdges={[]}>`, and the `Popover`
+ * must use `className="bc-popover bc-show-more-popover"`.
+ *
+ * **Additional time-grid requirement — `pointer-events: auto` on the trigger:**
+ * The time grid wraps the show-more slot in a container with
+ * `pointer-events: none` so that clicks fall through to the slot background for
+ * selection. The default `.bc-show-more` class re-enables pointer events via
+ * CSS. A custom trigger that relies on inline styles must set
+ * `pointerEvents: 'auto'` explicitly, otherwise clicks are silently swallowed
+ * by the wrapper and the popover never opens.
+ */
 export interface TimeShowMoreProps<TEvent> {
   /** How many events overflowed the all-day row limit. */
   count: number
@@ -197,8 +233,9 @@ export interface TimeShowMoreProps<TEvent> {
   /** The overflowed events, for listing in a popover. */
   events: ReadonlyArray<ShowMoreEvent<TEvent>>
   /**
-   * The configured all-day event slot component. Use this to render each
-   * overflowed event so the popover's events match the all-day strip's styling.
+   * The configured all-day event slot component. Wrap each event in
+   * `<EventButton className="bc-segment" resizeEdges={[]}>` and render
+   * `EventSlot` as its child so the popover events match the all-day strip.
    */
   EventSlot: ComponentType<TimeAllDayEventProps<TEvent>>
 }

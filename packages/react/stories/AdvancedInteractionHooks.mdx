@@ -1,0 +1,151 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/Interaction Hooks" />
+
+# Interaction Hooks
+
+Two low-level hooks power the keyboard interactions inside every built-in view. They
+are exported so you can wire the same accessibility behaviour into a **fully custom
+headless view** built with `useMonthView`, `useTimeGridView`, or `useAgendaView`.
+
+You do not need either hook when using the default view components or overriding
+individual component slots — the built-in views call them internally.
+
+---
+
+## `useEventRoving`
+
+Implements the roving-tabindex pattern for a view's event buttons. All event buttons
+in the view become **one** tab stop; the arrow keys move focus among them.
+
+### Why roving tabindex?
+
+A calendar can display dozens of event buttons at once. If every button were in the
+natural tab order, a keyboard user would have to press Tab many times to get past the
+calendar. The roving-tabindex pattern solves this by making the entire set of event
+buttons a single tab stop, with arrow navigation inside.
+
+### What it does
+
+- After every render it walks every `[data-bc-event]` element inside the container and
+  makes exactly one tabbable (the focused one, or the first if nothing is focused yet).
+- Arrow keys (up / down / left / right) move focus to the adjacent button.
+- Focus in/out events keep the single tabbable slot in sync with actual browser focus.
+
+### Usage
+
+Call the hook once in your custom view component. Attach the three returned values to
+the element that wraps all of your event buttons:
+
+```tsx
+import { useEventRoving, EventButton } from '@big-calendar/react'
+
+function MyMonthView() {
+  const { containerRef, onKeyDown, onFocusCapture } = useEventRoving()
+
+  return (
+    <div ref={containerRef} onKeyDown={onKeyDown} onFocusCapture={onFocusCapture}>
+      {/* EventButton elements rendered anywhere inside here */}
+    </div>
+  )
+}
+```
+
+### Return value — `EventRoving`
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>containerRef</code></td><td><code>(node: HTMLElement | null) =&gt; void</code></td><td>Attach to the element that contains all event buttons. The hook reads <code>[data-bc-event]</code> descendants from this element.</td></tr>
+    <tr><td><code>onKeyDown</code></td><td><code>(e: KeyboardEvent) =&gt; void</code></td><td>Arrow key handler. Moves focus to the adjacent event button and owns the arrow keys so they do not scroll the page.</td></tr>
+    <tr><td><code>onFocusCapture</code></td><td><code>(e: FocusEvent) =&gt; void</code></td><td>Focus sync. Keeps the single tabbable slot on the button that currently has real browser focus. Attach in capture phase (<code>onFocusCapture</code>, not <code>onFocus</code>).</td></tr>
+  </tbody>
+</table>
+
+---
+
+## `useRovingSelection`
+
+Implements roving-tabindex plus keyboard-driven slot selection for one slot surface —
+a month grid, the all-day row, or a time-grid day column. Cells in the surface become
+**one** tab stop; arrow keys move focus and, when combined with Shift, extend a
+selection.
+
+### What it does
+
+- Exactly one cell carries `tabIndex={0}` (the active cell), all others `-1`.
+- Plain arrow keys move focus to the neighbour cell (as defined by your `neighbor` callback).
+- **Shift+Arrow** starts or extends a slot selection: the first press calls `store.selection.start()`, each subsequent press calls `store.selection.to()`.
+- **Enter / Space** commits the selection (`store.selection.complete()`), or fires a click if nothing is selecting.
+- **Escape** cancels an in-progress selection.
+
+### Usage
+
+```tsx
+import { useRovingSelection } from '@big-calendar/react'
+
+function MyMonthGrid({ days }) {
+  const { containerRef, onKeyDown, onFocusCapture, cellTabIndex } =
+    useRovingSelection({
+      mode:  'day',
+      count: days.length,
+      neighbor: (index, direction) => {
+        if (direction === 'right') return index + 1 < days.length ? index + 1 : null
+        if (direction === 'left')  return index - 1 >= 0           ? index - 1 : null
+        return null
+      },
+    })
+
+  return (
+    <div ref={containerRef} onKeyDown={onKeyDown} onFocusCapture={onFocusCapture}>
+      {days.map((day, i) => (
+        <div
+          key={day}
+          data-slot-index={i}
+          data-date={day}
+          tabIndex={cellTabIndex(i)}
+        >
+          {day}
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+Each cell **must** carry both `data-slot-index` (its linear index in the group) and
+`data-date` (its day-start string). The hook reads these from the DOM to stay view-agnostic.
+
+### Options
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>mode</code></td><td><code>SelectionMode</code></td><td>yes</td><td><code>'day'</code> for month/all-day surfaces; <code>'slot'</code> for time-grid columns.</td></tr>
+    <tr><td><code>count</code></td><td><code>number</code></td><td>yes</td><td>Total number of cells in the group.</td></tr>
+    <tr><td><code>slotCount</code></td><td><code>number</code></td><td>time mode only</td><td>Slot rows per day column (required when <code>mode === 'slot'</code> so the store can decode a global slot index into day + in-day offset).</td></tr>
+    <tr><td><code>neighbor</code></td><td><code>(index: number, direction: Direction) =&gt; number | null</code></td><td>yes</td><td>Returns the index of the adjacent cell in the given direction, or <code>null</code> at an edge. You supply this because each view has its own geometry (month rows are horizontal, time columns are vertical).</td></tr>
+  </tbody>
+</table>
+
+### Return value — `RovingSelection`
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>containerRef</code></td><td><code>(node: HTMLElement | null) =&gt; void</code></td><td>Attach to the element that wraps all cells.</td></tr>
+    <tr><td><code>onKeyDown</code></td><td><code>(e: KeyboardEvent) =&gt; void</code></td><td>Arrow, Shift+Arrow, Enter, Space, and Escape handler. Attach directly to the container.</td></tr>
+    <tr><td><code>onFocusCapture</code></td><td><code>(e: FocusEvent) =&gt; void</code></td><td>Focus sync. Keeps the active index in step with real browser focus. Attach in capture phase.</td></tr>
+    <tr><td><code>cellTabIndex</code></td><td><code>(index: number) =&gt; 0 | -1</code></td><td>Returns the correct <code>tabIndex</code> for a cell at the given index. Pass the result directly to the cell element.</td></tr>
+  </tbody>
+</table>
+
+### `Direction`
+
+```ts
+type Direction = 'up' | 'down' | 'left' | 'right'
+```
+
+Passed to your `neighbor` callback. Map to whatever makes sense geometrically for
+your surface — a month row treats left/right as prev/next day and up/down as
+prev/next week.

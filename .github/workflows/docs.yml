@@ -32,18 +32,20 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Build all Storybook instances
-        run: pnpm exec nx run-many -t build-storybook
-
-      # Composes each instance into one static site with storybook-core as the
-      # base (/), framework instances mounted under /react, /vue, etc.
-      - name: Compose static site (core as base)
-        run: pnpm exec nx run storybook-core:compose-site
+      # Builds react (slave) then core (hub with STORYBOOK_BUILD=true so refs use
+      # relative paths), then assembles the hub's storybook-static/ by copying
+      # each framework ref into it. STORYBOOK_SITE_BASE sets Vite's base path so
+      # all asset URLs resolve under the /big-calendar/ GitHub Pages subpath.
+      - name: Build and compose Storybook site
+        run: pnpm exec nx run storybook-site:build
+        env:
+          STORYBOOK_BUILD: "true"
+          STORYBOOK_SITE_BASE: /big-calendar/
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist/storybook-site
+          path: packages/core/storybook-static
 
   deploy:
     needs: build

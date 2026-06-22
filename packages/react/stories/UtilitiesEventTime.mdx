@@ -1,0 +1,139 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Utilities/Event Time" />
+
+# Event Time Utilities
+
+Two utilities handle the two most common cross-cutting concerns in custom event
+rendering: formatting a start–end time as a human-readable string, and computing
+where a floating element (popover, tooltip, dialog) should appear on screen.
+
+Both are re-exported from `@big-calendar/react` so you do not need to reach into
+`@big-calendar/core` directly.
+
+---
+
+## `formatEventTime`
+
+Formats an event's start and end into a localizer-aware display string. The default
+event slot components use this to build the time label shown inside an event box or
+agenda row.
+
+```tsx
+import { formatEventTime } from '@big-calendar/react'
+import { useCalendarContext } from '@big-calendar/react'
+
+function CustomTimeEvent({ event, title, time }) {
+  // `time` is already formatted by the hook — use it directly.
+  return (
+    <div>
+      <strong>{title}</strong>
+      <span>{time}</span>
+    </div>
+  )
+}
+```
+
+When building a **fully custom** slot that needs to format time itself — for example,
+a custom agenda event that displays start and end on separate lines — call
+`formatEventTime` directly:
+
+```tsx
+import { formatEventTime, useCalendarContext } from '@big-calendar/react'
+
+function SplitTimeEvent({ event }) {
+  const { store, messages } = useCalendarContext()
+  const start = store.accessors.start(event)
+  const end   = store.accessors.end(event)
+  const label = formatEventTime({
+    localizer:   store.localizer,
+    allDayLabel: messages.allDay,
+    start:       typeof start === 'string' ? start : null,
+    end:         typeof end   === 'string' ? end   : null,
+    allDay:      store.accessors.allDay(event) ?? false,
+  })
+  return <span>{label}</span>
+}
+```
+
+### `FormatEventTimeArgs`
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>localizer</code></td><td><code>LocalizerContract</code></td><td>yes</td><td>The active localizer (read from <code>useCalendarContext().store.localizer</code>).</td></tr>
+    <tr><td><code>allDayLabel</code></td><td><code>string</code></td><td>yes</td><td>The "all day" label string (read from <code>useCalendarContext().messages.allDay</code>).</td></tr>
+    <tr><td><code>start</code></td><td><code>string | null</code></td><td>yes</td><td>Resolved event start in RFC 3339/9557 format, or <code>null</code> if unresolved.</td></tr>
+    <tr><td><code>end</code></td><td><code>string | null</code></td><td>yes</td><td>Resolved event end, or <code>null</code> if unresolved. When <code>null</code>, only the start is formatted.</td></tr>
+    <tr><td><code>allDay</code></td><td><code>boolean</code></td><td>yes</td><td>When <code>true</code>, returns <code>allDayLabel</code> regardless of <code>start</code> / <code>end</code>.</td></tr>
+    <tr><td><code>format</code></td><td><code>'agendaTime' | 'time'</code></td><td>no</td><td>Format role passed to the localizer. Defaults to <code>'agendaTime'</code>.</td></tr>
+  </tbody>
+</table>
+
+**Returns** `string` — either `allDayLabel`, a single formatted time, or a formatted range "start – end".
+
+---
+
+## `positionFloating`
+
+Computes a `position: fixed` coordinate for a top-layer element (native Popover API
+or modal `<dialog>`) relative to an anchor element. Used internally by `Popover` and
+`Tooltip`; exported so you can position custom top-layer surfaces using the same
+engine.
+
+```tsx
+import { positionFloating } from '@big-calendar/react'
+
+const { x, y, placement } = await positionFloating(anchorEl, floatingEl, {
+  placement: 'bottom-start',
+  offset: 8,
+})
+
+floatingEl.style.position         = 'fixed'
+floatingEl.style.insetInlineStart = `${x}px`
+floatingEl.style.insetBlockStart  = `${y}px`
+```
+
+The function is async because it lazily imports `@floating-ui/core` on first call
+(keeping it out of the initial JS bundle). Subsequent calls reuse the cached module.
+
+If you need the full React integration — repositioning on scroll and resize,
+lifecycle tied to an `open` boolean — use `useFloatingAnchor` instead.
+See [useFloatingAnchor](?path=/docs/advanced-usefloatinganchor--docs).
+
+### Signature
+
+```ts
+positionFloating(
+  reference: HTMLElement,
+  floating:  HTMLElement,
+  options?:  PositionFloatingOptions,
+): Promise<FloatingPosition>
+```
+
+### `PositionFloatingOptions`
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>placement</code></td><td><code>FloatingPlacement</code></td><td><code>'bottom-start'</code></td><td>Preferred placement before flip / shift middleware runs. May resolve to a different side if the preferred side clips the viewport.</td></tr>
+    <tr><td><code>offset</code></td><td><code>number</code></td><td><code>4</code></td><td>Gap between the anchor and the floating element, in pixels.</td></tr>
+  </tbody>
+</table>
+
+### `FloatingPosition`
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>x</code></td><td><code>number</code></td><td>Distance from the inline-start viewport edge, in pixels.</td></tr>
+    <tr><td><code>y</code></td><td><code>number</code></td><td>Distance from the block-start viewport edge, in pixels.</td></tr>
+    <tr><td><code>placement</code></td><td><code>FloatingPlacement</code></td><td>The placement that was actually used (may differ from the requested one if flipped).</td></tr>
+  </tbody>
+</table>
+
+### `FloatingPlacement`
+
+A floating-ui placement string. Common values: `'bottom-start'`, `'bottom-end'`,
+`'top-start'`, `'top-end'`, `'right'`, `'left'`. The middleware will flip to the
+opposite side if the preferred side clips the viewport.
