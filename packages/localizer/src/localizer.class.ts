@@ -38,7 +38,7 @@ function resolveTimeZone(locale: Intl.Locale, input: string | undefined): string
   // 3. Browser/host default resolved time zone.
   if (input != null) return input
   const zones = (locale as { getTimeZones?: () => string[] }).getTimeZones?.()
-  if (zones?.length === 1) return zones[0]
+  if (zones?.length === 1) return zones[0]!
   return new Intl.DateTimeFormat().resolvedOptions().timeZone
 }
 
@@ -236,14 +236,26 @@ export abstract class Localizer<T = unknown> implements LocalizerContract {
     if (values.length === 0) {
       throw new RangeError('min() requires at least one value')
     }
-    return values.reduce((acc, cur) => (this.cmp(cur, acc) < 0 ? cur : acc))
+    let minIdx = 0
+    let minMs = this.toEpochMs(this.parse(values[0]!))
+    for (let i = 1; i < values.length; i++) {
+      const ms = this.toEpochMs(this.parse(values[i]!))
+      if (ms < minMs) { minMs = ms; minIdx = i }
+    }
+    return values[minIdx]!
   }
 
   max({ values }: { values: string[] }): string {
     if (values.length === 0) {
       throw new RangeError('max() requires at least one value')
     }
-    return values.reduce((acc, cur) => (this.cmp(cur, acc) > 0 ? cur : acc))
+    let maxIdx = 0
+    let maxMs = this.toEpochMs(this.parse(values[0]!))
+    for (let i = 1; i < values.length; i++) {
+      const ms = this.toEpochMs(this.parse(values[i]!))
+      if (ms > maxMs) { maxMs = ms; maxIdx = i }
+    }
+    return values[maxIdx]!
   }
 
   // ── week / visible-range ──────────────────────────────────────────────────────
@@ -336,17 +348,20 @@ export abstract class Localizer<T = unknown> implements LocalizerContract {
   }
 
   sortEvents<TEvent extends DateRange & { allDay?: boolean }>({ events }: { events: TEvent[] }): TEvent[] {
-    return [...events].sort((a, b) => {
-      const byStart = this.cmp(a.start, b.start)
-      if (byStart !== 0) {
-        return byStart
-      }
-      const allDayRank = (a.allDay ? 0 : 1) - (b.allDay ? 0 : 1)
-      if (allDayRank !== 0) {
-        return allDayRank
-      }
-      // Longer events first (later end wins the tie).
-      return this.cmp(b.end, a.end)
-    })
+    const annotated = events.map((event) => ({
+      event,
+      startMs: this.toEpochMs(this.parse(event.start)),
+      endMs: this.toEpochMs(this.parse(event.end)),
+    }))
+    return annotated
+      .sort((a, b) => {
+        const byStart = a.startMs < b.startMs ? -1 : a.startMs > b.startMs ? 1 : 0
+        if (byStart !== 0) return byStart
+        const allDayRank = (a.event.allDay ? 0 : 1) - (b.event.allDay ? 0 : 1)
+        if (allDayRank !== 0) return allDayRank
+        // Longer events first (later end wins the tie).
+        return b.endMs < a.endMs ? -1 : b.endMs > a.endMs ? 1 : 0
+      })
+      .map(({ event }) => event)
   }
 }

@@ -444,3 +444,441 @@ chose:
     </tr>
   </tbody>
 </table>
+
+---
+
+## Localizer methods
+
+Every localizer instance is available at `store.localizer` inside the calendar
+store. If you are building a custom view or component using `useCalendarContext()`,
+you can pull it out and use any of the methods below to do your own date math
+with the same engine the calendar uses internally.
+
+```ts
+const { store } = useCalendarContext()
+const { localizer } = store
+
+// Format a date for display
+localizer.format({ value: '2026-07-03T16:00:00Z', format: 'time' })
+// → "12:00 PM"  (in America/New_York)
+```
+
+Many methods accept a `unit` argument. The valid unit strings are:
+`'year'`, `'month'`, `'week'`, `'day'`, `'hour'`, `'minute'`, `'second'`, `'millisecond'`.
+
+---
+
+### Properties
+
+These read-only values tell you how the localizer was configured.
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description / Example</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>locale</code></td>
+      <td><code>Intl.Locale</code></td>
+      <td>The resolved locale object. <code>localizer.locale.toString() // "en-US"</code></td>
+    </tr>
+    <tr>
+      <td><code>timeZone</code></td>
+      <td><code>string</code></td>
+      <td>The configured IANA time zone. <code>localizer.timeZone // "America/New_York"</code></td>
+    </tr>
+    <tr>
+      <td><code>extendedZone</code></td>
+      <td><code>boolean</code></td>
+      <td>Whether RFC 9557 bracket notation is enabled. <code>localizer.extendedZone // false</code></td>
+    </tr>
+    <tr>
+      <td><code>output</code></td>
+      <td><code>'utc' | 'offset'</code></td>
+      <td>How the localizer serializes strings it writes. <code>localizer.output // "utc"</code></td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### Formatting
+
+Use these to turn a date string into something a person can read. `format` is
+either a named role string (like `'time'` or `'date'` — see the `formats`
+config option above for the full list) or a plain `Intl.DateTimeFormat` options
+object.
+
+<table>
+  <thead><tr><th>Method</th><th>Returns</th><th>Description / Example</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>format(&#123; value, format &#125;)</code></td>
+      <td><code>string</code></td>
+      <td>
+        Format a single date for display.<br />
+        <code>localizer.format(&#123; value: '2026-07-03T16:00:00Z', format: 'time' &#125;)</code><br />
+        <code>// "12:00 PM"</code>
+      </td>
+    </tr>
+    <tr>
+      <td><code>formatDateRange(&#123; start, end, format &#125;)</code></td>
+      <td><code>string</code></td>
+      <td>
+        Format a date span via <code>Intl.DateTimeFormat.formatRange</code>. The browser
+        collapses repeated parts automatically ("Jun 1 – 7" instead of "Jun 1 – Jun 7").
+        Use for date spans — not time-only displays.<br />
+        <code>localizer.formatDateRange(&#123; start: '2026-07-01', end: '2026-07-07', format: 'monthDay' &#125;)</code><br />
+        <code>// "Jul 1 – 7"</code>
+      </td>
+    </tr>
+    <tr>
+      <td><code>formatTimeRange(&#123; start, end, format &#125;)</code></td>
+      <td><code>string</code></td>
+      <td>
+        Format two times joined by " – ". Use for time-only displays where
+        <code>hour: '2-digit'</code> alignment matters.<br />
+        <code>localizer.formatTimeRange(&#123; start: '...T09:00:00Z', end: '...T10:30:00Z', format: 'time' &#125;)</code><br />
+        <code>// "09:00 – 10:30 AM"</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### Comparison
+
+All comparison methods accept `&#123; a, b &#125;` where `a` and `b` are date strings.
+When an optional `unit` is supplied, both strings are floored to that unit before
+comparing — so `eq(&#123; a, b, unit: 'day' &#125;)` returns `true` as long as both fall on
+the same calendar day, regardless of the time.
+
+<table>
+  <thead><tr><th>Method</th><th>Returns</th><th>Description / Example</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>lt(&#123; a, b &#125;)</code></td>
+      <td><code>boolean</code></td>
+      <td>
+        <code>a</code> is before <code>b</code>.<br />
+        <code>localizer.lt(&#123; a: '2026-07-01', b: '2026-07-03' &#125;) // true</code>
+      </td>
+    </tr>
+    <tr>
+      <td><code>lte(&#123; a, b &#125;)</code></td>
+      <td><code>boolean</code></td>
+      <td><code>a</code> is before or the same as <code>b</code>.</td>
+    </tr>
+    <tr>
+      <td><code>gt(&#123; a, b &#125;)</code></td>
+      <td><code>boolean</code></td>
+      <td><code>a</code> is after <code>b</code>.</td>
+    </tr>
+    <tr>
+      <td><code>gte(&#123; a, b &#125;)</code></td>
+      <td><code>boolean</code></td>
+      <td><code>a</code> is after or the same as <code>b</code>.</td>
+    </tr>
+    <tr>
+      <td><code>eq(&#123; a, b, unit? &#125;)</code></td>
+      <td><code>boolean</code></td>
+      <td>
+        <code>a</code> equals <code>b</code>. With <code>unit: 'day'</code>, true if both
+        land on the same calendar day.<br />
+        <code>localizer.eq(&#123; a: '2026-07-03T09:00:00Z', b: '2026-07-03T22:00:00Z', unit: 'day' &#125;) // true</code>
+      </td>
+    </tr>
+    <tr>
+      <td><code>neq(&#123; a, b &#125;)</code></td>
+      <td><code>boolean</code></td>
+      <td><code>a</code> does not equal <code>b</code>.</td>
+    </tr>
+    <tr>
+      <td><code>inRange(&#123; value, min, max, unit? &#125;)</code></td>
+      <td><code>boolean</code></td>
+      <td>
+        <code>value</code> falls between <code>min</code> and <code>max</code> (inclusive).<br />
+        <code>localizer.inRange(&#123; value: '2026-07-03', min: '2026-07-01', max: '2026-07-07', unit: 'day' &#125;) // true</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### Math
+
+Use these to move dates around, find boundaries, and measure distances.
+
+<table>
+  <thead><tr><th>Method</th><th>Returns</th><th>Description / Example</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>add(&#123; value, amount, unit &#125;)</code></td>
+      <td><code>string</code></td>
+      <td>
+        Add <code>amount</code> of <code>unit</code> to <code>value</code>. Use a negative
+        number to subtract.<br />
+        <code>localizer.add(&#123; value: '2026-07-03', amount: 7, unit: 'day' &#125;) // "2026-07-10T..."</code>
+      </td>
+    </tr>
+    <tr>
+      <td><code>startOf(&#123; value, unit &#125;)</code></td>
+      <td><code>string</code></td>
+      <td>
+        Floor to the start of <code>unit</code>.<br />
+        <code>localizer.startOf(&#123; value: '2026-07-03T14:30:00Z', unit: 'day' &#125;) // "2026-07-03T04:00:00Z"</code> (midnight in NYC)
+      </td>
+    </tr>
+    <tr>
+      <td><code>endOf(&#123; value, unit &#125;)</code></td>
+      <td><code>string</code></td>
+      <td>
+        Advance to the end of <code>unit</code> (the last millisecond of that period).<br />
+        <code>localizer.endOf(&#123; value: '2026-07-03T14:30:00Z', unit: 'day' &#125;) // "2026-07-04T03:59:59.999Z"</code> (end of day in NYC)
+      </td>
+    </tr>
+    <tr>
+      <td><code>ceil(&#123; value, unit &#125;)</code></td>
+      <td><code>string</code></td>
+      <td>
+        Round up to the next <code>unit</code> boundary. Returns the value unchanged if it already
+        falls exactly on a boundary.<br />
+        <code>localizer.ceil(&#123; value: '...T09:15:00Z', unit: 'hour' &#125;) // "...T10:00:00Z"</code>
+      </td>
+    </tr>
+    <tr>
+      <td><code>diff(&#123; a, b, unit &#125;)</code></td>
+      <td><code>number</code></td>
+      <td>
+        <code>a − b</code>, measured in <code>unit</code>, truncated toward zero.<br />
+        <code>localizer.diff(&#123; a: '2026-07-10', b: '2026-07-03', unit: 'day' &#125;) // 7</code>
+      </td>
+    </tr>
+    <tr>
+      <td><code>range(&#123; start, end, unit? &#125;)</code></td>
+      <td><code>string[]</code></td>
+      <td>
+        All step-boundary instants from <code>start</code> through <code>end</code>.
+        Default unit is <code>'day'</code>.<br />
+        <code>localizer.range(&#123; start: '2026-07-01', end: '2026-07-03' &#125;) // ["2026-07-01...", "2026-07-02...", "2026-07-03..."]</code>
+      </td>
+    </tr>
+    <tr>
+      <td><code>min(&#123; values &#125;)</code></td>
+      <td><code>string</code></td>
+      <td>
+        The earliest date in the array.<br />
+        <code>localizer.min(&#123; values: ['2026-07-10', '2026-07-03', '2026-07-07'] &#125;) // "2026-07-03..."</code>
+      </td>
+    </tr>
+    <tr>
+      <td><code>max(&#123; values &#125;)</code></td>
+      <td><code>string</code></td>
+      <td>
+        The latest date in the array.<br />
+        <code>localizer.max(&#123; values: ['2026-07-10', '2026-07-03', '2026-07-07'] &#125;) // "2026-07-10..."</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### Week helpers
+
+<table>
+  <thead><tr><th>Method</th><th>Returns</th><th>Description / Example</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>firstDayOfWeek()</code></td>
+      <td><code>number</code></td>
+      <td>
+        The configured first day of the week: <code>1</code> = Monday, <code>7</code> = Sunday.<br />
+        <code>localizer.firstDayOfWeek() // 7</code> (US default)
+      </td>
+    </tr>
+    <tr>
+      <td><code>startOfWeek(value)</code></td>
+      <td><code>string</code></td>
+      <td>
+        The first day of the week that contains <code>value</code>.<br />
+        <code>localizer.startOfWeek('2026-07-03') // "2026-06-28..."</code> (prior Sunday in a Sunday-start locale)
+      </td>
+    </tr>
+    <tr>
+      <td><code>firstVisibleDay(value)</code></td>
+      <td><code>string</code></td>
+      <td>
+        The first day shown on the month grid that contains <code>value</code> — the
+        Monday or Sunday that starts the first displayed week row, even if it falls
+        in the previous month.<br />
+        <code>localizer.firstVisibleDay('2026-07-15') // "2026-06-28..."</code>
+      </td>
+    </tr>
+    <tr>
+      <td><code>lastVisibleDay(value)</code></td>
+      <td><code>string</code></td>
+      <td>
+        The last day shown on the month grid — the Saturday or Sunday that ends the
+        last displayed week row, even if it falls in the next month.<br />
+        <code>localizer.lastVisibleDay('2026-07-15') // "2026-08-01..."</code>
+      </td>
+    </tr>
+    <tr>
+      <td><code>visibleDays(value)</code></td>
+      <td><code>string[]</code></td>
+      <td>
+        All days shown on the month grid — from <code>firstVisibleDay</code> through
+        <code>lastVisibleDay</code>. Typically 28–42 entries.<br />
+        <code>localizer.visibleDays('2026-07-15') // ["2026-06-28...", ..., "2026-08-01..."]</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### Slot math
+
+These are primarily used by the time-grid engine internally, but are available to
+custom view builders that need to work with the same slot coordinate system.
+
+<table>
+  <thead><tr><th>Method</th><th>Returns</th><th>Description / Example</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>minutes(value)</code></td>
+      <td><code>number</code></td>
+      <td>
+        The minute component (0–59) of <code>value</code> in the configured time zone.<br />
+        <code>localizer.minutes('2026-07-03T09:45:00Z') // 45</code>
+      </td>
+    </tr>
+    <tr>
+      <td><code>getMinutesFromMidnight(value)</code></td>
+      <td><code>number</code></td>
+      <td>
+        Wall-clock minutes elapsed since midnight in the configured time zone.<br />
+        <code>localizer.getMinutesFromMidnight('2026-07-03T13:30:00Z') // 570</code> (9:30 AM = 9×60+30 in NYC)
+      </td>
+    </tr>
+    <tr>
+      <td><code>getTotalMin(&#123; start, end &#125;)</code></td>
+      <td><code>number</code></td>
+      <td>
+        Real elapsed minutes between two instants (based on epoch time, not wall clock).<br />
+        <code>localizer.getTotalMin(&#123; start: '...T09:00:00Z', end: '...T10:30:00Z' &#125;) // 90</code>
+      </td>
+    </tr>
+    <tr>
+      <td><code>getSlotDate(&#123; date, minutesFromMidnight &#125;)</code></td>
+      <td><code>string</code></td>
+      <td>
+        The instant that corresponds to <code>minutesFromMidnight</code> wall-clock minutes
+        into the day of <code>date</code>, accounting for DST. Each call is rebuilt from midnight
+        rather than added cumulatively, so slot boundaries stay correct across a DST transition.<br />
+        <code>localizer.getSlotDate(&#123; date: '2026-07-03', minutesFromMidnight: 570 &#125;) // "2026-07-03T13:30:00Z"</code> (9:30 AM in NYC)
+      </td>
+    </tr>
+    <tr>
+      <td><code>daySpan(&#123; start, end &#125;)</code></td>
+      <td><code>number</code></td>
+      <td>
+        Whole calendar days from <code>start</code> to <code>end</code>.<br />
+        <code>localizer.daySpan(&#123; start: '2026-07-01', end: '2026-07-08' &#125;) // 7</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### Timezone / DST
+
+<table>
+  <thead><tr><th>Method</th><th>Returns</th><th>Description / Example</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>getTimezoneOffset(value)</code></td>
+      <td><code>number</code></td>
+      <td>
+        Minutes behind UTC at the instant of <code>value</code>, following the same
+        sign convention as JavaScript's <code>Date.getTimezoneOffset()</code>: positive
+        west of UTC, negative east.<br />
+        <code>localizer.getTimezoneOffset('2026-07-03T16:00:00Z') // 240</code> (America/New_York in EDT = UTC-4)
+      </td>
+    </tr>
+    <tr>
+      <td><code>getDstOffset(&#123; start, end &#125;)</code></td>
+      <td><code>number</code></td>
+      <td>
+        Change in UTC offset between <code>start</code> and <code>end</code>. Positive on a
+        spring-forward transition (+60 when clocks jump one hour forward); negative on a
+        fall-back transition (-60 when clocks fall back). Zero on any normal pair of instants.<br />
+        <code>localizer.getDstOffset(&#123; start: winterInstant, end: summerInstant &#125;) // 60</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### Event helpers
+
+<table>
+  <thead><tr><th>Method</th><th>Returns</th><th>Description / Example</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>isSameDate(&#123; a, b &#125;)</code></td>
+      <td><code>boolean</code></td>
+      <td>
+        Both instants fall on the same calendar day in the configured time zone.<br />
+        <code>localizer.isSameDate(&#123; a: '2026-07-03T09:00:00Z', b: '2026-07-03T23:00:00Z' &#125;) // true</code>
+      </td>
+    </tr>
+    <tr>
+      <td><code>startAndEndAreDateOnly(&#123; start, end &#125;)</code></td>
+      <td><code>boolean</code></td>
+      <td>
+        Both <code>start</code> and <code>end</code> are exactly at midnight (wall clock),
+        which indicates a date-only all-day event rather than a timed one.<br />
+        <code>localizer.startAndEndAreDateOnly(&#123; start: '2026-07-03T04:00:00Z', end: '2026-07-04T04:00:00Z' &#125;) // true</code> (midnight-to-midnight in NYC)
+      </td>
+    </tr>
+    <tr>
+      <td><code>continuesPrior(&#123; eventStart, rangeStart &#125;)</code></td>
+      <td><code>boolean</code></td>
+      <td>
+        The event started before the visible range (it continues in from a prior period).<br />
+        <code>localizer.continuesPrior(&#123; eventStart: '2026-06-30', rangeStart: '2026-07-01' &#125;) // true</code>
+      </td>
+    </tr>
+    <tr>
+      <td><code>continuesAfter(&#123; eventEnd, rangeEnd &#125;)</code></td>
+      <td><code>boolean</code></td>
+      <td>
+        The event ends after the visible range (it continues into a future period).<br />
+        <code>localizer.continuesAfter(&#123; eventEnd: '2026-07-08', rangeEnd: '2026-07-07' &#125;) // true</code>
+      </td>
+    </tr>
+    <tr>
+      <td><code>inEventRange(&#123; event, range &#125;)</code></td>
+      <td><code>boolean</code></td>
+      <td>
+        The event overlaps with <code>range</code> at all. A zero-length event is included
+        when it lands within <code>[range.start, range.end)</code>.<br />
+        <code>localizer.inEventRange(&#123; event: &#123; start: '2026-07-03', end: '2026-07-05' &#125;, range: &#123; start: '2026-07-01', end: '2026-07-07' &#125; &#125;) // true</code>
+      </td>
+    </tr>
+    <tr>
+      <td><code>sortEvents(&#123; events &#125;)</code></td>
+      <td><code>TEvent[]</code></td>
+      <td>
+        Sort an array of events: earliest start first, all-day events before timed ones
+        on the same day, longer events before shorter ones when start times tie.
+        Returns a new array; the original is not modified.<br />
+        <code>localizer.sortEvents(&#123; events: myEvents &#125;)</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
