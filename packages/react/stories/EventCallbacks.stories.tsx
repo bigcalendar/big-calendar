@@ -12,6 +12,7 @@ const meta: Meta = {
     onEventDoubleClick: fn(),
     onEventRightClick: fn(),
     onEventMiddleClick: fn(),
+    onRangeChange: fn(),
   },
 }
 export default meta

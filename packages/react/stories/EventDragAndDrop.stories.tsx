@@ -2,6 +2,7 @@ import { Views } from '@big-calendar/core'
 import type { ViewKey } from '@big-calendar/core'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useRef, useState } from 'react'
+import { fn } from 'storybook/test'
 import { Calendar, useCalendarDnd } from '../src'
 import type { DemoEvent } from './harness'
 import { CalendarStage, demoEvents } from './harness'
@@ -19,9 +20,10 @@ function DraggableCalendar() {
 type DndArgs = {
   view: ViewKey
   lockAllDayEvents: boolean
+  onRangeChange: (a: { range: { start: string; end: string }; view: ViewKey }) => void
 }
 
-function DndDemo({ view, lockAllDayEvents }: DndArgs) {
+function DndDemo({ view, lockAllDayEvents, onRangeChange }: DndArgs) {
   const [events, setEvents] = useState<DemoEvent[]>(demoEvents)
 
   const apply = ({
@@ -41,6 +43,7 @@ function DndDemo({ view, lockAllDayEvents }: DndArgs) {
       defaultView={view}
       events={events}
       draggableAccessor={lockAllDayEvents ? (e: DemoEvent) => !e.allDay : undefined}
+      onRangeChange={onRangeChange}
       onEventDrop={apply}
       onEventResize={apply}
     >
@@ -51,6 +54,7 @@ function DndDemo({ view, lockAllDayEvents }: DndArgs) {
 
 const meta: Meta = {
   title: 'Drag & Drop/Event Drag & Drop',
+  args: { onRangeChange: fn() },
 }
 export default meta
 

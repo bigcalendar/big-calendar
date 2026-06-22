@@ -238,7 +238,10 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       store.navigate({ direction: Navigate.NEXT })
       expect(onRangeChange).toHaveBeenCalledTimes(1)
       expect(onRangeChange).toHaveBeenLastCalledWith({
-        range: store.range.value,
+        range: {
+          start: localizer.startOf({ value: store.range.value.firstVisibleDay, unit: 'day' }),
+          end: localizer.endOf({ value: store.range.value.lastVisibleDay, unit: 'day' }),
+        },
         view: Views.WEEK,
       })
     })

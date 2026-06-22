@@ -135,6 +135,12 @@ export function useCalendar<TEvent = unknown, TResource = unknown>(
     store.setLocalizer({ localizer: props.localizer })
   }, [props.localizer, store])
 
+  // Layout algorithm: live prop changes recompute the time-grid view model
+  // without remounting (the signal is read inside the viewModel computed).
+  useEffect(() => {
+    store.dayLayoutAlgorithm.value = props.dayLayoutAlgorithm
+  }, [props.dayLayoutAlgorithm, store])
+
   // Data inputs always reflect the latest props.
   useEffect(() => {
     store.events.value = props.events ?? []
@@ -145,6 +151,19 @@ export function useCalendar<TEvent = unknown, TResource = unknown>(
   useEffect(() => {
     store.resources.value = props.resources
   }, [props.resources, store])
+
+  // Fire onRangeChange once after the initial mount so callers always receive
+  // the opening range without having to compute it themselves.
+  useEffect(() => {
+    const r = store.range.value
+    propsRef.current.onRangeChange?.({
+      range: {
+        start: store.localizer.startOf({ value: r.firstVisibleDay, unit: 'day' }),
+        end: store.localizer.endOf({ value: r.lastVisibleDay, unit: 'day' }),
+      },
+      view: store.view.value,
+    })
+  }, [store])
 
   // Tear down the store's internal subscriptions on unmount.
   useEffect(() => () => store.destroy(), [store])

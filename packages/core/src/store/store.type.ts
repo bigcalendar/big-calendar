@@ -1,6 +1,7 @@
 import type { LocalizerContract } from '@big-calendar/localizer'
 import type { ReadonlySignal, Signal } from '@preact/signals-core'
 import type { Accessors } from '../accessors/accessors.type'
+import type { DayLayoutAlgorithm, DayLayoutAlgorithmKey } from '../layout/layout.type'
 import type { EventId, ResourceId, ViewKey, VisibleRange } from '../types/calendar.type'
 import type { NavigateDirection } from '../constants/views.constant'
 import type {
@@ -209,6 +210,11 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    * so the static prop always wins when supplied.
    */
   readonly measuredWeekLimit: Signal<number>
+  /**
+   * The active day-layout algorithm for time-grid views. Writable so the React
+   * layer can sync prop changes without remounting the calendar.
+   */
+  readonly dayLayoutAlgorithm: Signal<DayLayoutAlgorithmKey | DayLayoutAlgorithm | undefined>
   /**
    * The ordered list of active view keys for this calendar instance. Derived from
    * `config.enabledViews` when supplied, or all built-in views plus any custom

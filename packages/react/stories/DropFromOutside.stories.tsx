@@ -3,6 +3,7 @@ import type { ViewKey } from '@big-calendar/core'
 import { EXTERNAL_MIME } from '@big-calendar/dnd'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useRef, useState } from 'react'
+import { fn } from 'storybook/test'
 import { Calendar, useCalendarDnd } from '../src'
 import type { DemoEvent } from './harness'
 import { CalendarStage, demoEvents } from './harness'
@@ -28,9 +29,9 @@ const PALETTE: { label: string; payload: Record<string, unknown> }[] = [
   },
 ]
 
-type DropArgs = { view: ViewKey }
+type DropArgs = { view: ViewKey; onRangeChange: (a: { range: { start: string; end: string }; view: ViewKey }) => void }
 
-function DropFromOutsideDemo({ view }: DropArgs) {
+function DropFromOutsideDemo({ view, onRangeChange }: DropArgs) {
   const [events, setEvents] = useState<DemoEvent[]>(demoEvents)
   const nextId = useRef(1000)
 
@@ -71,6 +72,7 @@ function DropFromOutsideDemo({ view }: DropArgs) {
         <CalendarStage
           defaultView={view}
           events={events}
+          onRangeChange={onRangeChange}
           onDropFromOutside={({ start, end, allDay }) =>
             setEvents((prev) => [
               ...prev,
@@ -87,6 +89,7 @@ function DropFromOutsideDemo({ view }: DropArgs) {
 
 const meta: Meta = {
   title: 'Drag & Drop/Drop from Outside',
+  args: { onRangeChange: fn() },
 }
 export default meta
 

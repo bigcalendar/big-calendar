@@ -1,6 +1,8 @@
 import { Views } from '@big-calendar/core'
+import type { ViewKey } from '@big-calendar/core'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useRef, useState } from 'react'
+import { fn } from 'storybook/test'
 import { Calendar, useCalendarDnd } from '../src'
 import type { DemoEvent } from './harness'
 import { CalendarStage, demoEvents } from './harness'
@@ -28,9 +30,10 @@ function DraggableCalendar() {
 
 type ResourceArgs = {
   layout: 'day' | 'week' | 'week-day-major'
+  onRangeChange: (a: { range: { start: string; end: string }; view: ViewKey }) => void
 }
 
-function ResourceDemo({ layout }: ResourceArgs) {
+function ResourceDemo({ layout, onRangeChange }: ResourceArgs) {
   const [events, setEvents] = useState<DemoEvent[]>(demoEvents)
 
   const apply = ({
@@ -63,6 +66,7 @@ function ResourceDemo({ layout }: ResourceArgs) {
       resourceLayout={resourceLayout}
       events={events}
       selectable
+      onRangeChange={onRangeChange}
       onEventDrop={apply}
       onEventResize={apply}
     >
@@ -73,6 +77,7 @@ function ResourceDemo({ layout }: ResourceArgs) {
 
 const meta: Meta = {
   title: 'Resources/With Resources',
+  args: { onRangeChange: fn() },
 }
 export default meta
 

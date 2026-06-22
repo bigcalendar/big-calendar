@@ -1,5 +1,5 @@
 import { Views } from '@big-calendar/core'
-import type { ViewKey } from '@big-calendar/core'
+import type { DayLayoutAlgorithmKey, ViewKey } from '@big-calendar/core'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useRef, useState } from 'react'
 import { fn } from 'storybook/test'
@@ -19,7 +19,7 @@ const overlappingBg: DemoEvent[] = [
   { id: 1006, title: 'Sprint focus', start: '2026-06-16T09:00:00.000Z', end: '2026-06-18T17:00:00.000Z' },
 ]
 
-type BgArgs = { view: ViewKey; overlapping: boolean }
+type BgArgs = { view: ViewKey; overlapping: boolean; dayLayoutAlgorithm: DayLayoutAlgorithmKey }
 
 type DndDropArgs = {
   event: DemoEvent
@@ -27,6 +27,15 @@ type DndDropArgs = {
   end: string
   allDay: boolean
   backgroundEvents?: DemoEvent[]
+}
+
+type DndBgArgs = {
+  view: ViewKey
+  overlapping: boolean
+  dayLayoutAlgorithm: DayLayoutAlgorithmKey
+  onEventDrop: (a: DndDropArgs) => void
+  onEventResize: (a: DndDropArgs) => void
+  onRangeChange: (a: { range: { start: string; end: string }; view: ViewKey }) => void
 }
 
 function DraggableCalendar() {
@@ -39,6 +48,13 @@ function DraggableCalendar() {
   )
 }
 
+const dayLayoutAlgorithmArgType = {
+  control: 'select',
+  options: ['overlap', 'no-overlap'] satisfies DayLayoutAlgorithmKey[],
+  description:
+    '`overlap` packs concurrent events side-by-side sharing the full column width. `no-overlap` gives each event its own column so nothing overlaps visually.',
+}
+
 const meta: Meta = {
   title: 'Background Events/With Background Events',
   args: {
@@ -48,6 +64,7 @@ const meta: Meta = {
     onSlotSelecting: fn(),
     onEventDrop: fn(),
     onEventResize: fn(),
+    onRangeChange: fn(),
   },
 }
 export default meta
@@ -66,7 +83,7 @@ export default meta
  * Switch to the **Day** view and navigate to Monday Jun 15 to see them side by side.
  */
 export const WithBackgroundEvents: StoryObj<BgArgs> = {
-  args: { view: Views.WEEK, overlapping: false },
+  args: { view: Views.WEEK, overlapping: false, dayLayoutAlgorithm: 'overlap' },
   argTypes: {
     view: {
       control: 'select',
@@ -78,13 +95,15 @@ export const WithBackgroundEvents: StoryObj<BgArgs> = {
       description:
         'Show two overlapping background events on Jun 15. They share the column width, same as timed events.',
     },
+    dayLayoutAlgorithm: dayLayoutAlgorithmArgType,
   },
-  render: ({ view, overlapping }) => (
+  render: ({ view, overlapping, dayLayoutAlgorithm }) => (
     <CalendarStage
       defaultView={view}
       views={[Views.WEEK, Views.WORK_WEEK, Views.DAY]}
       events={demoEvents}
       backgroundEvents={overlapping ? overlappingBg : singleDayBg}
+      dayLayoutAlgorithm={dayLayoutAlgorithm}
     >
       <Calendar />
     </CalendarStage>
@@ -100,8 +119,8 @@ export const WithBackgroundEvents: StoryObj<BgArgs> = {
  * intersect any background event. `onSlotSelecting` receives the same field
  * during a live drag.
  */
-export const SelectableWithBackgroundEvents: StoryObj<{ view: ViewKey; overlapping: boolean }> = {
-  args: { view: Views.WEEK, overlapping: false },
+export const SelectableWithBackgroundEvents: StoryObj<{ view: ViewKey; overlapping: boolean; dayLayoutAlgorithm: DayLayoutAlgorithmKey }> = {
+  args: { view: Views.WEEK, overlapping: false, dayLayoutAlgorithm: 'overlap' },
   argTypes: {
     view: {
       control: 'select',
@@ -112,14 +131,16 @@ export const SelectableWithBackgroundEvents: StoryObj<{ view: ViewKey; overlappi
       control: 'boolean',
       description: 'Use overlapping background events to show multiple entries in the payload.',
     },
+    dayLayoutAlgorithm: dayLayoutAlgorithmArgType,
   },
-  render: ({ view, overlapping, ...callbacks }) => (
+  render: ({ view, overlapping, dayLayoutAlgorithm, ...callbacks }) => (
     <CalendarStage
       defaultView={view}
       views={[Views.WEEK, Views.WORK_WEEK, Views.DAY]}
       events={demoEvents}
       backgroundEvents={overlapping ? overlappingBg : singleDayBg}
       selectable
+      dayLayoutAlgorithm={dayLayoutAlgorithm}
       {...callbacks}
     >
       <Calendar />
@@ -127,9 +148,7 @@ export const SelectableWithBackgroundEvents: StoryObj<{ view: ViewKey; overlappi
   ),
 }
 
-type DndBgArgs = { view: ViewKey; overlapping: boolean; onEventDrop: (a: DndDropArgs) => void; onEventResize: (a: DndDropArgs) => void }
-
-function DndWithBgDemo({ view, overlapping, onEventDrop, onEventResize }: DndBgArgs) {
+function DndWithBgDemo({ view, overlapping, dayLayoutAlgorithm, onEventDrop, onEventResize, onRangeChange }: DndBgArgs) {
   const [events, setEvents] = useState<DemoEvent[]>(demoEvents)
 
   const apply = ({ event, start, end, allDay }: DndDropArgs) =>
@@ -141,6 +160,8 @@ function DndWithBgDemo({ view, overlapping, onEventDrop, onEventResize }: DndBgA
       views={[Views.WEEK, Views.WORK_WEEK, Views.DAY]}
       events={events}
       backgroundEvents={overlapping ? overlappingBg : singleDayBg}
+      dayLayoutAlgorithm={dayLayoutAlgorithm}
+      onRangeChange={onRangeChange}
       onEventDrop={(args) => { onEventDrop(args); apply(args) }}
       onEventResize={(args) => { onEventResize(args); apply(args) }}
     >
@@ -160,7 +181,7 @@ function DndWithBgDemo({ view, overlapping, onEventDrop, onEventResize }: DndBgA
  * keys to move, Shift+arrows to resize, Enter to commit.
  */
 export const DragAndDropWithBackgroundEvents: StoryObj<DndBgArgs> = {
-  args: { view: Views.WEEK, overlapping: false },
+  args: { view: Views.WEEK, overlapping: false, dayLayoutAlgorithm: 'overlap' },
   argTypes: {
     view: {
       control: 'select',
@@ -171,6 +192,7 @@ export const DragAndDropWithBackgroundEvents: StoryObj<DndBgArgs> = {
       control: 'boolean',
       description: 'Switch to the overlapping background event set.',
     },
+    dayLayoutAlgorithm: dayLayoutAlgorithmArgType,
   },
   render: (args) => <DndWithBgDemo {...args} />,
 }
