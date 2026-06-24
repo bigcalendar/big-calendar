@@ -243,6 +243,19 @@ These props control the Week, Work Week, and Day views. They have no effect on t
       </td>
     </tr>
     <tr>
+      <td><code>scrollToTime</code></td>
+      <td><code>&#123; hour: number; minute?: number &#125;</code></td>
+      <td>Current time</td>
+      <td>
+        The wall-clock time the time grid scrolls to when it first loads.
+        When omitted, the grid scrolls to the current time in the calendar's
+        configured time zone — keeping "now" in view without any extra work.
+        Pass a fixed value like <code>&#123; hour: 8 &#125;</code> to always open at
+        8:00 AM regardless of the time of day. The value is read once on mount;
+        changing it after the calendar has loaded has no effect.
+      </td>
+    </tr>
+    <tr>
       <td><code>dayLayoutAlgorithm</code></td>
       <td><code>'overlap' | 'no-overlap' | Function</code></td>
       <td><code>'overlap'</code></td>

@@ -1,4 +1,5 @@
 import type { CSSProperties, FocusEvent, KeyboardEvent } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useCalendarContext } from '../CalendarProvider'
 import { dayCountStyle, slotGroupStyle } from '../geometryStyles'
 import { useEventRoving } from '../useEventRoving'
@@ -92,13 +93,59 @@ export function useTimeGridView<TEvent = unknown>(): UseTimeGridViewReturn<TEven
   const eventRoving = useEventRoving()
   const keyboardDnd = useKeyboardDnd<TEvent>({ mode: 'time' })
 
+  // Capture the container element so the scroll effect can access it imperatively.
+  const containerEl = useRef<HTMLElement | null>(null)
+  const composedRef = useCallback(
+    (node: HTMLElement | null) => {
+      containerEl.current = node
+      eventRoving.containerRef(node)
+    },
+    [eventRoving.containerRef],
+  )
+
+  // Capture mount-time values in a ref so the effect runs exactly once with
+  // stable deps while still seeing the initial grid and store state.
+  const scrollSetup = useRef({ grid, store })
+  scrollSetup.current = { grid, store }
+
+  useEffect(() => {
+    const { grid: g, store: s } = scrollSetup.current
+    const el = containerEl.current
+    if (el == null || g == null) return
+
+    const firstCol =
+      g.columns[0] ??
+      g.resources?.[0]?.columns[0] ??
+      g.dayGroups?.[0]?.cells[0]?.column
+    if (firstCol == null) return
+
+    const colEl = el.querySelector<HTMLElement>('.bc-day-column')
+    if (colEl == null) return
+    const colHeight = colEl.offsetHeight
+    if (colHeight === 0) return
+
+    const dayStartMin = s.localizer.getMinutesFromMidnight(firstCol.min)
+    const totalMin = s.localizer.getTotalMin({ start: firstCol.min, end: firstCol.max })
+    if (totalMin === 0) return
+
+    const targetMin =
+      s.scrollToTime != null
+        ? s.scrollToTime.hour * 60 + (s.scrollToTime.minute ?? 0)
+        : s.localizer.getMinutesFromMidnight(s.getNow())
+
+    const fraction = Math.max(0, Math.min(1, (targetMin - dayStartMin) / totalMin))
+    if (typeof el.scrollTo === 'function') {
+      el.scrollTo({ top: Math.round(fraction * colHeight), behavior: 'instant' })
+    }
+  }, [])
+
   return {
     grid,
     announcement: keyboardDnd.announcement,
     announcer: { className: 'bc-sr-only', role: 'status' as const, 'aria-live': 'polite' as const },
     root: {
       className: computeRootClassName(grid),
-      ref: eventRoving.containerRef,
+      ref: composedRef,
       onKeyDownCapture: keyboardDnd.onKeyDownCapture,
       onKeyDown: eventRoving.onKeyDown,
       onFocusCapture: eventRoving.onFocusCapture,

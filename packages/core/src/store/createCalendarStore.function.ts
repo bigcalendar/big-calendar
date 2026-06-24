@@ -483,6 +483,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     getNow,
     step,
     timeslots,
+    scrollToTime: config.scrollToTime,
     selectable,
     longPressThreshold,
     isDraggable,

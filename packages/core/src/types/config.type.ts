@@ -82,6 +82,13 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
    * Events that run past this time are clipped at the bottom.
    */
   max?: PlainTimeInput | undefined
+  /**
+   * The wall-clock time the time grid scrolls to on initial load.
+   * Defaults to the current time in the calendar's configured time zone, keeping
+   * "now" in view without any additional configuration.
+   * Example: `{ hour: 8 }` scrolls to 8:00 AM on load regardless of the current time.
+   */
+  scrollToTime?: PlainTimeInput | undefined
   /** Day-layout algorithm for overlapping timed events: a built-in key or a custom fn. Defaults to `overlap`. */
   dayLayoutAlgorithm?: DayLayoutAlgorithmKey | DayLayoutAlgorithm | undefined
   /** Max event rows per week in the month grid before events overflow into "+N more". Defaults to unlimited. */

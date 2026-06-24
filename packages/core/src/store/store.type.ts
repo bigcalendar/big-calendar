@@ -3,6 +3,7 @@ import type { ReadonlySignal, Signal } from '@preact/signals-core'
 import type { Accessors } from '../accessors/accessors.type'
 import type { DayLayoutAlgorithm, DayLayoutAlgorithmKey } from '../layout/layout.type'
 import type { EventId, ResourceId, ViewKey, VisibleRange } from '../types/calendar.type'
+import type { PlainTimeInput } from '../types/config.type'
 import type { NavigateDirection } from '../constants/views.constant'
 import type {
   SelectableMode,
@@ -244,6 +245,11 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    * {@link CalendarStore.step} when an adapter rebuilds slot metrics.
    */
   readonly timeslots: number
+  /**
+   * The time to scroll to on initial load (`config.scrollToTime`). `undefined`
+   * means scroll to the current time in the calendar's configured time zone.
+   */
+  readonly scrollToTime: PlainTimeInput | undefined
   /**
    * Resolved slot-selection mode (`config.selectable`, default `false`). Adapters
    * read it to decide whether to attach selection handlers at all.

@@ -1,7 +1,7 @@
 import { Views } from '@big-calendar/core'
 import type { CalendarStore } from '@big-calendar/core'
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import { beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CalendarProvider, useCalendarContext } from '../CalendarProvider'
 import type { CalendarProviderProps } from '../CalendarProvider'
 import type { TimeEventProps } from '../components.type'
@@ -925,6 +925,68 @@ describe.each(LOCALIZER_CASES)('TimeGridView keyboard DnD [$name]', ({ create })
       expect(container.querySelector('.bc-drag-preview')).not.toBeNull()
       act(() => store.clearDragPreview())
       expect(container.querySelector('.bc-drag-preview')).toBeNull()
+    })
+  })
+
+  describe('scrollToTime', () => {
+    let scrollTo: ReturnType<typeof vi.fn>
+
+    beforeEach(() => {
+      scrollTo = vi.fn()
+      // JSDOM does not define scrollTo on HTMLElement — add it directly.
+      Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+        configurable: true, writable: true, value: scrollTo,
+      })
+      // JSDOM does not implement layout so offsetHeight is always 0.
+      // Return 1440 for .bc-day-column to simulate a 1px-per-minute column.
+      Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+        configurable: true,
+        get() {
+          return (this as HTMLElement).classList.contains('bc-day-column') ? 1440 : 0
+        },
+      })
+    })
+
+    afterEach(() => {
+      // Both properties were added only for this suite — delete them entirely.
+      delete (HTMLElement.prototype as Record<string, unknown>).scrollTo
+      delete (HTMLElement.prototype as Record<string, unknown>).offsetHeight
+    })
+
+    it('scrolls to current time when scrollToTime is not set', () => {
+      // NOW = 2026-06-15T12:00:00.000Z → 12:00 in UTC → 720 min from midnight.
+      // Full 24-hour column (1440 px) → fraction 720/1440 = 0.5 → scrollTop 720.
+      renderGrid()
+      expect(scrollTo).toHaveBeenCalledTimes(1)
+      expect(scrollTo).toHaveBeenCalledWith({ top: 720, behavior: 'instant' })
+    })
+
+    it('scrolls to the configured hour when scrollToTime is set', () => {
+      // scrollToTime { hour: 8 } → 480 min. Full 24h column → 480 px.
+      renderGrid({ scrollToTime: { hour: 8 } })
+      expect(scrollTo).toHaveBeenCalledTimes(1)
+      expect(scrollTo).toHaveBeenCalledWith({ top: 480, behavior: 'instant' })
+    })
+
+    it('scrolls to the configured hour + minute', () => {
+      // scrollToTime { hour: 8, minute: 30 } → 510 min → 510 px.
+      renderGrid({ scrollToTime: { hour: 8, minute: 30 } })
+      expect(scrollTo).toHaveBeenCalledTimes(1)
+      expect(scrollTo).toHaveBeenCalledWith({ top: 510, behavior: 'instant' })
+    })
+
+    it('clamps to top when scrollToTime is before min', () => {
+      // min: { hour: 8 } → visible window 08:00–24:00 (960 min).
+      // scrollToTime { hour: 6 } is before the window → clamped to top → scrollTop 0.
+      renderGrid({ min: { hour: 8 }, scrollToTime: { hour: 6 } })
+      expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'instant' })
+    })
+
+    it('clamps to bottom when scrollToTime is after max', () => {
+      // max: { hour: 18 } → visible window 00:00–18:00 (1080 min).
+      // scrollToTime { hour: 20 } is after the window → clamped to bottom → scrollTop 1440.
+      renderGrid({ max: { hour: 18 }, scrollToTime: { hour: 20 } })
+      expect(scrollTo).toHaveBeenCalledWith({ top: 1440, behavior: 'instant' })
     })
   })
 })

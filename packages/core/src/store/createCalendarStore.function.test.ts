@@ -384,6 +384,15 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
       expect(custom.longPressThreshold).toBe(800)
     })
 
+    it('exposes scrollToTime (undefined by default, overridable)', () => {
+      const base = createCalendarStore<Event>({ localizer, date: monday, view: Views.DAY })
+      expect(base.scrollToTime).toBeUndefined()
+      const custom = createCalendarStore<Event>({ localizer, date: monday, view: Views.DAY, scrollToTime: { hour: 8 } })
+      expect(custom.scrollToTime).toEqual({ hour: 8 })
+      const withMinute = createCalendarStore<Event>({ localizer, date: monday, view: Views.DAY, scrollToTime: { hour: 9, minute: 30 } })
+      expect(withMinute.scrollToTime).toEqual({ hour: 9, minute: 30 })
+    })
+
     it('is disabled by default (no selectable)', () => {
       const onSlotSelect = vi.fn()
       const onSlotClick = vi.fn()

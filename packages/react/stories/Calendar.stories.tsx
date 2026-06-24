@@ -67,6 +67,41 @@ export const Standard: StoryObj<{
 }
 
 /**
+ * The time grid scrolls to a specific time on load. When `scrollToTime` is
+ * omitted the calendar defaults to the **current time** in the configured
+ * time zone — the behavior you see here. Pass a fixed value like
+ * `{ hour: 8 }` to always open at the same hour regardless of when the page
+ * loads.
+ *
+ * Use the **Controls** panel to change the hour and observe the grid jumping
+ * to that position. The calendar remounts on each change because `scrollToTime`
+ * is read once at mount and is not reactive.
+ */
+export const ScrollToTime: StoryObj<{ scrollToHour: number }> = {
+  args: { scrollToHour: new Date().getHours() },
+  argTypes: {
+    scrollToHour: {
+      control: { type: 'number', min: 0, max: 23 },
+      description:
+        'Hour the time grid scrolls to on load (0–23). ' +
+        'Passed as `scrollToTime: { hour }`. Defaults to the current hour.',
+    },
+  },
+  render: ({ scrollToHour }) => {
+    const scrollToTime: PlainTimeInput = { hour: scrollToHour }
+    return (
+      <CalendarStage
+        key={String(scrollToHour)}
+        defaultView={Views.WEEK}
+        scrollToTime={scrollToTime}
+      >
+        <Calendar />
+      </CalendarStage>
+    )
+  },
+}
+
+/**
  * Use `min` and `max` to restrict the visible time window in the Week, Work
  * Week, and Day views. Both props accept a `{ hour, minute? }` object where
  * `hour` is 0–23 and `minute` defaults to 0.
