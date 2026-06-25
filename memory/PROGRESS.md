@@ -20,7 +20,7 @@
 
 ## ⚠ NEXT TASK
 
-**Phase 8 — 8-1 rename-imports transform.** Start here: `packages/codemods/src/transforms/rename-imports.ts`, jscodeshift `tsx` parser, replaces all `react-big-calendar` imports with `@big-calendar/react`. Handles `.js .jsx .ts .tsx`. Then continue 8-2 through 8-8 CLI in order.
+**Phase 8 — 8-2 merge-accessors transform.** Next: `packages/codemods/src/transforms/merge-accessors.ts`, jscodeshift `tsx` parser, collapses 11 `*Accessor` props on `<Calendar>` into a single `accessors={{ … }}` object prop. Then continue 8-3 through 8-8 CLI in order.
 
 ---
 
@@ -30,7 +30,7 @@ Transforms: jscodeshift `tsx` parser handles `.js .jsx .ts .tsx`. All live in `p
 
 | # | Task | Status |
 |---|---|---|
-| 8-1 | `rename-imports`: `react-big-calendar` → `@big-calendar/react` | [ ] |
+| 8-1 | `rename-imports`: `react-big-calendar` → `@big-calendar/react` | [x] |
 | 8-2 | `merge-accessors`: 11 `*Accessor` props → `accessors={{ … }}` object | [ ] |
 | 8-3 | `rename-callbacks`: `onSelectEvent` → `onEventClick`, `onDoubleClickEvent` → `onEventDoubleClick` | [ ] |
 | 8-4 | `rename-props`: misc prop renames (`resourceGroupingLayout` → `resourceLayout`, etc.) | [ ] |
