@@ -22,13 +22,15 @@ interface Event {
   title?: string
   start: string
   end: string
+  draggable?: boolean
+  resizable?: boolean
 }
 
 const focus = '2026-06-15'
 const NOW = '2026-06-15T12:00:00.000Z'
 const events: Event[] = [
-  { id: 1, title: 'Standup', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' },
-  { id: 2, title: 'Review', start: '2026-06-15T11:00:00.000Z', end: '2026-06-15T12:00:00.000Z' },
+  { id: 1, title: 'Standup', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z', draggable: true, resizable: true },
+  { id: 2, title: 'Review', start: '2026-06-15T11:00:00.000Z', end: '2026-06-15T12:00:00.000Z', draggable: true, resizable: true },
   // bare event: no id/title → exercises the accessor fallbacks
   { start: '2026-06-15T13:00:00.000Z', end: '2026-06-15T14:00:00.000Z' },
 ]
@@ -336,7 +338,7 @@ describe.each(LOCALIZER_CASES)('MonthView [$name]', ({ create }) => {
     it('splits the handles across week rows: start on the first row, end on the last', () => {
       // Jun 19 (Fri) → Jun 23 (Tue) spans week rows Jun14–20 and Jun21–27.
       const crossWeek: Event[] = [
-        { id: 9, title: 'Trip', start: '2026-06-19T00:00:00.000Z', end: '2026-06-23T23:59:59.999Z' },
+        { id: 9, title: 'Trip', start: '2026-06-19T00:00:00.000Z', end: '2026-06-23T23:59:59.999Z', draggable: true, resizable: true },
       ]
       const { container } = renderMonthWithDnd({ events: crossWeek })
       const starts = container.querySelectorAll('[data-bc-resize="start"]')
@@ -353,7 +355,7 @@ describe.each(LOCALIZER_CASES)('MonthView [$name]', ({ create }) => {
     })
 
     it('omits resize handles when the event is locked from resizing', () => {
-      const { container } = renderMonthWithDnd({ resizableAccessor: () => false })
+      const { container } = renderMonthWithDnd({ accessors: { resizable: () => false } })
       expect(container.querySelector('[data-bc-resize]')).toBeNull()
     })
 
@@ -423,7 +425,7 @@ describe.each(LOCALIZER_CASES)('MonthView keyboard DnD [$name]', ({ create }) =>
     localizer = await create()
   })
 
-  const one: Event[] = [{ id: 1, title: 'Standup', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' }]
+  const one: Event[] = [{ id: 1, title: 'Standup', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z', draggable: true, resizable: true }]
 
   function renderMonth(extra?: Partial<CalendarProviderProps<Event>>) {
     return render(
@@ -537,7 +539,7 @@ describe.each(LOCALIZER_CASES)('MonthView keyboard DnD [$name]', ({ create }) =>
     // Use a 2-week event so the end has room to shrink by 7 days without clamping to start.
     // The event spans 2 calendar weeks so it renders as 2 segments; grab the first one.
     const twoWeek: Event[] = [
-      { id: 1, title: 'Standup', start: '2026-06-15T09:00:00.000Z', end: '2026-06-22T10:00:00.000Z' },
+      { id: 1, title: 'Standup', start: '2026-06-15T09:00:00.000Z', end: '2026-06-22T10:00:00.000Z', draggable: true, resizable: true },
     ]
     render(
       <CalendarProvider<Event>

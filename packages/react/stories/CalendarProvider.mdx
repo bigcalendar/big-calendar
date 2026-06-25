@@ -428,22 +428,24 @@ Drag-and-drop requires the optional `@big-calendar/dnd` package. Install it sepa
   <thead><tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
   <tbody>
     <tr>
-      <td><code>draggableAccessor</code></td>
+      <td><code>accessors.draggable</code></td>
       <td><code>string | Function</code></td>
-      <td>All events</td>
+      <td>reads <code>event.draggable</code></td>
       <td>
-        Controls which events can be dragged. Pass a string to read a boolean field from each
-        event object, or a function <code>(event) =&gt; boolean</code> for custom logic. When
-        omitted, every event is draggable. Return <code>false</code> to lock an event in place.
+        Controls which events can be dragged. Defaults to reading the <code>draggable</code>
+        field from each event. An absent or falsy field means the event is not draggable
+        (opt-in). Override with a string key or a function <code>(event) =&gt; boolean</code>.
+        Configured via the <code>accessors</code> prop alongside the other field accessors.
       </td>
     </tr>
     <tr>
-      <td><code>resizableAccessor</code></td>
+      <td><code>accessors.resizable</code></td>
       <td><code>string | Function</code></td>
-      <td>All events</td>
+      <td>reads <code>event.resizable</code></td>
       <td>
-        Same as <code>draggableAccessor</code> but controls whether an event shows resize
-        handles. Return <code>false</code> to prevent resizing a specific event.
+        Controls whether an event shows resize handles. Defaults to reading the
+        <code>resizable</code> field. An absent or falsy field hides resize handles (opt-in).
+        Configured via the <code>accessors</code> prop.
       </td>
     </tr>
   </tbody>
@@ -485,7 +487,7 @@ For a full walkthrough see <LinkTo title="Resources/Overview" story="docs">Resou
 
 ## Accessors
 
-By default, Big Calendar looks for `title`, `start`, `end`, `allDay`, and `resource` fields on each event object. If your data uses different field names, supply an `accessors` object to map them.
+By default, Big Calendar looks for `title`, `start`, `end`, `allDay`, `resource`, `type`, and `resourceType` fields on each event or resource object, and treats every event as draggable and resizable. If your data uses different field names — or you want to lock specific events from being moved or resized — supply an `accessors` object to override the defaults.
 
 <table>
   <thead><tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
@@ -515,7 +517,7 @@ By default, Big Calendar looks for `title`, `start`, `end`, `allDay`, and `resou
 >
 ```
 
-The full list of overridable accessors: `title`, `start`, `end`, `allDay`, `resource`, `id`.
+The full list of overridable accessors: `title`, `start`, `end`, `allDay`, `resource`, `id`, `tooltip`, `resourceId`, `resourceTitle`, `type`, `resourceType`, `draggable`, `resizable`.
 
 ---
 

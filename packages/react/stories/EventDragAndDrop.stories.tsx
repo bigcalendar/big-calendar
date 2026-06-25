@@ -42,7 +42,7 @@ function DndDemo({ view, lockAllDayEvents, onRangeChange }: DndArgs) {
     <CalendarStage
       defaultView={view}
       events={events}
-      draggableAccessor={lockAllDayEvents ? (e: DemoEvent) => !e.allDay : undefined}
+      accessors={lockAllDayEvents ? { draggable: (e: DemoEvent) => !e.allDay } : undefined}
       onRangeChange={onRangeChange}
       onEventDrop={apply}
       onEventResize={apply}
@@ -67,7 +67,7 @@ export default meta
  *
  * Use the **Controls** panel to switch between the month grid (whole-day moves)
  * and the time-grid views (slot-snapping moves + resize handles). Toggle
- * **Lock all-day events** to see `draggableAccessor` prevent picks on all-day events
+ * **Lock all-day events** to see `accessors.draggable` prevent picks on all-day events
  * while timed events still move.
  */
 export const EventDragAndDrop: StoryObj<DndArgs> = {
@@ -82,7 +82,7 @@ export const EventDragAndDrop: StoryObj<DndArgs> = {
     lockAllDayEvents: {
       control: 'boolean',
       description:
-        'Pass a draggableAccessor that returns false for all-day events, preventing them from being picked up.',
+        'Set accessors.draggable to return false for all-day events, preventing them from being picked up.',
     },
   },
   render: (args) => <DndDemo {...args} />,

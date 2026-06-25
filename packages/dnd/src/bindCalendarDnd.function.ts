@@ -13,9 +13,9 @@ import type { EventId, EventTransfer, MoveMode, ResizeEdge, ResourceId } from '@
 export interface DndStore<TEvent> {
   /** Resolve an event by its accessor id (the value read from `data-bc-event`). */
   getEvent(args: { id: EventId }): TEvent | undefined
-  /** Whether the event may be dragged (`config.draggableAccessor`). */
+  /** Whether the event may be dragged (`config.accessors.draggable`). */
   isDraggable(event: TEvent): boolean
-  /** Whether the event may be resized (`config.resizableAccessor`). */
+  /** Whether the event may be resized (`config.accessors.resizable`). */
   isResizable(event: TEvent): boolean
   /** Commit a move drop: core recomputes the bounds and fires `onEventDrop`. */
   moveEvent(args: {
@@ -341,7 +341,7 @@ export function bindCalendarDnd<TEvent>({ root, store, mode }: BindCalendarDndOp
           let target: string | null = null
           if (slots.length === 1) {
             // Single-day stacked layout: only one possible day.
-            target = slots[0].getAttribute(ALLDAY_TARGET_ATTR)
+            target = slots[0]?.getAttribute(ALLDAY_TARGET_ATTR) ?? null
           } else {
             for (const slot of slots) {
               const rect = slot.getBoundingClientRect()

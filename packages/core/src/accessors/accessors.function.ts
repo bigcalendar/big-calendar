@@ -48,6 +48,10 @@ export const DEFAULT_ACCESSORS = {
   resource: 'resourceId',
   resourceId: 'id',
   resourceTitle: 'title',
+  type: 'type',
+  resourceType: 'resourceType',
+  draggable: 'draggable',
+  resizable: 'resizable',
 } as const satisfies Record<keyof Accessors<unknown, unknown>, string>
 
 /**

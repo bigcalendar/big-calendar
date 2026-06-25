@@ -50,14 +50,13 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
   const timeslots = config.timeslots ?? 2
   const selectable = config.selectable ?? false
   const longPressThreshold = config.longPressThreshold ?? 500
-  // Resolved drag predicate: every event is draggable unless an accessor opts out.
-  const getDraggable = config.draggableAccessor ? wrapAccessor(config.draggableAccessor) : null
-  const isDraggable = (event: TEvent): boolean =>
-    getDraggable ? (getDraggable(event) ?? true) : true
-  // Resolved resize predicate: every event is resizable unless an accessor opts out.
-  const getResizable = config.resizableAccessor ? wrapAccessor(config.resizableAccessor) : null
-  const isResizable = (event: TEvent): boolean =>
-    getResizable ? (getResizable(event) ?? true) : true
+  // Resolved drag predicate: event must have a truthy draggable field (or a function
+  // returning true). Absent field resolves to null → false (opt-in, not opt-out).
+  const getDraggable = wrapAccessor(accessors.draggable)
+  const isDraggable = (event: TEvent): boolean => !!getDraggable(event)
+  // Resolved resize predicate: same opt-in pattern as draggable.
+  const getResizable = wrapAccessor(accessors.resizable)
+  const isResizable = (event: TEvent): boolean => !!getResizable(event)
   const getEventId = wrapAccessor(accessors.id)
   const findEvent = (id: EventId): TEvent | undefined =>
     events.value.find((candidate) => {

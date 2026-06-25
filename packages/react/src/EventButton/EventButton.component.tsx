@@ -93,7 +93,7 @@ export default function EventButton<TEvent>({
   // Resize handles render only when DnD is wired AND the event allows resize.
   const edges: readonly ResizeEdge[] = resizeEdges != null && dndActive && store.isResizable(event) ? resizeEdges : []
   // Draggable class enables the grab cursor; shown only when DnD is active and the
-  // event opts in (or opts in by default via the draggableAccessor).
+  // event opts in (or opts in by default via accessors.draggable).
   const isDraggable = dndActive && store.isDraggable(event)
 
   // A pending single-click timer; a double-click cancels it before it fires.

@@ -14,6 +14,8 @@ interface Event {
   start: string
   end: string
   allDay?: boolean
+  draggable?: boolean
+  resizable?: boolean
 }
 
 const focus = '2026-06-15'
@@ -442,7 +444,7 @@ describe.each(LOCALIZER_CASES)('TimeGridView keyboard DnD [$name]', ({ create })
   })
 
   const timed: Event[] = [
-    { id: 1, title: 'Standup', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' },
+    { id: 1, title: 'Standup', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z', draggable: true, resizable: true },
     { id: 3, title: 'Holiday', allDay: true, ...allDayBounds },
   ]
 
@@ -949,8 +951,8 @@ describe.each(LOCALIZER_CASES)('TimeGridView keyboard DnD [$name]', ({ create })
 
     afterEach(() => {
       // Both properties were added only for this suite — delete them entirely.
-      delete (HTMLElement.prototype as Record<string, unknown>).scrollTo
-      delete (HTMLElement.prototype as Record<string, unknown>).offsetHeight
+      delete (HTMLElement.prototype as unknown as Record<string, unknown>).scrollTo
+      delete (HTMLElement.prototype as unknown as Record<string, unknown>).offsetHeight
     })
 
     it('scrolls to current time when scrollToTime is not set', () => {

@@ -24,9 +24,11 @@ interface Event {
   title: string
   start: string
   end: string
+  draggable?: boolean
+  resizable?: boolean
 }
 
-const event: Event = { id: 1, title: 'Standup', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' }
+const event: Event = { id: 1, title: 'Standup', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z', draggable: true, resizable: true }
 const DOUBLE_CLICK_MS = 250
 
 // One localizer is enough — EventButton exercises no date formatting itself.
@@ -257,7 +259,7 @@ describe('EventButton', () => {
   })
 
   it('omits resize handles when the event is not resizable', () => {
-    const container = renderWithHandles({ resizableAccessor: () => false })
+    const container = renderWithHandles({ accessors: { resizable: () => false } })
     expect(container.querySelector('[data-bc-resize]')).toBeNull()
   })
 
@@ -277,7 +279,7 @@ describe('EventButton', () => {
   })
 
   it('omits bc-event-draggable class when the event is not draggable', () => {
-    const container = renderWithHandles({ draggableAccessor: () => false })
+    const container = renderWithHandles({ accessors: { draggable: () => false } })
     expect(container.querySelector('.bc-event-draggable')).toBeNull()
   })
 })

@@ -138,17 +138,26 @@ See the <LinkTo title="Background Events/With Background Events" story="Drag And
 
 ## Locking events
 
-Use `draggableAccessor` to control which events can be dragged, and `resizableAccessor` for which can be resized. Each takes a field name or a function:
+Dragging and resizing are **opt-in** by default. Big Calendar reads `event.draggable` and `event.resizable` fields — an absent or falsy value locks the event in place. Set both fields to `true` on any event you want users to be able to move or resize:
+
+```ts
+{ id: 1, title: 'Team sync', start: '…', end: '…', draggable: true, resizable: true }
+{ id: 2, title: 'All-hands',  start: '…', end: '…' } // no fields → locked
+```
+
+Override the field names or use a function via `accessors.draggable` / `accessors.resizable`:
 
 ```tsx
 <CalendarProvider
-  draggableAccessor={(e) => !e.locked}
-  resizableAccessor={(e) => !e.fixed}
+  accessors={{
+    draggable: (e) => !e.locked,   // function: derive from any property
+    resizable: 'canResize',        // string: read a different field name
+  }}
   ...
 />
 ```
 
-An event returning `false` from `draggableAccessor` cannot be picked up. A `false` from `resizableAccessor` hides its resize handles.
+An event resolving to `false` from `accessors.draggable` cannot be picked up. A `false` from `accessors.resizable` hides its resize handles.
 
 ## Promoting a timed event to all-day
 

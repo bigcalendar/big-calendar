@@ -40,4 +40,12 @@ export interface Accessors<TEvent, TResource> {
   resourceId: Accessor<TResource, ResourceId>
   /** A resource object's display title (v1 `resourceTitleAccessor`). */
   resourceTitle: Accessor<TResource, string>
+  /** Optional event type label (e.g. `'meeting'`, `'holiday'`). Returns `null` when the field is absent. */
+  type: Accessor<TEvent, string>
+  /** Optional resource type label. Returns `null` when the field is absent. */
+  resourceType: Accessor<TResource, string>
+  /** Whether the event may be dragged. Returning `false` blocks drag; `null` falls back to draggable. */
+  draggable: Accessor<TEvent, boolean>
+  /** Whether the event may be resized. Returning `false` blocks resize; `null` falls back to resizable. */
+  resizable: Accessor<TEvent, boolean>
 }

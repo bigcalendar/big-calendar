@@ -262,15 +262,17 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    */
   readonly longPressThreshold: number
   /**
-   * Whether a given event may be dragged (`config.draggableAccessor`, default
-   * `() => true`). The DnD layer reads it to decide which events become drag
-   * sources, so the predicate stays defined once in core.
+   * Whether a given event may be dragged (reads `event.draggable` by default via
+   * `config.accessors.draggable`). Returns `true` only when the accessor resolves
+   * to a truthy value — absent field = `false` (opt-in). The DnD layer reads it
+   * to decide which events become drag sources.
    */
   readonly isDraggable: (event: TEvent) => boolean
   /**
-   * Whether a given event may be resized (`config.resizableAccessor`, default
-   * `() => true`). The DnD layer reads it to decide which events get resize
-   * handles, so the predicate stays defined once in core.
+   * Whether a given event may be resized (reads `event.resizable` by default via
+   * `config.accessors.resizable`). Returns `true` only when the accessor resolves
+   * to a truthy value — absent field = `false` (opt-in). The DnD layer reads it
+   * to decide which events get resize handles.
    */
   readonly isResizable: (event: TEvent) => boolean
 

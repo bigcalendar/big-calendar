@@ -1,0 +1,710 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Core/createCalendarStore" />
+
+# createCalendarStore
+
+`createCalendarStore` is the framework-agnostic heart of Big Calendar. It is a plain JavaScript function that returns a fully reactive calendar store — no React, no DOM, no rendering. If you are building a Big Calendar integration for a framework other than React, or if you want to drive the calendar from outside your component tree, this is the function you work with directly.
+
+If you are using React, you do not call this yourself. `CalendarProvider` calls it for you and connects the result to React's rendering system automatically.
+
+```ts
+import { createCalendarStore } from '@big-calendar/core'
+import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
+
+const localizer = await createTemporalLocalizer({ locale: 'en-US', timeZone: 'UTC' })
+
+const store = createCalendarStore({
+  localizer,
+  events: myEvents,
+  date: '2026-06-24',
+  view: 'week',
+})
+
+// Read reactive state
+console.log(store.view.value)   // 'week'
+console.log(store.range.value)  // { days: [...], firstVisibleDay: '...', lastVisibleDay: '...' }
+
+// Trigger actions
+store.navigate({ direction: 'NEXT' })
+store.setView({ view: 'month' })
+
+// Clean up when done
+store.destroy()
+```
+
+> Every store is isolated. Creating two stores creates two completely independent calendars with no shared state between them.
+
+---
+
+## Configuration
+
+All options are passed as a single object to `createCalendarStore`. Only `localizer` is required.
+
+### Required
+
+<table>
+  <thead><tr><th>Option</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>localizer</code></td>
+      <td><code>LocalizerContract</code></td>
+      <td>
+        The engine that handles all date formatting and arithmetic. Big Calendar never touches
+        JavaScript's built-in <code>Date</code> object directly — the localizer does all of that
+        work. Create one with <code>createTemporalLocalizer</code> or <code>createLuxonLocalizer</code>
+        before passing it here. Every derived value in the store recomputes when a new localizer
+        is swapped in via <code>store.setLocalizer</code>, so runtime locale or timezone switching
+        works without remounting.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### Data
+
+These options supply the calendar's content. The store reads what you pass in but never modifies it.
+
+<table>
+  <thead><tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>events</code></td>
+      <td><code>TEvent[]</code></td>
+      <td><code>[]</code></td>
+      <td>
+        Your foreground event objects. Each one needs at minimum a start date, an end date, and a
+        title — but you can use any field names you like and tell the store about them via
+        <code>accessors</code>. After the store is created, update the list at any time by calling
+        <code>store.setEvents(&#123; events: nextEvents &#125;)</code>.
+      </td>
+    </tr>
+    <tr>
+      <td><code>backgroundEvents</code></td>
+      <td><code>TEvent[]</code></td>
+      <td><code>[]</code></td>
+      <td>
+        Background events render as coloured bands behind foreground events. Clicks and drags pass
+        straight through them — they are visual only. Good for availability windows, focus blocks,
+        or blocked-off periods. Update via <code>store.setBackgroundEvents</code>.
+      </td>
+    </tr>
+    <tr>
+      <td><code>resources</code></td>
+      <td><code>TResource[]</code></td>
+      <td><em>none</em></td>
+      <td>
+        Resource objects for multi-resource time grids (e.g. rooms or staff). When supplied,
+        each day column in the time grid is split into one sub-column per resource. Update via
+        <code>store.setResources</code>.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### Initial state
+
+<table>
+  <thead><tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>date</code></td>
+      <td><code>string</code></td>
+      <td><code>getNow()</code></td>
+      <td>
+        The focus date the calendar opens on, as an RFC 3339 / ISO 8601 string
+        (e.g. <code>"2026-06-24"</code>). After creation, move to a new date with
+        <code>store.navigate</code> or <code>store.setDate</code>.
+      </td>
+    </tr>
+    <tr>
+      <td><code>view</code></td>
+      <td><code>ViewKey</code></td>
+      <td><code>'month'</code></td>
+      <td>
+        The view the calendar opens on. Valid built-in values: <code>'month'</code>,
+        <code>'week'</code>, <code>'work_week'</code>, <code>'day'</code>, <code>'agenda'</code>.
+        After creation, switch views with <code>store.setView</code>.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### View configuration
+
+<table>
+  <thead><tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>enabledViews</code></td>
+      <td><code>ViewKey[]</code></td>
+      <td>All built-ins + custom keys</td>
+      <td>
+        Which view keys are active in this calendar instance. Controls which toolbar buttons
+        appear and which views may be navigated to. For example,
+        <code>['month', 'agenda']</code> hides the Week, Work Week, and Day buttons entirely.
+        When omitted, all built-in views are available plus any custom keys from
+        <code>viewDefinitions</code>.
+      </td>
+    </tr>
+    <tr>
+      <td><code>viewDefinitions</code></td>
+      <td><code>ViewRegistry</code></td>
+      <td><em>none</em></td>
+      <td>
+        Register custom views alongside the built-ins. Each entry maps a new view key to a
+        definition object built with <code>defineView</code> — a set of pure functions (range,
+        navigate, label, buildModel) the store runs identically on every framework adapter.
+        Built-in key names are reserved; a custom key that collides with one is silently ignored.
+      </td>
+    </tr>
+    <tr>
+      <td><code>length</code></td>
+      <td><code>number</code></td>
+      <td><code>30</code></td>
+      <td>
+        How many days ahead the agenda view scans for events, starting from the focus date.
+        The default shows roughly one month. Increase it for a longer look-ahead window.
+      </td>
+    </tr>
+    <tr>
+      <td><code>drilldownView</code></td>
+      <td><code>ViewKey | null</code></td>
+      <td><code>'day'</code></td>
+      <td>
+        Which view the calendar jumps to when a user clicks a day number (month grid) or a
+        column heading (week grid). Pass <code>null</code> to disable drilldown entirely —
+        those labels become plain text with no click handler. Ignored when
+        <code>getDrilldownView</code> is also supplied.
+      </td>
+    </tr>
+    <tr>
+      <td><code>getDrilldownView</code></td>
+      <td><code>(date, currentView, enabledViews) =&gt; ViewKey | null</code></td>
+      <td><em>none</em></td>
+      <td>
+        A function called with the clicked date, the current view, and the list of enabled views.
+        Return a view key to navigate there, or <code>null</code> to block drilldown for that
+        specific date. When supplied, this overrides <code>drilldownView</code>.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### Time grid options
+
+These control the Week, Work Week, and Day views. They have no effect on the Month or Agenda view.
+
+<table>
+  <thead><tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>step</code></td>
+      <td><code>number</code></td>
+      <td><code>30</code></td>
+      <td>
+        The size of each time slot in minutes. <code>30</code> produces slots at "9:00", "9:30",
+        "10:00", and so on. Set to <code>15</code> for quarter-hour precision or <code>60</code>
+        for full-hour slots. The store exposes the resolved value as <code>store.step</code>.
+      </td>
+    </tr>
+    <tr>
+      <td><code>timeslots</code></td>
+      <td><code>number</code></td>
+      <td><code>2</code></td>
+      <td>
+        How many individual slot rows appear under each labelled time. At <code>step=30</code>
+        and <code>timeslots=2</code> you get two rows per half-hour — a lighter divider line
+        splits each block visually. Set to <code>1</code> to remove subdivisions.
+      </td>
+    </tr>
+    <tr>
+      <td><code>min</code></td>
+      <td><code>&#123; hour: number; minute?: number &#125;</code></td>
+      <td>Start of day (midnight)</td>
+      <td>
+        The earliest time shown in the time grid. <code>&#123; hour: 8 &#125;</code> starts
+        the grid at 8:00 AM. Events that begin before this time are still rendered; they are
+        clipped at the top edge.
+      </td>
+    </tr>
+    <tr>
+      <td><code>max</code></td>
+      <td><code>&#123; hour: number; minute?: number &#125;</code></td>
+      <td>End of day</td>
+      <td>
+        The latest time shown. <code>&#123; hour: 23 &#125;</code> ends the grid at 11:00 PM.
+        Passing <code>&#123; hour: 0 &#125;</code> means end of day (full 24-hour window).
+        Events that run past this boundary are clipped at the bottom edge.
+      </td>
+    </tr>
+    <tr>
+      <td><code>scrollToTime</code></td>
+      <td><code>&#123; hour: number; minute?: number &#125;</code></td>
+      <td>Current time</td>
+      <td>
+        The wall-clock time the time grid scrolls to on initial load. When omitted, the grid
+        scrolls to the current time in the calendar's configured time zone, keeping "now" in
+        view automatically. Pass a fixed value like <code>&#123; hour: 8 &#125;</code> to
+        always open at 8:00 AM. The store exposes this as <code>store.scrollToTime</code> for
+        framework adapters to act on at mount.
+      </td>
+    </tr>
+    <tr>
+      <td><code>dayLayoutAlgorithm</code></td>
+      <td><code>'overlap' | 'no-overlap' | Function</code></td>
+      <td><code>'overlap'</code></td>
+      <td>
+        Controls how events that share the same time slot are packed side-by-side in a column.
+        <ul>
+          <li><code>'overlap'</code> — groups time-close events and lets them share column width, Google Calendar style.</li>
+          <li><code>'no-overlap'</code> — gives every time-touching event its own lane so nothing overlaps visually.</li>
+        </ul>
+        You can also pass a custom function that receives the events and returns layout boxes.
+      </td>
+    </tr>
+    <tr>
+      <td><code>showMultiDayTimes</code></td>
+      <td><code>boolean</code></td>
+      <td><code>false</code></td>
+      <td>
+        By default, events that span more than one day appear in the all-day strip above the
+        time grid. Set this to <code>true</code> to render them in the time columns at their
+        actual start and end times instead. Useful for overnight shifts.
+      </td>
+    </tr>
+    <tr>
+      <td><code>showAllEvents</code></td>
+      <td><code>boolean</code></td>
+      <td><code>false</code></td>
+      <td>
+        The all-day strip above the time grid is capped at two rows by default; a
+        <strong>+ N more</strong> indicator appears when there are more. Set this to
+        <code>true</code> to remove that cap and show every event regardless of how tall
+        the strip grows.
+      </td>
+    </tr>
+    <tr>
+      <td><code>resourceLayout</code></td>
+      <td><code>'resource' | 'day'</code></td>
+      <td><code>'resource'</code></td>
+      <td>
+        Only meaningful when <code>resources</code> is supplied.
+        <ul>
+          <li><code>'resource'</code> — one column block per resource, spanning all visible days. Good for comparing resources side-by-side.</li>
+          <li><code>'day'</code> — one column block per day, with each resource as a sub-column within it. Good for a daily schedule broken down by resource.</li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### Month view options
+
+<table>
+  <thead><tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>weekEventLimit</code></td>
+      <td><code>number</code></td>
+      <td><em>auto</em></td>
+      <td>
+        The maximum number of event rows shown in a week cell before a
+        <strong>+ N more</strong> button appears. When unset, the framework adapter measures
+        the available height at runtime and fits as many rows as physically possible. Set this
+        to a fixed number to cap rows regardless of screen size — useful for a consistent layout.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### Accessors and utilities
+
+<table>
+  <thead><tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>accessors</code></td>
+      <td><code>Partial&lt;Accessors&gt;</code></td>
+      <td>Standard field names</td>
+      <td>
+        By default the store reads <code>title</code>, <code>start</code>, <code>end</code>,
+        <code>allDay</code>, <code>resource</code>, <code>id</code>, <code>tooltip</code>,
+        <code>type</code>, and <code>resourceType</code> from each event or resource object,
+        and treats every event as <code>draggable</code> and <code>resizable</code>.
+        Pass overrides here if your data uses different field names or needs custom logic.
+        Each accessor is either a string (field name to read) or a function
+        <code>(event) =&gt; value</code>. You only need to supply the ones that differ from
+        the defaults.
+
+        ```ts
+        accessors: {
+          title: 'name',
+          start: (event) => event.startsAt,
+          end:   (event) => event.endsAt,
+        }
+        ```
+      </td>
+    </tr>
+    <tr>
+      <td><code>getNow</code></td>
+      <td><code>() =&gt; string</code></td>
+      <td>Current UTC instant</td>
+      <td>
+        A function that returns the current moment as an ISO string. The store calls this to
+        decide where to draw the "today" highlight and the now-indicator line. Override it to
+        pin the calendar to a fixed point in time — useful in tests and in Storybook so the
+        layout renders identically every time.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### Selection
+
+Slot selection is how users click or drag on empty time to indicate they want to create a new event. It is disabled by default.
+
+<table>
+  <thead><tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>selectable</code></td>
+      <td><code>boolean | 'ignoreEvents'</code></td>
+      <td><code>false</code></td>
+      <td>
+        Enables slot selection. <code>true</code> lets users click and drag anywhere in the
+        grid — including on top of existing events — to make a selection.
+        <code>'ignoreEvents'</code> enables selection but prevents clicks directly on event
+        blocks from starting a selection; those clicks fall through to the event click handler
+        instead.
+      </td>
+    </tr>
+    <tr>
+      <td><code>longPressThreshold</code></td>
+      <td><code>number</code></td>
+      <td><code>500</code></td>
+      <td>
+        On touch screens, how long (in milliseconds) a finger must be held still before a slot
+        selection begins. A shorter touch is treated as a tap. Mouse and stylus inputs are not
+        affected. Decrease this if the long-press feels slow.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### Drag and drop
+
+<table>
+  <thead><tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>accessors.draggable</code></td>
+      <td><code>string | Function</code></td>
+      <td>reads <code>event.draggable</code></td>
+      <td>
+        Controls which events can be dragged. Defaults to reading the <code>draggable</code>
+        field from each event. An absent or falsy field means the event is not draggable
+        (opt-in). Override with a string key or a function <code>(event) =&gt; boolean</code>.
+        Configured via the <code>accessors</code> option alongside the other field accessors.
+      </td>
+    </tr>
+    <tr>
+      <td><code>accessors.resizable</code></td>
+      <td><code>string | Function</code></td>
+      <td>reads <code>event.resizable</code></td>
+      <td>
+        Controls whether an event shows resize handles. Defaults to reading the
+        <code>resizable</code> field. An absent or falsy field hides resize handles (opt-in).
+        Configured via the <code>accessors</code> option.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Callbacks
+
+Callbacks are optional functions you supply in the config. The store calls them when specific things happen — a user navigates to a new date, clicks an event, drops a drag. The store never mutates your data itself; callbacks are how you find out what the user did so you can update your own state.
+
+### Navigation
+
+<table>
+  <thead><tr><th>Option</th><th>Signature</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>onNavigate</code></td>
+      <td><code>(&#123; date, view &#125;) =&gt; void</code></td>
+      <td>
+        Fires after the focus date changes via <code>store.navigate</code>. Receives the new
+        date as an ISO string and the current view key.
+      </td>
+    </tr>
+    <tr>
+      <td><code>onView</code></td>
+      <td><code>(&#123; view &#125;) =&gt; void</code></td>
+      <td>
+        Fires after the active view changes via <code>store.setView</code>. Receives the new
+        view key.
+      </td>
+    </tr>
+    <tr>
+      <td><code>onRangeChange</code></td>
+      <td><code>(&#123; range: &#123; start, end &#125;, view &#125;) =&gt; void</code></td>
+      <td>
+        Fires whenever the visible date range changes (date or view change), but not on the
+        initial creation. <code>start</code> and <code>end</code> are full datetime strings
+        covering the start of the first visible day and the end of the last visible day.
+        Useful for fetching only the events that fall in the currently visible window.
+      </td>
+    </tr>
+    <tr>
+      <td><code>onDrillDown</code></td>
+      <td><code>(&#123; date, view &#125;) =&gt; void</code></td>
+      <td>
+        When supplied, the store hands full control of drilldown to you and will <em>not</em>
+        change its own view or date. Receives the target date and the view the store would have
+        navigated to. Use this to drive your own router instead of letting the store navigate.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### Event interaction
+
+These fire when a user interacts with an existing event block. They work on every view and do not require <code>selectable</code>.
+
+<table>
+  <thead><tr><th>Option</th><th>Signature</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>onEventClick</code></td>
+      <td><code>(event: TEvent) =&gt; void</code></td>
+      <td>Single click (or Enter / Space on keyboard) on an event. Receives your original event object.</td>
+    </tr>
+    <tr>
+      <td><code>onEventDoubleClick</code></td>
+      <td><code>(event: TEvent) =&gt; void</code></td>
+      <td>Double-click (or F2 on keyboard) on an event.</td>
+    </tr>
+    <tr>
+      <td><code>onEventRightClick</code></td>
+      <td><code>(event: TEvent, domEvent: MouseEvent) =&gt; void</code></td>
+      <td>
+        Right-click (or Menu key / Shift+F10) on an event. The native DOM event is included
+        so you can call <code>domEvent.preventDefault()</code> to suppress the browser's context
+        menu and position your own.
+      </td>
+    </tr>
+    <tr>
+      <td><code>onEventMiddleClick</code></td>
+      <td><code>(event: TEvent, domEvent: MouseEvent) =&gt; void</code></td>
+      <td>Middle-button (scroll wheel) click on an event. Pointer-only — no keyboard equivalent.</td>
+    </tr>
+    <tr>
+      <td><code>onEventSelect</code></td>
+      <td><code>(&#123; id: EventId | null &#125;) =&gt; void</code></td>
+      <td>
+        Fires when the internally selected event changes. The store tracks one selected event
+        at a time (the framework adapter highlights it with a ring). Fires with the event's id
+        when a new one is selected, or <code>null</code> when the selection is cleared. Most
+        apps can use <code>onEventClick</code> instead of this.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### Slot selection
+
+These fire when the user clicks or drags on empty time. Requires <code>selectable</code> to be set.
+
+<table>
+  <thead><tr><th>Option</th><th>Signature</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>onSlotClick</code></td>
+      <td><code>(selection) =&gt; void</code></td>
+      <td>A single slot or day cell was clicked.</td>
+    </tr>
+    <tr>
+      <td><code>onSlotDoubleClick</code></td>
+      <td><code>(selection) =&gt; void</code></td>
+      <td>A single slot or day cell was double-clicked.</td>
+    </tr>
+    <tr>
+      <td><code>onSlotSelect</code></td>
+      <td><code>(selection) =&gt; void</code></td>
+      <td>A drag across multiple slots was committed (pointer drag or keyboard Shift+Arrow range).</td>
+    </tr>
+    <tr>
+      <td><code>onSlotSelecting</code></td>
+      <td><code>(selection) =&gt; boolean | void</code></td>
+      <td>
+        Fires on every step while the user is mid-drag. Return <code>false</code> to cancel
+        the selection at that exact point — useful for blocking selections that overlap a
+        background event.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+Each selection callback receives a payload with:
+
+<table>
+  <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>start</code></td><td><code>string</code></td><td>Start of the selected range as an ISO date string.</td></tr>
+    <tr><td><code>end</code></td><td><code>string</code></td><td>End of the selected range (exclusive for time slots; inclusive day-end for whole-day selections).</td></tr>
+    <tr><td><code>slots</code></td><td><code>string[]</code></td><td>Each individual slot or day that was touched. Not present on <code>onSlotSelecting</code>.</td></tr>
+    <tr><td><code>allDay</code></td><td><code>boolean</code></td><td><code>true</code> when the selection is a whole-day or cross-day span.</td></tr>
+    <tr><td><code>resourceId</code></td><td><code>ResourceId</code></td><td>The resource column the selection started in. Only present on resource-grouped grids.</td></tr>
+    <tr><td><code>backgroundEvents</code></td><td><code>TEvent[]</code></td><td>Background events that overlap the selected range. Omitted when none intersect.</td></tr>
+  </tbody>
+</table>
+
+### Drag and drop
+
+These fire when the user drops an event in a new position. The store fires the callback with proposed new bounds; it never mutates <code>events</code> itself. Apply the change to your own state (optimistic update) and revert on a failed save.
+
+<table>
+  <thead><tr><th>Option</th><th>Signature</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>onEventDrop</code></td>
+      <td><code>(&#123; event, start, end, allDay, resourceId?, backgroundEvents? &#125;) =&gt; void</code></td>
+      <td>
+        Fires when a dragged event is dropped at a new position. Receives the original event
+        plus its proposed new <code>start</code> and <code>end</code> as ISO strings. The
+        original duration is preserved.
+      </td>
+    </tr>
+    <tr>
+      <td><code>onEventResize</code></td>
+      <td><code>(&#123; event, start, end, allDay, resourceId?, backgroundEvents? &#125;) =&gt; void</code></td>
+      <td>
+        Same shape as <code>onEventDrop</code>, fires when a resize handle is dragged and
+        dropped. The un-dragged edge is unchanged; the duration is clamped to at least one slot.
+      </td>
+    </tr>
+    <tr>
+      <td><code>onDropFromOutside</code></td>
+      <td><code>(&#123; start, end, allDay, resourceId?, backgroundEvents? &#125;) =&gt; void</code></td>
+      <td>
+        Fires when an item dragged from <em>outside</em> the calendar (a palette or unscheduled
+        list) is dropped on a slot. There is no existing event yet — you create one and add it
+        to your own <code>events</code> array.
+      </td>
+    </tr>
+    <tr>
+      <td><code>onEventDragStart</code></td>
+      <td><code>(&#123; event &#125;) =&gt; void</code></td>
+      <td>
+        Fires when the user begins dragging an event out of the calendar. Pair it with a
+        native drop target elsewhere in your UI to build an "unschedule" bin.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## What the store gives you back
+
+`createCalendarStore` returns a `CalendarStore` object. Here is a quick map of what is on it.
+
+### Reactive state (writable signals)
+
+These are `Signal` objects from `@preact/signals-core`. Read the current value with `.value`; write a new one by assigning to `.value`. Any computed signal or subscriber that reads one of these will automatically update.
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>store.date</code></td><td><code>Signal&lt;string&gt;</code></td><td>The current focus date as an ISO string.</td></tr>
+    <tr><td><code>store.view</code></td><td><code>Signal&lt;ViewKey&gt;</code></td><td>The active view key.</td></tr>
+    <tr><td><code>store.selected</code></td><td><code>Signal&lt;EventId | null&gt;</code></td><td>The id of the currently selected event, or <code>null</code>.</td></tr>
+    <tr><td><code>store.events</code></td><td><code>Signal&lt;TEvent[]&gt;</code></td><td>The foreground event list.</td></tr>
+    <tr><td><code>store.backgroundEvents</code></td><td><code>Signal&lt;TEvent[]&gt;</code></td><td>The background event list.</td></tr>
+    <tr><td><code>store.resources</code></td><td><code>Signal&lt;TResource[] | undefined&gt;</code></td><td>The resource list, or <code>undefined</code> when not in resource mode.</td></tr>
+    <tr><td><code>store.dndEnabled</code></td><td><code>Signal&lt;boolean&gt;</code></td><td><code>true</code> when a DnD adapter is mounted and active. UI components read this to suppress drag affordances when DnD is not wired.</td></tr>
+    <tr><td><code>store.measuredWeekLimit</code></td><td><code>Signal&lt;number&gt;</code></td><td>The dynamically measured max event rows per week in the month grid. Written by the framework adapter; defaults to <code>Infinity</code>.</td></tr>
+    <tr><td><code>store.dayLayoutAlgorithm</code></td><td><code>Signal&lt;...&gt;</code></td><td>The active day-layout algorithm. Writable so the framework adapter can sync prop changes without remounting.</td></tr>
+  </tbody>
+</table>
+
+### Derived state (read-only computed signals)
+
+These recompute automatically when their inputs change. Read with `.value`; never assign to them.
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>store.range</code></td><td><code>ReadonlySignal&lt;VisibleRange&gt;</code></td><td>The visible day range for the current date + view. Recomputes whenever either changes.</td></tr>
+    <tr><td><code>store.label</code></td><td><code>ReadonlySignal&lt;string&gt;</code></td><td>The localized toolbar title (e.g. "June 2026" or "Jun 22 – 28, 2026").</td></tr>
+    <tr><td><code>store.viewModel</code></td><td><code>ReadonlySignal&lt;CalendarViewModel&gt;</code></td><td>The full view model for the active view — all positioned events, layout data, and day/slot structure. Discriminated by <code>kind</code> ('month' / 'timeGrid' / 'agenda').</td></tr>
+    <tr><td><code>store.enabledViews</code></td><td><code>ReadonlySignal&lt;ViewKey[]&gt;</code></td><td>The ordered list of active view keys for this instance.</td></tr>
+    <tr><td><code>store.dragPreview</code></td><td><code>ReadonlySignal&lt;&#123; start, end &#125; | null&gt;</code></td><td>Proposed drag bounds while a move or resize is in flight. <code>null</code> when idle.</td></tr>
+    <tr><td><code>store.keyboardDrag</code></td><td><code>ReadonlySignal&lt;KeyboardDragState | null&gt;</code></td><td>The live state of a keyboard drag ("grab"). <code>null</code> when no grab is in progress.</td></tr>
+  </tbody>
+</table>
+
+### Resolved config values
+
+These are plain values (not signals) resolved once at construction time and stable for the store's lifetime.
+
+<table>
+  <thead><tr><th>Property</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>store.localizer</code></td><td>The active <code>LocalizerContract</code> instance. Updates when <code>store.setLocalizer</code> is called.</td></tr>
+    <tr><td><code>store.accessors</code></td><td>The fully-resolved accessor set (your overrides merged with the defaults).</td></tr>
+    <tr><td><code>store.getNow</code></td><td>The resolved "now" source function.</td></tr>
+    <tr><td><code>store.step</code></td><td>Slot size in minutes.</td></tr>
+    <tr><td><code>store.timeslots</code></td><td>Slots per labelled group.</td></tr>
+    <tr><td><code>store.scrollToTime</code></td><td>The configured initial scroll-to time, or <code>undefined</code>.</td></tr>
+    <tr><td><code>store.selectable</code></td><td>The resolved slot-selection mode.</td></tr>
+    <tr><td><code>store.longPressThreshold</code></td><td>Touch long-press duration in ms.</td></tr>
+    <tr><td><code>store.isDraggable(event)</code></td><td>Returns <code>true</code> when the given event may be dragged.</td></tr>
+    <tr><td><code>store.isResizable(event)</code></td><td>Returns <code>true</code> when the given event may be resized.</td></tr>
+  </tbody>
+</table>
+
+### Actions
+
+Actions are methods that mutate state or fire callbacks. All take a single named-argument object.
+
+<table>
+  <thead><tr><th>Method</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>navigate(&#123; direction, date? &#125;)</code></td><td>Move the focus date. <code>direction</code> is <code>'PREV'</code>, <code>'NEXT'</code>, <code>'TODAY'</code>, or <code>'DATE'</code>. Pass <code>date</code> when using <code>'DATE'</code> to jump to a specific ISO string.</td></tr>
+    <tr><td><code>setView(&#123; view &#125;)</code></td><td>Switch the active view.</td></tr>
+    <tr><td><code>setDate(&#123; date &#125;)</code></td><td>Set the focus date directly (no navigate direction semantics).</td></tr>
+    <tr><td><code>selectEvent(&#123; id &#125;)</code></td><td>Select an event by id, or pass <code>null</code> to clear. Fires <code>onEventSelect</code>.</td></tr>
+    <tr><td><code>getEvent(&#123; id &#125;)</code></td><td>Look up a foreground event by its accessor id. Returns <code>undefined</code> when not found.</td></tr>
+    <tr><td><code>setEvents(&#123; events &#125;)</code></td><td>Replace the foreground event list.</td></tr>
+    <tr><td><code>setBackgroundEvents(&#123; events &#125;)</code></td><td>Replace the background event list.</td></tr>
+    <tr><td><code>setResources(&#123; resources &#125;)</code></td><td>Replace the resource list.</td></tr>
+    <tr><td><code>setLocalizer(&#123; localizer &#125;)</code></td><td>Swap the active localizer. All derived signals recompute immediately. Use for runtime locale or timezone switching.</td></tr>
+    <tr><td><code>drilldown(&#123; date &#125;)</code></td><td>Trigger a drilldown on the given date (resolves target view per <code>drilldownView</code> / <code>getDrilldownView</code>).</td></tr>
+    <tr><td><code>moveEvent(&#123; id, target, mode, resourceId?, promote? &#125;)</code></td><td>Drop a dragged event at a new position. Fires <code>onEventDrop</code>.</td></tr>
+    <tr><td><code>resizeEvent(&#123; id, edge, target, mode?, resourceId? &#125;)</code></td><td>Commit a resize drag. Fires <code>onEventResize</code>.</td></tr>
+    <tr><td><code>dropExternal(&#123; target, mode?, durationMinutes?, allDay?, start?, end?, resourceId? &#125;)</code></td><td>Commit an external (outside-calendar) drop. Fires <code>onDropFromOutside</code>.</td></tr>
+    <tr><td><code>destroy()</code></td><td>Dispose internal subscriptions. Call this when you tear down the calendar instance to avoid memory leaks. Safe to call more than once.</td></tr>
+  </tbody>
+</table>
+
+> There are also preview actions (`previewMove`, `previewResize`, `previewExternal`, `clearDragPreview`) and keyboard-drag actions (`grabEvent`, `grabMove`, `grabResize`, `grabCommit`, `grabCancel`) used by the DnD and accessibility layers. Framework adapter authors will need these; most application developers will not.

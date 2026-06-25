@@ -9,6 +9,8 @@ interface Event {
   title: string
   start: string
   end: string
+  draggable?: boolean
+  resizable?: boolean
 }
 
 const isoPattern = /^\d{4}-\d{2}-\d{2}T/
@@ -830,7 +832,7 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
 
   describe('event resize (resizeEvent)', () => {
     const events: Event[] = [
-      { id: 1, title: 'A', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' },
+      { id: 1, title: 'A', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z', draggable: true, resizable: true },
     ]
 
     it('fires onEventResize moving the start edge to the dropped slot', () => {
@@ -1125,7 +1127,7 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
 
   describe('keyboard drag (grab / move / resize / commit / cancel)', () => {
     const events: Event[] = [
-      { id: 1, title: 'A', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z' },
+      { id: 1, title: 'A', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T10:00:00.000Z', draggable: true, resizable: true },
     ]
 
     it('grabEvent seeds the grab + preview from the event bounds', () => {
@@ -1174,7 +1176,7 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
     it('grabResize moves the end edge by whole days (month) and clamps to a one-day minimum', () => {
       // A 3-day all-day event.
       const adEvents: Event[] = [
-        { id: 1, title: 'A', start: '2026-06-15T00:00:00.000Z', end: localizer.endOf({ value: '2026-06-17T00:00:00.000Z', unit: 'day' }) },
+        { id: 1, title: 'A', start: '2026-06-15T00:00:00.000Z', end: localizer.endOf({ value: '2026-06-17T00:00:00.000Z', unit: 'day' }), draggable: true, resizable: true },
       ]
       const store = createCalendarStore<Event>({ localizer, events: adEvents })
       store.grabEvent({ id: 1 })
@@ -1203,7 +1205,7 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
 
     it('grabResize edge=start moves the start edge by whole days (month) and clamps to a one-day minimum', () => {
       const adEvents: Event[] = [
-        { id: 1, title: 'A', start: '2026-06-15T00:00:00.000Z', end: localizer.endOf({ value: '2026-06-17T00:00:00.000Z', unit: 'day' }) },
+        { id: 1, title: 'A', start: '2026-06-15T00:00:00.000Z', end: localizer.endOf({ value: '2026-06-17T00:00:00.000Z', unit: 'day' }), draggable: true, resizable: true },
       ]
       const store = createCalendarStore<Event>({ localizer, events: adEvents })
       store.grabEvent({ id: 1 })
@@ -1291,7 +1293,7 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
     })
 
     it('grabEvent returns false and starts nothing when the event is not draggable', () => {
-      const store = createCalendarStore<Event>({ localizer, events, draggableAccessor: () => false })
+      const store = createCalendarStore<Event>({ localizer, events, accessors: { draggable: () => false } })
       expect(store.grabEvent({ id: 1 })).toBe(false)
       expect(store.keyboardDrag.value).toBeNull()
       expect(store.dragPreview.value).toBeNull()
@@ -1303,7 +1305,7 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
     })
 
     it('grabResize is a no-op when the grabbed event is not resizable', () => {
-      const store = createCalendarStore<Event>({ localizer, events, resizableAccessor: () => false })
+      const store = createCalendarStore<Event>({ localizer, events, accessors: { resizable: () => false } })
       store.grabEvent({ id: 1 })
       const beforeEnd = store.keyboardDrag.value?.end
       store.grabResize({ minutes: 30 })
@@ -1317,22 +1319,27 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
     }
     const event: ResizableEvent = { id: 1, title: 'A', start: 's', end: 'e' }
 
-    it('defaults to every event being resizable', () => {
+    it('returns false when the event has no resizable field (opt-in)', () => {
       const store = createCalendarStore<ResizableEvent>({ localizer })
-      expect(store.isResizable(event)).toBe(true)
+      expect(store.isResizable(event)).toBe(false)
     })
 
-    it('respects a function resizableAccessor', () => {
-      const store = createCalendarStore<ResizableEvent>({ localizer, resizableAccessor: (e) => e.id !== 2 })
+    it('returns true when the event has resizable: true', () => {
+      const store = createCalendarStore<ResizableEvent>({ localizer })
+      expect(store.isResizable({ ...event, resizable: true })).toBe(true)
+    })
+
+    it('respects a function resizable accessor', () => {
+      const store = createCalendarStore<ResizableEvent>({ localizer, accessors: { resizable: (e) => e.id !== 2 } })
       expect(store.isResizable({ ...event, id: 1 })).toBe(true)
       expect(store.isResizable({ ...event, id: 2 })).toBe(false)
     })
 
-    it('reads a string resizableAccessor, defaulting an unset field to resizable', () => {
-      const store = createCalendarStore<ResizableEvent>({ localizer, resizableAccessor: 'resizable' })
+    it('reads a string resizable accessor: truthy field → resizable, falsy or absent → not', () => {
+      const store = createCalendarStore<ResizableEvent>({ localizer, accessors: { resizable: 'resizable' } })
+      expect(store.isResizable({ ...event, resizable: true })).toBe(true)
       expect(store.isResizable({ ...event, resizable: false })).toBe(false)
-      // field absent → accessor resolves null → defaults to resizable
-      expect(store.isResizable(event)).toBe(true)
+      expect(store.isResizable(event)).toBe(false) // field absent → null → false
     })
   })
 
@@ -1342,22 +1349,27 @@ describe.each(LOCALIZER_CASES)('createCalendarStore [$name]', ({ create }) => {
     }
     const event: DraggableEvent = { id: 1, title: 'A', start: 's', end: 'e' }
 
-    it('defaults to every event being draggable', () => {
+    it('returns false when the event has no draggable field (opt-in)', () => {
       const store = createCalendarStore<DraggableEvent>({ localizer })
-      expect(store.isDraggable(event)).toBe(true)
+      expect(store.isDraggable(event)).toBe(false)
     })
 
-    it('respects a function draggableAccessor', () => {
-      const store = createCalendarStore<DraggableEvent>({ localizer, draggableAccessor: (e) => e.id !== 2 })
+    it('returns true when the event has draggable: true', () => {
+      const store = createCalendarStore<DraggableEvent>({ localizer })
+      expect(store.isDraggable({ ...event, draggable: true })).toBe(true)
+    })
+
+    it('respects a function draggable accessor', () => {
+      const store = createCalendarStore<DraggableEvent>({ localizer, accessors: { draggable: (e) => e.id !== 2 } })
       expect(store.isDraggable({ ...event, id: 1 })).toBe(true)
       expect(store.isDraggable({ ...event, id: 2 })).toBe(false)
     })
 
-    it('reads a string draggableAccessor, defaulting an unset field to draggable', () => {
-      const store = createCalendarStore<DraggableEvent>({ localizer, draggableAccessor: 'draggable' })
+    it('reads a string draggable accessor: truthy field → draggable, falsy or absent → not', () => {
+      const store = createCalendarStore<DraggableEvent>({ localizer, accessors: { draggable: 'draggable' } })
+      expect(store.isDraggable({ ...event, draggable: true })).toBe(true)
       expect(store.isDraggable({ ...event, draggable: false })).toBe(false)
-      // field absent → accessor resolves null → defaults to draggable
-      expect(store.isDraggable(event)).toBe(true)
+      expect(store.isDraggable(event)).toBe(false) // field absent → null → false
     })
   })
 

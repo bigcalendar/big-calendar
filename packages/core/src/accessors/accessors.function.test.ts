@@ -48,7 +48,7 @@ describe('wrapAccessor', () => {
 })
 
 describe('resolveAccessors', () => {
-  it('returns the v1-parity defaults when no overrides are given', () => {
+  it('returns the defaults when no overrides are given', () => {
     expect(resolveAccessors()).toEqual(DEFAULT_ACCESSORS)
   })
 
@@ -57,10 +57,27 @@ describe('resolveAccessors', () => {
     expect(DEFAULT_ACCESSORS.resourceId).toBe('id')
   })
 
+  it('defaults type to the type field and resourceType to the resourceType field', () => {
+    expect(DEFAULT_ACCESSORS.type).toBe('type')
+    expect(DEFAULT_ACCESSORS.resourceType).toBe('resourceType')
+  })
+
+  it('defaults draggable to the draggable field and resizable to the resizable field', () => {
+    expect(DEFAULT_ACCESSORS.draggable).toBe('draggable')
+    expect(DEFAULT_ACCESSORS.resizable).toBe('resizable')
+  })
+
   it('merges overrides over the defaults, keeping untouched keys', () => {
     const start = (e: Event) => e.start
     const resolved = resolveAccessors<Event, unknown>({ start })
     expect(resolved.start).toBe(start)
     expect(resolved.title).toBe('title')
+  })
+
+  it('allows overriding draggable with a function that gates per-event', () => {
+    const resolved = resolveAccessors<Event, unknown>({ draggable: (e: Event) => e.id !== 99 })
+    const isDraggable = wrapAccessor(resolved.draggable)
+    expect(isDraggable({ id: 1, title: 'A', start: 's' })).toBe(true)
+    expect(isDraggable({ id: 99, title: 'B', start: 's' })).toBe(false)
   })
 })

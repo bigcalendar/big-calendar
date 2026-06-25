@@ -14,6 +14,10 @@ export interface DemoEvent {
   allDay?: boolean
   /** Room ID. Matches the `rooms` array in TimeGridView.stories.tsx. */
   resourceId?: string
+  /** Present and `true` on ~2/3 of events; absent on the remaining third (= not draggable). */
+  draggable?: boolean
+  /** Present and `true` on ~2/3 of events; absent on the remaining third (= not resizable). */
+  resizable?: boolean
 }
 
 /**
@@ -32,7 +36,7 @@ export interface DemoEvent {
  * Events with a `resourceId` route to a specific room in resource views.
  * Events without one appear in plain-grid, month, and agenda views only.
  */
-export const demoEvents: DemoEvent[] = [
+const _base: DemoEvent[] = [
   // ── April all-day blocks ────────────────────────────────────────────────────
   { id: 1, title: 'Q2 Planning Kickoff', allDay: true, start: '2026-04-01T00:00:00.000Z', end: '2026-04-03T00:00:00.000Z' },
 
@@ -299,3 +303,13 @@ export const demoEvents: DemoEvent[] = [
   { id: 209, title: 'Standup',              start: '2026-11-06T14:30:00.000Z', end: '2026-11-06T14:45:00.000Z', resourceId: 'mtg3' },
   { id: 210, title: 'Sprint 27 demo',       start: '2026-11-06T20:00:00.000Z', end: '2026-11-06T21:00:00.000Z', resourceId: 'annex' },
 ]
+
+/**
+ * Events with `draggable: true` and `resizable: true` stamped on roughly two-thirds
+ * of the set (those whose `id` is not a multiple of 3). The remaining third have
+ * neither field, demonstrating the opt-in behaviour of the default `'draggable'` /
+ * `'resizable'` string accessors: absent field → accessor returns `null` → false.
+ */
+export const demoEvents: DemoEvent[] = _base.map((e) =>
+  e.id % 3 === 0 ? e : { ...e, draggable: true, resizable: true },
+)

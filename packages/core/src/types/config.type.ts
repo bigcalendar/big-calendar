@@ -1,5 +1,5 @@
 import type { LocalizerContract } from '@big-calendar/localizer'
-import type { Accessor, Accessors } from '../accessors/accessors.type'
+import type { Accessors } from '../accessors/accessors.type'
 import type { DayLayoutAlgorithm, DayLayoutAlgorithmKey } from '../layout/layout.type'
 import type { SelectableMode, SlotSelectionDates } from '../selection/selection.type'
 import type { GetDrilldownView } from '../store/drilldown.function'
@@ -162,12 +162,6 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
   // is the framework-neutral pointer layer that decodes a DOM drop into a target
   // slot/day and calls `store.moveEvent`. The callback fires only when defined.
   /**
-   * Whether a given event may be dragged. A string reads a boolean field; a
-   * function derives it. Omitted → every event is draggable. Read by the DnD
-   * layer to decide which events to make drag sources.
-   */
-  draggableAccessor?: Accessor<TEvent, boolean> | undefined
-  /**
    * Fired when an event is dropped at a new position. Receives the **original**
    * event plus its **proposed** new bounds as ISO date strings (`allDay` flags a
    * whole-day span); core preserves the original duration.
@@ -195,12 +189,6 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
         backgroundEvents?: TEvent[]
       }) => void)
     | undefined
-  /**
-   * Whether a given event may be resized. A string reads a boolean field; a
-   * function derives it. Omitted → every event is resizable. Read by the DnD
-   * layer to decide which events get resize handles.
-   */
-  resizableAccessor?: Accessor<TEvent, boolean> | undefined
   /**
    * Fired when an event is resized by dragging one of its edges. Receives the
    * **original** event plus its **proposed** new bounds as ISO date strings; the
