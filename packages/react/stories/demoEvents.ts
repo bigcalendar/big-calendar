@@ -6,6 +6,13 @@
  * (`event.resourceId`). Room IDs match the `rooms` roster in
  * TimeGridView.stories.tsx.
  */
+export const EVENT_TYPES = [
+  'meeting', 'standup', 'review', 'planning', 'social',
+  'training', 'one-on-one', 'demo', 'interview', 'holiday',
+] as const
+
+export type EventType = typeof EVENT_TYPES[number]
+
 export interface DemoEvent {
   id: number
   title: string
@@ -18,6 +25,8 @@ export interface DemoEvent {
   draggable?: boolean
   /** Present and `true` on ~2/3 of events; absent on the remaining third (= not resizable). */
   resizable?: boolean
+  /** One of the ten demo event types, assigned by `id % 10`. */
+  type?: EventType
 }
 
 /**
@@ -310,6 +319,7 @@ const _base: DemoEvent[] = [
  * neither field, demonstrating the opt-in behaviour of the default `'draggable'` /
  * `'resizable'` string accessors: absent field → accessor returns `null` → false.
  */
-export const demoEvents: DemoEvent[] = _base.map((e) =>
-  e.id % 3 === 0 ? e : { ...e, draggable: true, resizable: true },
-)
+export const demoEvents: DemoEvent[] = _base.map((e) => {
+  const withDnd = e.id % 3 === 0 ? e : { ...e, draggable: true, resizable: true }
+  return { ...withDnd, type: EVENT_TYPES[e.id % EVENT_TYPES.length] }
+})
