@@ -1,7 +1,6 @@
 # PROGRESS
 
 > Full history → PROGRESS-ARCHIVE.md.
-> ⚠ React tests import core from `dist/`. After any core src change: `pnpm nx build core` before running react tests.
 
 ## Roadmap
 
@@ -13,42 +12,43 @@
 - [x] Phase 5 — DnD (`@big-calendar/dnd` + React: move/resize/outside/keyboard)
 - [x] Phase 6 — LuxonLocalizer (dual-localizer parity, `timeZone` rename)
 - [x] **Phase 7a — API surface refactor**
-- [ ] **Phase 7b — Polish & 2.0.0 (React)** ← CURRENT
-- [ ] Phase 8 — Codemods (deferred until 7a API finalized)
+- [x] **Phase 7b — Polish (accessors unification + type story)**
+- [ ] **Phase 8 — Codemods** ← CURRENT
 - [ ] Phase 9+ — Additional frameworks (Vue → Angular → Lit, one at a time)
 
 ---
 
 ## ⚠ NEXT TASK
 
-**Phase 7b** — Polish & 2.0.0 (React). Start with reviewing the public API surface, changelog, and any remaining documentation gaps before cutting the 2.0.0 release.
+**Phase 8 — 8-1 rename-imports transform.** Start here: `packages/codemods/src/transforms/rename-imports.ts`, jscodeshift `tsx` parser, replaces all `react-big-calendar` imports with `@big-calendar/react`. Handles `.js .jsx .ts .tsx`. Then continue 8-2 through 8-8 CLI in order.
 
 ---
 
-## Phase 7a — task list
+## Phase 8 — Codemods task list
+
+Transforms: jscodeshift `tsx` parser handles `.js .jsx .ts .tsx`. All live in `packages/codemods/src/transforms/`.
 
 | # | Task | Status |
 |---|---|---|
-| 7a-0 | Doc updates (DECISIONS.md, PROGRESS.md, DECISIONS-ARCHIVE.md, Upgrade_plan_prompt.md) | ✅ |
-| 7a-1 | Core: rename `config.views` → `config.viewDefinitions`; add `config.enabledViews`; expose `store.enabledViews` signal | ✅ |
-| 7a-2 | React: add `views?: ViewKey[]` to `CalendarProps`; update `useToolbarProps` to read `store.enabledViews`; update `Calendar` dispatch to check `components.views[viewModel.view]` for all views | ✅ |
-| 7a-3 | Storybook globals — `packages/storybook-shared/` with locale/TZ constants + `withLocalizerDecorator`; wired into storybook-core and storybook-react | ✅ |
-| 7a-4 | `@big-calendar/styles` MDX documentation page — all `.bc-*` classes, nesting, CSS custom property overrides | ✅ |
-| 7a-5 | `src/` restructure — move internal hooks to top-level public folders; promote `AgendaEventButton` + all `Default*` components to public | ✅ |
-| 7a-6 | Hook extraction — `useMonthView`, `useTimeGridView` (split: `useTimeGridHeader` / `useTimeGridBody`), `useAgendaView`; element-spread pattern (className + data-* + handlers + refs + aria per group) | ✅ |
-| 7a-7 | Build — multi-entry Vite config + wildcard `package.json` subpath exports | ✅ |
-| 7a-8 | Tests — update imports throughout; verify per-file coverage bars | ✅ |
-| **7a-9** | **Stories — MDX + interactive stories for each newly-public component/hook; all stories include `withLocalizerDecorator`** | ✅ |
+| 8-1 | `rename-imports`: `react-big-calendar` → `@big-calendar/react` | [ ] |
+| 8-2 | `merge-accessors`: 11 `*Accessor` props → `accessors={{ … }}` object | [ ] |
+| 8-3 | `rename-callbacks`: `onSelectEvent` → `onEventClick`, `onDoubleClickEvent` → `onEventDoubleClick` | [ ] |
+| 8-4 | `rename-props`: misc prop renames (`resourceGroupingLayout` → `resourceLayout`, etc.) | [ ] |
+| 8-5 | `flag-removed-props`: props with no equivalent — inject `// TODO: removed — …` comment | [ ] |
+| 8-6 | `views-prop`: array/object `views` → `views` array + optional `viewDefinitions` | [ ] |
+| 8-8 | CLI runner (`npx @big-calendar/codemods`) — wires all transforms, accepts `--dry-run`, glob or dir | [ ] |
+| 8-7 | `wrap-provider` (opt-in): wraps `<Calendar>` in `<CalendarProvider>` | [ ] |
+| 8-9 | Migration guide MDX in `storybook-core` | [ ] |
 
 ---
 
 ## Reference
 
-Test counts (last green run — 7a-8 coverage): localizer: 45 · core: 493 · dnd: 36 · react: 357 · **total: 931** (7a-9 added stories only, no new tests)
+Test counts (entering Phase 8): localizer: 45 · core: 493 · dnd: 36 · react: 357 · **total: 931**
 
 Coverage bar: **per-file** 85% branch / 95% function (not a global average).
 
-Architecture decisions: DECISIONS.md 2026-06-10 "Phase 7 redesign".
+Architecture decisions: DECISIONS-ARCHIVE.md — Phase 5 DnD + Phase 7 API surface entries.
 
 ## Quick resume
 

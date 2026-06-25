@@ -1,6 +1,14 @@
+import { resolve } from 'node:path'
 import { defineConfig } from 'vitest/config'
 
+const pkgs = resolve(import.meta.dirname, '..')
+
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@big-calendar/core': resolve(pkgs, 'core/src/index.ts'),
+    },
+  },
   test: {
     environment: 'jsdom',
     include: ['src/**/*.{test,spec}.ts'],

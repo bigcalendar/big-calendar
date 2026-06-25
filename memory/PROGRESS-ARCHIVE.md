@@ -1,7 +1,38 @@
 # PROGRESS — ARCHIVE
 
 > Full phase history. Active state → PROGRESS.md.
-> Preserved as of 2026-06-09.
+> Preserved as of 2026-06-24.
+
+---
+
+## Phase 7b — Polish ✅ (completed 2026-06-24)
+
+Focused pass to unify draggable/resizable accessors and add the `type` accessor story.
+
+- **7b-1** — Core: `draggableAccessor`/`resizableAccessor` removed from top-level `CalendarConfig`; `draggable` and `resizable` moved into the `Accessors` object (`accessors.draggable`, `accessors.resizable`). `createCalendarStore` updated; opt-in semantics unchanged (absent = non-draggable/non-resizable). All test files updated. Commit `f4dc383`.
+- **7b-2** — Core: `type` and `resourceType` accessors added to `Accessors` type and `DEFAULT_ACCESSORS`. Commit `f4dc383`.
+- **7b-3** — React: `EventTypeAccessor.stories.tsx` — new story demonstrating the `type` accessor. `demoEvents.ts` updated with `EVENT_TYPES` const (10 types), `EventType` export, and deterministic `type` stamp per event. Story uses CSS `:has(.bc-event-type-X)` to override `--bc-color-event-bg`/`--bc-color-event-fg` CSS custom properties from custom `TypedMonthEvent` and `TypedTimeEvent` slot components. Two stories: `MonthViewTyped` and `WeekViewTyped`. Commit `a65473c`.
+
+Test counts entering Phase 8: localizer: 45 · core: 493 · dnd: 36 · react: 357 · **total: 931** (7b added test updates only; count unchanged from 7a-8 baseline).
+
+---
+
+## Phase 7a — API surface refactor ✅ (completed 2026-06-24)
+
+Full task list and per-task details were in PROGRESS.md. Summary:
+
+- **7a-0** — DECISIONS.md, PROGRESS.md, DECISIONS-ARCHIVE.md, Upgrade_plan_prompt.md updated for Phase 7 redesign.
+- **7a-1** — Core: `config.views` → `config.viewDefinitions`; `config.enabledViews`; `store.enabledViews` signal.
+- **7a-2** — React: `CalendarProps.views?: ViewKey[]`; `useToolbarProps` reads `store.enabledViews`; `Calendar` checks `components.views[viewModel.view]` for all views.
+- **7a-3** — `packages/storybook-shared/` with locale/TZ constants + `withLocalizerDecorator`; wired into storybook-core and storybook-react.
+- **7a-4** — `@big-calendar/styles` MDX doc — all `.bc-*` classes, nesting, CSS custom property overrides.
+- **7a-5** — `src/` restructure — internal hooks moved to top-level public folders; `AgendaEventButton` + all `Default*` components promoted to public.
+- **7a-6** — Hook extraction — `useMonthView`, `useTimeGridView` (split: `useTimeGridHeader` / `useTimeGridBody`), `useAgendaView`; element-spread pattern per component.
+- **7a-7** — Build: multi-entry Vite config + wildcard `package.json` subpath exports.
+- **7a-8** — Tests: imports updated throughout; per-file coverage bars verified. localizer: 45 · core: 493 · dnd: 36 · react: 357 · total: **931**.
+- **7a-9** — Stories: MDX + interactive stories for each newly-public component/hook; all stories include `withLocalizerDecorator`.
+
+Architecture decisions: DECISIONS-ARCHIVE.md 2026-06-10 "Phase 7 redesign" entries.
 
 ---
 
