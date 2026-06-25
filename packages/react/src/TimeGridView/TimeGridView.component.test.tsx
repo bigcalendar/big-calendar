@@ -577,6 +577,7 @@ describe.each(LOCALIZER_CASES)('TimeGridView keyboard DnD [$name]', ({ create })
     interface Resource {
       id: string
       title: string
+      resourceType?: string
     }
     const resources: Resource[] = [
       { id: 'r1', title: 'Board room' },
@@ -615,6 +616,27 @@ describe.each(LOCALIZER_CASES)('TimeGridView keyboard DnD [$name]', ({ create })
       expect(columns).toHaveLength(2)
       expect(container.querySelector('.bc-day-column[data-bc-resource="r1"]')).toBeTruthy()
       expect(container.querySelector('.bc-day-column[data-bc-resource="r2"]')).toBeTruthy()
+    })
+
+    it('sets data-bc-resource-type on columns when resources carry a resourceType field', () => {
+      const typedResources: Resource[] = [
+        { id: 'r1', title: 'Board room', resourceType: 'conference' },
+        { id: 'r2', title: 'Training room', resourceType: 'training' },
+      ]
+      const { container } = render(
+        <CalendarProvider<ResEvent>
+          localizer={localizer}
+          defaultDate={focus}
+          defaultView={Views.DAY}
+          events={resEvents}
+          resources={typedResources}
+          getNow={() => NOW}
+        >
+          <TimeGridView />
+        </CalendarProvider>,
+      )
+      expect(container.querySelector('.bc-day-column[data-bc-resource-type="conference"]')).toBeTruthy()
+      expect(container.querySelector('.bc-day-column[data-bc-resource-type="training"]')).toBeTruthy()
     })
 
     it('places each timed event in its own resource column', () => {
@@ -671,6 +693,7 @@ describe.each(LOCALIZER_CASES)('TimeGridView keyboard DnD [$name]', ({ create })
     interface Resource {
       id: string
       title: string
+      resourceType?: string
     }
     const resources: Resource[] = [
       { id: 'r1', title: 'Board room' },
@@ -802,6 +825,7 @@ describe.each(LOCALIZER_CASES)('TimeGridView keyboard DnD [$name]', ({ create })
     interface Resource {
       id: string
       title: string
+      resourceType?: string
     }
     const resources: Resource[] = [
       { id: 'r1', title: 'Board room' },
@@ -927,6 +951,28 @@ describe.each(LOCALIZER_CASES)('TimeGridView keyboard DnD [$name]', ({ create })
       expect(container.querySelector('.bc-drag-preview')).not.toBeNull()
       act(() => store.clearDragPreview())
       expect(container.querySelector('.bc-drag-preview')).toBeNull()
+    })
+
+    it('sets data-bc-resource-type on day-major columns when resources carry a resourceType field', () => {
+      const typedResources: Resource[] = [
+        { id: 'r1', title: 'Board room', resourceType: 'conference' },
+        { id: 'r2', title: 'Training room', resourceType: 'training' },
+      ]
+      const { container } = render(
+        <CalendarProvider<ResEvent>
+          localizer={localizer}
+          defaultDate={focus}
+          defaultView={Views.WEEK}
+          events={resEvents}
+          resources={typedResources}
+          resourceLayout="day"
+          getNow={() => NOW}
+        >
+          <TimeGridView />
+        </CalendarProvider>,
+      )
+      expect(container.querySelector('.bc-day-column[data-bc-resource-type="conference"]')).toBeTruthy()
+      expect(container.querySelector('.bc-day-column[data-bc-resource-type="training"]')).toBeTruthy()
     })
   })
 

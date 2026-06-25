@@ -53,6 +53,16 @@ const preview: Preview = {
   },
   parameters: {
     layout: 'fullscreen',
+    options: {
+      storySort: {
+        order: [
+          'Core',
+          ['Welcome', 'createCalendarStore', 'Localizers', 'Custom localizer', 'Selection', 'Selection contract'],
+          'Styles',
+          ['Guide'],
+        ],
+      },
+    },
   },
 }
 

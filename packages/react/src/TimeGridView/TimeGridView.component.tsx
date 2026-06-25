@@ -102,6 +102,7 @@ function TimeGridView<TEvent = unknown>() {
                 <div
                   key={cell.key}
                   {...getDayMajorAllDayResourceProps(dayGroup.isToday, cell.resourceId)}
+                  data-bc-resource-type={cell.resourceType ?? undefined}
                 >
                   <div {...getResourceAllDaySlotProps(dayGroup.date, di)} />
                   <div {...allDayResourceStack}>
@@ -142,6 +143,7 @@ function TimeGridView<TEvent = unknown>() {
                   key={cell.column.key}
                   {...colProps}
                   data-bc-resource={String(cell.resourceId)}
+                  data-bc-resource-type={cell.resourceType ?? undefined}
                 >
                   <div {...timeSlotsContainer}>
                     {Array.from({ length: grid.slotCount }, (_, slotIndex) => (
@@ -220,6 +222,7 @@ function TimeGridView<TEvent = unknown>() {
                   <div
                     key={group.key}
                     {...getResourceWeekAllDayProps(gi, group.resourceId)}
+                    data-bc-resource-type={group.resourceType ?? undefined}
                   >
                     <div {...getResourceWeekAllDaySlotsContainerProps()}>
                       {group.columns.map((column, di) => (
@@ -249,6 +252,7 @@ function TimeGridView<TEvent = unknown>() {
                   <div
                     key={group.key}
                     {...getResourceDayAllDayProps(group.columns[0]?.isToday ?? false, group.resourceId)}
+                    data-bc-resource-type={group.resourceType ?? undefined}
                   >
                     <div
                       {...getResourceAllDaySlotProps(group.columns[0]?.day ?? '', 0)}
@@ -285,7 +289,7 @@ function TimeGridView<TEvent = unknown>() {
               const colProps = getColumnProps(column)
               const selDiv = getResourceSelectionDivProps(group.resourceId, column.day)
               return (
-                <div key={column.key} {...colProps} data-bc-resource={String(group.resourceId)}>
+                <div key={column.key} {...colProps} data-bc-resource={String(group.resourceId)} data-bc-resource-type={group.resourceType ?? undefined}>
                   <div {...timeSlotsContainer}>
                     {Array.from({ length: grid.slotCount }, (_, slotIndex) => (
                       <div

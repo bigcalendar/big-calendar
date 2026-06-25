@@ -58,6 +58,8 @@ export interface TimeGridResourceGroup<TEvent> {
   resourceId: ResourceId
   /** Resolved resource display title (for the resource header). */
   resourceTitle: string
+  /** Resolved resource type label (`null` when the field is absent or blank). */
+  resourceType: string | null
   /** One column per visible day, filtered to this resource's events. */
   columns: TimeGridColumn<TEvent>[]
   /** This resource's all-day header segments, laid out across the visible days. */
@@ -72,6 +74,8 @@ export interface TimeGridResourceGroup<TEvent> {
 export interface TimeGridDayResourceCell<TEvent> {
   resourceId: ResourceId
   resourceTitle: string
+  /** Resolved resource type label (`null` when the field is absent or blank). */
+  resourceType: string | null
   column: TimeGridColumn<TEvent>
   /** All-day segments for this resource on this specific day (single-day scope). */
   allDay: SegmentRows<TEvent>

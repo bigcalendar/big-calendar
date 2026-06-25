@@ -214,6 +214,7 @@ describe.each(LOCALIZER_CASES)('timeGridViewModel [$name]', ({ create }) => {
     interface Resource {
       id: number
       title: string
+      resourceType?: string
     }
     const resAccessors = DEFAULT_ACCESSORS as unknown as Accessors<ResEvent, Resource>
     const resources: Resource[] = [
@@ -245,6 +246,34 @@ describe.each(LOCALIZER_CASES)('timeGridViewModel [$name]', ({ create }) => {
       expect(board?.columns[0]?.resourceId).toBe(10)
       expect(board?.columns[0]?.events.map((e) => e.event.id)).toEqual([1])
       expect(training?.columns[0]?.events.map((e) => e.event.id)).toEqual([2])
+    })
+
+    it('resolves resourceType for resource-major groups', () => {
+      const typed: Resource[] = [
+        { id: 10, title: 'Board room', resourceType: 'conference' },
+        { id: 20, title: 'Training room', resourceType: 'training' },
+      ]
+      const model = timeGridViewModel({
+        localizer,
+        accessors: resAccessors,
+        days: [day],
+        events: [],
+        resources: typed,
+      })
+      const [board, training] = model.resources!
+      expect(board?.resourceType).toBe('conference')
+      expect(training?.resourceType).toBe('training')
+    })
+
+    it('resolves resourceType as null when the field is absent', () => {
+      const model = timeGridViewModel({
+        localizer,
+        accessors: resAccessors,
+        days: [day],
+        events: [],
+        resources,
+      })
+      expect(model.resources![0]?.resourceType).toBeNull()
     })
 
     it('drops events whose resource matches none of the supplied resources', () => {
@@ -353,6 +382,25 @@ describe.each(LOCALIZER_CASES)('timeGridViewModel [$name]', ({ create }) => {
       expect(group.cells[0]!.resourceTitle).toBe('Board room')
       expect(group.cells[1]!.resourceId).toBe(20)
       expect(group.cells[1]!.resourceTitle).toBe('Training room')
+    })
+
+    it('resolves resourceType in day-major cells', () => {
+      const typed: Resource[] = [
+        { id: 10, title: 'Board room', resourceType: 'conference' },
+        { id: 20, title: 'Training room', resourceType: 'training' },
+      ]
+      const model = timeGridViewModel({
+        localizer,
+        accessors: resAccessors,
+        days: twodays,
+        events: [],
+        resources: typed,
+        resourceLayout: 'day',
+      })
+      const cell0 = model.dayGroups![0]!.cells[0]!
+      const cell1 = model.dayGroups![0]!.cells[1]!
+      expect(cell0.resourceType).toBe('conference')
+      expect(cell1.resourceType).toBe('training')
     })
 
     it('routes events to the correct (day, resource) cell', () => {

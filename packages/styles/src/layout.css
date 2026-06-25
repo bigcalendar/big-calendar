@@ -338,12 +338,6 @@
     overflow: auto;
   }
 
-  /* Day columns are full per-resource columns (one resource per day, not one day
-     per week), so they get a roomier minimum to comfortably show day-long content. */
-  .bc-time-grid-resources-day {
-    --bc-col-min: var(--bc-col-min);
-  }
-
   /* Frozen gutter: the time-label column (and its header/all-day counterparts)
      stay pinned at the inline-start while day columns scroll horizontally.
      The trailing border is the fixed gutter/content divider; `align-self: stretch`

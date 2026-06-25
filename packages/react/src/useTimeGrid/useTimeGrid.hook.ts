@@ -142,6 +142,8 @@ export interface TimeResourceGroup<TEvent> {
   resourceId: ResourceId
   /** Resolved resource display title (for the resource header). */
   resourceTitle: string
+  /** Resolved resource type label (`null` when absent). Maps to `data-bc-resource-type` on the column. */
+  resourceType: string | null
   columns: TimeColumn<TEvent>[]
   allDay: TimeAllDayRow<TEvent>
 }
@@ -155,6 +157,8 @@ export interface TimeDayResourceCell<TEvent> {
   key: string
   resourceId: ResourceId
   resourceTitle: string
+  /** Resolved resource type label (`null` when absent). Maps to `data-bc-resource-type` on the column. */
+  resourceType: string | null
   column: TimeColumn<TEvent>
   /** All-day events for this resource scoped to this single day. */
   allDay: TimeAllDayRow<TEvent>
@@ -351,6 +355,7 @@ export function useTimeGrid<TEvent>(): TimeGrid<TEvent> | null {
           key: base,
           resourceId: group.resourceId,
           resourceTitle: group.resourceTitle,
+          resourceType: group.resourceType,
           columns: group.columns.map((column, colIndex) => resolveColumn(column, `${base}-${colIndex}`)),
           allDay: resolveAllDay(group.allDay, base),
         }
@@ -379,6 +384,7 @@ export function useTimeGrid<TEvent>(): TimeGrid<TEvent> | null {
             key: base,
             resourceId: cell.resourceId,
             resourceTitle: cell.resourceTitle,
+            resourceType: cell.resourceType,
             column: resolveColumn(cell.column, base),
             allDay: resolveAllDay(cell.allDay, base),
           }

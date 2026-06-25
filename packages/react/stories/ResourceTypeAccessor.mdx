@@ -1,0 +1,186 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Resources/Resource Type Accessor" />
+
+# Resource Type Accessor
+
+The **resourceType accessor** lets you assign a category string to each resource and use
+that category to colour its lane background — without touching the calendar's internal
+components.
+
+It follows the same pattern as the [Event Type Accessor](/?path=/docs/calendar-event-type-accessor--docs):
+add a field to your data, configure the accessor, then write CSS that targets the rendered
+attribute.
+
+---
+
+## How it works
+
+You add a `resourceType` field (or any field name you choose) to your resource objects.
+The calendar reads it via `accessors={{ resourceType: 'resourceType' }}` (the default field
+name, so you can omit it when your field is called `resourceType`). It then writes that
+value as a `data-bc-resource-type` attribute on every `.bc-day-column` element that belongs
+to that resource.
+
+Because the attribute sits directly on the column element — not on a child — you can target
+the lane background with a plain attribute selector. No `:has()` indirection needed.
+
+---
+
+## Step 1 — Add a `resourceType` field to your resources
+
+```ts
+interface Room {
+  id: string
+  title: string
+  resourceType: string
+}
+
+const rooms: Room[] = [
+  { id: 'board',    title: 'Board room',      resourceType: 'conference' },
+  { id: 'training', title: 'Training room',   resourceType: 'training'   },
+  { id: 'mtg1',     title: 'Meeting room 1',  resourceType: 'meeting'    },
+  { id: 'mtg2',     title: 'Meeting room 2',  resourceType: 'meeting'    },
+  { id: 'exec',     title: 'Executive suite', resourceType: 'executive'  },
+]
+```
+
+Notice that `mtg1` and `mtg2` share the same type. Resources of the same type will all
+receive the same CSS attribute value, so one CSS rule colours all of them together.
+
+---
+
+## Step 2 — Configure the accessor
+
+Pass `accessors` to `<CalendarProvider>`. Since the default field name is already
+`resourceType`, the explicit configuration below is optional — but it makes the intent clear.
+
+```tsx
+<CalendarProvider
+  localizer={localizer}
+  resources={rooms}
+  events={events}
+  accessors={{ resourceType: 'resourceType' }}
+>
+  <Calendar />
+</CalendarProvider>
+```
+
+If your field has a different name — say `category` — change it to
+`accessors={{ resourceType: 'category' }}`. You can also use a function accessor:
+
+```tsx
+<CalendarProvider
+  accessors={{ resourceType: (resource) => resource.metadata?.type ?? '' }}
+>
+  <Calendar />
+</CalendarProvider>
+```
+
+---
+
+## Step 3 — Style lanes with CSS
+
+The calendar emits `data-bc-resource-type="conference"` (and so on) on both the
+`.bc-day-column` (time body) and the `.bc-allday-resource` (all-day strip). Target
+both with attribute selectors to colour the full lane top-to-bottom.
+
+Add `:not(.bc-today)` so today's column keeps its built-in highlight instead of
+being overridden by the lane colour:
+
+```css
+.bc-day-column[data-bc-resource-type="conference"]:not(.bc-today),
+.bc-allday-resource[data-bc-resource-type="conference"]:not(.bc-today) {
+  background-color: #d4e8f5;
+}
+
+.bc-day-column[data-bc-resource-type="training"]:not(.bc-today),
+.bc-allday-resource[data-bc-resource-type="training"]:not(.bc-today) {
+  background-color: #d4f5e8;
+}
+
+.bc-day-column[data-bc-resource-type="meeting"]:not(.bc-today),
+.bc-allday-resource[data-bc-resource-type="meeting"]:not(.bc-today) {
+  background-color: #f5f0d4;
+}
+
+.bc-day-column[data-bc-resource-type="executive"]:not(.bc-today),
+.bc-allday-resource[data-bc-resource-type="executive"]:not(.bc-today) {
+  background-color: #ead4f5;
+}
+```
+
+This works in both the resource-major layout (one block per resource, all its days together)
+and the day-major layout (`resourceLayout="day"`, all resources for one day together).
+
+---
+
+## Combining with CSS custom properties
+
+By default, using `:not(.bc-today)` (as shown in Step 3) leaves today's column with
+its standard highlight. If you'd rather blend today's highlight with the lane colour
+instead, target `.bc-today` separately and override `--bc-color-today-bg`:
+
+```css
+/* Non-today: lane colour on both the body column and the all-day strip */
+.bc-day-column[data-bc-resource-type="meeting"]:not(.bc-today),
+.bc-allday-resource[data-bc-resource-type="meeting"]:not(.bc-today) {
+  background-color: #f5f0d4;
+}
+
+/* Today's column: lane colour darkened slightly to preserve the 'today' distinction */
+.bc-day-column[data-bc-resource-type="meeting"].bc-today,
+.bc-allday-resource[data-bc-resource-type="meeting"].bc-today {
+  --bc-color-today-bg: color-mix(in oklab, #f5f0d4, CanvasText 5%);
+  background-color: var(--bc-color-today-bg);
+}
+```
+
+Overriding `--bc-color-today-bg` keeps the all-day strip and the body column in sync
+so the whole lane reads as a consistent colour band.
+
+---
+
+## Comparison with the Event Type Accessor
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Event Type Accessor</th>
+      <th>Resource Type Accessor</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>What it styles</td>
+      <td>Individual event cards</td>
+      <td>Entire lane column backgrounds</td>
+    </tr>
+    <tr>
+      <td>Where the value appears in the DOM</td>
+      <td>Class on a <code>{"<span>"}</code> inside the event button</td>
+      <td><code>data-bc-resource-type</code> attribute on <code>.bc-day-column</code></td>
+    </tr>
+    <tr>
+      <td>CSS selector needed</td>
+      <td><code>{".bc-event:has(.bc-event-type-{name})"}</code> (requires <code>:has()</code>)</td>
+      <td><code>{".bc-day-column[data-bc-resource-type=\"{name}\"]"}</code> (plain attribute selector)</td>
+    </tr>
+    <tr>
+      <td>Accessor field</td>
+      <td><code>accessors.type</code> (reads from the event)</td>
+      <td><code>accessors.resourceType</code> (reads from the resource object)</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Live examples
+
+The stories in this section show the pattern across three layouts:
+
+- **Day View — Resource Lane Colours** — six rooms in a single-day resource grid, each type tinted differently (the three meeting rooms share one colour)
+- **Week View — Resource Lane Colours** — resource-major week view with the same tinting
+- **Day-Major Week — Resource Lane Colours** — day-major layout (`resourceLayout="day"`) with the same colours applied across all day columns

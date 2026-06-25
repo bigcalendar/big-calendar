@@ -206,6 +206,7 @@ export function timeGridViewModel<TEvent, TResource = unknown>(args: {
   if (resources && resources.length > 0) {
     const getResourceId = wrapAccessor(accessors.resourceId)
     const getResourceTitle = wrapAccessor(accessors.resourceTitle)
+    const getResourceType = wrapAccessor(accessors.resourceType)
     const getEventResource = wrapAccessor(accessors.resource)
 
     const resourceIdsOf = (event: TEvent): ResourceId[] => {
@@ -225,12 +226,14 @@ export function timeGridViewModel<TEvent, TResource = unknown>(args: {
           const resourceId = getResourceId(resource)
           if (resourceId == null) continue
           const resourceTitle = getResourceTitle(resource) ?? ''
+          const resourceType = getResourceType(resource) ?? null
           const timedHere = timedItems.filter((item) => belongsTo(item, resourceId))
           const bgHere = bgItems.filter((item) => belongsTo(item, resourceId))
           const allDayHere = allDayItems.filter((item) => belongsTo(item, resourceId))
           cells.push({
             resourceId,
             resourceTitle,
+            resourceType,
             column: buildColumn(ctx, date, resourceId, timedHere, bgHere),
             // Single-day scope: segments always have left:1, span:1.
             allDay: rowSegments({ localizer, days: [date], items: allDayHere, limit: allDayMaxRows }),
@@ -248,12 +251,14 @@ export function timeGridViewModel<TEvent, TResource = unknown>(args: {
       // A resource without an id can hold no events and can't be a drop target; skip it.
       if (resourceId == null) continue
       const resourceTitle = getResourceTitle(resource) ?? ''
+      const resourceType = getResourceType(resource) ?? null
       const timedHere = timedItems.filter((item) => belongsTo(item, resourceId))
       const bgHere = bgItems.filter((item) => belongsTo(item, resourceId))
       const allDayHere = allDayItems.filter((item) => belongsTo(item, resourceId))
       groups.push({
         resourceId,
         resourceTitle,
+        resourceType,
         columns: days.map((date) => buildColumn(ctx, date, resourceId, timedHere, bgHere)),
         allDay: rowSegments({ localizer, days, items: allDayHere, limit: allDayMaxRows }),
       })
