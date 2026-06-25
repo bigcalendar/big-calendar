@@ -20,7 +20,7 @@
 
 ## ⚠ NEXT TASK
 
-**Phase 8 — 8-2 merge-accessors transform.** Next: `packages/codemods/src/transforms/merge-accessors.ts`, jscodeshift `tsx` parser, collapses 11 `*Accessor` props on `<Calendar>` into a single `accessors={{ … }}` object prop. Then continue 8-3 through 8-8 CLI in order.
+**Phase 8 — 8-3 rename-callbacks transform.** Next: `packages/codemods/src/transforms/rename-callbacks.ts`, jscodeshift `tsx` parser, renames `onSelectEvent` → `onEventClick` and `onDoubleClickEvent` → `onEventDoubleClick` on `<Calendar>` JSX elements. Then continue 8-4 through 8-8 CLI in order.
 
 ---
 
@@ -31,7 +31,7 @@ Transforms: jscodeshift `tsx` parser handles `.js .jsx .ts .tsx`. All live in `p
 | # | Task | Status |
 |---|---|---|
 | 8-1 | `rename-imports`: `react-big-calendar` → `@big-calendar/react` | [x] |
-| 8-2 | `merge-accessors`: 11 `*Accessor` props → `accessors={{ … }}` object | [ ] |
+| 8-2 | `merge-accessors`: 11 `*Accessor` props → `accessors={{ … }}` object | [x] |
 | 8-3 | `rename-callbacks`: `onSelectEvent` → `onEventClick`, `onDoubleClickEvent` → `onEventDoubleClick` | [ ] |
 | 8-4 | `rename-props`: misc prop renames (`resourceGroupingLayout` → `resourceLayout`, etc.) | [ ] |
 | 8-5 | `flag-removed-props`: props with no equivalent — inject `// TODO: removed — …` comment | [ ] |
