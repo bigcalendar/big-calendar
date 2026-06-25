@@ -10,6 +10,9 @@
     "directory": "packages/codemods"
   },
   "sideEffects": false,
+  "bin": {
+    "@big-calendar/codemods": "./dist/cli.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -29,6 +32,7 @@
   },
   "peerDependencies": {},
   "devDependencies": {
-    "@types/jscodeshift": "^17.3.0"
+    "@types/jscodeshift": "^17.3.0",
+    "@types/node": "^25.9.1"
   }
 }

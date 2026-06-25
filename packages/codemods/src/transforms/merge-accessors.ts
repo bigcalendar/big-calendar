@@ -18,7 +18,7 @@ const PROP_MAP: Record<string, string> = {
 /** Extracts the JS expression from a JSXAttribute value. */
 function extractValue(attr: JSXAttribute, j: Parameters<Transform>[1]['jscodeshift']) {
   const { value } = attr
-  if (value === null) return j.booleanLiteral(true)
+  if (value === null || value === undefined) return j.booleanLiteral(true)
   if (value.type === 'StringLiteral') return j.stringLiteral(value.value)
   if (value.type === 'JSXExpressionContainer') {
     const { expression } = value
@@ -39,7 +39,7 @@ const transform: Transform = (file, api) => {
       return name.type === 'JSXIdentifier' && name.name === 'Calendar'
     })
     .forEach((path) => {
-      const { attributes } = path.node
+      const attributes = path.node.attributes ?? []
 
       // Collect *Accessor attributes present on this element
       const accessorAttrs = attributes.filter(
@@ -53,7 +53,7 @@ const transform: Transform = (file, api) => {
 
       // Build object properties for the collected accessors
       const newProperties = accessorAttrs.map((attr) => {
-        const key = PROP_MAP[(attr.name as { name: string }).name]
+        const key = PROP_MAP[(attr.name as { name: string }).name] as string
         return j.property('init', j.identifier(key), extractValue(attr, j)) as Property
       })
 
@@ -68,10 +68,13 @@ const transform: Transform = (file, api) => {
       if (existingAttr) {
         const container = existingAttr.value
         if (
-          container?.type === 'JSXExpressionContainer' &&
+          container != null &&
+          container.type === 'JSXExpressionContainer' &&
           container.expression.type === 'ObjectExpression'
         ) {
-          ;(container.expression as ObjectExpression).properties.push(...(newProperties as ObjectProperty[]))
+          ;(container.expression as ObjectExpression).properties.push(
+            ...(newProperties as unknown as ObjectProperty[]),
+          )
         }
       } else {
         // Insert a new `accessors={{ … }}` prop in place of the first accessor prop

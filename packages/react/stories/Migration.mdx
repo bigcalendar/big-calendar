@@ -1,0 +1,453 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Migration Guide" />
+
+# Migrating from react-big-calendar
+
+Big Calendar is the successor to react-big-calendar. It keeps the same mental model — a
+calendar with views, events, and a toolbar — but fixes the foundational issues that made
+react-big-calendar hard to maintain: `Date` objects everywhere, timezone brittleness, and
+a monolithic component that could not be composed.
+
+This guide walks you through every change you need to make. Most of it is handled
+automatically by the official codemod, so you can do it in minutes instead of hours.
+
+---
+
+## Step 1 — Run the codemod
+
+The codemod reads your source files and applies all the safe, automated changes for you.
+Run it once from your project root:
+
+```bash
+npx @big-calendar/codemods src/
+```
+
+Or use `--dry-run` first to preview what it would change without touching any files:
+
+```bash
+npx @big-calendar/codemods --dry-run "src/**/*.{ts,tsx,js,jsx}"
+```
+
+The codemod applies seven transforms in order:
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Transform</th>
+      <th>What it does</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td><code>rename-imports</code></td>
+      <td>Changes <code>react-big-calendar</code> imports to <code>@big-calendar/react</code></td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><code>merge-accessors</code></td>
+      <td>Collapses 11 <code>*Accessor</code> props into a single <code>accessors={"{…}"}</code> object</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><code>rename-callbacks</code></td>
+      <td>Renames <code>onSelectEvent</code> → <code>onEventClick</code> and <code>onDoubleClickEvent</code> → <code>onEventDoubleClick</code></td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><code>rename-props</code></td>
+      <td>Renames <code>resourceGroupingLayout</code> → <code>resourceLayout</code> and <code>onSelecting</code> → <code>onSlotSelecting</code></td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><code>flag-removed-props</code></td>
+      <td>Injects <code>{"// TODO: removed —"}</code> comments next to props that no longer exist</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><code>views-prop</code></td>
+      <td>Converts a <code>views</code> object or string to the new array form, splitting custom view components into <code>viewDefinitions</code></td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td><code>wrap-provider</code></td>
+      <td>Wraps each <code>{"<Calendar>"}</code> in a <code>{"<CalendarProvider>"}</code> and moves all data props to the provider</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Step 2 — Install the new packages
+
+Uninstall the old package and install the new ones:
+
+```bash
+# Remove the old library
+npm uninstall react-big-calendar
+
+# Install Big Calendar
+npm install @big-calendar/react @big-calendar/styles
+
+# Pick a localizer — Temporal is the default (no extra install needed)
+# If you were using moment or Luxon:
+npm install @big-calendar/localizer-luxon luxon
+```
+
+---
+
+## Step 3 — Switch the localizer
+
+React Big Calendar required you to create a localizer from moment, Luxon, or date-fns.
+Big Calendar ships its own localizers that do not depend on any of those.
+
+**Old (moment):**
+
+```js
+import { momentLocalizer } from 'react-big-calendar'
+import moment from 'moment'
+
+const localizer = momentLocalizer(moment)
+```
+
+**New (Temporal — recommended):**
+
+```js
+import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
+
+const localizer = await createTemporalLocalizer({ locale: 'en-US', timeZone: 'UTC' })
+```
+
+**New (Luxon):**
+
+```js
+import { createLuxonLocalizer } from '@big-calendar/localizer-luxon'
+
+const localizer = createLuxonLocalizer({ locale: 'en-US', timeZone: 'UTC' })
+```
+
+The `timeZone` is now a first-class option on the localizer rather than something you
+have to wire up manually. Dates everywhere in the public API are **ISO 8601 strings**
+(`"2026-06-15T09:00:00Z"`) instead of `Date` objects.
+
+---
+
+## Step 4 — Wrap `<Calendar>` in `<CalendarProvider>`
+
+The biggest architecture change: `<Calendar>` is now a pure display component.
+All your data and callbacks go on `<CalendarProvider>`.
+
+**Old:**
+
+```tsx
+<Calendar
+  localizer={localizer}
+  events={events}
+  onEventClick={handleClick}
+  defaultView="week"
+/>
+```
+
+**New:**
+
+```tsx
+<CalendarProvider
+  localizer={localizer}
+  events={events}
+  onEventClick={handleClick}
+  defaultView="week"
+>
+  <Calendar />
+</CalendarProvider>
+```
+
+The `wrap-provider` codemod transform does this automatically, but review the output
+to make sure the props landed in the right place.
+
+---
+
+## Step 5 — Review the TODO comments
+
+After running the codemod, search your project for `TODO: removed`. Each comment marks
+a prop that has no automatic equivalent in Big Calendar. The most common ones are:
+
+<table>
+  <thead>
+    <tr>
+      <th>Old prop</th>
+      <th>What to do</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>popup</code></td>
+      <td>
+        The month overflow popup is not in Big Calendar yet. Use <code>weekEventLimit</code>
+        to cap the number of rows, and render extra events in your own popover using
+        the <code>components.monthShowMore</code> slot.
+      </td>
+    </tr>
+    <tr>
+      <td><code>popupOffset</code></td>
+      <td>Remove it — <code>popup</code> is gone.</td>
+    </tr>
+    <tr>
+      <td><code>rtl</code></td>
+      <td>Right-to-left layout is not currently supported. Remove this prop and follow Big Calendar's GitHub for updates.</td>
+    </tr>
+    <tr>
+      <td><code>onSelectSlot</code></td>
+      <td>
+        Split into three callbacks on <code>{"<CalendarProvider>"}</code>:
+        <ul>
+          <li><code>onSlotClick</code> — a single click on an empty slot</li>
+          <li><code>onSlotDoubleClick</code> — a double-click on an empty slot</li>
+          <li><code>onSlotSelect</code> — a drag that commits a multi-slot range</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><code>culture</code></td>
+      <td>Pass <code>locale</code> to the localizer instead of to the calendar.</td>
+    </tr>
+    <tr>
+      <td><code>formats</code></td>
+      <td>Formatting is owned by the localizer. See the localizer docs for how to override date formats.</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Step 6 — Update `resourceGroupingLayout`
+
+The codemod renames `resourceGroupingLayout` to `resourceLayout`, but the **value** type
+also changed. You need to update it manually:
+
+<table>
+  <thead>
+    <tr>
+      <th>Old value</th>
+      <th>New value</th>
+      <th>Meaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>{"resourceGroupingLayout={false}"}</code></td>
+      <td><code>{"resourceLayout='resource'"}</code></td>
+      <td>Resource-major: one block per resource, spanning all days (the default)</td>
+    </tr>
+    <tr>
+      <td><code>{"resourceGroupingLayout={true}"}</code></td>
+      <td><code>{"resourceLayout='day'"}</code></td>
+      <td>Day-major: one block per day, with each resource as a sub-column</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Step 7 — Import the stylesheet
+
+Big Calendar ships its own stylesheet. Add it once, near the top of your app:
+
+```tsx
+import '@big-calendar/styles/index.css'
+```
+
+If you were overriding react-big-calendar styles with custom CSS, you will need to
+update your selectors. Big Calendar uses a `bc-` prefix (for example `.bc-calendar`,
+`.bc-event`, `.bc-toolbar`). The custom properties are all prefixed with `--bc-`.
+
+---
+
+## Prop reference
+
+A complete list of every change to the `<CalendarProvider>` prop API:
+
+<table>
+  <thead>
+    <tr>
+      <th>react-big-calendar prop</th>
+      <th>@big-calendar/react prop</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>localizer</code></td>
+      <td><code>localizer</code></td>
+      <td>Now a Big Calendar localizer, not a moment/Luxon/date-fns bridge</td>
+    </tr>
+    <tr>
+      <td><code>events</code></td>
+      <td><code>events</code></td>
+      <td>Same — but <code>start</code>/<code>end</code> fields must be ISO strings, not <code>Date</code> objects</td>
+    </tr>
+    <tr>
+      <td><code>defaultView</code></td>
+      <td><code>defaultView</code></td>
+      <td>Same</td>
+    </tr>
+    <tr>
+      <td><code>view</code> (controlled)</td>
+      <td><code>view</code></td>
+      <td>Same</td>
+    </tr>
+    <tr>
+      <td><code>date</code></td>
+      <td><code>date</code></td>
+      <td>ISO string now instead of <code>Date</code></td>
+    </tr>
+    <tr>
+      <td><code>views</code> (array)</td>
+      <td><code>views</code></td>
+      <td>Same — array of view keys e.g. <code>['month', 'week']</code></td>
+    </tr>
+    <tr>
+      <td><code>views</code> (object with components)</td>
+      <td><code>views</code> + <code>viewDefinitions</code></td>
+      <td>Boolean entries → <code>views</code> array; component entries → <code>viewDefinitions</code></td>
+    </tr>
+    <tr>
+      <td><code>onSelectEvent</code></td>
+      <td><code>onEventClick</code></td>
+      <td>Renamed</td>
+    </tr>
+    <tr>
+      <td><code>onDoubleClickEvent</code></td>
+      <td><code>onEventDoubleClick</code></td>
+      <td>Renamed</td>
+    </tr>
+    <tr>
+      <td><code>onSelecting</code></td>
+      <td><code>onSlotSelecting</code></td>
+      <td>Renamed; now receives <code>{"{ start, end, allDay }"}</code> ISO strings</td>
+    </tr>
+    <tr>
+      <td><code>onSelectSlot</code></td>
+      <td><code>onSlotClick</code> / <code>onSlotDoubleClick</code> / <code>onSlotSelect</code></td>
+      <td>Split by gesture — see Step 5</td>
+    </tr>
+    <tr>
+      <td><code>onNavigate</code></td>
+      <td><code>onNavigate</code></td>
+      <td>Signature changed: now <code>{"({ date, view })"}</code> instead of <code>{"(date, view)"}</code></td>
+    </tr>
+    <tr>
+      <td><code>onView</code></td>
+      <td><code>onView</code></td>
+      <td>Signature changed: now <code>{"({ view })"}</code> instead of <code>{"(view)"}</code></td>
+    </tr>
+    <tr>
+      <td><code>onRangeChange</code></td>
+      <td><code>onRangeChange</code></td>
+      <td>Signature changed: now <code>{"({ range: { start, end }, view })"}</code> with ISO strings</td>
+    </tr>
+    <tr>
+      <td><code>resourceGroupingLayout</code></td>
+      <td><code>resourceLayout</code></td>
+      <td>Renamed + value type changed — see Step 6</td>
+    </tr>
+    <tr>
+      <td><code>titleAccessor</code></td>
+      <td><code>accessors.title</code></td>
+      <td>All 11 <code>*Accessor</code> props merged into one <code>accessors</code> object</td>
+    </tr>
+    <tr>
+      <td><code>scrollToTime</code></td>
+      <td><code>scrollToTime</code></td>
+      <td>Type changed: now <code>{"{ hour, minute? }"}</code> instead of <code>Date</code></td>
+    </tr>
+    <tr>
+      <td><code>min</code> / <code>max</code></td>
+      <td><code>min</code> / <code>max</code></td>
+      <td>Type changed: now <code>{"{ hour, minute? }"}</code> instead of <code>Date</code></td>
+    </tr>
+    <tr>
+      <td><code>step</code></td>
+      <td><code>step</code></td>
+      <td>Same</td>
+    </tr>
+    <tr>
+      <td><code>timeslots</code></td>
+      <td><code>timeslots</code></td>
+      <td>Same</td>
+    </tr>
+    <tr>
+      <td><code>length</code></td>
+      <td><code>length</code></td>
+      <td>Same — agenda view span in days</td>
+    </tr>
+    <tr>
+      <td><code>drilldownView</code></td>
+      <td><code>drilldownView</code></td>
+      <td>Same</td>
+    </tr>
+    <tr>
+      <td><code>getDrilldownView</code></td>
+      <td><code>getDrilldownView</code></td>
+      <td>Same</td>
+    </tr>
+    <tr>
+      <td><code>selectable</code></td>
+      <td><code>selectable</code></td>
+      <td>Same — <code>true</code> / <code>false</code> / <code>'ignoreEvents'</code></td>
+    </tr>
+    <tr>
+      <td><code>longPressThreshold</code></td>
+      <td><code>longPressThreshold</code></td>
+      <td>Same</td>
+    </tr>
+    <tr>
+      <td><code>dayLayoutAlgorithm</code></td>
+      <td><code>dayLayoutAlgorithm</code></td>
+      <td>Same — <code>'overlap'</code> (default) or a custom function</td>
+    </tr>
+    <tr>
+      <td><code>showMultiDayTimes</code></td>
+      <td><code>showMultiDayTimes</code></td>
+      <td>Same</td>
+    </tr>
+    <tr>
+      <td><code>popup</code></td>
+      <td>—</td>
+      <td>Removed — see Step 5</td>
+    </tr>
+    <tr>
+      <td><code>popupOffset</code></td>
+      <td>—</td>
+      <td>Removed with <code>popup</code></td>
+    </tr>
+    <tr>
+      <td><code>rtl</code></td>
+      <td>—</td>
+      <td>Removed</td>
+    </tr>
+    <tr>
+      <td><code>culture</code></td>
+      <td>—</td>
+      <td>Removed — pass <code>locale</code> to the localizer</td>
+    </tr>
+    <tr>
+      <td><code>formats</code></td>
+      <td>—</td>
+      <td>Removed — use localizer formatting or <code>messages</code></td>
+    </tr>
+    <tr>
+      <td><code>getNow</code></td>
+      <td><code>getNow</code></td>
+      <td>Same — returns an ISO string instead of a <code>Date</code></td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Need help?
+
+- Open an issue on [GitHub](https://github.com/bigcalendar/big-calendar/issues)
+- Read the interactive stories in this Storybook — every feature has a live example

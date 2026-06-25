@@ -13,38 +13,36 @@
 - [x] Phase 6 — LuxonLocalizer (dual-localizer parity, `timeZone` rename)
 - [x] **Phase 7a — API surface refactor**
 - [x] **Phase 7b — Polish (accessors unification + type story)**
-- [ ] **Phase 8 — Codemods** ← CURRENT
-- [ ] Phase 9+ — Additional frameworks (Vue → Angular → Lit, one at a time)
+- [x] **Phase 8 — Codemods**
+- [ ] Phase 9+ — Additional frameworks (Vue → Angular → Lit, one at a time) ← CURRENT
 
 ---
 
 ## ⚠ NEXT TASK
 
-**Phase 8 — 8-3 rename-callbacks transform.** Next: `packages/codemods/src/transforms/rename-callbacks.ts`, jscodeshift `tsx` parser, renames `onSelectEvent` → `onEventClick` and `onDoubleClickEvent` → `onEventDoubleClick` on `<Calendar>` JSX elements. Then continue 8-4 through 8-8 CLI in order.
+**Phase 9 — Additional frameworks.** Start with Vue adapter (Vue 3 + `@big-calendar/vue`), following the same package structure as `@big-calendar/react`.
 
 ---
 
-## Phase 8 — Codemods task list
-
-Transforms: jscodeshift `tsx` parser handles `.js .jsx .ts .tsx`. All live in `packages/codemods/src/transforms/`.
+## Phase 8 — Codemods task list (COMPLETE)
 
 | # | Task | Status |
 |---|---|---|
-| 8-1 | `rename-imports`: `react-big-calendar` → `@big-calendar/react` | [x] |
-| 8-2 | `merge-accessors`: 11 `*Accessor` props → `accessors={{ … }}` object | [x] |
-| 8-3 | `rename-callbacks`: `onSelectEvent` → `onEventClick`, `onDoubleClickEvent` → `onEventDoubleClick` | [ ] |
-| 8-4 | `rename-props`: misc prop renames (`resourceGroupingLayout` → `resourceLayout`, etc.) | [ ] |
-| 8-5 | `flag-removed-props`: props with no equivalent — inject `// TODO: removed — …` comment | [ ] |
-| 8-6 | `views-prop`: array/object `views` → `views` array + optional `viewDefinitions` | [ ] |
-| 8-8 | CLI runner (`npx @big-calendar/codemods`) — wires all transforms, accepts `--dry-run`, glob or dir | [ ] |
-| 8-7 | `wrap-provider` (opt-in): wraps `<Calendar>` in `<CalendarProvider>` | [ ] |
-| 8-9 | Migration guide MDX in `storybook-core` | [ ] |
+| 8-1 | `rename-imports` | [x] |
+| 8-2 | `merge-accessors` | [x] |
+| 8-3 | `rename-callbacks` | [x] |
+| 8-4 | `rename-props` | [x] |
+| 8-5 | `flag-removed-props` | [x] |
+| 8-6 | `views-prop` | [x] |
+| 8-8 | CLI runner (`npx @big-calendar/codemods`) | [x] |
+| 8-7 | `wrap-provider` | [x] |
+| 8-9 | Migration guide MDX | [x] |
 
 ---
 
 ## Reference
 
-Test counts (entering Phase 8): localizer: 45 · core: 493 · dnd: 36 · react: 357 · **total: 931**
+Test counts (entering Phase 9): localizer: 45 · core: 493 · dnd: 36 · react: 357 · codemods: 82 · **total: 1013**
 
 Coverage bar: **per-file** 85% branch / 95% function (not a global average).
 
