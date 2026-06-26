@@ -3,6 +3,35 @@ import { localeList, timeZoneList, withLocalizerDecorator } from '@big-calendar/
 
 const _localeNames = new Intl.DisplayNames(['en'], { type: 'language' })
 
+// ─── Composition globals bridge ──────────────────────────────────────────────
+// Storybook's manager always sends UPDATE_GLOBALS to "storybook-preview-iframe"
+// (the hub's own iframe) and never to embedded ref iframes ("storybook-ref-*").
+// This preview.ts runs inside the hub, so it DOES receive the event. We relay
+// the updated globals to every ref iframe via postMessage. The hub preview and
+// the manager share the same origin (same host:port), so accessing
+// window.parent.document is allowed.
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ch = (window as any).__STORYBOOK_ADDONS_CHANNEL__ as
+      | { on: (event: string, cb: (data: unknown) => void) => void }
+      | undefined
+    if (!ch) return
+    ch.on('updateGlobals', (data: unknown) => {
+      const { globals } = data as { globals?: Record<string, unknown> }
+      if (!globals) return
+      try {
+        const frames = window.parent.document.querySelectorAll<HTMLIFrameElement>(
+          'iframe[id^="storybook-ref-"]',
+        )
+        frames.forEach((f) => f.contentWindow?.postMessage({ type: 'bc-globals-sync', globals }, '*'))
+      } catch {
+        // Not in a composition context or cross-origin; ignore.
+      }
+    })
+  }, 0)
+}
+
 const preview: Preview = {
   decorators: [withLocalizerDecorator],
   globalTypes: {
