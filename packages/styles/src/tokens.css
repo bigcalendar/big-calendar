@@ -31,7 +31,7 @@
   --bc-color-event-bg: #0c41ff;
   --bc-color-event-fg: #fff;
   --bc-color-event-hover-bg: color-mix(in oklab, var(--bc-color-event-bg), CanvasText 30%);
-  --bc-color-event-border: color-mix(in oklab, AccentColor 80%, CanvasText);
+  --bc-color-event-border: color-mix(in oklab, var(--bc-color-event-bg), CanvasText 25%);
   --bc-color-bg-event-bg: #BFC6FF;
   --bc-color-bg-event-fg: #000000;
   --bc-color-bg-event-border: color-mix(in oklab, var(--bc-color-bg-event-bg), CanvasText 25%);

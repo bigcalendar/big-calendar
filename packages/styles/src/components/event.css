@@ -2,7 +2,7 @@
 @layer bc.components {
   .bc-event,
   .bc-segment {
-    border: var(--bc-border-width) solid var(--bc-color-event-fg);
+    border: var(--bc-border-width) solid var(--bc-color-event-border);
     border-radius: var(--bc-radius-sm);
     background: var(--bc-color-event-bg);
     color: var(--bc-color-event-fg);

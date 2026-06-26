@@ -47,7 +47,7 @@
 
   .bc-toolbar-group button:not(:first-child) {
     margin-inline-start: -1px;
-    border-inline-start-color: var(--bc-color-event-fg);
+    border-inline-start-color: var(--bc-color-event-border);
   }
 
   .bc-toolbar-group button:first-child {

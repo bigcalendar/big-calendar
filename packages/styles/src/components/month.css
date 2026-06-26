@@ -38,6 +38,12 @@
     block-size: 1.75rem;
   }
 
+  /* Date numbers anchor to the physical right in both LTR and RTL. In RTL
+     `end` maps to left, so we flip it back with an explicit `start` override. */
+  :dir(rtl) .bc-date-number {
+    text-align: start;
+  }
+
   .bc-date-cell.bc-today {
     background: var(--bc-color-today-bg);
   }
