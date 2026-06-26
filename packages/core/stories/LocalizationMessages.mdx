@@ -1,0 +1,231 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Core/Localization/Messages" />
+
+# Messages
+
+> These patterns apply to any Big Calendar framework adapter. Code examples use `resolveMessages` and `createCalendarStore` directly — your framework adapter wraps this same API.
+
+Every user-facing string the calendar renders can be replaced. Call `resolveMessages` with the keys you want to override and pass the result to your framework adapter's provider. Any key you omit keeps its English default.
+
+```ts
+import { resolveMessages } from '@big-calendar/core'
+
+const messages = resolveMessages({ today: 'Hoy', month: 'Mes', week: 'Semana' })
+// Pass messages to your framework adapter's provider
+```
+
+---
+
+## All overridable keys
+
+<table>
+  <thead>
+    <tr>
+      <th>Key</th>
+      <th>Type</th>
+      <th>English default</th>
+      <th>Where it appears</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>date</code></td>
+      <td><code>string</code></td>
+      <td><code>"Date"</code></td>
+      <td>Column header in the Agenda view's date column.</td>
+    </tr>
+    <tr>
+      <td><code>time</code></td>
+      <td><code>string</code></td>
+      <td><code>"Time"</code></td>
+      <td>Column header in the Agenda view's time column.</td>
+    </tr>
+    <tr>
+      <td><code>event</code></td>
+      <td><code>string</code></td>
+      <td><code>"Event"</code></td>
+      <td>Column header in the Agenda view's event column.</td>
+    </tr>
+    <tr>
+      <td><code>allDay</code></td>
+      <td><code>string</code></td>
+      <td><code>"All Day"</code></td>
+      <td>Label shown in the Agenda view time column for all-day events.</td>
+    </tr>
+    <tr>
+      <td><code>week</code></td>
+      <td><code>string</code></td>
+      <td><code>"Week"</code></td>
+      <td>Week view button in the toolbar.</td>
+    </tr>
+    <tr>
+      <td><code>work_week</code></td>
+      <td><code>string</code></td>
+      <td><code>"Work Week"</code></td>
+      <td>Work Week view button in the toolbar.</td>
+    </tr>
+    <tr>
+      <td><code>day</code></td>
+      <td><code>string</code></td>
+      <td><code>"Day"</code></td>
+      <td>Day view button in the toolbar.</td>
+    </tr>
+    <tr>
+      <td><code>month</code></td>
+      <td><code>string</code></td>
+      <td><code>"Month"</code></td>
+      <td>Month view button in the toolbar.</td>
+    </tr>
+    <tr>
+      <td><code>previous</code></td>
+      <td><code>string</code></td>
+      <td><code>"Previous"</code></td>
+      <td>The back navigation button in the toolbar.</td>
+    </tr>
+    <tr>
+      <td><code>next</code></td>
+      <td><code>string</code></td>
+      <td><code>"Next"</code></td>
+      <td>The forward navigation button in the toolbar.</td>
+    </tr>
+    <tr>
+      <td><code>yesterday</code></td>
+      <td><code>string</code></td>
+      <td><code>"Yesterday"</code></td>
+      <td>Label shown in place of the date when the Day view is on the previous day.</td>
+    </tr>
+    <tr>
+      <td><code>tomorrow</code></td>
+      <td><code>string</code></td>
+      <td><code>"Tomorrow"</code></td>
+      <td>Label shown in place of the date when the Day view is on the next day.</td>
+    </tr>
+    <tr>
+      <td><code>today</code></td>
+      <td><code>string</code></td>
+      <td><code>"Today"</code></td>
+      <td>The jump-to-today button in the toolbar, and the Day view label when focused on today.</td>
+    </tr>
+    <tr>
+      <td><code>agenda</code></td>
+      <td><code>string</code></td>
+      <td><code>"Agenda"</code></td>
+      <td>Agenda view button in the toolbar.</td>
+    </tr>
+    <tr>
+      <td><code>noEventsInRange</code></td>
+      <td><code>string</code></td>
+      <td><code>"There are no events in this range."</code></td>
+      <td>Empty state shown in Agenda view when no events fall in the visible range.</td>
+    </tr>
+    <tr>
+      <td><code>showMore</code></td>
+      <td><code>(total: number) =&gt; string</code></td>
+      <td><code>(total) =&gt; `+${"{"}total{"}"} more`</code></td>
+      <td>The overflow button in Month and time grid views when events exceed the visible rows. Receives the count of hidden events.</td>
+    </tr>
+    <tr>
+      <td><code>selectionInstructions</code></td>
+      <td><code>string</code></td>
+      <td><em>See below</em></td>
+      <td>Screen-reader only. Read by assistive technology when a user focuses a time slot or day cell. Describes the keyboard gestures for slot selection.</td>
+    </tr>
+    <tr>
+      <td><code>eventInstructions</code></td>
+      <td><code>string</code></td>
+      <td><em>See below</em></td>
+      <td>Screen-reader only. Read by assistive technology when a user focuses an event. Describes the keyboard gestures for opening, navigating, and repositioning events.</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## The `showMore` key is a function
+
+Unlike the other keys, `showMore` accepts a function instead of a plain string. The function receives the number of hidden events and should return the label to display:
+
+```ts
+// English default
+showMore: (total) => `+${total} more`
+
+// Spanish
+showMore: (total) => `+${total} más`
+
+// French — plural-aware
+showMore: (total) => total === 1 ? `+1 événement` : `+${total} événements`
+```
+
+This gives you full control over pluralization rules, which vary between languages.
+
+---
+
+## The screen-reader instruction strings
+
+`selectionInstructions` and `eventInstructions` are rendered as visually hidden text in the DOM and referenced by `aria-describedby` on focusable cells and event buttons. Screen readers read them aloud when a user focuses those elements.
+
+The English defaults are:
+
+```
+selectionInstructions:
+  "Use the arrow keys to move between slots. Hold Shift and an arrow key to
+   select a range. Press Enter or Space to confirm, or Escape to cancel."
+
+eventInstructions:
+  "Use the arrow keys to move between events. Press Enter to open an event
+   or F2 for its secondary action. To reposition an event, press Space to
+   pick it up, then the arrow keys to move it (hold Shift while pressing an
+   arrow key to resize), Enter to drop, or Escape to cancel."
+```
+
+Translate these for a fully accessible non-English calendar.
+
+---
+
+## Full example — Spanish
+
+```ts
+import { createCalendarStore, resolveMessages } from '@big-calendar/core'
+import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
+
+const localizer = await createTemporalLocalizer({ locale: 'es' })
+
+const messages = resolveMessages({
+  date:            'Fecha',
+  time:            'Hora',
+  event:           'Evento',
+  allDay:          'Todo el día',
+  week:            'Semana',
+  work_week:       'Semana laboral',
+  day:             'Día',
+  month:           'Mes',
+  previous:        'Anterior',
+  next:            'Siguiente',
+  yesterday:       'Ayer',
+  tomorrow:        'Mañana',
+  today:           'Hoy',
+  agenda:          'Agenda',
+  noEventsInRange: 'No hay eventos en este rango.',
+  showMore:        (total) => `+${total} más`,
+  selectionInstructions:
+    'Use las teclas de flecha para moverse entre franjas horarias. ' +
+    'Mantenga pulsada Mayúsculas y una tecla de flecha para seleccionar un rango. ' +
+    'Presione Intro o Espacio para confirmar, o Escape para cancelar.',
+  eventInstructions:
+    'Use las teclas de flecha para moverse entre eventos. ' +
+    'Presione Intro para abrir un evento o F2 para su acción secundaria. ' +
+    'Para reposicionar un evento, presione Espacio para recogerlo, luego las teclas de ' +
+    'flecha para moverlo (mantenga Mayúsculas mientras presiona una tecla de flecha para ' +
+    'redimensionar), Intro para soltar, o Escape para cancelar.',
+})
+
+const store = createCalendarStore({ localizer, events })
+// Pass messages to your framework adapter's provider
+```
+
+---
+
+## Combining with RTL
+
+If you are building a right-to-left interface, use both `messages` (for translated strings) and `dir="rtl"` on the container (for the visual layout flip). See the [RTL](./LocalizationRTL) doc for details.

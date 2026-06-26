@@ -1,0 +1,145 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Core/Internationalization" />
+
+# Internationalization
+
+> These patterns apply to any Big Calendar framework adapter. Code examples use `createCalendarStore` and `resolveMessages` directly — your framework adapter (React, Vue, etc.) wraps this same API.
+
+Big Calendar separates i18n into three independent layers. Each one is your responsibility to configure at a different level.
+
+<table>
+  <thead>
+    <tr>
+      <th>Layer</th>
+      <th>What it covers</th>
+      <th>How to configure it</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Date and time formatting</strong></td>
+      <td>Month names, weekday labels, time formats, date ranges in the toolbar</td>
+      <td>Pass <code>locale</code> and <code>timeZone</code> to your localizer</td>
+    </tr>
+    <tr>
+      <td><strong>Calendar UI strings</strong></td>
+      <td>Toolbar button labels, view names, "no events" text, screen-reader instructions</td>
+      <td>Call <code>resolveMessages</code> with your overrides and pass the result to your framework adapter</td>
+    </tr>
+    <tr>
+      <td><strong>Event and resource content</strong></td>
+      <td>Event titles, resource names, custom slot text — anything that comes from your data</td>
+      <td>Your responsibility; translate before passing to the calendar</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Layer 1 — Date and time formatting
+
+All date and time formatting is handled by the **localizer**. Pass a `locale` (a BCP 47 language tag) and a `timeZone` (an IANA identifier) when you create it. The calendar's month names, weekday abbreviations, time formats, and date range labels will all render in that locale automatically via the browser's built-in `Intl.DateTimeFormat` API.
+
+```ts
+import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
+
+// Arabic, Riyadh time zone
+const localizer = await createTemporalLocalizer({
+  locale: 'ar',
+  timeZone: 'Asia/Riyadh',
+})
+```
+
+No extra libraries are required. The `Intl` API handles the formatting; the localizer handles the date math.
+
+### Reading locale metadata from the localizer
+
+Once constructed, the localizer exposes the resolved locale and writing direction:
+
+```ts
+localizer.locale     // Intl.Locale — the fully resolved locale object
+localizer.direction  // 'ltr' | 'rtl'
+```
+
+`localizer.language` gives you the primary language subtag (`'ar'`, `'en'`, `'es'`, etc.) if you need it for conditional logic elsewhere in your app.
+
+`localizer.direction` derives the writing direction from the locale. It uses `Intl.Locale.textInfo` where available (all Baseline 2024 browsers), with a known-RTL language list as a fallback for older environments. Pass it to your framework adapter to set `dir` on the container element:
+
+```ts
+import { createCalendarStore } from '@big-calendar/core'
+
+const store = createCalendarStore({ localizer, events })
+
+// Your framework adapter sets these on the calendar's container element:
+store.localizer.direction  // 'rtl' (for Arabic, Hebrew, Persian, etc.)
+store.localizer.language   // 'ar'  — use as the lang attribute
+```
+
+See the [RTL doc](./LocalizationRTL) for what this does to the layout.
+
+---
+
+## Layer 2 — Calendar UI strings
+
+The localizer does not translate the calendar's built-in button labels or status messages. Those come from a resolved `Messages` object you build with `resolveMessages` and pass to your framework adapter. By default all strings are in English. Pass a partial `Messages` object to replace any or all of them.
+
+```ts
+import { createCalendarStore, resolveMessages } from '@big-calendar/core'
+
+const messages = resolveMessages({
+  today:           'Hoy',
+  previous:        'Anterior',
+  next:            'Siguiente',
+  month:           'Mes',
+  noEventsInRange: 'No hay eventos en este rango.',
+  showMore:        (total) => `+${total} más`,
+})
+
+const store = createCalendarStore({ localizer, events })
+// Pass messages to your framework adapter's provider
+```
+
+The `messages` value is a plain object, so it works with any i18n library — i18next, react-intl, Lingui, or anything else that returns translated strings. For a full list of every overridable key, see the [Messages doc](./LocalizationMessages).
+
+> **Don't skip `selectionInstructions` and `eventInstructions`.** These are read by screen readers when a user focuses a time slot or an event. Untranslated instruction strings create a confusing mixed-language experience for screen-reader users.
+
+---
+
+## Layer 3 — Event and resource content
+
+The calendar renders event titles, resource names, and any custom slot content exactly as you supply them. It does not translate them.
+
+If your app supports multiple languages, make sure event titles, resource names, and any other displayed data are already translated before you pass them to the calendar. How you do that is entirely up to you — fetch them pre-translated from your API, pull them from a local translation file, or apply whatever logic your app uses. The calendar treats those fields as opaque strings and renders them exactly as supplied.
+
+---
+
+## Putting it all together
+
+A fully internationalized calendar wires all three layers:
+
+```ts
+import { createCalendarStore, resolveMessages } from '@big-calendar/core'
+import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
+
+// 1. Create the localizer for the user's locale (date/time formatting + direction)
+const localizer = await createTemporalLocalizer({ locale: userLocale })
+
+// 2. Translate calendar UI strings (t() can be from any i18n library)
+const messages = resolveMessages({
+  today:    t('today'),
+  previous: t('previous'),
+  next:     t('next'),
+  // ... rest of the keys
+  showMore: (n) => t('showMore', { count: n }),
+})
+
+// 3. Event titles and data are your responsibility — fetch them pre-translated
+//    from your API or apply whatever translation logic your app uses
+const events = await fetchEvents({ locale: userLocale })
+
+// 4. Create the store
+const store = createCalendarStore({ localizer, events })
+
+// 5. Pass localizer.direction, localizer.language, and messages to your framework adapter
+```
