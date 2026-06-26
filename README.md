@@ -1,42 +1,125 @@
-# Big Calendar (`@big-calendar/*`)
+# Big Calendar
 
-A framework-agnostic calendar **engine** with thin, idiomatic UI packages per
-framework. The engine owns all logic, state, and date math; UI packages own only
-rendering and framework wiring. This is a ground-up, breaking rewrite of
-`react-big-calendar`.
+Big Calendar is a set of components for building event calendar interfaces in your web application — the kind you see in Google Calendar or Outlook. You give it a list of events, and it renders a fully interactive calendar with month, week, day, and agenda views built in.
 
-> **Status:** early development on `feat/initial`. Not yet published.
+**Big Calendar is the next generation of [`react-big-calendar`](https://github.com/jquense/react-big-calendar).** It's a ground-up rewrite with a framework-agnostic engine at the center, so the same calendar logic can power UIs in React, Vue, Angular, and more — all from one shared core.
 
-## Workspace layout
+> **Status:** Early development on `feat/initial`. Not yet published to npm.
 
-| Package                            | Scope             | Purpose                                                                |
-| ---------------------------------- | ----------------- | ---------------------------------------------------------------------- |
-| `@big-calendar/core`               | `scope:core`      | Framework-agnostic store (signals), view models, layout, selection FSM |
-| `@big-calendar/localizer`          | `scope:localizer` | Base localizer contract (Intl-based, string-in/string-out)             |
-| `@big-calendar/localizer-temporal` | `scope:localizer` | Temporal API localizer (recommended default)                           |
-| `@big-calendar/localizer-luxon`    | `scope:localizer` | Luxon localizer                                                        |
-| `@big-calendar/styles`             | `scope:styles`    | Baseline 2024 CSS, `--bc-*` tokens, `@layer`s                          |
-| `@big-calendar/dnd`                | `scope:dnd`       | Optional drag/drop (Pragmatic Drag and Drop)                           |
-| `@big-calendar/react`              | `scope:ui`        | React 18+ UI (reference implementation)                                |
-| `@big-calendar/codemods`           | `scope:tooling`   | v1 → v2 migration codemods (jscodeshift)                               |
+---
 
-Vue / Angular / Lit packages come after the React base is complete.
+## How it's organized
+
+Big Calendar is a monorepo — one repository made up of several smaller packages that each do one specific job. You install only the pieces you need.
+
+| Package | What it does |
+|---|---|
+| [`@big-calendar/core`](packages/core) | The engine. All calendar logic, date math, view models, and state management live here. No framework required. |
+| [`@big-calendar/localizer`](packages/localizer) | The base class for date/time formatting. Defines how the calendar reads, formats, and compares dates. |
+| [`@big-calendar/localizer-temporal`](packages/localizer-temporal) | The recommended localizer, built on the browser's built-in Temporal API. |
+| [`@big-calendar/localizer-luxon`](packages/localizer-luxon) | An alternative localizer for teams already using Luxon. |
+| [`@big-calendar/styles`](packages/styles) | All the CSS — design tokens, layout, and component styles. |
+| [`@big-calendar/dnd`](packages/dnd) | Optional drag-and-drop support for moving and resizing events. |
+| [`@big-calendar/react`](packages/react) | The React UI package. This is what most developers will install. |
+| [`@big-calendar/codemods`](packages/codemods) | A CLI tool that automatically updates your code when migrating from `react-big-calendar`. |
+| [`@big-calendar/mcp`](packages/mcp) | An MCP server that gives AI coding assistants direct knowledge of the Big Calendar API and your project's configuration. |
+
+Vue / Angular / Lit packages are planned after the React base is complete.
+
+---
+
+## Why the rewrite?
+
+`react-big-calendar` worked well for years, but its architecture had some hard limits that couldn't be fixed without starting over.
+
+**It was React-only by design.** Every piece of calendar logic — date math, event layout, state management — was wired directly into React components. There was no way to share that logic with a Vue or Angular project without duplicating it.
+
+**It used JavaScript `Date` objects at its boundaries.** `Date` objects carry no time zone information and behave differently depending on the local machine's clock. This caused subtle bugs that were hard to trace and nearly impossible to test reliably. Big Calendar uses plain ISO date strings everywhere instead — serializable, portable, and unambiguous.
+
+**It required you to install a third-party date library.** Moment, Luxon, date-fns, or Day.js — you had to pick one and wire it in before the calendar would work. Big Calendar recommends the Temporal API, which is built into modern browsers and needs no extra installation.
+
+**Its styles were hard to customize.** One flat CSS file with no design tokens meant any override required fighting specificity or using `!important`. Big Calendar uses CSS custom properties (`--bc-*`) as the customization API and CSS `@layer` for a predictable specificity order where your styles always win.
+
+The rewrite addresses all of this: a framework-agnostic core, string-only date boundaries, the platform's own date APIs, and CSS built for customization from the start.
+
+---
+
+## Getting started (React)
+
+Install the React package, a localizer, and the styles:
+
+```bash
+pnpm add @big-calendar/react @big-calendar/localizer-temporal @big-calendar/styles
+```
+
+Set up a localizer and drop the calendar into your app:
+
+```jsx
+import { CalendarProvider, Calendar } from '@big-calendar/react'
+import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
+import '@big-calendar/styles/index.css'
+
+const localizer = await createTemporalLocalizer()
+
+const events = [
+  {
+    id: '1',
+    title: 'Team standup',
+    start: '2025-09-01T09:00:00Z',
+    end: '2025-09-01T09:30:00Z',
+  },
+]
+
+function MyCalendar() {
+  return (
+    <CalendarProvider localizer={localizer} events={events}>
+      <Calendar />
+    </CalendarProvider>
+  )
+}
+```
+
+See the [`@big-calendar/react` README](packages/react) for the full prop reference and customization options.
+
+---
+
+## AI-assisted development
+
+`@big-calendar/mcp` is an optional dev dependency that adds an [MCP server](https://modelcontextprotocol.io) to your project. It gives AI coding assistants (Claude Code, Cursor, VS Code Copilot, JetBrains AI) direct knowledge of the Big Calendar API — so they can scaffold components, add features, generate sample events, and answer integration questions without guessing at the API surface.
+
+```bash
+pnpm add --save-dev @big-calendar/mcp
+```
+
+See the [MCP server README](packages/mcp) for client setup instructions.
+
+---
+
+## Migrating from react-big-calendar
+
+If you are upgrading from `react-big-calendar`, the `@big-calendar/codemods` package can handle most of the mechanical changes automatically. See the [codemods README](packages/codemods) for instructions.
+
+---
 
 ## Toolchain
 
-Nx (no Cloud) · pnpm workspace · TypeScript (ESNext → ES2024, ESM only) · Vite
-(library mode) · Vitest · Playwright · ESLint + Prettier · Nx Release
-(conventional commits, synced versions).
+Nx · pnpm workspaces · TypeScript (ESNext → ES2024, ESM only) · Vite (library mode) · Vitest · Playwright · ESLint + Prettier · Nx Release (conventional commits, synced versions).
+
+---
 
 ## Common commands
 
 ```bash
-pnpm install                      # install workspace
-pnpm exec nx run-many -t build    # build all packages
-pnpm exec nx run-many -t test     # unit/component tests
-pnpm exec nx run-many -t lint     # lint (incl. module-boundary rules)
-pnpm exec nx run-many -t typecheck
-pnpm exec nx affected -t lint test typecheck   # only what changed
+pnpm install                                        # install the workspace
+pnpm exec nx run-many -t build                      # build all packages
+pnpm exec nx run-many -t test                       # run all tests
+pnpm exec nx run-many -t lint                       # lint all packages
+pnpm exec nx run-many -t typecheck                  # type-check all packages
+pnpm exec nx affected -t lint typecheck test        # only run what changed
 ```
 
-Implementation roadmap and decisions live in [`memory/`](./memory).
+---
+
+## License
+
+MIT

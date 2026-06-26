@@ -1,0 +1,134 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="MCP Server/Overview" />
+
+# @big-calendar/mcp — AI-Assisted Integration
+
+`@big-calendar/mcp` is an optional dev dependency that adds a [Model Context Protocol](https://modelcontextprotocol.io) server to your project.
+It gives AI coding assistants (Claude Code, Cursor, VS Code Copilot, JetBrains AI) deep knowledge of the Big Calendar API and your project's specific calendar configuration — so they can scaffold components, add features, generate sample data, and answer integration questions without hallucinating API details.
+
+---
+
+## What it is
+
+When you install `@big-calendar/mcp`, your AI assistant gets access to:
+
+- **Tools** — Active capabilities: scaffold a `Calendar` component, add DnD or slot selection, generate sample events, and more
+- **Resources** — Static docs: the full CalendarProvider props reference, accessor mapping guide, view reference, DnD setup, and common integration recipes
+- **Prompts** — Pre-built conversation starters: `bootstrap-calendar` (full onboarding) and `add-feature`
+
+The server stores your configuration in a `bc.md` file at your project root — the same pattern as `CLAUDE.md`. It remembers your event field names, enabled views, and features so subsequent tool calls produce code tailored to your data shape.
+
+---
+
+## Installation
+
+```bash
+pnpm add --save-dev @big-calendar/mcp
+```
+
+> Install the same version as `@big-calendar/react` to keep the API reference in sync.
+
+---
+
+## Connecting to your AI assistant
+
+### Claude Code
+
+Add to `.claude/mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "big-calendar": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["./node_modules/@big-calendar/mcp/dist/cli.js"]
+    }
+  }
+}
+```
+
+Restart Claude Code or run `/mcp` to pick up the server.
+
+### Cursor
+
+Add to `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "big-calendar": {
+      "command": "node",
+      "args": ["./node_modules/@big-calendar/mcp/dist/cli.js"]
+    }
+  }
+}
+```
+
+### VS Code
+
+Add to `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "big-calendar": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${workspaceFolder}/node_modules/@big-calendar/mcp/dist/cli.js"]
+    }
+  }
+}
+```
+
+### Any other stdio client
+
+```json
+{
+  "command": "node",
+  "args": ["./node_modules/@big-calendar/mcp/dist/cli.js"]
+}
+```
+
+---
+
+## First run — bootstrap-calendar
+
+After connecting, use the `bootstrap-calendar` prompt to get started:
+
+```
+/prompt bootstrap-calendar
+```
+
+This runs the full onboarding flow:
+
+1. Checks if `bc.md` already exists in your project
+2. Asks for your event field names, enabled views, and features
+3. Creates `bc.md` in your project root
+4. Generates a starter `Calendar` component tailored to your data shape
+
+---
+
+## The bc.md memory file
+
+`bc.md` lives at your project root and uses YAML frontmatter for structured config plus a free-form prose section for app context.
+
+```yaml
+---
+version: "1.20.0"
+views: [month, week, day, agenda]
+features: [dnd, selection]
+accessors:
+  id: id
+  title: name
+  start: startDate
+  end: endDate
+  allDay: isAllDay
+---
+
+Events are fetched from /api/appointments. We use shadcn Dialog for editing.
+```
+
+Run the `init` tool with no arguments to check the current state of `bc.md`.
+Run `update-memory` to patch specific fields without overwriting the whole file.

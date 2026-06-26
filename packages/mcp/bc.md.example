@@ -1,0 +1,49 @@
+---
+# Semver of @big-calendar/react in use.
+version: "1.20.0"
+
+# Which calendar views to enable.
+# Options: month | week | work_week | day | agenda
+views:
+  - month
+  - week
+  - day
+  - agenda
+
+# Which features are active in this integration.
+# Options: dnd | selection | resources
+features:
+  - dnd
+  - selection
+
+# Maps Big Calendar accessor keys to field names on your event/resource objects.
+# Only the keys you need — omit the ones you don't use.
+accessors:
+  id: id                    # event.id — stable identity
+  title: name               # event.name — display title
+  start: startDate          # event.startDate — ISO 8601 datetime string
+  end: endDate              # event.endDate — ISO 8601 datetime string
+  allDay: isAllDay          # event.isAllDay — boolean
+  # tooltip: description    # event.description — hover tooltip (optional)
+  # resource: resourceId    # event.resourceId — link event to a resource
+  # resourceId: id          # resource.id
+  # resourceTitle: label    # resource.label
+---
+
+## App context
+
+This project is a scheduling app for a medical practice. Events represent appointments.
+
+**Data fetching:** Events are fetched from the REST API at `/api/appointments?start=&end=`.
+The `onRangeChange` callback triggers a fetch whenever the visible window changes.
+
+**Event editing:** We use shadcn/ui's `<Dialog>` component for editing appointments.
+Clicking an event opens the dialog with the appointment pre-loaded.
+
+**Creating events:** Slot selection (`onSlotSelect`) opens the same dialog with the
+selected time range pre-filled.
+
+**DnD:** Drag-to-move is enabled. We use optimistic updates — the local state is
+updated immediately, and we roll back if the server save fails.
+
+**Localizer:** `LuxonLocalizer` with `timeZone: 'America/New_York'`.

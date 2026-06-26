@@ -1,7 +1,27 @@
 # PROGRESS — ARCHIVE
 
 > Full phase history. Active state → PROGRESS.md.
-> Preserved as of 2026-06-24.
+> Preserved as of 2026-06-25.
+
+---
+
+## Phase 8 — Codemods ✅ (completed 2026-06-24)
+
+Nine codemods covering the full BC API rename surface, plus a CLI runner and migration guide.
+
+- **8-1** — `rename-imports` — rewrites import paths from old package names to new.
+- **8-2** — `merge-accessors` — merges deprecated top-level accessor props into the `accessors` object.
+- **8-3** — `rename-callbacks` — renames event/slot callback props to match the new API (`onSelect` → `onEventClick`, etc.).
+- **8-4** — `rename-props` — renames miscellaneous renamed props.
+- **8-5** — `flag-removed-props` — inserts TODO comments for props with no direct equivalent.
+- **8-6** — `views-prop` — migrates the old `views` array prop to the new `views`/`viewDefinitions` shape.
+- **8-7** — `wrap-provider` — wraps bare `<Calendar>` usage in `<CalendarProvider>`.
+- **8-8** — CLI runner (`npx @big-calendar/codemods`) — discovery, transform execution, dry-run flag.
+- **8-9** — Migration guide MDX — step-by-step upgrade doc in Storybook.
+
+Test counts entering Phase 9: localizer: 45 · core: 493 · dnd: 36 · react: 357 · codemods: 82 · **total: 1013**
+
+Architecture decisions: none logged — Phase 8 was a mechanical implementation of an already-decided API surface.
 
 ---
 

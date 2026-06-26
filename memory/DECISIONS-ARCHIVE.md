@@ -46,6 +46,7 @@
 | Phase 7a: Storybook globals (localizer/locale/TZ), story design guidelines | 2026-06-10 Phase 7 |
 | Phase 7a: utility functions → core/utils subpath; view-internal hooks promoted | 2026-06-10 Phase 7 |
 | Phase 7a: subfolder export pattern, barrel structure, wildcard exports, Vite multi-entry | 2026-06-10 Phase 7 |
+| Phase 8: Codemods — no architecture decisions logged; mechanical implementation of settled API surface | 2026-06-24 Phase 8 |
 
 ---
 
