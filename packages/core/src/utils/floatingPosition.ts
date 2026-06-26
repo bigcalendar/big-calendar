@@ -48,6 +48,10 @@ function rectOf(element: Element): Rect {
  * position against the viewport with `strategy: 'fixed'`. That means the three
  * required platform methods can come straight from `getBoundingClientRect` and
  * the viewport box — no `@floating-ui/dom` dependency (§7.5, DECISIONS 2026-06-02).
+ *
+ * `isRTL` lets floating-ui interpret `start`/`end` placement suffixes correctly
+ * in RTL layouts — without it, `bottom-start` always aligns to the physical left
+ * regardless of writing direction.
  */
 const platform: Platform = {
   getElementRects: ({ reference, floating }) => ({
@@ -64,6 +68,7 @@ const platform: Platform = {
     width: globalThis.innerWidth,
     height: globalThis.innerHeight,
   }),
+  isRTL: (element) => getComputedStyle(element).direction === 'rtl',
 }
 
 /**

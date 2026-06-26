@@ -18,14 +18,14 @@ function DefaultToolbar({ label, view, views, messages, onNavigate, onView }: To
   return (
     <div className="bc-toolbar">
       <div className="bc-toolbar-group">
-        <button type="button" aria-label={messages.previous} onClick={() => onNavigate(Navigate.PREVIOUS)}>
-          ‹
+        <button type="button" onClick={() => onNavigate(Navigate.PREVIOUS)}>
+          {messages.previous}
         </button>
-        <button type="button" aria-label={messages.today} onClick={() => onNavigate(Navigate.TODAY)}>
-          ·
+        <button type="button" onClick={() => onNavigate(Navigate.TODAY)}>
+          {messages.today}
         </button>
-        <button type="button" aria-label={messages.next} onClick={() => onNavigate(Navigate.NEXT)}>
-          ›
+        <button type="button" onClick={() => onNavigate(Navigate.NEXT)}>
+          {messages.next}
         </button>
       </div>
       <span className="bc-toolbar-label">{label}</span>

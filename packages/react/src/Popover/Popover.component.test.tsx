@@ -40,7 +40,7 @@ describe('Popover', () => {
     expect(trigger.getAttribute('aria-expanded')).toBe('true')
     // The positioning effect runs floating-ui and pins the panel.
     await waitFor(() => expect(panel.style.position).toBe('fixed'))
-    expect(panel.style.insetInlineStart).toMatch(/px$/)
+    expect(panel.style.left).toMatch(/px$/)
 
     dispatchToggle(panel, 'closed')
 

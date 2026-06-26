@@ -28,14 +28,16 @@ export function useFloatingAnchor<A extends HTMLElement, F extends HTMLElement>(
     const place = () => {
       void positionFloating(anchor, floating, { placement }).then(({ x, y }) => {
         floating.style.position = 'fixed'
-        floating.style.insetInlineStart = `${x}px`
-        floating.style.insetBlockStart = `${y}px`
-        // Reset end sides: the browser's UA stylesheet for [popover] sets
-        // `inset: 0` on all four sides. Without these resets, inset-block-end
-        // and inset-inline-end remain 0, which stretches the panel to the
-        // viewport edge and overrides `height: fit-content`.
-        floating.style.insetBlockEnd = 'auto'
-        floating.style.insetInlineEnd = 'auto'
+        // x/y from @floating-ui/core are always physical viewport offsets (left/top),
+        // regardless of writing direction. Use physical properties here — logical
+        // inset-inline-start would map to `right` in RTL and misplace the panel.
+        floating.style.left = `${x}px`
+        floating.style.top = `${y}px`
+        // Reset the end sides: the UA stylesheet for [popover] sets `inset: 0` on
+        // all four physical sides. Without these resets the panel stretches to fill
+        // the viewport and `height: fit-content` is overridden.
+        floating.style.bottom = 'auto'
+        floating.style.right = 'auto'
         floating.style.margin = '0'
         if (sameWidth) {
           floating.style.inlineSize = `${anchor.getBoundingClientRect().width}px`

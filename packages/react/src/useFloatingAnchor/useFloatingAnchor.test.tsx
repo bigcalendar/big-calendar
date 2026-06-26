@@ -48,8 +48,8 @@ describe('useFloatingAnchor', () => {
     renderHook(() => useFloatingAnchor(true, { current: anchor }, { current: floating }, 'bottom-start'))
 
     await waitFor(() => expect(floating.style.position).toBe('fixed'))
-    expect(floating.style.insetInlineStart).toMatch(/px$/)
-    expect(floating.style.insetBlockStart).toMatch(/px$/)
+    expect(floating.style.left).toMatch(/px$/)
+    expect(floating.style.top).toMatch(/px$/)
   })
 
   it('repositions on resize and removes its listeners on unmount', async () => {
