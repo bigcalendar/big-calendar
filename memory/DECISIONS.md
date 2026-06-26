@@ -1,46 +1,23 @@
-# DECISIONS — Active (Phase 9 onward)
+# DECISIONS — Active (Phase 10 onward)
 
-> Phase 0–8 decisions archived to `DECISIONS-ARCHIVE.md` (with topic index).
+> Phase 0–9 decisions archived to `DECISIONS-ARCHIVE.md` (with topic index).
 > Add new entries here; archive when a phase is fully closed.
 
 ---
 
-## Phase 9 — MCP server (`@big-calendar/mcp`)
+## Standing rule — Documentation and MCP sync (Phase 10+)
 
-### 2026-06-25 — MCP server design: installable dev dependency + `bc.md` memory file
+### 2026-06-26 — All new code ships with documentation; MCP resources stay in sync
 
-**What was decided:** `@big-calendar/mcp` is a workspace package in the BC monorepo, installable as a dev dependency (`npm install --save-dev @big-calendar/mcp`), version-locked to BC core. It runs as a stdio MCP server and uses a `bc.md` file at the project root as persistent memory.
+**What was decided:** Every new package, component, composable, or API surface must ship documentation in the same phase it is built. This is tracked as an explicit task in each phase (the `10-11` pattern). Required documentation for any given deliverable:
 
-**Why:** Installable (vs. standalone `npx`) gives the server file-system access to read and write `bc.md` in the developer's project. `bc.md` uses YAML frontmatter (parsed by `gray-matter`) for structured config (accessor field names, features, views) plus a prose body for app context (modal library, data-fetching approach, implemented patterns). This mirrors the `CLAUDE.md` pattern developers already know.
+- **Storybook `.stories` files** — interactive examples for all exported components and composables, mirroring the React adapter's story coverage where applicable and adapted for framework-specific patterns.
+- **MDX concept docs** — prose documentation for new features, APIs, and patterns. Framework docs should mirror the React MDX docs in structure and depth, noting where the framework differs.
+- **Package README** — each new package ships a README covering installation, basic usage, and an API summary.
+- **MCP resources + tools updated** — any new or changed API surface that affects the MCP server's `bc://` resources or active tools must be updated in the same phase. The MCP server must reflect the current state of the library at all times.
 
-**What was rejected:**
-- Standalone `npx @big-calendar/mcp` — ephemeral, no project context, can't write files.
-- `bc.config.ts` — a `.ts` config file adds parsing complexity and can't hold prose context naturally.
-- `.json` / `.yaml` — structured-only, no prose, less flexible for capturing app-specific conventions.
-
----
-
-### 2026-06-25 — MCP server scope: consumers, both tools and resources
-
-**What was decided:** Server targets BC *consumers* (developers building scheduling apps, not BC contributors). It exposes both *resources* (static docs, API reference, recipes) and *tools* (active capabilities: onboarding wizard, scaffold component, add feature/handler, generate sample events, update memory).
+**Why:** As the library expands to additional framework adapters, consistent documentation is essential for developer adoption. Deferring docs creates technical debt that rarely gets paid. The MCP server is a primary developer touchpoint — stale resources undermine its usefulness.
 
 **What was rejected:**
-- Resources-only — too passive; doesn't help developers generate integration code.
-- Contributor-focused tooling — a separate concern, lower priority.
-
----
-
-### 2026-06-25 — No event generation; dummy events only for wiring
-
-**What was decided:** The server does not generate real events. Events come from the developer's server. `generate-sample-events` produces dummy events shaped to the developer's accessor mapping, for wiring/testing before real data is connected.
-
-**What was rejected:**
-- General event generator — not useful; real events come from the app's REST layer.
-
----
-
-### 2026-06-25 — Four MCP client targets + stdio fallback
-
-**What was decided:** Ship explicit setup docs for Claude Code, Cursor, VS Code, and JetBrains (matching the Nx MCP pattern). Fallback for any other client: configure to run `npx @big-calendar/mcp` via stdio transport.
-
-**Why:** These four cover the dominant AI-assisted dev environments. stdio is the universal adapter — any MCP-compatible client can connect without server changes.
+- Documentation as a follow-on phase — risks docs being skipped when priorities shift.
+- "Document where convenient" — too vague to enforce; documentation is a first-class deliverable, not a nice-to-have.

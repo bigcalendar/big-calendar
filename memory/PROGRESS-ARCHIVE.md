@@ -1,7 +1,28 @@
 # PROGRESS — ARCHIVE
 
 > Full phase history. Active state → PROGRESS.md.
-> Preserved as of 2026-06-25.
+> Preserved as of 2026-06-26.
+
+---
+
+## Phase 9 — MCP server (`@big-calendar/mcp`) ✅ (completed 2026-06-25)
+
+Standalone stdio MCP server installable as a dev dependency, giving AI coding assistants project-aware context and active tooling for Big Calendar integrations.
+
+- **9-1** — Package foundation — stdio MCP server scaffold, `package.json` bin entry, workspace wiring.
+- **9-2** — Memory layer — `bc.md` Zod schema, `reader.ts` + `writer.ts` (find, parse YAML frontmatter + prose, create/update).
+- **9-3** — `init` tool — detects missing `bc.md` on startup, runs conversational onboarding, writes `bc.md` on completion.
+- **9-4** — Core tools — `scaffold-calendar`, `add-feature`, `add-handler`, `generate-sample-events`, `update-memory`.
+- **9-5** — Resources — all `api/` and `recipes/` `.md` docs written and registered as `bc://` URI MCP resources.
+- **9-6** — Prompts — `bootstrap-calendar` (init → scaffold-calendar chain), `add-feature`.
+- **9-7** — Client setup docs — Claude Code, Cursor, VS Code, JetBrains, stdio fallback; `bc.md.example`.
+- **9-8** — Tests — unit tests for memory reader/writer, each tool (mock `bc.md` states), resource URI resolution.
+- **9-9** — Release wiring — version-lock confirmed with BC core in monorepo release process.
+- **9-10** — Documentation — MDX files, README updates for `packages/mcp` and root.
+
+Test counts entering Phase 10: localizer: 53 · localizer-temporal: 21 · localizer-luxon: 20 · core: 553 · dnd: 36 · react: 379 · mcp: 64 · codemods: 82 · **total: 1208**
+
+Architecture decisions: DECISIONS-ARCHIVE.md (Phase 9 section).
 
 ---
 

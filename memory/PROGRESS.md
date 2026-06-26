@@ -15,56 +15,42 @@
 - [x] **Phase 7b — Polish (accessors unification + type story)**
 - [x] **Phase 8 — Codemods**
 - [x] **Phase 9 — MCP server (`@big-calendar/mcp`)**
-- [ ] Phase 10+ — Additional frameworks (Vue → Angular → Lit, one at a time) ← CURRENT
+- [ ] **Phase 10 — Vue adapter (`@big-calendar/vue` + DnD)** ← CURRENT
+- [ ] Phase 11+ — Additional frameworks (Angular → Lit, one at a time)
 
 ---
 
 ## ⚠ NEXT TASK
 
-**Phase 9 — COMPLETE.** Next: Phase 10 — Additional frameworks (Vue → Angular → Lit).
+**Phase 9 — COMPLETE.** Next: Phase 10 Task 10-1 — `@big-calendar/vue` package scaffold.
 
 ---
 
-## Phase 9 — MCP server task list
+## Phase 10 — Vue adapter task list
 
 | # | Task | Status |
 |---|---|---|
-| 9-1 | Package foundation — scaffold `packages/mcp`, `package.json` (bin entry), `tsconfig.json`, workspace wiring, basic stdio MCP server (connects, no tools) | [x] |
-| 9-2 | Memory layer — `bc.md` Zod schema, `reader.ts` (find + parse frontmatter + prose), `writer.ts` (create/update), unit tests | [x] |
-| 9-3 | `init` tool — detect missing `bc.md` on startup, conversational onboarding (field names with defaults, feature flags, app context), write `bc.md` on completion | [x] |
-| 9-4 | Core tools — `scaffold-calendar`, `add-feature`, `add-handler`, `generate-sample-events`, `update-memory` | [x] |
-| 9-5 | Resources — write all `api/` and `recipes/` `.md` docs; register each as a `bc://` URI MCP resource | [x] |
-| 9-6 | Prompts — `bootstrap-calendar` (runs `init` then `scaffold-calendar`), `add-feature` | [x] |
-| 9-7 | Client setup docs — Claude Code, Cursor, VS Code, JetBrains, stdio fallback; `bc.md.example` | [x] |
-| 9-8 | Tests — unit tests for memory reader/writer, each tool (mock `bc.md` states), resource URI resolution | [x] |
-| 9-9 | Release wiring — confirm version-lock with BC core in monorepo release process | [x] |
-| 9-10 | Documentation — MDX files, README updates for `packages/mcp` and root | [x] |
-
----
-
-## Phase 8 — Codemods task list (COMPLETE)
-
-| # | Task | Status |
-|---|---|---|
-| 8-1 | `rename-imports` | [x] |
-| 8-2 | `merge-accessors` | [x] |
-| 8-3 | `rename-callbacks` | [x] |
-| 8-4 | `rename-props` | [x] |
-| 8-5 | `flag-removed-props` | [x] |
-| 8-6 | `views-prop` | [x] |
-| 8-7 | `wrap-provider` | [x] |
-| 8-8 | CLI runner (`npx @big-calendar/codemods`) | [x] |
-| 8-9 | Migration guide MDX | [x] |
+| 10-1 | Package scaffold — `packages/vue`, Vue 3 + `@preact/signals-core` peerDeps, workspace wiring, tsconfig, vitest config (jsdom + Vue Test Utils), Storybook (`@storybook/vue3-vite`) wired into core composition hub | [ ] |
+| 10-2 | Signals bridge — `useCalendarStore` composable wrapping `createCalendarStore`; bridge `@preact/signals-core` signals to Vue reactivity via `watchEffect` and `computed` refs | [ ] |
+| 10-3 | Context — `CalendarProvider.vue` (Vue `provide`/`inject`), `useCalendarContext()` composable, messages and localizer direction threaded through | [ ] |
+| 10-4 | View model composables — `useMonthView`, `useTimeGridView`, `useAgendaView` (Vue ports of the React headless hooks) | [ ] |
+| 10-5 | View components — `MonthView.vue`, `TimeGridView.vue` (Week / Work Week / Day), `AgendaView.vue`; slot customization mirroring React's `components` prop pattern | [ ] |
+| 10-6 | `Calendar.vue` shell + `DefaultToolbar.vue` | [ ] |
+| 10-7 | Top-layer UI — `Popover.vue`, `Tooltip.vue`, `Dialog.vue` using Vue `<Teleport>` + `<Transition>` + `@floating-ui/dom` | [ ] |
+| 10-8 | Accessibility — slot selection (`useRovingSelection`), event roving (`useEventRoving`), keyboard nav, aria attributes; a11y test assertions | [ ] |
+| 10-9 | DnD adapter — `useCalendarDnd` composable wiring `@big-calendar/dnd` into the Vue component tree; keyboard DnD (`useKeyboardDnd`); pointer move + resize previews | [ ] |
+| 10-10 | Tests — unit tests for all composables, component tests for all view components and the Calendar shell (Vue Test Utils + vitest, per-file 85% branch / 95% function) | [ ] |
+| 10-11 | Documentation — `.stories` files for all exported components, MDX concept docs mirroring React where applicable (noting Vue-specific patterns), package README, MCP `api/` + `recipes/` resources updated | [ ] |
 
 ---
 
 ## Reference
 
-Test counts (entering Phase 9): localizer: 45 · core: 493 · dnd: 36 · react: 357 · codemods: 82 · **total: 1013**
+Test counts (entering Phase 10): localizer: 53 · localizer-temporal: 21 · localizer-luxon: 20 · core: 553 · dnd: 36 · react: 379 · mcp: 64 · codemods: 82 · **total: 1208**
 
 Coverage bar: **per-file** 85% branch / 95% function (not a global average).
 
-Architecture decisions: DECISIONS.md (Phase 9 MCP decisions) · DECISIONS-ARCHIVE.md (Phase 0–8).
+Architecture decisions: DECISIONS.md (standing rules + Phase 10 decisions) · DECISIONS-ARCHIVE.md (Phase 0–9).
 
 ## Quick resume
 
