@@ -1,17 +1,12 @@
 import { resolve } from 'node:path'
 import { defineConfig } from 'vitest/config'
+import { packageAliases } from '../aliases.ts'
 
 const pkgs = resolve(import.meta.dirname, '..')
 
 export default defineConfig({
   resolve: {
-    alias: {
-      '@big-calendar/core/utils': resolve(pkgs, 'core/src/utils/index.ts'),
-      '@big-calendar/core': resolve(pkgs, 'core/src/index.ts'),
-      '@big-calendar/dnd': resolve(pkgs, 'dnd/src/index.ts'),
-      '@big-calendar/localizer-luxon': resolve(pkgs, 'localizer-luxon/src/index.ts'),
-      '@big-calendar/localizer-temporal': resolve(pkgs, 'localizer-temporal/src/index.ts'),
-    },
+    alias: packageAliases(pkgs),
   },
   test: {
     reporters: ['dot'],

@@ -1,5 +1,6 @@
 import { resolve } from 'node:path'
 import type { StorybookConfig } from '@storybook/react-vite'
+import { packageAliases } from '../../aliases.ts'
 
 /**
  * Storybook config for `@big-calendar/react`. Stories and `.mdx` docs live in
@@ -14,20 +15,11 @@ const config: StorybookConfig = {
     options: {},
   },
   viteFinal: (config) => {
-    // Point every @big-calendar/* import at the package source so CSS and TS
-    // changes show up in Storybook immediately without a rebuild step.
     const pkgs = resolve(import.meta.dirname, '../..')
     config.resolve ??= {}
     config.resolve.alias = {
       ...(config.resolve.alias as Record<string, string>),
-      '@big-calendar/core/utils': resolve(pkgs, 'core/src/utils/index.ts'),
-      '@big-calendar/core': resolve(pkgs, 'core/src/index.ts'),
-      '@big-calendar/dnd': resolve(pkgs, 'dnd/src/index.ts'),
-      '@big-calendar/localizer': resolve(pkgs, 'localizer/src/index.ts'),
-      '@big-calendar/localizer-luxon': resolve(pkgs, 'localizer-luxon/src/index.ts'),
-      '@big-calendar/localizer-temporal': resolve(pkgs, 'localizer-temporal/src/index.ts'),
-      '@big-calendar/storybook-shared': resolve(pkgs, 'storybook-shared/src/index.ts'),
-      '@big-calendar/styles': resolve(pkgs, 'styles/src'),
+      ...packageAliases(pkgs),
     }
     // STORYBOOK_SITE_BASE is set in CI to the GitHub Pages root (e.g. /big-calendar/).
     // This instance mounts under the /react/ subpath in the composed site.
