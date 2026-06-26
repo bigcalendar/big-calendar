@@ -60,6 +60,25 @@ export abstract class Localizer<T = unknown> implements LocalizerContract {
   readonly extendedZone: boolean
   readonly output: 'utc' | 'offset'
 
+  /** Primary language subtag of the resolved locale (e.g. `'ar'`, `'en'`, `'es'`). */
+  get language(): string {
+    return this.locale.language
+  }
+
+  /**
+   * Writing direction implied by the resolved locale.
+   *
+   * Uses `Intl.Locale.textInfo` (Baseline 2022) when available, with a
+   * known-RTL language-subtag list as fallback for older environments.
+   */
+  get direction(): 'ltr' | 'rtl' {
+    const textInfo = (this.locale as { textInfo?: { direction: string } }).textInfo
+    if (textInfo?.direction === 'rtl') return 'rtl'
+    if (textInfo?.direction === 'ltr') return 'ltr'
+    const RTL_LANGS = new Set(['ar', 'he', 'fa', 'ur', 'yi', 'iw', 'ug'])
+    return RTL_LANGS.has(this.locale.language) ? 'rtl' : 'ltr'
+  }
+
   protected readonly formats: Record<FormatKey, Intl.DateTimeFormatOptions>
   private readonly _firstDayOfWeek: number
 

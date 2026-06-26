@@ -481,6 +481,20 @@ These read-only values tell you how the localizer was configured.
       <td>The resolved locale object. <code>localizer.locale.toString() // "en-US"</code></td>
     </tr>
     <tr>
+      <td><code>language</code></td>
+      <td><code>string</code></td>
+      <td>Primary language subtag of the resolved locale. <code>localizer.language // "en"</code></td>
+    </tr>
+    <tr>
+      <td><code>direction</code></td>
+      <td><code>'ltr' | 'rtl'</code></td>
+      <td>
+        Writing direction implied by the locale. Uses <code>Intl.Locale.textInfo</code> where
+        available, with a known-RTL language list as a fallback.<br />
+        <code>localizer.direction // "rtl"</code> (for <code>locale: 'ar'</code>)
+      </td>
+    </tr>
+    <tr>
       <td><code>timeZone</code></td>
       <td><code>string</code></td>
       <td>The configured IANA time zone. <code>localizer.timeZone // "America/New_York"</code></td>

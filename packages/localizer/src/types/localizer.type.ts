@@ -118,6 +118,10 @@ export interface LocalizerContract {
   readonly timeZone: string
   readonly extendedZone: boolean
   readonly output: 'utc' | 'offset'
+  /** Primary language subtag of the resolved locale (e.g. `'ar'`, `'en'`, `'es'`). */
+  readonly language: string
+  /** Writing direction implied by the resolved locale: `'ltr'` or `'rtl'`. */
+  readonly direction: 'ltr' | 'rtl'
 
   /** Human-facing formatting via a named role or explicit Intl options. */
   format(args: { value: string; format: FormatInput }): string

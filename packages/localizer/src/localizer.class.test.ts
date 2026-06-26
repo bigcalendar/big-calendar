@@ -350,3 +350,30 @@ describe('Localizer base — event-range helpers', () => {
     expect(loc.sortEvents({ events }).map((e) => e.id)).toEqual(['e3', 'e4', 'e2', 'e1'])
   })
 })
+
+describe('Localizer base — language', () => {
+  it('returns the primary language subtag', () => {
+    expect(new TestLocalizer({ locale: 'en-US' }).language).toBe('en')
+    expect(new TestLocalizer({ locale: 'ar' }).language).toBe('ar')
+    expect(new TestLocalizer({ locale: 'zh-Hant-TW' }).language).toBe('zh')
+  })
+})
+
+describe('Localizer base — direction', () => {
+  it('returns ltr for a Latin-script locale', () => {
+    const loc = new TestLocalizer({ locale: 'en-US' })
+    expect(loc.direction).toBe('ltr')
+  })
+  it('returns rtl for Arabic', () => {
+    const loc = new TestLocalizer({ locale: 'ar' })
+    expect(loc.direction).toBe('rtl')
+  })
+  it('returns rtl for Hebrew', () => {
+    const loc = new TestLocalizer({ locale: 'he' })
+    expect(loc.direction).toBe('rtl')
+  })
+  it('returns rtl for Persian', () => {
+    const loc = new TestLocalizer({ locale: 'fa' })
+    expect(loc.direction).toBe('rtl')
+  })
+})
