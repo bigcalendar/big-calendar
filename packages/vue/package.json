@@ -1,0 +1,57 @@
+{
+  "name": "@big-calendar/vue",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Big Calendar — @big-calendar/vue",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bigcalendar/big-calendar.git",
+    "directory": "packages/vue"
+  },
+  "sideEffects": false,
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./*": {
+      "import": "./dist/*/index.js",
+      "types": "./dist/*/index.d.ts",
+      "default": "./dist/*/index.js"
+    }
+  },
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@big-calendar/core": "workspace:*",
+    "@big-calendar/styles": "workspace:*",
+    "@preact/signals-core": "^1.14.2",
+    "clsx": "^2.1.1"
+  },
+  "peerDependencies": {
+    "@big-calendar/dnd": "workspace:*",
+    "vue": ">=3.4"
+  },
+  "peerDependenciesMeta": {
+    "@big-calendar/dnd": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@big-calendar/dnd": "workspace:*",
+    "@big-calendar/localizer-luxon": "workspace:*",
+    "@big-calendar/localizer-temporal": "workspace:*",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "@vue/test-utils": "^2.4.11",
+    "jsdom": "^29.1.1",
+    "vue": "^3.5.0"
+  }
+}

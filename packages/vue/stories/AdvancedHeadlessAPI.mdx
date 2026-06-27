@@ -1,0 +1,112 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/Headless API" />
+
+# Headless API
+
+The `<Calendar>` component and the `<MonthView>`, `<TimeGridView>`, `<AgendaView>` components are the default path — they render a complete, styled calendar using the library's HTML structure. The **headless API** gives you the view model and all element-spread props so you can build exactly the markup you need, while the library still handles all the logic.
+
+## When to use the composables
+
+Use the view components when the default rendering is good enough, or when you only need to swap individual slots via `components.month`, `components.time`, or `components.agenda`.
+
+Use the composables when you need to change the **HTML structure** of a view — for example, rendering the month grid as a `<table>`, adding custom wrapper elements between the slots, or building a completely custom layout.
+
+## The pattern
+
+Every composable follows the same pattern:
+
+1. Call the composable inside a component that lives inside a `CalendarProvider`.
+2. Guard on the returned `grid` (or `rows`) — it is `null` when a different view is active.
+3. Use `v-bind` to spread the returned element-prop objects onto your DOM elements.
+4. Use the returned getter functions to build per-item props.
+
+```vue
+<script setup>
+import { useMonthView, EventButton } from '@big-calendar/vue'
+
+const { grid, components, root, monthGrid, getDaySlotProps, getSegmentProps } =
+  useMonthView()
+
+const { Weekday, DateCell, EventSlot } = components
+</script>
+
+<template>
+  <template v-if="grid !== null">
+    <div v-bind="root">
+      <!-- your custom HTML structure -->
+    </div>
+  </template>
+</template>
+```
+
+Place your component inside `CalendarProvider` alongside the toolbar:
+
+```vue
+<template>
+  <CalendarProvider :events="events" defaultView="month">
+    <Toolbar />
+    <div class="bc-calendar">
+      <MyMonthView />
+    </div>
+  </CalendarProvider>
+</template>
+```
+
+## Element-spread props
+
+The composables return objects like `root`, `monthGrid`, `body`, `header`, etc. Each is a plain object of HTML attributes — `class`, `ref`, `aria-*`, event handlers — designed to be spread directly onto a DOM element using `v-bind`:
+
+```vue
+<div v-bind="root">          <!-- applies class, ref, keyboard handlers -->
+  <div v-bind="monthGrid">  <!-- applies class and the CSS grid role -->
+```
+
+Do not destructure or pick from these objects individually — spread the whole thing so no attributes are dropped.
+
+## Slot components from the composable
+
+Each composable returns a `components` object with the resolved slot components — either the defaults or the `components.month` / `components.time` / `components.agenda` overrides you passed to `CalendarProvider`. Use these to render individual pieces:
+
+```vue
+const { Weekday, DateCell, EventSlot, ShowMore } = components
+```
+
+This ensures your custom layout respects the `components` overrides just like the default view does. Use `<component :is="...">` to render them:
+
+```vue
+<component :is="EventSlot" :event="seg.event" :title="seg.title" />
+```
+
+## EventButton
+
+When rendering event segments yourself, wrap them in `<EventButton>` and spread the props returned by the composable's getter (e.g. `getSegmentProps`, `getEventProps`). `EventButton` is what wires up click, keyboard, and drag-and-drop interactions for an event:
+
+```vue
+<script setup>
+import { EventButton } from '@big-calendar/vue'
+</script>
+
+<template>
+  <EventButton
+    v-for="seg in week.segments"
+    :key="seg.key"
+    v-bind="getSegmentProps(seg)"
+  >
+    <component :is="EventSlot" :event="seg.event" :title="seg.title" />
+  </EventButton>
+</template>
+```
+
+## Available composables
+
+<table>
+  <thead><tr><th>Composable</th><th>View</th><th>See also</th></tr></thead>
+  <tbody>
+    <tr><td><code>useMonthView()</code></td><td>Month</td><td>Advanced → useMonthView</td></tr>
+    <tr><td><code>useTimeGridView()</code></td><td>Day / Week / Work-Week</td><td>Advanced → useTimeGridView</td></tr>
+    <tr><td><code>useAgendaView()</code></td><td>Agenda</td><td>Advanced → useAgendaView</td></tr>
+  </tbody>
+</table>
+
+Each page has a full return-value reference and an annotated usage example.

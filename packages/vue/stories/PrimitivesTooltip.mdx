@@ -1,0 +1,60 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Primitives/Tooltip" />
+
+# Tooltip
+
+A lightweight hover tooltip built on the same top-layer positioning stack as `<Popover>`. It appears on mouse-over and disappears when the pointer leaves.
+
+## Where it is used
+
+Big Calendar does not attach tooltips to events automatically. `<Tooltip>` is exported as a building block for custom event slot components that need hover text — for example, a truncated event title with a full-text tooltip, or a hover card with extended event details.
+
+## API
+
+```ts
+import { Tooltip } from '@big-calendar/vue'
+```
+
+In Vue, `<Tooltip>` wraps its trigger via the default slot:
+
+```vue
+<script setup>
+import { Tooltip } from '@big-calendar/vue'
+
+const props = defineProps(['event', 'title'])
+</script>
+
+<template>
+  <Tooltip :content="`${title} — ${event.location}`" placement="top">
+    <span class="my-event-label">{{ title }}</span>
+  </Tooltip>
+</template>
+```
+
+The `content` prop accepts a string. The default slot is the trigger element — any element that accepts mouse-over events works.
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>content</code></td><td><code>string</code></td><td>—</td><td>Text shown inside the tooltip panel.</td></tr>
+    <tr><td><code>placement</code></td><td><code>FloatingPlacement</code></td><td><code>'top'</code></td><td>Preferred placement. Flips automatically if there is not enough space.</td></tr>
+    <tr><td><code>#default</code></td><td>slot</td><td>—</td><td>The element that triggers the tooltip on hover.</td></tr>
+    <tr><td><code>class</code></td><td><code>string</code></td><td>—</td><td>Additional class applied to the tooltip panel.</td></tr>
+  </tbody>
+</table>
+
+## Styling
+
+The base class is `bc-tooltip`. It uses a dark background and light text by default:
+
+```css
+.bc-tooltip {
+  background: var(--bc-color-fg);
+  color: var(--bc-color-bg);
+  border-radius: var(--bc-radius-sm);
+  font-size: var(--bc-font-size-sm);
+}
+```
+
+Override via CSS custom properties or target `.bc-tooltip` directly.

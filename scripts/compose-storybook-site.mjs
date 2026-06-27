@@ -6,7 +6,7 @@
  * The hub (packages/core/storybook-static/) is the deployment root; each ref
  * is nested inside it so the entire site is one self-contained static artifact.
  *
- * To add a future framework package (e.g. Vue):
+ * To add a future framework package:
  *   1. Add its build to storybook-site:build in project.json
  *   2. Add one line to REFS below
  *   3. Add a matching entry in packages/core/.storybook/main.ts refs config
@@ -22,7 +22,7 @@ const HUB_DIST = join(ROOT, 'packages/core/storybook-static')
 /** ref name → source dist path */
 const REFS = [
   { name: 'react', dist: join(ROOT, 'packages/react/storybook-static') },
-  // { name: 'vue', dist: join(ROOT, 'packages/vue/storybook-static') },
+  { name: 'vue',   dist: join(ROOT, 'packages/vue/storybook-static') },
 ]
 
 const ensureExists = async (path, label) => {

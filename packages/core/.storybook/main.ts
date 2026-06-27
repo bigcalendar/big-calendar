@@ -28,16 +28,14 @@ const config: StorybookConfig = {
           url: './react',
           index: './react/index.json',
         },
-        // Future framework packages: add one entry here per package.
-        // vue: { title: 'Vue', url: './vue', index: './vue/index.json' },
+        vue: { title: 'Vue', url: './vue', index: './vue/index.json' },
       }
     : {
         react: {
           title: 'React',
           url: 'http://localhost:6006',
         },
-        // Future framework packages: add one entry here per package.
-        // vue: { title: 'Vue', url: 'http://localhost:6008' },
+        vue: { title: 'Vue', url: 'http://localhost:6008' },
       },
   viteFinal: (config) => {
     const pkgs = resolve(import.meta.dirname, '../..')

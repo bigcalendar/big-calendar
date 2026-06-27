@@ -1,0 +1,110 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Concepts/Vue Patterns" />
+
+# Vue Patterns
+
+`@big-calendar/vue` is a thin Vue 3 layer over the shared `@big-calendar/core` engine. It maps the same public API as the React adapter, but in Vue idioms. This page covers the main differences a developer coming from the React version will notice.
+
+---
+
+## `provide` / `inject` instead of React context
+
+In React, `<CalendarProvider>` uses `React.createContext`. In Vue, it uses `provide()` and `inject()`. The effect is the same — every composable and component inside the provider tree can read the shared calendar store without props.
+
+You will never see `useCalendarContext()` in your own components. That is an internal composable used by the built-in views. You interact with the calendar through props on `<CalendarProvider>` and through the composables described below.
+
+---
+
+## Vue slots instead of React render props
+
+The React adapter uses the `components` prop to swap out visual pieces. For example, to replace the default event block in the month grid you would pass `components={{ event: MyEvent }}`.
+
+The Vue adapter uses the same `components` prop (it is part of `CalendarProviderProps`), but you pass Vue component objects instead of React function components:
+
+```vue
+<script setup>
+import { CalendarProvider, Calendar } from '@big-calendar/vue'
+import MyMonthEvent from './MyMonthEvent.vue'
+</script>
+
+<template>
+  <CalendarProvider :components="{ monthEvent: MyMonthEvent }" ...>
+    <Calendar />
+  </CalendarProvider>
+</template>
+```
+
+Each slot component receives props typed by the corresponding `*Props` interface exported from `@big-calendar/vue`. For example, a custom month event receives `MonthEventProps`.
+
+---
+
+## `<script setup>` composables instead of hooks
+
+The headless composables (`useMonthView`, `useTimeGridView`, `useAgendaView`) are Vue 3 Composition API composables — they must be called at the top level of `<script setup>`, just like Vue hooks.
+
+```vue
+<script setup>
+import { useMonthView } from '@big-calendar/vue'
+
+const { grid, root, getDaySlotProps, getSegmentProps } = useMonthView()
+</script>
+```
+
+They return reactive data. In templates, reactive refs are auto-unwrapped — you do not need `.value` in the template. In `<script setup>`, access `.value` when reading a `Ref` outside of a template or watchEffect.
+
+---
+
+## `<Teleport>` instead of React portals
+
+`Popover`, `Tooltip`, and `Dialog` use Vue's built-in `<Teleport>` to render into `document.body`. This prevents clipping from parent `overflow: hidden` CSS. The implementation is the same as the React version's `createPortal` calls, just expressed as a Vue built-in.
+
+---
+
+## Drag and drop: `useCalendarDnd`
+
+React DnD is enabled by wrapping `<Calendar>` in `<WithDragAndDrop>`. In Vue, call the `useCalendarDnd` composable inside the component that contains your calendar root element, then pass the element ref to it:
+
+```vue
+<script setup>
+import { shallowRef } from 'vue'
+import { CalendarProvider, Calendar, useCalendarDnd } from '@big-calendar/vue'
+import '@big-calendar/dnd' // peer dep — must be installed separately
+
+const calendarRef = shallowRef(null)
+useCalendarDnd(calendarRef)
+</script>
+
+<template>
+  <CalendarProvider :localizer="localizer" :events="events" ...>
+    <div ref="calendarRef" class="bc-calendar">
+      <Calendar />
+    </div>
+  </CalendarProvider>
+</template>
+```
+
+> **Note.** `useCalendarDnd` must be called inside a component that is a descendant of
+> `<CalendarProvider>`. It reads the store from `inject()` internally.
+
+The `@big-calendar/dnd` package is an optional peer dependency. If it is not installed,
+`useCalendarDnd` is a no-op — drag-and-drop will simply not activate.
+
+---
+
+## Keyboard navigation and accessibility
+
+`@big-calendar/vue` implements the same a11y pattern as the React adapter:
+
+- **Roving tabindex** — each slot grid has exactly one focusable cell at a time. Arrow keys move focus through cells without requiring the user to tab through every single one.
+- **Keyboard selection** — once a cell is focused, `Shift+Arrow` extends a slot selection; `Enter` or `Space` commits it; `Escape` cancels.
+- **Keyboard DnD** — `Space` picks up a focused event; arrow keys move or resize it; `Enter` drops it; `Escape` cancels.
+- **Screen-reader announcements** — a visually hidden `aria-live="polite"` region announces grab, move, and drop events.
+
+Enable selection by setting `selectable` on `<CalendarProvider>`:
+
+```vue
+<CalendarProvider :selectable="true" :onSlotSelect="handleSelect" ...>
+```
+
+No extra work is needed to enable keyboard navigation — it is always on.

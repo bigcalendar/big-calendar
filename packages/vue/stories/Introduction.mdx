@@ -1,0 +1,30 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Introduction" />
+
+# Big Calendar — Vue
+
+Big Calendar is a framework-agnostic calendar engine with a thin Vue 3 adapter. This Storybook documents the `@big-calendar/vue` package.
+
+> **Note:** This adapter is under active development. Component stories will appear here as each task is completed. See the [React Storybook](../react/) for a complete feature reference.
+
+## Architecture
+
+`@big-calendar/vue` is a thin Vue 3 layer over the shared `@big-calendar/core` engine. It mirrors the React adapter's public API — views, composables, slots, and DnD — adapted to Vue 3 idioms:
+
+- **`provide` / `inject`** instead of React context
+- **`<script setup>` composables** instead of hooks
+- **Vue slots** instead of React render props
+- **`<Teleport>`** instead of React portals for top-layer UI
+
+## Packages
+
+| Package | Purpose |
+|---|---|
+| `@big-calendar/core` | Shared engine — store, view models, layout, selection FSM |
+| `@big-calendar/vue` | Vue 3 components and composables |
+| `@big-calendar/dnd` | Drag-and-drop engine (optional peer dep) |
+| `@big-calendar/styles` | CSS custom-property design tokens |
+| `@big-calendar/localizer` | Base localizer interface |
+| `@big-calendar/localizer-luxon` | Luxon-backed localizer |
+| `@big-calendar/localizer-temporal` | `Temporal`-backed localizer |

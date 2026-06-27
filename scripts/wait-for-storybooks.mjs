@@ -50,13 +50,19 @@ const openBrowser = () => {
 }
 
 // ── Step 1: react slave ──────────────────────────────────────────────────────
-console.log('\n  [1/2] Starting react slave on port 6006...')
+console.log('\n  [1/3] Starting react slave on port 6006...')
 const reactProc = spawnStorybook('react', 6006)
 await waitForIndex('http://localhost:6006/index.json')
 console.log('        React ready.\n')
 
-// ── Step 2: core hub ─────────────────────────────────────────────────────────
-console.log('  [2/2] Starting core hub on port 6007...')
+// ── Step 2: vue slave ────────────────────────────────────────────────────────
+console.log('  [2/3] Starting vue slave on port 6008...')
+const vueProc = spawnStorybook('vue', 6008)
+await waitForIndex('http://localhost:6008/index.json')
+console.log('        Vue ready.\n')
+
+// ── Step 3: core hub ─────────────────────────────────────────────────────────
+console.log('  [3/3] Starting core hub on port 6007...')
 const coreProc = spawnStorybook('core', 6007)
 await waitForIndex('http://localhost:6007/index.json')
 console.log('        Core hub ready.\n')
@@ -65,7 +71,7 @@ console.log('        Core hub ready.\n')
 openBrowser()
 console.log(`  Hub open at ${HUB_URL}\n`)
 
-// Keep the script alive so both child processes stay up, and clean up on exit.
-const shutdown = () => { reactProc.kill(); coreProc.kill(); process.exit(0) }
+// Keep the script alive so all child processes stay up, and clean up on exit.
+const shutdown = () => { reactProc.kill(); vueProc.kill(); coreProc.kill(); process.exit(0) }
 process.on('SIGINT',  shutdown)
 process.on('SIGTERM', shutdown)

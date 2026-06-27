@@ -1,0 +1,401 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Calendar/CalendarProvider" />
+
+# CalendarProvider
+
+`CalendarProvider` is the required outer wrapper for every Big Calendar. Think of it as the brain of the whole calendar — it holds the active view, the focus date, the event list, and all of the settings. Every component or composable you use inside it reads from that shared state automatically.
+
+In Vue, it works through `provide` / `inject`: `CalendarProvider` calls `provide()` to share the calendar store, and every composable inside (`useMonthView`, `useTimeGridView`, etc.) calls `inject()` to read it. You never pass props down by hand.
+
+```vue
+<script setup>
+import { CalendarProvider, Calendar } from '@big-calendar/vue'
+import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
+import '@big-calendar/styles/index.css'
+
+const localizer = await createTemporalLocalizer({ locale: 'en-US', timeZone: 'UTC' })
+const events = [
+  { id: '1', title: 'Team standup', start: '2026-06-15T09:00:00Z', end: '2026-06-15T09:30:00Z' }
+]
+</script>
+
+<template>
+  <CalendarProvider :localizer="localizer" :events="events" defaultDate="2026-06-15">
+    <Calendar />
+  </CalendarProvider>
+</template>
+```
+
+---
+
+## Required prop
+
+<table>
+  <thead>
+    <tr><th>Prop</th><th>Type</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>localizer</code></td>
+      <td><code>LocalizerContract</code></td>
+      <td>
+        The engine that handles all date formatting and arithmetic. Big Calendar never touches
+        JavaScript's built-in <code>Date</code> object directly — the localizer does all of that
+        work. Create one with <code>createTemporalLocalizer</code> or
+        <code>createLuxonLocalizer</code> and pass it here. It is async, so call it once at
+        module level or in a top-level <code>await</code>.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Data props
+
+<table>
+  <thead>
+    <tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>events</code></td>
+      <td><code>TEvent[]</code></td>
+      <td><code>[]</code></td>
+      <td>
+        Your foreground event objects. Each needs at minimum a start date, an end date, and a
+        title — but you can use any field names and configure them via <code>accessors</code>.
+        The calendar renders these as coloured blocks across all views.
+      </td>
+    </tr>
+    <tr>
+      <td><code>backgroundEvents</code></td>
+      <td><code>TEvent[]</code></td>
+      <td><code>[]</code></td>
+      <td>
+        Background events render as coloured bands behind foreground events. Clicks and drags
+        pass straight through them — they are visual only. Useful for showing availability
+        windows or blocked-off periods.
+      </td>
+    </tr>
+    <tr>
+      <td><code>resources</code></td>
+      <td><code>TResource[]</code></td>
+      <td><em>none</em></td>
+      <td>
+        Resource objects for multi-resource time grids (for example, rooms or staff). When
+        supplied, each day column in the time grid is split into one sub-column per resource.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Date and view
+
+### Uncontrolled (calendar manages its own state)
+
+Pass these to set the initial values. The calendar handles navigation on its own after that.
+
+<table>
+  <thead>
+    <tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>defaultView</code></td>
+      <td><code>ViewKey</code></td>
+      <td><code>'month'</code></td>
+      <td>
+        Which view the calendar opens on. Valid values: <code>'month'</code>,
+        <code>'week'</code>, <code>'work_week'</code>, <code>'day'</code>,
+        <code>'agenda'</code>. The user can switch views with the toolbar after that.
+      </td>
+    </tr>
+    <tr>
+      <td><code>defaultDate</code></td>
+      <td><code>string</code></td>
+      <td>Today</td>
+      <td>
+        The date the calendar focuses on when it first loads, as an ISO 8601 string
+        (for example <code>"2026-06-15"</code>). The user can navigate away with Prev / Next.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+### Controlled (your state drives the calendar)
+
+Use these when your application needs to programmatically control which view or date is shown
+— for example, from a URL-driven route or a custom mini-calendar.
+
+```vue
+<script setup>
+import { ref } from 'vue'
+const view = ref('week')
+const date = ref('2026-06-15')
+</script>
+
+<template>
+  <CalendarProvider
+    :localizer="localizer"
+    :events="events"
+    :view="view"
+    :date="date"
+    @update:view="v => view = v"
+    @update:date="d => date = d"
+  >
+    <Calendar />
+  </CalendarProvider>
+</template>
+```
+
+> **Vue idiom.** `CalendarProvider` emits `update:view` and `update:date` when the user
+> switches views or navigates. Use `v-model:view` and `v-model:date` if your parent component
+> owns the state as a `ref`.
+
+---
+
+## Time grid props
+
+<table>
+  <thead>
+    <tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>step</code></td>
+      <td><code>number</code></td>
+      <td><code>30</code></td>
+      <td>
+        Size of each time slot in minutes. <code>30</code> gives slots at "9:00", "9:30",
+        "10:00", and so on. Use <code>15</code> for quarter-hour slots.
+      </td>
+    </tr>
+    <tr>
+      <td><code>timeslots</code></td>
+      <td><code>number</code></td>
+      <td><code>2</code></td>
+      <td>
+        How many individual slot rows appear under each labelled time. At <code>step=30</code>
+        and <code>timeslots=2</code> you get two rows per half-hour.
+      </td>
+    </tr>
+    <tr>
+      <td><code>min</code></td>
+      <td><code>&#123; hour: number; minute?: number &#125;</code></td>
+      <td>Start of day</td>
+      <td>Earliest time shown. For example, <code>&#123; hour: 8 &#125;</code> starts at 8:00 AM.</td>
+    </tr>
+    <tr>
+      <td><code>max</code></td>
+      <td><code>&#123; hour: number; minute?: number &#125;</code></td>
+      <td>End of day</td>
+      <td>Latest time shown. <code>&#123; hour: 0 &#125;</code> means end of day (full 24-hour grid).</td>
+    </tr>
+    <tr>
+      <td><code>scrollToTime</code></td>
+      <td><code>&#123; hour: number; minute?: number &#125;</code></td>
+      <td>Current time</td>
+      <td>
+        The wall-clock time the grid scrolls to on mount. When omitted the grid scrolls to the
+        current time in the calendar's configured time zone.
+      </td>
+    </tr>
+    <tr>
+      <td><code>dayLayoutAlgorithm</code></td>
+      <td><code>'overlap' | 'no-overlap'</code></td>
+      <td><code>'overlap'</code></td>
+      <td>
+        Controls how concurrent events are packed side by side in a day column.
+        <code>'overlap'</code> looks like Google Calendar; <code>'no-overlap'</code> gives
+        every time-touching event its own lane.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Selection
+
+Slot selection is disabled by default.
+
+<table>
+  <thead>
+    <tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>selectable</code></td>
+      <td><code>boolean | 'ignoreEvents'</code></td>
+      <td><code>false</code></td>
+      <td>
+        Enables slot selection. <code>true</code> lets users click and drag anywhere in the
+        grid. <code>'ignoreEvents'</code> enables selection but prevents clicks directly on
+        event blocks from starting a selection.
+      </td>
+    </tr>
+    <tr>
+      <td><code>longPressThreshold</code></td>
+      <td><code>number</code></td>
+      <td><code>500</code></td>
+      <td>
+        On touch screens, how long in milliseconds a finger must be held still before a slot
+        selection starts. Mouse and stylus inputs are not affected.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Drag and drop
+
+Drag-and-drop requires the optional `@big-calendar/dnd` package and the `useCalendarDnd`
+composable. See the **Drag & Drop** section for setup.
+
+<table>
+  <thead>
+    <tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>accessors.draggable</code></td>
+      <td><code>string | Function</code></td>
+      <td>reads <code>event.draggable</code></td>
+      <td>
+        Controls which events can be dragged. Defaults to reading the <code>draggable</code>
+        field. An absent or falsy field means the event is not draggable (opt-in).
+      </td>
+    </tr>
+    <tr>
+      <td><code>accessors.resizable</code></td>
+      <td><code>string | Function</code></td>
+      <td>reads <code>event.resizable</code></td>
+      <td>
+        Controls whether an event shows resize handles. Defaults to reading the
+        <code>resizable</code> field. An absent or falsy field hides resize handles (opt-in).
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Callbacks
+
+### Event interaction
+
+<table>
+  <thead>
+    <tr><th>Prop</th><th>Signature</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>onEventClick</code></td>
+      <td><code>(event: TEvent) =&gt; void</code></td>
+      <td>Single click on an event. Receives your original event object.</td>
+    </tr>
+    <tr>
+      <td><code>onEventDoubleClick</code></td>
+      <td><code>(event: TEvent) =&gt; void</code></td>
+      <td>Double-click on an event.</td>
+    </tr>
+  </tbody>
+</table>
+
+### Slot selection
+
+These require `selectable`.
+
+<table>
+  <thead>
+    <tr><th>Prop</th><th>Signature</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>onSlotClick</code></td>
+      <td><code>(selection) =&gt; void</code></td>
+      <td>A single slot or day was clicked.</td>
+    </tr>
+    <tr>
+      <td><code>onSlotDoubleClick</code></td>
+      <td><code>(selection) =&gt; void</code></td>
+      <td>A single slot or day was double-clicked.</td>
+    </tr>
+    <tr>
+      <td><code>onSlotSelect</code></td>
+      <td><code>(selection) =&gt; void</code></td>
+      <td>A drag across multiple slots was committed.</td>
+    </tr>
+  </tbody>
+</table>
+
+### Navigation
+
+<table>
+  <thead>
+    <tr><th>Prop</th><th>Signature</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>onNavigate</code></td>
+      <td><code>(&#123; date, view &#125;) =&gt; void</code></td>
+      <td>Fires after the focus date changes via the toolbar.</td>
+    </tr>
+    <tr>
+      <td><code>onView</code></td>
+      <td><code>(&#123; view &#125;) =&gt; void</code></td>
+      <td>Fires after the user switches views via the toolbar.</td>
+    </tr>
+    <tr>
+      <td><code>onRangeChange</code></td>
+      <td><code>(&#123; range, view &#125;) =&gt; void</code></td>
+      <td>
+        Fires on initial render and again whenever the visible range changes. Useful for
+        fetching only the events in the visible window from your API.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Customization
+
+<table>
+  <thead>
+    <tr><th>Prop</th><th>Type</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>components</code></td>
+      <td><code>CalendarComponents</code></td>
+      <td>
+        Swap out any visual piece of the calendar — event blocks, day headings, the toolbar,
+        the show-more button, and more — with your own Vue components. Pass an object with
+        the keys matching the slot you want to override.
+      </td>
+    </tr>
+    <tr>
+      <td><code>messages</code></td>
+      <td><code>Partial&lt;Messages&gt;</code></td>
+      <td>
+        Override any UI string the calendar displays — button labels, the "no events" message
+        in the agenda, and more. Only supply the strings you want to change.
+      </td>
+    </tr>
+    <tr>
+      <td><code>getNow</code></td>
+      <td><code>() =&gt; string</code></td>
+      <td>
+        A function that returns the current moment as an ISO string. Override it to pin the
+        calendar to a fixed point in time — useful in tests and in Storybook so the layout
+        renders the same way every time.
+      </td>
+    </tr>
+  </tbody>
+</table>

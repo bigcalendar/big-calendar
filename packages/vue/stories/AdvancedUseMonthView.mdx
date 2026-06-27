@@ -1,0 +1,117 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/useMonthView" />
+
+# useMonthView
+
+A composable that composes all the logic needed to render a custom month grid. Call it inside a component that lives inside a `CalendarProvider`. See **Advanced → Headless API** for the general pattern.
+
+```ts
+import { useMonthView } from '@big-calendar/vue'
+```
+
+## Return value
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>grid</code></td><td><code>MonthGrid | null</code></td><td>The rendered month model. <code>null</code> when the active view is not the month — use as a gate with <code>v-if</code>.</td></tr>
+    <tr><td><code>components</code></td><td><code>object</code></td><td>Resolved slot components: <code>Weekday</code>, <code>DateCell</code>, <code>EventSlot</code>, <code>ShowMore</code>.</td></tr>
+    <tr><td><code>messages</code></td><td><code>Messages</code></td><td>Localized strings (e.g. the show-more label).</td></tr>
+    <tr><td><code>announcement</code></td><td><code>string</code></td><td>Text for the keyboard-DnD live region. Render inside <code>role="status"</code>.</td></tr>
+    <tr><td><code>root</code></td><td><code>object</code></td><td>Element-spread props for the outermost <code>&lt;div&gt;</code>. Use <code>v-bind="root"</code>.</td></tr>
+    <tr><td><code>monthGrid</code></td><td><code>object</code></td><td>Element-spread props for the CSS grid <code>&lt;div&gt;</code>.</td></tr>
+    <tr><td><code>getDaySlotProps(cell, weekIndex, dayIndex)</code></td><td><code>function</code></td><td>Props for the invisible slot hit-target inside each day cell (slot selection + roving focus).</td></tr>
+    <tr><td><code>getWeekSelectionBand(weekIndex)</code></td><td><code>function</code></td><td>Returns the selection highlight for a week row, or <code>null</code>.</td></tr>
+    <tr><td><code>getWeekPreviewBand(week)</code></td><td><code>function</code></td><td>Returns the drag-preview highlight for a week row, or <code>null</code>.</td></tr>
+    <tr><td><code>getSegmentProps(segment)</code></td><td><code>function</code></td><td>All <code>EventButton</code> props for a placed event segment.</td></tr>
+    <tr><td><code>getShowMoreCellProps(cell, dayIndex, moreRow)</code></td><td><code>function</code></td><td>Wrapper and <code>ShowMore</code> props for an overflowed day, or <code>null</code> when there is no overflow.</td></tr>
+  </tbody>
+</table>
+
+## Usage example
+
+```vue
+<script setup>
+import { EventButton, useMonthView } from '@big-calendar/vue'
+
+const {
+  grid, components, messages, announcement, root, monthGrid,
+  getDaySlotProps, getWeekSelectionBand, getWeekPreviewBand,
+  getSegmentProps, getShowMoreCellProps,
+} = useMonthView()
+
+const { Weekday, DateCell, EventSlot, ShowMore } = components
+</script>
+
+<template>
+  <template v-if="grid !== null">
+    <div v-bind="root">
+      <div role="status" aria-live="polite" class="bc-sr-only">
+        {{ announcement }}
+      </div>
+      <div class="bc-month-header">
+        <component
+          v-for="wd in grid.weekdays"
+          :key="wd.day"
+          :is="Weekday"
+          :day="wd.day"
+          :long="wd.long"
+          :short="wd.short"
+        />
+      </div>
+      <div v-bind="monthGrid">
+        <div
+          v-for="(week, wi) in grid.weeks"
+          :key="week.key"
+          class="bc-month-week"
+        >
+          <div class="bc-month-slots">
+            <div
+              v-for="(cell, di) in week.days"
+              :key="cell.day"
+              v-bind="getDaySlotProps(cell, wi, di)"
+            />
+          </div>
+          <div class="bc-week-backgrounds">
+            <div v-for="(cell, di) in week.days" :key="cell.day">
+              <component
+                :is="DateCell"
+                v-bind="cell"
+                :onDrillDown="() => {}"
+              />
+              <template v-if="getShowMoreCellProps(cell, di, week.moreRow) as more">
+                <div v-bind="more.wrapper">
+                  <component
+                    :is="ShowMore"
+                    v-bind="more.showMore"
+                    :label="messages.showMore(more.showMore.count)"
+                    :eventSlot="EventSlot"
+                  />
+                </div>
+              </template>
+            </div>
+          </div>
+          <div v-if="getWeekSelectionBand(wi)" v-bind="getWeekSelectionBand(wi)" />
+          <div v-if="getWeekPreviewBand(week)" v-bind="getWeekPreviewBand(week)" />
+          <div class="bc-week-events">
+            <EventButton
+              v-for="seg in week.segments"
+              :key="seg.key"
+              v-bind="getSegmentProps(seg)"
+            >
+              <component :is="EventSlot" :event="seg.event" :title="seg.title" />
+            </EventButton>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+</template>
+```
+
+## When to use this vs. `<MonthView>`
+
+Use `<MonthView>` when the default rendering is sufficient. Use `useMonthView` when you need to change the HTML structure — render the grid as a `<table>`, add custom row wrappers, or change how segments are positioned.
+
+For changing individual cells or labels without restructuring the HTML, use `components.month` slot overrides on `CalendarProvider` instead — no composable required.
