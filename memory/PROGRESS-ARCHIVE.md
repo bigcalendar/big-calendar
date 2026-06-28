@@ -1,7 +1,31 @@
 # PROGRESS — ARCHIVE
 
 > Full phase history. Active state → PROGRESS.md.
-> Preserved as of 2026-06-26.
+> Preserved as of 2026-06-27.
+
+---
+
+## Phase 10 — Vue adapter (`@big-calendar/vue` + DnD) ✅ (completed 2026-06-27)
+
+Full feature-parity Vue 3 adapter with DnD support, Storybook stories, and composition-mode globals bridge.
+
+- **10-1** — Package scaffold — `packages/vue`, workspace wiring, Storybook (`@storybook/vue3-vite`) wired into composition hub.
+- **10-2** — Signals bridge — `useCalendarStore` composable; `@preact/signals-core` signals bridged to Vue reactivity via `watchEffect` / `computed`.
+- **10-3** — Context — `CalendarProvider.vue`, `useCalendarContext()`, `useCalendarStore()` composables using Vue `provide`/`inject`.
+- **10-4** — View model composables — `useMonthView`, `useTimeGridView` (split: `useTimeGridHeader` / `useTimeGridBody`), `useAgendaView`.
+- **10-5** — View components — `MonthView.vue`, `TimeGridView.vue`, `AgendaView.vue`; slot customization via Vue named slots mirroring React's `components` prop.
+- **10-6** — `Calendar.vue` shell + `DefaultToolbar.vue`.
+- **10-7** — Top-layer UI — `Popover.vue`, `Tooltip.vue`, `Dialog.vue` using `<Teleport>` + `<Transition>` + `@floating-ui/dom`.
+- **10-8** — Accessibility — roving selection, event roving, keyboard nav, aria attributes.
+- **10-9** — DnD adapter — `useCalendarDnd` composable; keyboard DnD; pointer move + resize previews.
+- **10-10** — Tests — 218 tests (per-file 85% branch / 95% function).
+- **10-11** — Documentation — stories for Calendar (Standard, ScrollToTime, TimeWindow), EventCallbacks, Selection (Selectable), DnD, BackgroundEvents, Resources; MDX docs; package README; Storybook composition-mode globals bridge (localStorage cache + manager.ts addon, `bc-globals-sync` postMessage relay).
+
+Key architecture decisions: `localizerRef.ts` (sync `shallowRef`) + `harness.ts` (async top-level-await upgrade); side-effect decorator pattern (no component wrapping, `window.addEventListener` for toolbar relay); `bodyNowIndicatorProps` for body-spanning now-indicator parity with React.
+
+Test counts entering Phase 11: localizer: 53 · localizer-temporal: 21 · localizer-luxon: 20 · core: 553 · dnd: 36 · react: 379 · vue: 218 · mcp: 64 · codemods: 82 · **total: 1,426**
+
+Architecture decisions: DECISIONS-ARCHIVE.md (Phase 10 section).
 
 ---
 

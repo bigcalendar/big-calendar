@@ -1,11 +1,11 @@
-# DECISIONS — Active (Phase 10 onward)
+# DECISIONS — Active (Phase 11 onward)
 
-> Phase 0–9 decisions archived to `DECISIONS-ARCHIVE.md` (with topic index).
+> Phase 0–10 decisions archived to `DECISIONS-ARCHIVE.md` (with topic index).
 > Add new entries here; archive when a phase is fully closed.
 
 ---
 
-## Standing rule — Documentation and MCP sync (Phase 10+)
+## Standing rule — Documentation and MCP sync (Phase 10+, ongoing)
 
 ### 2026-06-26 — All new code ships with documentation; MCP resources stay in sync
 

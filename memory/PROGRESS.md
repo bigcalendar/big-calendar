@@ -15,42 +15,43 @@
 - [x] **Phase 7b — Polish (accessors unification + type story)**
 - [x] **Phase 8 — Codemods**
 - [x] **Phase 9 — MCP server (`@big-calendar/mcp`)**
-- [ ] **Phase 10 — Vue adapter (`@big-calendar/vue` + DnD)** ← CURRENT
-- [ ] Phase 11+ — Additional frameworks (Angular → Lit, one at a time)
+- [x] **Phase 10 — Vue adapter (`@big-calendar/vue` + DnD)**
+- [ ] **Phase 11 — Angular adapter (`@big-calendar/angular` + DnD)** ← CURRENT
+- [ ] Phase 12+ — Additional frameworks (Lit, Svelte, one at a time)
 
 ---
 
 ## ⚠ NEXT TASK
 
-**Phase 9 — COMPLETE.** Next: Phase 10 Task 10-1 — `@big-calendar/vue` package scaffold.
+**Phase 10 — COMPLETE.** Next: Phase 11 Task 11-1 — `@big-calendar/angular` package scaffold.
 
 ---
 
-## Phase 10 — Vue adapter task list
+## Phase 11 — Angular adapter task list
 
 | # | Task | Status |
 |---|---|---|
-| 10-1 | Package scaffold — `packages/vue`, Vue 3 + `@preact/signals-core` peerDeps, workspace wiring, tsconfig, vitest config (jsdom + Vue Test Utils), Storybook (`@storybook/vue3-vite`) wired into core composition hub | [ ] |
-| 10-2 | Signals bridge — `useCalendarStore` composable wrapping `createCalendarStore`; bridge `@preact/signals-core` signals to Vue reactivity via `watchEffect` and `computed` refs | [ ] |
-| 10-3 | Context — `CalendarProvider.vue` (Vue `provide`/`inject`), `useCalendarContext()` composable, messages and localizer direction threaded through | [ ] |
-| 10-4 | View model composables — `useMonthView`, `useTimeGridView`, `useAgendaView` (Vue ports of the React headless hooks) | [ ] |
-| 10-5 | View components — `MonthView.vue`, `TimeGridView.vue` (Week / Work Week / Day), `AgendaView.vue`; slot customization mirroring React's `components` prop pattern | [ ] |
-| 10-6 | `Calendar.vue` shell + `DefaultToolbar.vue` | [ ] |
-| 10-7 | Top-layer UI — `Popover.vue`, `Tooltip.vue`, `Dialog.vue` using Vue `<Teleport>` + `<Transition>` + `@floating-ui/dom` | [ ] |
-| 10-8 | Accessibility — slot selection (`useRovingSelection`), event roving (`useEventRoving`), keyboard nav, aria attributes; a11y test assertions | [ ] |
-| 10-9 | DnD adapter — `useCalendarDnd` composable wiring `@big-calendar/dnd` into the Vue component tree; keyboard DnD (`useKeyboardDnd`); pointer move + resize previews | [ ] |
-| 10-10 | Tests — unit tests for all composables, component tests for all view components and the Calendar shell (Vue Test Utils + vitest, per-file 85% branch / 95% function) | [ ] |
-| 10-11 | Documentation — `.stories` files for all exported components, MDX concept docs mirroring React where applicable (noting Vue-specific patterns), package README, MCP `api/` + `recipes/` resources updated | [ ] |
+| 11-1 | Package scaffold — `packages/angular`, Angular (check `npm show @angular/core dist-tags` at task start; target latest LTS − 1, currently expected Angular 20), standalone components, `@angular/cdk` peer dep, workspace wiring, tsconfig, Vitest config (`@analogjs/vitest-angular` + jsdom), Storybook (`@storybook/angular`) wired into composition hub at port 6009 | [ ] |
+| 11-2 | Signals bridge — `injectCalendarStore(config)` factory composable; bridge `@preact/signals-core` signals to Angular signals via `computed()` + `effect()`; `toAngularSignal(preactSignal)` utility | [ ] |
+| 11-3 | Context — `CalendarProviderComponent` (standalone), `CALENDAR_TOKEN` injection token, `injectCalendar()` helper; messages and localizer threaded through Angular DI; `CalendarProviderComponent` owns store lifecycle (create on init, destroy on destroy) | [ ] |
+| 11-4 | View model inject composables — `injectMonthView()`, `injectTimeGridView()`, `injectAgendaView()` (Angular signals derived from core view models; call `injectCalendar()` internally) | [ ] |
+| 11-5 | View components — `MonthViewComponent`, `TimeGridViewComponent` (Week / WorkWeek / Day), `AgendaViewComponent`; slot customization via `ng-template` input properties (e.g. `[bcMonthEvent]`, `[bcTimeEvent]`, `[bcAgendaDate]`) mirroring React's `components` prop pattern | [ ] |
+| 11-6 | `CalendarComponent` shell (dispatches view by `viewModel.kind`) + `DefaultToolbarComponent`; re-exports barrel for single-import convenience | [ ] |
+| 11-7 | Top-layer UI — `BcPopoverComponent`, `BcTooltipComponent`, `BcDialogComponent`; popover/tooltip use Angular CDK Overlay + `@floating-ui/dom` positioning; dialog wraps native `<dialog>` (same as React/Vue) | [ ] |
+| 11-8 | Accessibility — `BcRovingSelectionDirective`, `BcEventRovingDirective`, keyboard nav, `aria-describedby` instruction elements; a11y assertion tests | [ ] |
+| 11-9 | DnD adapter — `CalendarDndDirective` + `CalendarDndService` wiring `@big-calendar/dnd`; keyboard DnD (`useKeyboardDnd` as Angular service); pointer move + resize live previews | [ ] |
+| 11-10 | Tests — unit tests for all inject composables, directives, and services; component tests for view components and CalendarComponent (`TestBed` + `@analogjs/vitest-angular`, per-file 85% branch / 95% function) | [ ] |
+| 11-11 | Documentation — `.stories` files for all exported components in same order as React/Vue stories; MDX concept docs mirroring React/Vue (Angular-specific patterns noted); package README; MCP `api/` + `recipes/` resources updated for Angular | [ ] |
 
 ---
 
 ## Reference
 
-Test counts (entering Phase 10): localizer: 53 · localizer-temporal: 21 · localizer-luxon: 20 · core: 553 · dnd: 36 · react: 379 · mcp: 64 · codemods: 82 · **total: 1208**
+Test counts (entering Phase 11): localizer: 53 · localizer-temporal: 21 · localizer-luxon: 20 · core: 553 · dnd: 36 · react: 379 · vue: 218 · mcp: 64 · codemods: 82 · **total: 1,426**
 
 Coverage bar: **per-file** 85% branch / 95% function (not a global average).
 
-Architecture decisions: DECISIONS.md (standing rules + Phase 10 decisions) · DECISIONS-ARCHIVE.md (Phase 0–9).
+Architecture decisions: DECISIONS.md (standing rules + Phase 11 decisions) · DECISIONS-ARCHIVE.md (Phase 0–10).
 
 ## Quick resume
 

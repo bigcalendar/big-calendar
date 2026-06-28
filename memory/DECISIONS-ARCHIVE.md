@@ -1,6 +1,6 @@
-# DECISIONS — Archive (Phase 0–Phase 9)
+# DECISIONS — Archive (Phase 0–Phase 10)
 
-> Phase 10+ decisions live in the active `DECISIONS.md`.
+> Phase 11+ decisions live in the active `DECISIONS.md`.
 > Full decision bodies are below, organized chronologically.
 
 ## Quick topic index
@@ -51,6 +51,11 @@
 | MCP scope: consumer-facing, tools + resources both | 2026-06-25 Phase 9 |
 | No real event generation; `generate-sample-events` produces dummy wiring events only | 2026-06-25 Phase 9 |
 | MCP client targets: Claude Code, Cursor, VS Code, JetBrains + stdio fallback | 2026-06-25 Phase 9 |
+| Vue adapter: localizerRef.ts (sync shallowRef) + harness.ts (async upgrade pattern) | 2026-06-26 Phase 10 |
+| Vue adapter: side-effect decorator pattern (no component wrapping; window.addEventListener relay) | 2026-06-26 Phase 10 |
+| Vue adapter: bodyNowIndicatorProps for body-spanning now-indicator (parity with React) | 2026-06-26 Phase 10 |
+| Storybook composition globals bridge: localStorage cache + manager.ts addon + bc-globals-sync postMessage | 2026-06-26 Phase 10 |
+| All new code ships with documentation; MCP resources stay in sync (standing rule, Phase 10+) | 2026-06-26 Phase 10 |
 
 ---
 
