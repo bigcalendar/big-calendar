@@ -125,7 +125,7 @@ describe.each(LOCALIZER_CASES)('AgendaView [$name]', ({ create }) => {
     act(() => {
       vi.advanceTimersByTime(DOUBLE_CLICK_MS)
     })
-    expect(onEventClick).toHaveBeenCalledWith(expect.objectContaining({ title: 'Standup' }))
+    expect(onEventClick).toHaveBeenCalledWith(expect.objectContaining({ title: 'Standup' }), expect.any(MouseEvent))
   })
 
   it('fires onEventDoubleClick and cancels the pending single on a double click', () => {
@@ -139,7 +139,7 @@ describe.each(LOCALIZER_CASES)('AgendaView [$name]', ({ create }) => {
     act(() => {
       vi.advanceTimersByTime(DOUBLE_CLICK_MS)
     })
-    expect(onEventDoubleClick).toHaveBeenCalledWith(expect.objectContaining({ title: 'Standup' }))
+    expect(onEventDoubleClick).toHaveBeenCalledWith(expect.objectContaining({ title: 'Standup' }), expect.any(MouseEvent))
     expect(onEventClick).not.toHaveBeenCalled()
   })
 

@@ -5,6 +5,7 @@ import * as views from './api/views.js'
 import * as dnd from './api/dnd.js'
 import * as localizers from './api/localizers.js'
 import * as basicSetup from './recipes/basic-setup.js'
+import * as basicSetupVue from './recipes/basic-setup-vue.js'
 import * as eventEditing from './recipes/event-editing.js'
 import * as createEvent from './recipes/create-event.js'
 import * as dataFetching from './recipes/data-fetching.js'
@@ -50,9 +51,15 @@ const RESOURCES: ResourceEntry[] = [
   },
   {
     uri: basicSetup.URI,
-    name: 'Basic setup recipe',
+    name: 'Basic setup recipe (React)',
     description: 'A minimal working Big Calendar integration in React',
     content: basicSetup.CONTENT,
+  },
+  {
+    uri: basicSetupVue.URI,
+    name: 'Basic setup recipe (Vue 3)',
+    description: 'A minimal working Big Calendar integration in Vue 3',
+    content: basicSetupVue.CONTENT,
   },
   {
     uri: eventEditing.URI,

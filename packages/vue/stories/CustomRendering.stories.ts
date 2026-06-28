@@ -43,7 +43,7 @@ const BoldWeekday = {
 /** Replace \`components.month.weekday\` with a custom column heading that renders
  * the full weekday name in uppercase purple. */
 export const MonthWeekday: Story = {
-  storyName: 'Custom Month Weekday',
+  name: 'Custom Month Weekday',
   render: () => ({
     components: { CalendarProvider, Calendar },
     setup() {
@@ -89,7 +89,7 @@ const HighlightedDateCell = {
 /** Replace \`components.month.dateCell\` to give today a filled circle treatment.
  * Click any date to drill down into the day view. */
 export const MonthDateCell: Story = {
-  storyName: 'Custom Month Date Cell',
+  name: 'Custom Month Date Cell',
   render: () => ({
     components: { CalendarProvider, Calendar },
     setup() {
@@ -125,7 +125,7 @@ const PillEvent = {
 
 /** Replace \`components.month.event\` to render a small dot before each event title. */
 export const MonthEvent: Story = {
-  storyName: 'Custom Month Event',
+  name: 'Custom Month Event',
   render: () => ({
     components: { CalendarProvider, Calendar },
     setup() {
@@ -206,7 +206,7 @@ const MinimalShowMore = defineComponent({
 /** Replace \`components.month.showMore\` with a custom trigger that opens the
  * same popover but with a plain-text link style. */
 export const MonthShowMore: Story = {
-  storyName: 'Custom Month Show More',
+  name: 'Custom Month Show More',
   render: () => ({
     components: { CalendarProvider, Calendar },
     setup() {
@@ -253,7 +253,7 @@ const AccentedDayHeading = {
 /** Replace \`components.time.dayHeading\` to highlight today's column with a
  * filled purple background. Click a heading to drill into the day view. */
 export const TimeDayHeading: Story = {
-  storyName: 'Custom Time Day Heading',
+  name: 'Custom Time Day Heading',
   render: () => ({
     components: { CalendarProvider, Calendar },
     setup() {
@@ -283,7 +283,7 @@ const ItalicTimeLabel = {
 
 /** Replace \`components.time.timeLabel\` to render gutter labels in italic teal. */
 export const TimeLabel: Story = {
-  storyName: 'Custom Time Label',
+  name: 'Custom Time Label',
   render: () => ({
     components: { CalendarProvider, Calendar },
     setup() {
@@ -319,7 +319,7 @@ const StackedTimeEvent = {
 /** Replace \`components.time.event\` to render the title and time on separate
  * lines inside the event box, with the title bold. */
 export const TimeEvent: Story = {
-  storyName: 'Custom Time Event',
+  name: 'Custom Time Event',
   render: () => ({
     components: { CalendarProvider, Calendar },
     setup() {
@@ -357,7 +357,7 @@ const TaggedAllDayEvent = {
 /** Replace \`components.time.allDayEvent\` to add a small dot before each all-day
  * event title in the time-grid header strip. */
 export const TimeAllDayEvent: Story = {
-  storyName: 'Custom Time All-Day Event',
+  name: 'Custom Time All-Day Event',
   render: () => ({
     components: { CalendarProvider, Calendar },
     setup() {
@@ -447,7 +447,7 @@ const timeShowMoreEvents: DemoEvent[] = [
  * opens the same popover as the default. Extra all-day events are added to the
  * focus week so the strip overflows and the indicator is visible immediately. */
 export const TimeShowMore: Story = {
-  storyName: 'Custom Time Show More',
+  name: 'Custom Time Show More',
   render: () => ({
     components: { CalendarProvider, Calendar },
     setup() {
@@ -485,7 +485,7 @@ const RuledAgendaDate = {
 /** Replace \`components.agenda.date\` to render each day heading in uppercase
  * with an underline accent. */
 export const AgendaDate: Story = {
-  storyName: 'Custom Agenda Date',
+  name: 'Custom Agenda Date',
   render: () => ({
     components: { CalendarProvider, Calendar },
     setup() {
@@ -524,7 +524,7 @@ const TwoColumnAgendaEvent = {
 /** Replace \`components.agenda.event\` to render a two-column grid row with the
  * time left-aligned and the title bold on the right. */
 export const AgendaEvent: Story = {
-  storyName: 'Custom Agenda Event',
+  name: 'Custom Agenda Event',
   render: () => ({
     components: { CalendarProvider, Calendar },
     setup() {
@@ -561,7 +561,7 @@ const CustomEmptyState = {
 /** Replace \`components.agenda.empty\` to show a custom empty state. An empty
  * \`events\` array is passed so the empty state is visible immediately. */
 export const AgendaEmpty: Story = {
-  storyName: 'Custom Agenda Empty State',
+  name: 'Custom Agenda Empty State',
   render: () => ({
     components: { CalendarProvider, Calendar },
     setup() {
@@ -619,7 +619,7 @@ const BorderedAgendaEvent = defineComponent({
  * the app has wired any event handler, otherwise as a plain \`<span>\` — the same
  * smart toggle the default row uses internally. */
 export const AgendaEventButtonUsage: Story = {
-  storyName: 'AgendaEventButton in Custom Row',
+  name: 'AgendaEventButton in Custom Row',
   render: () => ({
     components: { CalendarProvider, Calendar },
     setup() {

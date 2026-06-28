@@ -56,35 +56,36 @@ function AgendaEventButton<TEvent>({ event, title }: AgendaEventButtonProps<TEve
   if (!eventHandlers.has) return <span className="bc-agenda-event">{title}</span>
 
   // No selection in the agenda — fire the callback only (no selectEvent).
-  const primary = () => eventHandlers.click(event)
-  const secondary = () => eventHandlers.doubleClick(event)
+  const primary = (domEvent: globalThis.MouseEvent | globalThis.KeyboardEvent) => eventHandlers.click(event, domEvent)
+  const secondary = (domEvent: globalThis.MouseEvent | globalThis.KeyboardEvent) => eventHandlers.doubleClick(event, domEvent)
 
   const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
     // Keyboard-synthesized clicks (Enter/Space) report detail 0 — handled in
     // onKeyDown so they're immediate (no double-click delay) and never debounced.
     if (e.detail === 0) return
     if (clickTimer.current !== null) return // second click of a double — let dblclick run
+    const nativeEvent = e.nativeEvent
     clickTimer.current = setTimeout(() => {
       clickTimer.current = null
-      primary()
+      primary(nativeEvent)
     }, DOUBLE_CLICK_MS)
   }
 
-  const handleDoubleClick = () => {
+  const handleDoubleClick = (e: MouseEvent<HTMLButtonElement>) => {
     if (clickTimer.current !== null) {
       clearTimeout(clickTimer.current)
       clickTimer.current = null
     }
-    secondary()
+    secondary(e.nativeEvent)
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
-      primary()
+      primary(e.nativeEvent)
     } else if (e.key === 'F2') {
       e.preventDefault()
-      secondary()
+      secondary(e.nativeEvent)
     }
   }
 

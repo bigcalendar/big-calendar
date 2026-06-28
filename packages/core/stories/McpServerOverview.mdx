@@ -7,6 +7,8 @@ import { Meta } from '@storybook/addon-docs/blocks'
 `@big-calendar/mcp` is an optional dev dependency that adds a [Model Context Protocol](https://modelcontextprotocol.io) server to your project.
 It gives AI coding assistants (Claude Code, Cursor, VS Code Copilot, JetBrains AI) deep knowledge of the Big Calendar API and your project's specific calendar configuration — so they can scaffold components, add features, generate sample data, and answer integration questions without hallucinating API details.
 
+The server works with any Big Calendar adapter — `@big-calendar/react`, `@big-calendar/vue`, or any future framework package.
+
 ---
 
 ## What it is
@@ -14,7 +16,7 @@ It gives AI coding assistants (Claude Code, Cursor, VS Code Copilot, JetBrains A
 When you install `@big-calendar/mcp`, your AI assistant gets access to:
 
 - **Tools** — Active capabilities: scaffold a `Calendar` component, add DnD or slot selection, generate sample events, and more
-- **Resources** — Static docs: the full CalendarProvider props reference, accessor mapping guide, view reference, DnD setup, and common integration recipes
+- **Resources** — Static docs: the full CalendarProvider props reference, accessor mapping guide, view reference, DnD setup, and common integration recipes (React and Vue)
 - **Prompts** — Pre-built conversation starters: `bootstrap-calendar` (full onboarding) and `add-feature`
 
 The server stores your configuration in a `bc.md` file at your project root — the same pattern as `CLAUDE.md`. It remembers your event field names, enabled views, and features so subsequent tool calls produce code tailored to your data shape.
@@ -27,7 +29,7 @@ The server stores your configuration in a `bc.md` file at your project root — 
 pnpm add --save-dev @big-calendar/mcp
 ```
 
-> Install the same version as `@big-calendar/react` to keep the API reference in sync.
+> Install the same version as your framework package (`@big-calendar/react` or `@big-calendar/vue`) to keep the API reference in sync.
 
 ---
 

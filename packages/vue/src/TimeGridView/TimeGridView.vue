@@ -1,4 +1,5 @@
 <script setup lang="ts" generic="TEvent = unknown">
+import { computed } from 'vue'
 import EventButton from '../EventButton/EventButton.vue'
 import { useTimeGridView } from '../useTimeGridView'
 
@@ -14,6 +15,10 @@ const {
 
 const hdr = header
 const bdy = body
+
+// CSS grid column helpers for resource header layouts (mirrors React's colStartOf / colStartOfDay)
+const numResources = computed(() => grid.value?.dayGroups?.[0]?.cells.length ?? 0)
+const daysPerGroup = computed(() => grid.value?.headings.length ?? 0)
 </script>
 
 <template>
@@ -34,17 +39,22 @@ const bdy = body
         <div v-bind="hdr.timeHead">
           <div v-bind="hdr.timeHeader">
             <div v-bind="hdr.timeHeaderGutter" />
-            <template v-for="dayGroup in grid.dayGroups" :key="dayGroup.key">
-              <div v-bind="{ class: 'bc-header bc-day-major-header', role: 'columnheader' }">
+            <template v-for="(dayGroup, di) in grid.dayGroups" :key="dayGroup.key">
+              <div
+                class="bc-header bc-day-major-header"
+                role="columnheader"
+                :style="{ gridColumn: `${2 + di * numResources} / span ${numResources}`, gridRow: '1' }"
+              >
                 <component
                   :is="hdr.components.DayHeading"
                   v-bind="hdr.getHeadingProps({ day: dayGroup.date, label: dayGroup.label, isToday: dayGroup.isToday })"
                 />
               </div>
               <div
-                v-for="cell in dayGroup.cells"
+                v-for="(cell, ri) in dayGroup.cells"
                 :key="cell.key"
                 class="bc-resource-day-head"
+                :style="{ gridColumn: 2 + di * numResources + ri, gridRow: '2' }"
               >
                 <span v-bind="hdr.resourceHeaderLabel">{{ cell.resourceTitle }}</span>
               </div>
@@ -59,6 +69,7 @@ const bdy = body
                   class="bc-allday-resource"
                   :class="dayGroup.isToday ? 'bc-today' : undefined"
                   :data-bc-resource="String(cell.resourceId)"
+                  :data-bc-resource-type="cell.resourceType ?? undefined"
                 >
                   <div v-bind="hdr.getResourceAllDaySlotProps(dayGroup.date, di)" />
                   <div class="bc-allday-resource-stack">
@@ -102,6 +113,7 @@ const bdy = body
               <div
                 v-bind="bdy.getColumnProps(cell.column)"
                 :data-bc-resource="String(cell.resourceId)"
+                :data-bc-resource-type="cell.resourceType ?? undefined"
               >
                 <div v-bind="bdy.timeSlotsContainer">
                   <div
@@ -157,14 +169,19 @@ const bdy = body
             <div v-bind="hdr.timeHeaderGutter" />
             <!-- resource-week: tiered headers -->
             <template v-if="grid.headings.length > 1">
-              <template v-for="group in grid.resources" :key="`${group.key}-title`">
-                <div class="bc-header bc-resource-header" role="columnheader">
+              <template v-for="(group, gi) in grid.resources" :key="`${group.key}-title`">
+                <div
+                  class="bc-header bc-resource-header"
+                  role="columnheader"
+                  :style="{ gridColumn: `${2 + gi * daysPerGroup} / span ${daysPerGroup}`, gridRow: '1' }"
+                >
                   {{ group.resourceTitle }}
                 </div>
                 <div
                   v-for="(column, di) in group.columns"
                   :key="`${column.key}-head`"
                   class="bc-resource-day-head"
+                  :style="{ gridColumn: 2 + gi * daysPerGroup + di, gridRow: '2' }"
                 >
                   <component
                     :is="hdr.components.DayHeading"
@@ -193,19 +210,21 @@ const bdy = body
             <template v-if="grid.headings.length > 1">
               <!-- resource-week allday -->
               <div
-                v-for="group in grid.resources"
+                v-for="(group, gi) in grid.resources"
                 :key="group.key"
                 class="bc-allday-resource bc-allday-resource-week"
                 :data-bc-resource="String(group.resourceId)"
+                :data-bc-resource-type="group.resourceType ?? undefined"
+                :style="{ gridArea: `1 / ${2 + gi * daysPerGroup} / auto / span ${daysPerGroup}` }"
               >
-                <div class="bc-allday-resource-slots">
+                <div class="bc-allday-resource-slots" :style="{ gridTemplateColumns: `repeat(${daysPerGroup}, minmax(0, 1fr))` }">
                   <div
                     v-for="(column, di) in group.columns"
                     :key="column.key"
                     v-bind="hdr.getResourceAllDaySlotProps(column.day, di, column.isToday)"
                   />
                 </div>
-                <div class="bc-allday-resource-segments" data-bc-allday-segments="">
+                <div class="bc-allday-resource-segments" data-bc-allday-segments="" :style="{ gridTemplateColumns: `repeat(${daysPerGroup}, minmax(0, 1fr))` }">
                   <EventButton
                     v-for="segment in group.allDay.segments"
                     :key="segment.key"
@@ -235,6 +254,7 @@ const bdy = body
                 class="bc-allday-resource"
                 :class="group.columns[0]?.isToday ? 'bc-today' : undefined"
                 :data-bc-resource="String(group.resourceId)"
+                :data-bc-resource-type="group.resourceType ?? undefined"
               >
                 <div v-bind="hdr.getResourceAllDaySlotProps(group.columns[0]?.day ?? '', 0)" />
                 <div class="bc-allday-resource-stack">
@@ -278,6 +298,7 @@ const bdy = body
               :key="column.key"
               v-bind="bdy.getColumnProps(column)"
               :data-bc-resource="String(group.resourceId)"
+              :data-bc-resource-type="group.resourceType ?? undefined"
             >
               <div v-bind="bdy.timeSlotsContainer">
                 <div
@@ -429,10 +450,6 @@ const bdy = body
             <div
               v-if="bdy.getPreviewDivProps(column) !== null"
               v-bind="bdy.getPreviewDivProps(column)!"
-            />
-            <div
-              v-if="bdy.getNowIndicatorProps(column) !== null"
-              v-bind="bdy.getNowIndicatorProps(column)!"
             />
           </div>
           <div v-if="bdy.bodyNowIndicatorProps !== null" v-bind="bdy.bodyNowIndicatorProps" />

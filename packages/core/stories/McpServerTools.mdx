@@ -4,7 +4,7 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # MCP Server — Tools Reference
 
-The `@big-calendar/mcp` server exposes six tools, ten resources, and two prompts.
+The `@big-calendar/mcp` server exposes six tools, eleven resources, and two prompts.
 Tools take arguments and return generated code or status text.
 Resources are read-only documents your AI assistant can pull in as context.
 Prompts are conversation starters that chain tools together.
@@ -41,7 +41,7 @@ Checks for an existing `bc.md` memory file or writes a new one.
       <td><code>version</code></td>
       <td>string</td>
       <td>No</td>
-      <td>The <code>@big-calendar/react</code> version in use, e.g. <code>"1.20.0"</code>.</td>
+      <td>The Big Calendar package version in use (e.g. <code>@big-calendar/react</code> or <code>@big-calendar/vue</code>), e.g. <code>"1.20.0"</code>.</td>
     </tr>
     <tr>
       <td><code>views</code></td>
@@ -76,11 +76,13 @@ Checks for an existing `bc.md` memory file or writes a new one.
 
 Generates a ready-to-use `Calendar` component using your `bc.md` configuration.
 
-The generated component includes:
+The generated component targets **React** by default and includes:
 - `createTemporalLocalizer` setup (no extra dependencies required)
 - `CalendarProvider` with your `accessors` wired to the correct field names
 - All enabled `views` in the provider's view list
 - `useCalendarDnd` + `CalendarWithDnd` wrapper if `dnd` is listed in features
+
+For a **Vue 3** starting point, fetch the `bc://recipes/basic-setup-vue` resource directly instead.
 
 <table>
   <thead>
@@ -244,7 +246,7 @@ Use this after any change to your event data shape, enabled views, or app contex
       <td><code>version</code></td>
       <td>string</td>
       <td>No</td>
-      <td>Update the recorded <code>@big-calendar/react</code> version.</td>
+      <td>Update the recorded Big Calendar package version.</td>
     </tr>
     <tr>
       <td><code>views</code></td>
@@ -331,7 +333,11 @@ All URIs use the `bc://` scheme.
   <tbody>
     <tr>
       <td><code>bc://recipes/basic-setup</code></td>
-      <td>Installation and minimal working calendar with <code>TemporalLocalizer</code></td>
+      <td>Installation and minimal working calendar with <code>TemporalLocalizer</code> (React)</td>
+    </tr>
+    <tr>
+      <td><code>bc://recipes/basic-setup-vue</code></td>
+      <td>Installation and minimal working calendar with <code>TemporalLocalizer</code> (Vue 3)</td>
     </tr>
     <tr>
       <td><code>bc://recipes/event-editing</code></td>

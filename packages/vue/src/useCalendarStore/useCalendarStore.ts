@@ -49,10 +49,10 @@ export function useCalendarStore<TEvent = unknown, TResource = unknown>(
       ? (args) => props.onDrillDown?.(args)
       : undefined,
     onEventClick: props.onEventClick
-      ? (event) => props.onEventClick?.(event)
+      ? (event, domEvent) => props.onEventClick?.(event, domEvent)
       : undefined,
     onEventDoubleClick: props.onEventDoubleClick
-      ? (event) => props.onEventDoubleClick?.(event)
+      ? (event, domEvent) => props.onEventDoubleClick?.(event, domEvent)
       : undefined,
     onEventRightClick: props.onEventRightClick
       ? (event, domEvent) => props.onEventRightClick?.(event, domEvent)

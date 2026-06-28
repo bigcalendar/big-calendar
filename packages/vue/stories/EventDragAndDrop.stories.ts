@@ -45,7 +45,7 @@ const DndDemo = defineComponent({
         h(
           CalendarProvider,
           {
-            localizer,
+            localizer: localizer.value,
             events: events.value,
             defaultDate: FOCUS,
             getNow,

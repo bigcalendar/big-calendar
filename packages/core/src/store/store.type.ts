@@ -102,9 +102,9 @@ export interface EventHandlerApi<TEvent> {
   /** Whether a middle-click handler is configured (adapter attaches `auxclick` only then). */
   readonly hasMiddleClick: boolean
   /** Primary action: fire `onEventClick` (selection is composed separately via `selectEvent`). */
-  click(event: TEvent): void
+  click(event: TEvent, domEvent: MouseEvent | KeyboardEvent): void
   /** Secondary action: fire `onEventDoubleClick`. */
-  doubleClick(event: TEvent): void
+  doubleClick(event: TEvent, domEvent: MouseEvent | KeyboardEvent): void
   /** Context-menu action: fire `onEventRightClick` with the native DOM event. */
   rightClick(event: TEvent, domEvent: MouseEvent): void
   /** Tertiary (middle-button) action: fire `onEventMiddleClick` with the native DOM event. */

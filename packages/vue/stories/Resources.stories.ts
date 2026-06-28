@@ -73,7 +73,7 @@ const ResourceDemo = defineComponent({
         h(
           CalendarProvider,
           {
-            localizer,
+            localizer: localizer.value,
             events: events.value,
             defaultDate: FOCUS,
             getNow,
@@ -123,5 +123,9 @@ export const WithResources: StoryObj<ResourceArgs> = {
         'Column ordering. "day" = one column per resource; "week" = resource-major; "week-day-major" = day-major.',
     },
   },
-  render: () => ResourceDemo,
+  render: (args) => ({
+    components: { ResourceDemo },
+    setup() { return { args } },
+    template: '<ResourceDemo v-bind="args" />',
+  }),
 }

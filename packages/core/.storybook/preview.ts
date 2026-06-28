@@ -95,4 +95,23 @@ const preview: Preview = {
   },
 }
 
+// Cache globalTypes so manager.ts can bootstrap the toolbar on hard reload at
+// a ref story URL (where this preview never loads because FramesRenderer
+// replaces storybook-preview-iframe with the ref's URL immediately).
+// localStorage is shared across same-origin documents, so the manager window
+// and this preview iframe can both access it.
+if (typeof localStorage !== 'undefined') {
+  try {
+    localStorage.setItem(
+      '__bc_hub_globalTypes_v1',
+      JSON.stringify({
+        globalTypes: preview.globalTypes,
+        initialGlobals: preview.initialGlobals,
+      }),
+    )
+  } catch {
+    // Ignore — write fails silently in private browsing or when storage is full.
+  }
+}
+
 export default preview

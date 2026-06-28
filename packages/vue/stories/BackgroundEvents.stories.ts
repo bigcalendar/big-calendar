@@ -80,6 +80,7 @@ export const WithBackgroundEvents: StoryObj<BgArgs> = {
     setup() {
       const getNow = () => NOW
       return {
+        Views,
         localizer,
         events: demoEvents,
         FOCUS,
@@ -97,7 +98,7 @@ export const WithBackgroundEvents: StoryObj<BgArgs> = {
           :defaultDate="FOCUS"
           :getNow="getNow"
           :defaultView="args.view"
-          :views="[args.view]"
+          :views="[Views.WEEK, Views.WORK_WEEK, Views.DAY]"
           :backgroundEvents="args.overlapping ? overlappingBg : singleDayBg"
           :dayLayoutAlgorithm="args.dayLayoutAlgorithm"
         >
@@ -135,6 +136,7 @@ export const SelectableWithBackgroundEvents: StoryObj<BgArgs> = {
     setup() {
       const getNow = () => NOW
       return {
+        Views,
         localizer,
         events: demoEvents,
         FOCUS,
@@ -152,7 +154,7 @@ export const SelectableWithBackgroundEvents: StoryObj<BgArgs> = {
           :defaultDate="FOCUS"
           :getNow="getNow"
           :defaultView="args.view"
-          :views="[args.view]"
+          :views="[Views.WEEK, Views.WORK_WEEK, Views.DAY]"
           :backgroundEvents="args.overlapping ? overlappingBg : singleDayBg"
           :dayLayoutAlgorithm="args.dayLayoutAlgorithm"
           :selectable="true"
@@ -199,11 +201,12 @@ const DndWithBg = defineComponent({
         h(
           CalendarProvider,
           {
-            localizer,
+            localizer: localizer.value,
             events: events.value,
             defaultDate: FOCUS,
             getNow,
             defaultView: props.view ?? Views.WEEK,
+            views: [Views.WEEK, Views.WORK_WEEK, Views.DAY],
             backgroundEvents: props.overlapping ? overlappingBg : singleDayBg,
             dayLayoutAlgorithm: props.dayLayoutAlgorithm ?? 'overlap',
             onRangeChange: props.onRangeChange,

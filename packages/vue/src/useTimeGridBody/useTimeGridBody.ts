@@ -105,7 +105,7 @@ export interface UseTimeGridBodyReturn<TEvent> {
   getNowIndicatorProps: (column: TimeColumn<TEvent>) => { class: string; style: Record<string, string> } | null
   /**
    * Now-indicator spanning the full body width (gutter + all day columns), or
-   * `null` when today is not visible. (Stub: always `null` until 10-9.)
+   * `null` when today is not visible.
    */
   bodyNowIndicatorProps: { class: string; style: Record<string, string> } | null
   /** Element-spread props for the `.bc-time-gutter` time-label column. */
@@ -244,7 +244,32 @@ export function useTimeGridBody<TEvent = unknown>(
         style: nowIndicatorStyle(column.nowTop) as Record<string, string>,
       }
     },
-    bodyNowIndicatorProps: null,
+    bodyNowIndicatorProps: (() => {
+      // Mirror React's logic: find the first column with nowTop set.
+      // This produces a single indicator that spans gutter + all day columns
+      // via `inset-inline: 0` on `.bc-now-indicator` inside `.bc-time-body`.
+      let bodyNowTop: number | null = null
+      for (const col of grid?.columns ?? []) {
+        if (col.nowTop !== null) { bodyNowTop = col.nowTop; break }
+      }
+      if (bodyNowTop === null && grid?.resources) {
+        outer: for (const r of grid.resources) {
+          for (const col of r.columns) {
+            if (col.nowTop !== null) { bodyNowTop = col.nowTop; break outer }
+          }
+        }
+      }
+      if (bodyNowTop === null && grid?.dayGroups) {
+        outerDg: for (const g of grid.dayGroups) {
+          for (const cell of g.cells) {
+            if (cell.column?.nowTop != null) { bodyNowTop = cell.column.nowTop; break outerDg }
+          }
+        }
+      }
+      return bodyNowTop !== null
+        ? { class: 'bc-now-indicator', style: nowIndicatorStyle(bodyNowTop) as Record<string, string> }
+        : null
+    })(),
     gutter: { class: 'bc-time-gutter' },
     timeSlotsContainer: { class: 'bc-time-slots' },
     getTimeSelectionDivProps: (colIndex: number) => {

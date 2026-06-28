@@ -353,11 +353,11 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
       hasMiddleClick,
     hasRightClick,
     hasMiddleClick,
-    click(event: TEvent) {
-      config.onEventClick?.(event)
+    click(event: TEvent, domEvent: MouseEvent | KeyboardEvent) {
+      config.onEventClick?.(event, domEvent)
     },
-    doubleClick(event: TEvent) {
-      config.onEventDoubleClick?.(event)
+    doubleClick(event: TEvent, domEvent: MouseEvent | KeyboardEvent) {
+      config.onEventDoubleClick?.(event, domEvent)
     },
     rightClick(event: TEvent, domEvent: MouseEvent) {
       config.onEventRightClick?.(event, domEvent)

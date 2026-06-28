@@ -68,10 +68,10 @@ export function useCalendar<TEvent = unknown, TResource = unknown>(
       // an omitted right/middle handler wires no listener at all. The wrapper
       // keeps a stable identity while reading the latest prop via the ref.
       onEventClick: props.onEventClick
-        ? (event) => propsRef.current.onEventClick?.(event)
+        ? (event, domEvent) => propsRef.current.onEventClick?.(event, domEvent)
         : undefined,
       onEventDoubleClick: props.onEventDoubleClick
-        ? (event) => propsRef.current.onEventDoubleClick?.(event)
+        ? (event, domEvent) => propsRef.current.onEventDoubleClick?.(event, domEvent)
         : undefined,
       onEventRightClick: props.onEventRightClick
         ? (event, domEvent) => propsRef.current.onEventRightClick?.(event, domEvent)

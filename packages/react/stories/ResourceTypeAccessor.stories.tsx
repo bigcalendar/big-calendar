@@ -53,6 +53,11 @@ const TYPE_STYLES_CSS = ROOM_TYPES.map(
   (type) => [
     `.bc-day-column[data-bc-resource-type="${type}"]:not(.bc-today) { background-color: ${TYPE_COLORS[type]}; }`,
     `.bc-allday-resource[data-bc-resource-type="${type}"]:not(.bc-today) { background-color: ${TYPE_COLORS[type]}; }`,
+    `.bc-day-column[data-bc-resource-type="${type}"].bc-today,`,
+    `.bc-allday-resource[data-bc-resource-type="${type}"].bc-today {`,
+    `  --bc-color-today-bg: color-mix(in oklab, ${TYPE_COLORS[type]}, CanvasText 5%);`,
+    `  background-color: var(--bc-color-today-bg);`,
+    `}`,
   ].join('\n'),
 ).join('\n')
 

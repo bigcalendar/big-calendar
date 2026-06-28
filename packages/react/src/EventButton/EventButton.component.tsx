@@ -111,13 +111,13 @@ export default function EventButton<TEvent>({
   const select = () => {
     if (id != null) store.selectEvent({ id })
   }
-  const primary = () => {
+  const primary = (domEvent: globalThis.MouseEvent | globalThis.KeyboardEvent) => {
     select()
-    eventHandlers.click(event)
+    eventHandlers.click(event, domEvent)
   }
-  const secondary = () => {
+  const secondary = (domEvent: globalThis.MouseEvent | globalThis.KeyboardEvent) => {
     select()
-    eventHandlers.doubleClick(event)
+    eventHandlers.doubleClick(event, domEvent)
   }
 
   const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
@@ -125,27 +125,29 @@ export default function EventButton<TEvent>({
     // onKeyDown so they're immediate (no double-click delay) and never debounced.
     if (e.detail === 0) return
     if (clickTimer.current !== null) return // second click of a double — let dblclick run
+    // Capture the native event before the setTimeout closure so it stays valid.
+    const nativeEvent = e.nativeEvent
     clickTimer.current = setTimeout(() => {
       clickTimer.current = null
-      primary()
+      primary(nativeEvent)
     }, DOUBLE_CLICK_MS)
   }
 
-  const handleDoubleClick = () => {
+  const handleDoubleClick = (e: MouseEvent<HTMLButtonElement>) => {
     if (clickTimer.current !== null) {
       clearTimeout(clickTimer.current)
       clickTimer.current = null
     }
-    secondary()
+    secondary(e.nativeEvent)
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
-      primary()
+      primary(e.nativeEvent)
     } else if (e.key === 'F2') {
       e.preventDefault()
-      secondary()
+      secondary(e.nativeEvent)
     }
   }
 

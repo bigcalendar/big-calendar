@@ -131,14 +131,16 @@ export interface CalendarConfig<TEvent = unknown, TResource = unknown> {
   // optional and invoked only when defined — core never fabricates a noop.
   /**
    * Event primary action: fired on click / Enter / Space, after the event is
-   * selected (by its accessor id). Receives the full event.
+   * selected (by its accessor id). Receives the full event and the native DOM
+   * event (`MouseEvent` for pointer, `KeyboardEvent` for Enter / Space).
    */
-  onEventClick?: ((event: TEvent) => void) | undefined
+  onEventClick?: ((event: TEvent, domEvent: MouseEvent | KeyboardEvent) => void) | undefined
   /**
-   * Event secondary action: fired on double-click / F2. Receives the full event.
-   * (There is no keyboard double-click; F2 is the WCAG 2.1.1 parity key.)
+   * Event secondary action: fired on double-click / F2. Receives the full event
+   * and the native DOM event (`MouseEvent` for double-click, `KeyboardEvent` for
+   * F2 — the WCAG 2.1.1 keyboard parity key).
    */
-  onEventDoubleClick?: ((event: TEvent) => void) | undefined
+  onEventDoubleClick?: ((event: TEvent, domEvent: MouseEvent | KeyboardEvent) => void) | undefined
   /**
    * Event context-menu action: fired on right-click (and the keyboard Menu key /
    * Shift+F10, and touch long-press). Receives the event **and** the native DOM

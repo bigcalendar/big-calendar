@@ -88,7 +88,7 @@ describe('EventButton', () => {
     act(() => {
       vi.advanceTimersByTime(DOUBLE_CLICK_MS)
     })
-    expect(onEventClick).toHaveBeenCalledWith(event)
+    expect(onEventClick).toHaveBeenCalledWith(event, expect.any(MouseEvent))
     expect(button.getAttribute('aria-selected')).toBe('true')
   })
 
@@ -102,7 +102,7 @@ describe('EventButton', () => {
     act(() => {
       vi.advanceTimersByTime(DOUBLE_CLICK_MS)
     })
-    expect(onEventDoubleClick).toHaveBeenCalledWith(event)
+    expect(onEventDoubleClick).toHaveBeenCalledWith(event, expect.any(MouseEvent))
     expect(onEventClick).not.toHaveBeenCalled()
     expect(button.getAttribute('aria-selected')).toBe('true')
   })
@@ -121,7 +121,7 @@ describe('EventButton', () => {
     const onEventDoubleClick = vi.fn()
     const { button } = renderButton({ onEventDoubleClick })
     fireEvent.keyDown(button, { key: 'F2' })
-    expect(onEventDoubleClick).toHaveBeenCalledWith(event)
+    expect(onEventDoubleClick).toHaveBeenCalledWith(event, expect.any(KeyboardEvent))
     expect(button.getAttribute('aria-selected')).toBe('true')
   })
 
@@ -215,7 +215,7 @@ describe('EventButton', () => {
     const button = container.querySelector('button.bc-event') as HTMLButtonElement
     expect(button.dataset.bcEvent).toBe('')
     fireEvent.keyDown(button, { key: 'Enter' })
-    expect(onEventClick).toHaveBeenCalledWith(bare)
+    expect(onEventClick).toHaveBeenCalledWith(bare, expect.any(KeyboardEvent))
     expect(button.getAttribute('aria-selected')).toBe('false')
   })
 

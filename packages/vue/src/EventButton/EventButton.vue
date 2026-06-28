@@ -53,13 +53,13 @@ const select = () => {
   const evId = id.value
   if (evId != null) store.selectEvent({ id: evId })
 }
-const primary = () => {
+const primary = (domEvent: MouseEvent | KeyboardEvent) => {
   select()
-  eventHandlers.click(props.event)
+  eventHandlers.click(props.event, domEvent)
 }
-const secondary = () => {
+const secondary = (domEvent: MouseEvent | KeyboardEvent) => {
   select()
-  eventHandlers.doubleClick(props.event)
+  eventHandlers.doubleClick(props.event, domEvent)
 }
 
 function handleClick(e: MouseEvent) {
@@ -67,25 +67,25 @@ function handleClick(e: MouseEvent) {
   if (clickTimer.value !== null) return
   clickTimer.value = setTimeout(() => {
     clickTimer.value = null
-    primary()
+    primary(e)
   }, DOUBLE_CLICK_MS)
 }
 
-function handleDblClick() {
+function handleDblClick(e: MouseEvent) {
   if (clickTimer.value !== null) {
     clearTimeout(clickTimer.value)
     clickTimer.value = null
   }
-  secondary()
+  secondary(e)
 }
 
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Enter' || e.key === ' ') {
     e.preventDefault()
-    primary()
+    primary(e)
   } else if (e.key === 'F2') {
     e.preventDefault()
-    secondary()
+    secondary(e)
   }
 }
 
