@@ -1,0 +1,73 @@
+{
+  "name": "@big-calendar/angular",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Big Calendar — @big-calendar/angular",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bigcalendar/big-calendar.git",
+    "directory": "packages/angular"
+  },
+  "sideEffects": false,
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./*": {
+      "import": "./dist/*/index.js",
+      "types": "./dist/*/index.d.ts",
+      "default": "./dist/*/index.js"
+    }
+  },
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@big-calendar/core": "workspace:*",
+    "@big-calendar/styles": "workspace:*",
+    "@preact/signals-core": "^1.14.2",
+    "clsx": "^2.1.1"
+  },
+  "peerDependencies": {
+    "@angular/cdk": ">=21.0.0 <23.0.0",
+    "@angular/common": ">=21.0.0 <23.0.0",
+    "@angular/core": ">=21.0.0 <23.0.0",
+    "@angular/platform-browser": ">=21.0.0 <23.0.0",
+    "@big-calendar/dnd": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@big-calendar/dnd": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@angular/animations": "^21.0.0",
+    "@angular/cdk": "^21.0.0",
+    "@angular/cli": "^21.0.0",
+    "@angular/common": "^21.0.0",
+    "@angular/compiler": "^21.0.0",
+    "@angular/compiler-cli": "^21.0.0",
+    "@angular/core": "^21.0.0",
+    "@angular/platform-browser": "^21.0.0",
+    "@angular/platform-browser-dynamic": "^21.0.0",
+    "@angular-devkit/architect": "^0.2100.0",
+    "@angular-devkit/build-angular": "^21.0.0",
+    "@angular-devkit/core": "^21.0.0",
+    "@analogjs/vite-plugin-angular": "^2.6.2",
+    "@analogjs/vitest-angular": "^2.6.2",
+    "@big-calendar/dnd": "workspace:*",
+    "@big-calendar/localizer-luxon": "workspace:*",
+    "@big-calendar/localizer-temporal": "workspace:*",
+    "jsdom": "^29.1.1",
+    "rxjs": "^7.8.2",
+    "zone.js": "^0.16.0"
+  }
+}

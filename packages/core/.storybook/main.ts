@@ -29,6 +29,7 @@ const config: StorybookConfig = {
           index: './react/index.json',
         },
         vue: { title: 'Vue', url: './vue', index: './vue/index.json' },
+        angular: { title: 'Angular', url: './angular', index: './angular/index.json' },
       }
     : {
         react: {
@@ -36,6 +37,7 @@ const config: StorybookConfig = {
           url: 'http://localhost:6006',
         },
         vue: { title: 'Vue', url: 'http://localhost:6008' },
+        angular: { title: 'Angular', url: 'http://localhost:6009' },
       },
   viteFinal: (config) => {
     const pkgs = resolve(import.meta.dirname, '../..')

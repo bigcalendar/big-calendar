@@ -1,0 +1,33 @@
+{
+  "name": "angular",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/angular/src",
+  "tags": ["scope:ui"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": { "command": "vite build", "cwd": "packages/angular" }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": { "command": "vitest run", "cwd": "packages/angular" }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": { "command": "eslint packages/angular/src" }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": { "command": "tsc --noEmit -p packages/angular/tsconfig.json" }
+    },
+    "storybook": {
+      "executor": "nx:run-commands",
+      "options": { "command": "storybook dev -p 6009", "cwd": "packages/angular" }
+    },
+    "build-storybook": {
+      "executor": "nx:run-commands",
+      "options": { "command": "storybook build", "cwd": "packages/angular" }
+    }
+  }
+}

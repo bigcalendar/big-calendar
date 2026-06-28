@@ -23,7 +23,7 @@
 
 ## ⚠ NEXT TASK
 
-**Phase 10 — COMPLETE.** Next: Phase 11 Task 11-1 — `@big-calendar/angular` package scaffold.
+**Phase 11 Task 11-2** — Signals bridge: `injectCalendarStore(config)` factory + `toAngularSignal(preactSignal)` utility.
 
 ---
 
@@ -31,7 +31,7 @@
 
 | # | Task | Status |
 |---|---|---|
-| 11-1 | Package scaffold — `packages/angular`, Angular (check `npm show @angular/core dist-tags` at task start; target latest LTS − 1, currently expected Angular 20), standalone components, `@angular/cdk` peer dep, workspace wiring, tsconfig, Vitest config (`@analogjs/vitest-angular` + jsdom), Storybook (`@storybook/angular`) wired into composition hub at port 6009 | [ ] |
+| 11-1 | Package scaffold — `packages/angular`, Angular (check `npm show @angular/core dist-tags` at task start; target latest LTS − 1, currently expected Angular 20), standalone components, `@angular/cdk` peer dep, workspace wiring, tsconfig, Vitest config (`@analogjs/vitest-angular` + jsdom), Storybook (`@storybook/angular`) wired into composition hub at port 6009 | [x] |
 | 11-2 | Signals bridge — `injectCalendarStore(config)` factory composable; bridge `@preact/signals-core` signals to Angular signals via `computed()` + `effect()`; `toAngularSignal(preactSignal)` utility | [ ] |
 | 11-3 | Context — `CalendarProviderComponent` (standalone), `CALENDAR_TOKEN` injection token, `injectCalendar()` helper; messages and localizer threaded through Angular DI; `CalendarProviderComponent` owns store lifecycle (create on init, destroy on destroy) | [ ] |
 | 11-4 | View model inject composables — `injectMonthView()`, `injectTimeGridView()`, `injectAgendaView()` (Angular signals derived from core view models; call `injectCalendar()` internally) | [ ] |
