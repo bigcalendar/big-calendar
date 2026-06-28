@@ -15,7 +15,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     passWithNoTests: true,
-    setupFiles: ['@analogjs/vitest-angular/setup-zone', './vitest.setup.ts'],
+    setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.{test,spec}.ts'],
     coverage: {
       provider: 'v8',
