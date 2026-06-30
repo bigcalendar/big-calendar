@@ -215,7 +215,7 @@ describe.each(LOCALIZER_CASES)('useTimeGridBody [$name]', ({ create }) => {
     })
 
     makeWrapper(localizer, Views.WEEK, Probe)
-    const bg = { event: {}, top: 0.1, height: 0.2, left: 0, width: 1, isStart: true, isEnd: false }
+    const bg = { key: 'bg', event: {}, title: '', top: 0.1, height: 0.2, left: 0, width: 1, isStart: true, isEnd: false }
     const props = result!.body.getBgEventProps(bg)
     expect(props.class).toContain('bc-bg-event')
     expect(props.class).toContain('bc-bg-event--start')
@@ -233,7 +233,7 @@ describe.each(LOCALIZER_CASES)('useTimeGridBody [$name]', ({ create }) => {
     })
 
     makeWrapper(localizer, Views.WEEK, Probe)
-    const ev = { event: {}, title: 'Test', time: '9:00 AM', top: 0.1, height: 0.05, left: 0, width: 0.5, zIndex: 1 }
+    const ev = { key: 'ev', event: {}, title: 'Test', time: '9:00 AM', top: 0.1, height: 0.05, left: 0, width: 0.5, zIndex: 1 }
     const props = result!.body.getEventProps(ev)
     expect(props.class).toBe('bc-event')
     expect(props.time).toBe('9:00 AM')

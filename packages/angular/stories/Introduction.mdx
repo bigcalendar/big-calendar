@@ -1,0 +1,63 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Introduction" />
+
+# Big Calendar — Angular
+
+Big Calendar is a framework-agnostic calendar engine with a thin Angular adapter. This Storybook documents the `@big-calendar/angular` package.
+
+## Architecture
+
+`@big-calendar/angular` is a thin Angular 21+ layer over the shared `@big-calendar/core` engine. It mirrors the React and Vue adapters' public API — views, inject composables, ng-template slots, and DnD — adapted to Angular idioms:
+
+- **`inject()` + `InjectionToken`** instead of React context or Vue provide/inject
+- **`injectMonthView()` / `injectTimeGridView()` / `injectAgendaView()`** instead of React hooks or Vue composables
+- **`ng-template` inputs** (`[bcMonthEvent]`, `[bcTimeDayHeading]`, etc.) instead of React render props or Vue slots
+- **`CalendarDndDirective`** applied as `calendarDnd` attribute instead of a composable
+- **Angular `Signal`** for reactive state bridging from preact signals
+
+## Packages
+
+<table>
+<thead>
+<tr><th>Package</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>@big-calendar/core</code></td><td>Shared engine — store, view models, layout, selection FSM</td></tr>
+<tr><td><code>@big-calendar/angular</code></td><td>Angular 21+ standalone components and inject composables</td></tr>
+<tr><td><code>@big-calendar/dnd</code></td><td>Drag-and-drop engine (optional peer dep)</td></tr>
+<tr><td><code>@big-calendar/styles</code></td><td>CSS custom-property design tokens</td></tr>
+<tr><td><code>@big-calendar/localizer</code></td><td>Base localizer interface</td></tr>
+<tr><td><code>@big-calendar/localizer-luxon</code></td><td>Luxon-backed localizer</td></tr>
+<tr><td><code>@big-calendar/localizer-temporal</code></td><td><code>Temporal</code>-backed localizer</td></tr>
+</tbody>
+</table>
+
+## Quick start
+
+```bash
+npm install @big-calendar/angular @big-calendar/localizer-temporal @big-calendar/styles
+```
+
+```ts
+// app.component.ts
+import { Component } from '@angular/core'
+import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
+import { CalendarProviderComponent } from '@big-calendar/angular'
+import { CalendarComponent } from '@big-calendar/angular'
+import '@big-calendar/styles/index.css'
+
+@Component({
+  standalone: true,
+  imports: [CalendarProviderComponent, CalendarComponent],
+  template: `
+    <bc-calendar-provider [localizer]="localizer" [events]="events" defaultView="week">
+      <bc-calendar />
+    </bc-calendar-provider>
+  `,
+})
+export class AppComponent {
+  readonly localizer = await createTemporalLocalizer({ locale: 'en-US', timeZone: 'UTC' })
+  readonly events = []
+}
+```

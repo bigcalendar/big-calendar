@@ -64,6 +64,7 @@
     "@analogjs/vite-plugin-angular": "^2.6.2",
     "@analogjs/vitest-angular": "^2.6.2",
     "@big-calendar/dnd": "workspace:*",
+    "@big-calendar/localizer": "workspace:*",
     "@big-calendar/localizer-luxon": "workspace:*",
     "@big-calendar/localizer-temporal": "workspace:*",
     "jsdom": "^29.1.1",

@@ -1,5 +1,17 @@
 # big-calendar — Claude instructions
 
+## Cross-framework adapter parity
+
+**Read `memory/ADAPTER_STANDARDS.md` before starting any of the following:**
+- A new framework adapter phase
+- A feature or API addition to any existing adapter
+- Any change touching HTML structure, CSS classes, or Storybook wiring
+- A new story or MDX doc in any framework package
+
+That file is the authoritative reference for package aliases, story-file parity, HTML/CSS output rules, Storybook wiring (Controls, Actions, localizer toolbar, DnD), the 8-step pre-delivery verification checklist, and the storybook-site composite verification. Nothing in that checklist is optional.
+
+---
+
 ## MDX / Storybook
 
 **Always use `<table>` tags for tables in `.mdx` files.** Markdown table syntax

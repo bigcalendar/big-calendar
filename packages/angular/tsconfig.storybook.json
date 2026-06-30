@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@big-calendar/core/utils": ["../core/src/utils/index.ts"],
+      "@big-calendar/core": ["../core/src/index.ts"],
+      "@big-calendar/dnd": ["../dnd/src/index.ts"],
+      "@big-calendar/localizer": ["../localizer/src/index.ts"],
+      "@big-calendar/localizer-luxon": ["../localizer-luxon/src/index.ts"],
+      "@big-calendar/localizer-temporal": ["../localizer-temporal/src/index.ts"],
+      "@big-calendar/angular": ["./src/index.ts"],
+      "@big-calendar/storybook-shared": ["../storybook-shared/src/index.ts"]
+    },
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  },
+  "include": ["src/**/*.ts", "stories/**/*.ts", ".storybook/**/*.ts", "css.d.ts"]
+}

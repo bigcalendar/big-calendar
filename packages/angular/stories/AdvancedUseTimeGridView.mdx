@@ -1,0 +1,85 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/injectTimeGridView" />
+
+# injectTimeGridView
+
+A composable that provides all the data needed to render a custom time grid (Week, Work Week, or Day view). Call it inside a component that lives inside a `<bc-calendar-provider>`.
+
+```ts
+import { injectTimeGridView } from '@big-calendar/angular'
+```
+
+## Return value
+
+<table>
+<thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>grid()</code></td><td><code>TimeGrid | null</code></td><td>The rendered time grid model. <code>null</code> when the active view is <code>'month'</code> or <code>'agenda'</code>.</td></tr>
+<tr><td><code>announcement()</code></td><td><code>string</code></td><td>Text for the keyboard-DnD live region.</td></tr>
+</tbody>
+</table>
+
+## The `TimeGrid` shape
+
+<table>
+<thead><tr><th>Field</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>columns</code></td><td>Array of <code>TimeColumn</code> objects, one per day (or per resource column in resource views).</td></tr>
+<tr><td><code>gutterLabels</code></td><td>Array of <code>TimeGutterLabel</code> objects for the left-side time labels.</td></tr>
+<tr><td><code>allDay</code></td><td>All-day event strip data: <code>segments</code> (visible rows) and <code>extra</code> (overflow info).</td></tr>
+<tr><td><code>dayGroups</code></td><td>Non-null only in resource + day-major mode. Groups columns by date.</td></tr>
+<tr><td><code>resources</code></td><td>Non-null only in resource mode. Groups columns by resource.</td></tr>
+</tbody>
+</table>
+
+### Column (`TimeColumn`)
+
+<table>
+<thead><tr><th>Field</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>heading</code></td><td>Day heading data: <code>label</code>, <code>day</code>, <code>isToday</code>.</td></tr>
+<tr><td><code>slots</code></td><td>Array of time slot rows. Each slot has <code>label</code>, <code>time</code>, and <code>isMinor</code>.</td></tr>
+<tr><td><code>events</code></td><td>Positioned timed events for this column (top/height/left/width as percentages).</td></tr>
+</tbody>
+</table>
+
+## Minimal example
+
+```ts
+@Component({
+  standalone: true,
+  selector: 'my-time-grid-view',
+  template: `
+    @if (view.grid(); as grid) {
+      <div role="status" aria-live="polite" class="bc-sr-only">
+        {{ view.announcement() }}
+      </div>
+      <div class="my-time-grid">
+        <div class="my-gutter">
+          @for (label of grid.gutterLabels; track label.time) {
+            <div class="my-gutter-cell">{{ label.label }}</div>
+          }
+        </div>
+        <div class="my-columns">
+          @for (col of grid.columns; track col.heading.day) {
+            <div class="my-column">
+              <div class="my-heading">{{ col.heading.label }}</div>
+              @for (event of col.events; track event.key) {
+                <div
+                  class="my-event"
+                  [style.top.%]="event.top"
+                  [style.height.%]="event.height"
+                >{{ event.title }}</div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+  `,
+})
+export class MyTimeGridViewComponent {
+  readonly view = injectTimeGridView()
+}
+```

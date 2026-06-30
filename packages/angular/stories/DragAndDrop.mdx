@@ -1,0 +1,134 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Drag & Drop/Overview" />
+
+# Drag and Drop
+
+Big Calendar's drag-and-drop is powered by the optional `@big-calendar/dnd` peer dependency. In Angular it is wired through `CalendarDndDirective` — an attribute directive you apply to a wrapper element inside the provider.
+
+## Setup
+
+Install the DnD package:
+
+```bash
+npm install @big-calendar/dnd
+```
+
+Import `CalendarDndDirective` and add the `calendarDnd` attribute to a wrapper inside `<bc-calendar-provider>`:
+
+```ts
+import { CalendarProviderComponent, CalendarComponent, CalendarDndDirective } from '@big-calendar/angular'
+
+@Component({
+  standalone: true,
+  imports: [CalendarProviderComponent, CalendarComponent, CalendarDndDirective],
+  template: `
+    <bc-calendar-provider
+      [localizer]="loc"
+      [events]="events()"
+      (onEventDrop)="applyDrop($event)"
+      (onEventResize)="applyResize($event)"
+    >
+      <div calendarDnd style="display: contents">
+        <bc-calendar />
+      </div>
+    </bc-calendar-provider>
+  `,
+})
+export class CalendarWithDnDComponent {
+  readonly events = signal<MyEvent[]>([...initialEvents])
+
+  applyDrop({ event, start, end, allDay }: EventDropPayload<MyEvent>) {
+    this.events.update(list =>
+      list.map(e => e.id === event.id ? { ...e, start, end, allDay } : e)
+    )
+  }
+
+  applyResize = this.applyDrop
+}
+```
+
+## What the `calendarDnd` directive does
+
+`CalendarDndDirective` binds pointer and keyboard event listeners to the host element. It reads the calendar store from the DI context (injected from the nearest `<bc-calendar-provider>`) and routes:
+
+- **Pointer moves** → live preview of the dragged event's new position.
+- **Pointer up** → fires `onEventDrop` or `onEventResize` on the provider.
+- **`dataTransfer` drops** → fires `onDropFromOutside` when an external element lands on the grid.
+
+> The directive does not modify the event list itself. Apply the change in your `onEventDrop` / `onEventResize` handler.
+
+## Updating events on drop
+
+The calendar never mutates your event array. You receive the proposed change and apply it yourself — making it trivial to do an optimistic update and revert if the server call fails:
+
+```ts
+applyDrop({ event, start, end, allDay }: EventDropPayload<MyEvent>) {
+  const original = event
+  // Optimistic update
+  this.events.update(list =>
+    list.map(e => e.id === event.id ? { ...e, start, end, allDay } : e)
+  )
+  // Persist
+  this.api.updateEvent({ ...event, start, end, allDay }).catch(() => {
+    // Revert on failure
+    this.events.update(list =>
+      list.map(e => e.id === original.id ? original : e)
+    )
+  })
+}
+```
+
+## Controlling which events are draggable or resizable
+
+Use `accessors.draggable` and `accessors.resizable` to control which events can be picked up or resized:
+
+```ts
+readonly accessors = {
+  // Only events where event.draggable === true can be moved
+  draggable: 'draggable',
+  // Disable resizing for all-day events
+  resizable: (event: MyEvent) => !event.allDay,
+}
+```
+
+```html
+<bc-calendar-provider [accessors]="accessors" ...>
+```
+
+## Keyboard drag and drop
+
+No extra configuration is needed for keyboard DnD. Tab to an event button and:
+
+- **Space** — pick up the event.
+- **Arrow keys** — move it one cell/slot at a time.
+- **Shift + Arrow** — resize (extend the end boundary).
+- **Enter** — drop at the current preview position.
+- **Escape** — cancel and return the event to its original position.
+
+An ARIA live region announces pick-up, move, and drop actions for screen reader users.
+
+## Dropping from outside the calendar
+
+Set an `onDropFromOutside` callback to receive items dragged from outside the calendar:
+
+```ts
+readonly onDropFromOutside = ({ start, end, allDay }: SlotInfo) => {
+  this.events.update(list => [
+    ...list,
+    { id: Date.now(), title: 'New event', start, end, allDay }
+  ])
+}
+```
+
+The external element must write a payload to `dataTransfer` using `EXTERNAL_MIME` from `@big-calendar/dnd`:
+
+```ts
+import { EXTERNAL_MIME } from '@big-calendar/dnd'
+
+onDragStart(e: DragEvent) {
+  e.dataTransfer!.setData(EXTERNAL_MIME, JSON.stringify({ durationMinutes: 60 }))
+}
+```
+
+See **Drag & Drop → Drop from Outside** for a live demo.

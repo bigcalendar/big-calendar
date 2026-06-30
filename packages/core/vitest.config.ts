@@ -1,6 +1,13 @@
+import { resolve } from 'node:path'
 import { defineConfig } from 'vitest/config'
+import { packageAliases } from '../aliases.ts'
+
+const pkgs = resolve(import.meta.dirname, '..')
 
 export default defineConfig({
+  resolve: {
+    alias: packageAliases(pkgs),
+  },
   test: {
     reporters: ['dot'],
     environment: 'node',

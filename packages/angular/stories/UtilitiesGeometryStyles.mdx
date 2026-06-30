@@ -1,0 +1,207 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Utilities/Geometry Styles" />
+
+# Geometry Styles
+
+The geometry style functions translate the numeric layout values produced by the view model into plain style objects you can bind with `[style]`. They are the bridge between the calendar's internal coordinate system and the CSS that positions every event, segment, slot, and indicator on screen.
+
+You only need these when building a **fully custom headless view** (see **Advanced → Headless API**). The built-in view components call them internally, so nothing here is required for slot overrides or `ng-template` customisation.
+
+These utilities are exported from `@big-calendar/core/utils`:
+
+```ts
+import {
+  eventBoxStyle,
+  segmentStyle,
+  monthGridStyle,
+  dayCountStyle,
+  slotCountStyle,
+  slotGroupStyle,
+  agendaRowsStyle,
+  nowIndicatorStyle,
+  selectionStyle,
+} from '@big-calendar/core/utils'
+```
+
+---
+
+## How they work
+
+Every function returns a plain object of CSS custom-property assignments (e.g. `{ '--bc-event-top': '25%' }`). Bind the result directly to `[style]` in your Angular template — Angular handles plain style objects as inline styles when combined with `[style]` binding.
+
+---
+
+## Event positioning
+
+### `eventBoxStyle(geometry)`
+
+Positions a timed event box inside a day column. Bind the result to `[style]` on the outermost element of a timed event.
+
+```html
+<div
+  class="bc-event"
+  [style]="eventBoxStyle({ top, height, left, width, zIndex })"
+>
+  ...
+</div>
+```
+
+**`EventBoxGeometry` properties**
+
+<table>
+<thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>top</code></td><td><code>number</code></td><td>Distance from the column top, as a percentage of total column height.</td></tr>
+<tr><td><code>height</code></td><td><code>number</code></td><td>Event height, as a percentage of total column height.</td></tr>
+<tr><td><code>left</code></td><td><code>number</code></td><td>Horizontal offset within the column's overlap group (0–1).</td></tr>
+<tr><td><code>width</code></td><td><code>number</code></td><td>Horizontal span within the column's overlap group (0–1).</td></tr>
+<tr><td><code>zIndex</code></td><td><code>number</code></td><td>Stack order for events that share vertical space.</td></tr>
+</tbody>
+</table>
+
+---
+
+### `segmentStyle(geometry)`
+
+Positions a month-view event segment (or an all-day segment) inside a grid row. Bind the result to `[style]` on the outermost element of the segment.
+
+```html
+<div
+  class="bc-segment"
+  [style]="segmentStyle({ left, span, row })"
+>
+  ...
+</div>
+```
+
+**`SegmentGeometry` properties**
+
+<table>
+<thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>left</code></td><td><code>number</code></td><td>1-based start column in the week row.</td></tr>
+<tr><td><code>span</code></td><td><code>number</code></td><td>Number of columns the segment spans.</td></tr>
+<tr><td><code>row</code></td><td><code>number</code></td><td>1-based stack level (first event is row 1).</td></tr>
+</tbody>
+</table>
+
+---
+
+## Grid sizing
+
+### `monthGridStyle(columnCount)`
+
+Sets the number of day columns in a month grid. Call once on the grid container.
+
+```html
+<div class="bc-month-grid" [style]="monthGridStyle(7)">
+  ...
+</div>
+```
+
+**`columnCount`** — number of columns (almost always `7` for a standard week).
+
+---
+
+### `dayCountStyle(dayCount)`
+
+Sets the number of day columns in a time-grid header or body. Call once on the header or body root.
+
+```html
+<div class="bc-time-header" [style]="dayCountStyle(5)">
+  ...
+</div>
+```
+
+**`dayCount`** — number of visible day columns (5 for work-week, 7 for week, 1 for day).
+
+---
+
+### `slotCountStyle(slotCount)`
+
+Sets the number of time-slot rows in a single day column.
+
+```html
+<div class="bc-day-column" [style]="slotCountStyle(96)">
+  <!-- 96 slots = 15-min intervals across 24 hours -->
+</div>
+```
+
+**`slotCount`** — total number of minor slots in the column.
+
+---
+
+### `slotGroupStyle(groupSize)`
+
+Groups minor time slots under one major label in the gutter.
+
+```html
+<div class="bc-slot-group" [style]="slotGroupStyle(4)">
+  <!-- 4 minor slots per hour label -->
+</div>
+```
+
+**`groupSize`** — number of minor slots per labelled group (e.g. `4` for 15-min slots under hourly labels).
+
+---
+
+### `agendaRowsStyle(rowCount)`
+
+Sets the number of agenda day-group rows in the agenda grid.
+
+```html
+<div class="bc-agenda" [style]="agendaRowsStyle(rows.length)">
+  ...
+</div>
+```
+
+**`rowCount`** — number of day groups currently rendered.
+
+---
+
+## Indicators
+
+### `nowIndicatorStyle(offset)`
+
+Positions the "now" line within a day column as a percentage of the column height.
+
+```html
+<div class="bc-now-indicator" [style]="nowIndicatorStyle(offset)"></div>
+```
+
+**`offset`** — fractional position from the top (0 = midnight, 0.5 = noon, 1 = end of day).
+
+---
+
+### `selectionStyle(geometry)`
+
+Positions the visual selection highlight inside a day column during an in-progress slot selection.
+
+```html
+<div class="bc-selection" [style]="selectionStyle({ top, height })"></div>
+```
+
+**`SelectionGeometry` properties**
+
+<table>
+<thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>top</code></td><td><code>number</code></td><td>Distance from the column top, as a percentage of total column height.</td></tr>
+<tr><td><code>height</code></td><td><code>number</code></td><td>Selection height, as a percentage of total column height.</td></tr>
+</tbody>
+</table>
+
+---
+
+## Types
+
+<table>
+<thead><tr><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>EventBoxGeometry</code></td><td>Input shape for <code>eventBoxStyle</code>.</td></tr>
+<tr><td><code>SegmentGeometry</code></td><td>Input shape for <code>segmentStyle</code>.</td></tr>
+<tr><td><code>SelectionGeometry</code></td><td>Input shape for <code>selectionStyle</code>.</td></tr>
+<tr><td><code>CSSVars</code></td><td>The underlying CSS custom-property bag produced by the core utilities. The style functions return this directly — Angular binds it correctly as an inline style object via <code>[style]</code>.</td></tr>
+</tbody>
+</table>

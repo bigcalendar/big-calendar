@@ -23,11 +23,11 @@
     },
     "storybook": {
       "executor": "nx:run-commands",
-      "options": { "command": "storybook dev -p 6009", "cwd": "packages/angular" }
+      "options": { "command": "ng run angular:storybook", "cwd": "packages/angular" }
     },
     "build-storybook": {
       "executor": "nx:run-commands",
-      "options": { "command": "storybook build", "cwd": "packages/angular" }
+      "options": { "command": "ng run angular:build-storybook", "cwd": "packages/angular" }
     }
   }
 }

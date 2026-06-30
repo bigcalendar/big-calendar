@@ -1,0 +1,76 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Background Events/Overview" />
+
+# Background Events
+
+Background events render as coloured bands behind the regular foreground events in time-grid views (Week, Work Week, Day). They are purely visual — pointer events, slot selection, and DnD all pass straight through them.
+
+## When to use background events
+
+- **Availability windows** — show when a person or room is bookable vs. blocked.
+- **Working hours** — shade the hours outside a person's work schedule.
+- **Sprint or project periods** — highlight a date range across multiple days.
+- **Recurring blocks** — overlay repeating focus time or standing meetings.
+
+## Setup
+
+Pass your background events through `[backgroundEvents]` on `<bc-calendar-provider>`:
+
+```ts
+readonly backgroundEvents = [
+  { id: 'bg-1', title: 'Deep work', start: '2026-06-15T09:00:00Z', end: '2026-06-15T12:00:00Z' },
+  { id: 'bg-2', title: 'Sprint focus', start: '2026-06-16T09:00:00Z', end: '2026-06-18T17:00:00Z' },
+]
+```
+
+```html
+<bc-calendar-provider
+  [localizer]="loc"
+  [events]="events"
+  [backgroundEvents]="backgroundEvents"
+  defaultView="week"
+>
+  <bc-calendar />
+</bc-calendar-provider>
+```
+
+## Visual behaviour
+
+- A single-day background event has rounded corners on both edges.
+- A multi-day event is clipped at midnight per column and loses its rounding on the clipped side.
+- When two background events overlap the same time span, they share the column width (similar to foreground events).
+- Background events are keyboard-inaccessible by design — they carry no interactive meaning.
+
+## Background events in selection payloads
+
+When `[selectable]="true"` and the user's slot selection overlaps one or more background events, the `backgroundEvents` field is included in the selection payload:
+
+```ts
+readonly onSlotSelect = (selection: SlotSelection<MyEvent>) => {
+  if (selection.backgroundEvents?.length) {
+    // User selected a slot that overlaps a background event
+    console.log('Overlapping background events:', selection.backgroundEvents)
+  }
+}
+```
+
+This is useful for enforcing booking rules — for example, preventing users from creating events outside of available blocks.
+
+## Background events in DnD payloads
+
+The same `backgroundEvents` field appears in `onEventDrop` and `onEventResize` payloads when the drop target overlaps a background event:
+
+```ts
+readonly applyDrop = ({ event, start, end, allDay, backgroundEvents }: EventDropPayload<MyEvent>) => {
+  if (backgroundEvents?.some(bg => isBlocked(bg))) {
+    // Reject the drop
+    return
+  }
+  this.events.update(list =>
+    list.map(e => e.id === event.id ? { ...e, start, end, allDay } : e)
+  )
+}
+```
+
+See **Background Events → With Background Events** for live demos of each scenario.

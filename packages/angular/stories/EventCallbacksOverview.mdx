@@ -1,0 +1,100 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Events/Overview" />
+
+# Event Callbacks
+
+Big Calendar fires four callbacks when a user interacts with an existing event block. They work on every view and do not require `selectable` to be enabled.
+
+## The callbacks
+
+<table>
+<thead><tr><th>Input</th><th>Signature</th><th>Description</th></tr></thead>
+<tbody>
+<tr>
+<td><code>[onEventClick]</code></td>
+<td><code>(event: TEvent, domEvent: MouseEvent | KeyboardEvent) =&gt; void</code></td>
+<td>Single click on an event block, or Enter / Space when the event button has focus.</td>
+</tr>
+<tr>
+<td><code>[onEventDoubleClick]</code></td>
+<td><code>(event: TEvent, domEvent: MouseEvent | KeyboardEvent) =&gt; void</code></td>
+<td>Double-click on an event block, or F2 when the event button has focus.</td>
+</tr>
+<tr>
+<td><code>[onEventRightClick]</code></td>
+<td><code>(event: TEvent, domEvent: MouseEvent) =&gt; void</code></td>
+<td>Right-click on an event block. Call <code>domEvent.preventDefault()</code> to suppress the browser's native context menu.</td>
+</tr>
+<tr>
+<td><code>[onEventMiddleClick]</code></td>
+<td><code>(event: TEvent, domEvent: MouseEvent) =&gt; void</code></td>
+<td>Middle-button (scroll-wheel) click on an event block. Some browsers suppress this inside iframes.</td>
+</tr>
+</tbody>
+</table>
+
+## Usage
+
+Pass the callbacks directly as inputs on `<bc-calendar-provider>`:
+
+```html
+<bc-calendar-provider
+  [localizer]="loc"
+  [events]="events"
+  [onEventClick]="handleEventClick"
+  [onEventDoubleClick]="handleEventDoubleClick"
+>
+  <bc-calendar />
+</bc-calendar-provider>
+```
+
+```ts
+readonly handleEventClick = (event: MyEvent, domEvent: MouseEvent | KeyboardEvent) => {
+  console.log('Clicked event:', event.title)
+  this.selectedEvent.set(event)
+}
+```
+
+## The event payload
+
+The first argument to every callback is your original event object — the exact same object you passed in `[events]`. You never need to look up the event by id; it arrives ready to use.
+
+## Keyboard navigation
+
+Users can Tab between events in the calendar and interact with the focused event using the keyboard:
+
+- **Enter** or **Space** → fires `onEventClick`
+- **F2** → fires `onEventDoubleClick`
+- **Arrow keys** → move focus to the next/previous event in reading order
+
+No extra setup is needed — keyboard support is built into the event buttons.
+
+## Typical pattern: open a detail modal
+
+```ts
+@Component({
+  standalone: true,
+  imports: [CalendarProviderComponent, CalendarComponent],
+  template: `
+    <bc-calendar-provider
+      [localizer]="loc"
+      [events]="events"
+      [onEventClick]="openDetail"
+    >
+      <bc-calendar />
+    </bc-calendar-provider>
+
+    @if (selectedEvent()) {
+      <my-event-dialog [event]="selectedEvent()!" (close)="selectedEvent.set(null)" />
+    }
+  `,
+})
+export class CalendarPageComponent {
+  readonly events: MyEvent[] = []
+  readonly selectedEvent = signal<MyEvent | null>(null)
+  readonly openDetail = (event: MyEvent) => this.selectedEvent.set(event)
+}
+```
+
+See the **Events → Event Callbacks** story for a live demo.

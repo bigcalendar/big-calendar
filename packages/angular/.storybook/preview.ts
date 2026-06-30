@@ -1,7 +1,54 @@
 import type { Preview } from '@storybook/angular'
-import '@big-calendar/styles/index.css'
+import { localeList, timeZoneList } from './localeTimeZone'
+import { withAngularLocalizerDecorator } from './withAngularLocalizerDecorator'
+
+const _localeNames = new Intl.DisplayNames(['en'], { type: 'language' })
 
 const preview: Preview = {
+  decorators: [withAngularLocalizerDecorator],
+  globalTypes: {
+    localizer: {
+      name: 'Localizer',
+      description: 'Active date localizer (Temporal or Luxon)',
+      toolbar: {
+        icon: 'time',
+        items: [
+          { value: 'temporal', title: 'Temporal' },
+          { value: 'luxon', title: 'Luxon' },
+        ],
+      },
+    },
+    locale: {
+      name: 'Locale',
+      description: 'BCP 47 locale passed to the localizer (empty → en-US)',
+      toolbar: {
+        icon: 'globe',
+        items: [
+          { value: '', title: 'Default (en-US)' },
+          ...localeList.map((tag: string) => ({
+            value: tag,
+            title: `${_localeNames.of(tag) ?? tag} (${tag})`,
+          })),
+        ],
+      },
+    },
+    timeZone: {
+      name: 'Time Zone',
+      description: 'IANA time zone passed to the localizer (empty → UTC)',
+      toolbar: {
+        icon: 'timer',
+        items: [
+          { value: '', title: 'Default (UTC)' },
+          ...timeZoneList.map((tz: string) => ({ value: tz, title: tz })),
+        ],
+      },
+    },
+  },
+  initialGlobals: {
+    localizer: 'temporal',
+    locale: '',
+    timeZone: '',
+  },
   parameters: {
     layout: 'fullscreen',
     controls: { expanded: true },

@@ -1,0 +1,79 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/Headless API" />
+
+# Headless API
+
+Big Calendar ships a headless API that lets you build a completely custom calendar UI from scratch. Instead of using the pre-built `<bc-calendar>` component, you use `injectMonthView()`, `injectTimeGridView()`, and `injectAgendaView()` inside your own components to get the computed view model as Angular signals.
+
+## When to use the headless API
+
+- You need a calendar layout that differs significantly from the built-in views.
+- You want full control over the DOM structure and class names.
+- You are integrating with a component library that has its own event, grid, or popover primitives.
+
+## The pattern
+
+Any component that calls `injectMonthView()` (or the other inject composables) must live inside a `<bc-calendar-provider>`. The composable reads the store from Angular's DI context via `CALENDAR_TOKEN` and returns reactive signals:
+
+```ts
+@Component({
+  standalone: true,
+  selector: 'my-month-view',
+  template: `
+    @if (view.grid(); as grid) {
+      <div class="my-month-grid">
+        @for (week of grid.weeks; track week.key) {
+          <div class="my-week-row">
+            @for (day of week.days; track day.day) {
+              <div class="my-day-cell">{{ day.label }}</div>
+            }
+          </div>
+        }
+      </div>
+    }
+  `,
+})
+export class MyMonthViewComponent {
+  readonly view = injectMonthView()
+}
+```
+
+Then use it inside a provider:
+
+```html
+<bc-calendar-provider [localizer]="loc" [events]="events" defaultView="month">
+  <my-month-view />
+</bc-calendar-provider>
+```
+
+## Angular specifics
+
+- `injectMonthView()` returns an object of Angular `Signal<...>` values — read them by calling them like functions: `view.grid()`, `view.announcement()`.
+- Call composables at the top of the `inject()` lifecycle (constructor or field initialiser), not inside lifecycle hooks.
+- The `grid()` signal is `null` when the active view is not the month view. Use `@if (view.grid(); as grid)` to gate the template.
+
+## Available composables
+
+<table>
+<thead><tr><th>Composable</th><th>Active when</th><th>Returns</th></tr></thead>
+<tbody>
+<tr><td><code>injectMonthView()</code></td><td>Active view is <code>'month'</code></td><td>Month grid model (weeks → days → segments)</td></tr>
+<tr><td><code>injectTimeGridView()</code></td><td>Active view is <code>'week'</code>, <code>'work_week'</code>, or <code>'day'</code></td><td>Time grid model (columns → slots → events)</td></tr>
+<tr><td><code>injectAgendaView()</code></td><td>Active view is <code>'agenda'</code></td><td>Agenda row list (date groups → event rows)</td></tr>
+</tbody>
+</table>
+
+See the individual **Advanced** stories for the full return-value shape of each composable.
+
+## Combining with `<bc-calendar>`
+
+You can use headless composables alongside the full `<bc-calendar>` component. Inject the store directly via `injectCalendar()` from a child component to read any reactive state without replacing the rendering layer:
+
+```ts
+@Component({ ... })
+export class CalendarSidebarComponent {
+  private readonly ctx = injectCalendar()
+  // Access the raw store via this.ctx.storeSignal()
+}
+```

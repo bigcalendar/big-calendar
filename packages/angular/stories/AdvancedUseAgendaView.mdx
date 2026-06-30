@@ -1,0 +1,80 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/injectAgendaView" />
+
+# injectAgendaView
+
+A composable that provides all the data needed to render a custom agenda view. Call it inside a component that lives inside a `<bc-calendar-provider>`.
+
+```ts
+import { injectAgendaView } from '@big-calendar/angular'
+```
+
+## Return value
+
+<table>
+<thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>rows()</code></td><td><code>AgendaRow[] | null</code></td><td>The rendered agenda model. <code>null</code> when the active view is not <code>'agenda'</code>.</td></tr>
+</tbody>
+</table>
+
+## The `AgendaRow` shape
+
+Each element of the `rows()` array represents a date group:
+
+<table>
+<thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>day</code></td><td><code>string</code></td><td>ISO date string for this row's date.</td></tr>
+<tr><td><code>label</code></td><td><code>string</code></td><td>Formatted display string for the date (e.g. <code>"Mon, Jun 15"</code>).</td></tr>
+<tr><td><code>events</code></td><td><code>AgendaRowEvent[]</code></td><td>Events on this day.</td></tr>
+</tbody>
+</table>
+
+### Event row (`AgendaRowEvent`)
+
+<table>
+<thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>key</code></td><td><code>string</code></td><td>Stable render key for <code>@for track</code>.</td></tr>
+<tr><td><code>event</code></td><td><code>TEvent</code></td><td>Your original event object.</td></tr>
+<tr><td><code>title</code></td><td><code>string</code></td><td>Resolved title string via the title accessor.</td></tr>
+<tr><td><code>time</code></td><td><code>string</code></td><td>Formatted time range (e.g. <code>"9:00 AM – 9:30 AM"</code>).</td></tr>
+<tr><td><code>allDay</code></td><td><code>boolean</code></td><td><code>true</code> for all-day events.</td></tr>
+</tbody>
+</table>
+
+## Minimal example
+
+```ts
+@Component({
+  standalone: true,
+  selector: 'my-agenda-view',
+  template: `
+    @if (view.rows(); as rows) {
+      @if (rows.length === 0) {
+        <p class="my-empty">No upcoming events.</p>
+      }
+      @for (row of rows; track row.day) {
+        <div class="my-date-group">
+          <h3>{{ row.label }}</h3>
+          @for (event of row.events; track event.key) {
+            <div class="my-event-row">
+              <span>{{ event.allDay ? 'All day' : event.time }}</span>
+              <strong>{{ event.title }}</strong>
+            </div>
+          }
+        </div>
+      }
+    }
+  `,
+})
+export class MyAgendaViewComponent {
+  readonly view = injectAgendaView()
+}
+```
+
+## Empty state
+
+When `rows()` is an empty array (not null) the agenda has no events in the current range. Show a custom empty state by checking `rows.length === 0`. The range is controlled by the `[length]` input on `<bc-calendar-provider>` (default: 30 days).

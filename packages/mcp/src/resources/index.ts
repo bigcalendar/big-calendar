@@ -6,6 +6,7 @@ import * as dnd from './api/dnd.js'
 import * as localizers from './api/localizers.js'
 import * as basicSetup from './recipes/basic-setup.js'
 import * as basicSetupVue from './recipes/basic-setup-vue.js'
+import * as basicSetupAngular from './recipes/basic-setup-angular.js'
 import * as eventEditing from './recipes/event-editing.js'
 import * as createEvent from './recipes/create-event.js'
 import * as dataFetching from './recipes/data-fetching.js'
@@ -60,6 +61,12 @@ const RESOURCES: ResourceEntry[] = [
     name: 'Basic setup recipe (Vue 3)',
     description: 'A minimal working Big Calendar integration in Vue 3',
     content: basicSetupVue.CONTENT,
+  },
+  {
+    uri: basicSetupAngular.URI,
+    name: 'Basic setup recipe (Angular)',
+    description: 'A minimal working Big Calendar integration in Angular 17+',
+    content: basicSetupAngular.CONTENT,
   },
   {
     uri: eventEditing.URI,

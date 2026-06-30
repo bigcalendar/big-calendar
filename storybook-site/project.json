@@ -13,6 +13,7 @@
         "commands": [
           "pnpm exec nx run react:build-storybook",
           "pnpm exec nx run vue:build-storybook",
+          "pnpm exec nx run angular:build-storybook",
           "pnpm exec nx run core:build-storybook",
           "node scripts/compose-storybook-site.mjs"
         ],

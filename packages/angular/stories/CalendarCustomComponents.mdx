@@ -1,0 +1,93 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Calendar/Custom Components" />
+
+# Custom Components
+
+Big Calendar lets you replace any visual piece of the calendar — event blocks, day headings, gutter labels, the show-more button, and more — with your own Angular templates.
+
+In Angular, custom slot components are `ng-template` inputs on the individual view components (`<bc-month-view>`, `<bc-time-grid-view>`, `<bc-agenda-view>`). Each template receives its context object via `$implicit`.
+
+## Using `<bc-calendar>` vs. individual view components
+
+`<bc-calendar>` auto-dispatches to the correct view component based on the active view, but does not expose slot template inputs directly. To pass custom slot templates, use the individual view component alongside `<bc-calendar-provider>`:
+
+```html
+<!-- Instead of: <bc-calendar /> -->
+<bc-month-view [bcMonthEvent]="myEventTemplate" />
+```
+
+You can use multiple view components inside one provider and show/hide them with `@if`:
+
+```html
+<bc-calendar-provider [localizer]="loc" [events]="events" [defaultView]="view()">
+  @if (view() === 'month') {
+    <bc-month-view [bcMonthEvent]="customEvent" />
+  } @else {
+    <bc-time-grid-view [bcTimeEvent]="customEvent" />
+  }
+</bc-calendar-provider>
+```
+
+## Month view slots
+
+<table>
+<thead><tr><th>Input</th><th>Context (<code>$implicit</code>)</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>[bcMonthWeekday]</code></td><td><code>&#123; long: string; short: string; day: string &#125;</code></td><td>Column headings (Mon, Tue, …).</td></tr>
+<tr><td><code>[bcMonthDateCell]</code></td><td><code>MonthDayCell &amp; &#123; onDrillDown: () =&gt; void &#125;</code></td><td>The date number button in each cell.</td></tr>
+<tr><td><code>[bcMonthEvent]</code></td><td><code>&#123; event: TEvent; title: string &#125;</code></td><td>Content rendered inside each event bar.</td></tr>
+<tr><td><code>[bcMonthShowMore]</code></td><td><code>&#123; count: number; label: string; day: string; events: … &#125;</code></td><td>The "+ N more" overflow button.</td></tr>
+</tbody>
+</table>
+
+## Time grid view slots
+
+<table>
+<thead><tr><th>Input</th><th>Context (<code>$implicit</code>)</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>[bcTimeDayHeading]</code></td><td><code>&#123; label: string; day: string; isToday: boolean; onDrillDown: () =&gt; void &#125;</code></td><td>Column header for each day.</td></tr>
+<tr><td><code>[bcTimeGutterLabel]</code></td><td><code>&#123; label: string; time: string &#125;</code></td><td>Time label in the left gutter.</td></tr>
+<tr><td><code>[bcTimeEvent]</code></td><td><code>&#123; event: TEvent; title: string; time: string &#125;</code></td><td>Content inside a timed event block.</td></tr>
+<tr><td><code>[bcTimeAllDayEvent]</code></td><td><code>&#123; event: TEvent; title: string &#125;</code></td><td>Content inside an all-day event bar in the header strip.</td></tr>
+</tbody>
+</table>
+
+## Agenda view slots
+
+<table>
+<thead><tr><th>Input</th><th>Context (<code>$implicit</code>)</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>[bcAgendaDate]</code></td><td><code>&#123; day: string; label: string &#125;</code></td><td>The date column cell for each day group.</td></tr>
+<tr><td><code>[bcAgendaEvent]</code></td><td><code>AgendaRowEvent&lt;TEvent&gt;</code> — includes <code>event</code>, <code>title</code>, <code>time</code>, <code>allDay</code></td><td>Each event row.</td></tr>
+<tr><td><code>[bcAgendaEmpty]</code></td><td><code>string</code> — the empty-state message</td><td>Shown when no events exist in the agenda range.</td></tr>
+</tbody>
+</table>
+
+## Minimal example
+
+```ts
+import { Component, TemplateRef, ViewChild } from '@angular/core'
+import { CalendarProviderComponent, MonthViewComponent } from '@big-calendar/angular'
+
+@Component({
+  standalone: true,
+  imports: [CalendarProviderComponent, MonthViewComponent],
+  template: `
+    <bc-calendar-provider [localizer]="loc" [events]="events" defaultView="month">
+      <bc-month-view [bcMonthEvent]="boldEvent" />
+    </bc-calendar-provider>
+    <ng-template #boldEvent let-ctx>
+      <strong>{{ ctx.title }}</strong>
+    </ng-template>
+  `,
+})
+export class CalendarWithCustomEventsComponent {
+  @ViewChild('boldEvent') boldEvent!: TemplateRef<unknown>
+  // ...
+}
+```
+
+> **Note:** The `@ViewChild` decorator is required because Angular evaluates the `[bcMonthEvent]` binding after the view initialises. If you use a signal-based approach or the new `viewChild()` query, the timing is handled automatically.
+
+See **Calendar → Custom Rendering** for live examples of every slot.

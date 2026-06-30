@@ -64,3 +64,16 @@ and don't have this problem, but a function accessor that closes over changing s
 - `manager.ts` reads from that cache after the 300 ms delay and emits `'setGlobals'` directly on the channel if globalTypes are still empty. No new iframe → no extra event source → no "multiple candidates".
 
 **Note for next time:** In Storybook composition, the manager and hub preview share `localStorage` (same origin). The event name for setting globals in SB8–10 is `'setGlobals'` (camelCase string), not `'SET_GLOBALS'`. The `stories.json`/`metadata.json` 404s in the console are harmless backward-compat probes — they do NOT cause the spinner to stall; only extra same-origin event sources do.
+
+## @storybook/angular: getting Angular Storybook to build
+
+**What didn't work:** `storybook dev` (throws `AngularLegacyBuildOptionsError`); `angular.json` without a build target; `render: () => ({ component: X })` (not in `StoryFnAngularReturnType`); `component: X` on `: StoryObj` stories (TS2353 — not in `StoryAnnotations`); importing CSS in `preview.ts` (no webpack CSS loader); adding `style-loader`/`css-loader` via `webpackFinal` (not resolvable as pnpm transitive deps).
+
+**What worked:**
+- `angular.json` needs: `@angular-devkit/build-angular:ng-packagr` build target (requires `ng-package.json` with `"project": "ng-package.json"`) + storybook targets with `browserTarget: "angular:build"`.
+- Start via `ng run angular:storybook`, not `storybook dev`.
+- Angular story exports with `component: X`: omit `: StoryObj` annotation (inferred type is fine). Stories with args use `StoryObj<TArgs> & { component?: unknown }`.
+- Global CSS: put in `angular.json` `styles[]` as `"node_modules/@big-calendar/styles/dist/index.css"` — NOT in `preview.ts`.
+- `verbatimModuleSyntax`: Angular lifecycle interfaces (`OnInit`, `OnDestroy`, etc.) must use `import type`.
+
+**Note for next time:** `ng run angular:storybook` only. CSS in `angular.json styles[]`. Story-level `component` needs no `: StoryObj` annotation.

@@ -11,6 +11,9 @@ out-tsc
 .nx/cache
 .nx/workspace-data
 
+# angular
+.angular
+
 # test / coverage
 coverage
 .vitest
@@ -27,6 +30,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# local MCP config
+.mcp.json
 
 # editor / os
 .DS_Store

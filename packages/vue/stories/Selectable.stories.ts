@@ -1,23 +1,31 @@
 import { Views } from '@big-calendar/core'
 import type { ViewKey } from '@big-calendar/core'
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
+import { fn } from 'storybook/test'
 import Calendar from '../src/Calendar/Calendar.vue'
 import CalendarProvider from '../src/CalendarProvider/CalendarProvider.vue'
 import { demoEvents, FOCUS, localizer, NOW } from './harness'
 
 const meta: Meta = {
   title: 'Selection/Selectable',
+  args: {
+    onSlotClick: fn(),
+    onSlotDoubleClick: fn(),
+    onSlotSelect: fn(),
+    onEventClick: fn(),
+    onEventDoubleClick: fn(),
+    onEventRightClick: fn(),
+    onEventMiddleClick: fn(),
+    onRangeChange: fn(),
+  },
 }
 export default meta
 
 /**
- * Calendar with slot and event selection enabled. Click or drag on empty time
- * to see the selection highlight. Actions fired by each gesture are logged in
- * the browser console — wire `onSlotClick`, `onSlotDoubleClick`, and
- * `onSlotSelect` to your own handlers to open a create-event modal.
- *
- * Switch views with the **Controls** panel to compare how slot payloads differ
- * between the month grid and the time grid.
+ * Calendar with slot and event selection enabled. Every gesture — click,
+ * double-click, drag-to-select — fires a callback logged in the **Actions**
+ * panel below. Switch views with the **Controls** panel to explore how slot
+ * payloads differ between the month grid and the time grid.
  */
 export const Selectable: StoryObj<{ selectable: boolean; view: ViewKey }> = {
   args: { selectable: true, view: Views.MONTH },
@@ -37,10 +45,7 @@ export const Selectable: StoryObj<{ selectable: boolean; view: ViewKey }> = {
     components: { CalendarProvider, Calendar },
     setup() {
       const getNow = () => NOW
-      const onSlotClick = (payload: unknown) => console.log('onSlotClick', payload)
-      const onSlotDoubleClick = (payload: unknown) => console.log('onSlotDoubleClick', payload)
-      const onSlotSelect = (payload: unknown) => console.log('onSlotSelect', payload)
-      return { localizer, events: demoEvents, FOCUS, getNow, args, onSlotClick, onSlotDoubleClick, onSlotSelect }
+      return { localizer, events: demoEvents, FOCUS, getNow, args }
     },
     template: `
       <div style="block-size: 100dvh; inline-size: 100%">
@@ -51,9 +56,14 @@ export const Selectable: StoryObj<{ selectable: boolean; view: ViewKey }> = {
           :getNow="getNow"
           :defaultView="args.view"
           :selectable="args.selectable"
-          :onSlotClick="onSlotClick"
-          :onSlotDoubleClick="onSlotDoubleClick"
-          :onSlotSelect="onSlotSelect"
+          :onSlotClick="args.onSlotClick"
+          :onSlotDoubleClick="args.onSlotDoubleClick"
+          :onSlotSelect="args.onSlotSelect"
+          :onEventClick="args.onEventClick"
+          :onEventDoubleClick="args.onEventDoubleClick"
+          :onEventRightClick="args.onEventRightClick"
+          :onEventMiddleClick="args.onEventMiddleClick"
+          :onRangeChange="args.onRangeChange"
         >
           <Calendar />
         </CalendarProvider>

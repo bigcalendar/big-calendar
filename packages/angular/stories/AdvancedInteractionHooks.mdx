@@ -1,0 +1,90 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/Interaction Hooks" />
+
+# Interaction Directives
+
+Two Angular directives power the keyboard interactions inside every built-in view. They provide the same accessibility behaviour in **fully custom headless views** built with `injectMonthView()`, `injectTimeGridView()`, or `injectAgendaView()`.
+
+You do not need these directives when using the default view components or overriding individual `ng-template` slots — the built-in views apply them internally.
+
+---
+
+## `BcEventRovingDirective`
+
+Implements the roving-tabindex pattern for a view's event buttons. All event buttons in the view become **one** tab stop; the arrow keys move focus among them.
+
+**Selector:** `[bcEventRoving]`
+
+### Why roving tabindex?
+
+A calendar can display dozens of event buttons at once. If every button were in the natural tab order, a keyboard user would have to press Tab many times to get past the calendar. The roving-tabindex pattern solves this by making the entire set of event buttons a single tab stop, with arrow navigation inside.
+
+### What it does
+
+- After every render it walks every `[data-bc-event]` element inside the host element and makes exactly one tabbable (the focused one, or the first if nothing is focused yet).
+- Arrow keys (up / down / left / right) move focus to the adjacent button.
+- Focus in/out events keep the single tabbable slot in sync with actual browser focus.
+
+### Usage
+
+Apply the directive to the element that wraps all your event buttons:
+
+```html
+<div bcEventRoving>
+  <!-- event buttons rendered anywhere inside here -->
+  <button type="button" data-bc-event="evt-1">Meeting</button>
+  <button type="button" data-bc-event="evt-2">Standup</button>
+</div>
+```
+
+```ts
+import { BcEventRovingDirective } from '@big-calendar/angular'
+
+@Component({
+  standalone: true,
+  imports: [BcEventRovingDirective],
+  template: `...`,
+})
+export class MyViewComponent {}
+```
+
+---
+
+## `BcRovingSelectionDirective`
+
+Implements a roving-tabindex pattern for the calendar's slot cells, enabling keyboard-driven slot selection. Slot cells become one tab stop; arrow keys navigate between them, and Shift+Arrow extends a selection range.
+
+**Selector:** `[bcRovingSelection]`
+
+### Inputs
+
+<table>
+<thead><tr><th>Input</th><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>[bcMode]</code></td><td><code>'day' | 'time'</code></td><td>Grid layout mode — determines which arrow keys move by row vs. column.</td></tr>
+<tr><td><code>[bcCount]</code></td><td><code>number</code></td><td>Total number of cells in the grid.</td></tr>
+<tr><td><code>[bcColumns]</code></td><td><code>number</code></td><td>Number of columns per row.</td></tr>
+</tbody>
+</table>
+
+### Usage
+
+Apply the directive to the grid container and add a `data-slot-index` attribute to each cell:
+
+```html
+<div
+  bcRovingSelection
+  [bcMode]="'day'"
+  [bcCount]="35"
+  [bcColumns]="7"
+>
+  @for (cell of days; track cell.day; let i = $index) {
+    <div [attr.data-slot-index]="i" [attr.data-date]="cell.day" tabindex="-1">
+      {{ cell.label }}
+    </div>
+  }
+</div>
+```
+
+The directive manages `tabIndex` values and fires selection callbacks through the calendar store. It is called internally by `MonthViewComponent` and `TimeGridViewComponent`.

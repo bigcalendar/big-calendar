@@ -1,5 +1,5 @@
 import { Views } from '@big-calendar/core'
-import type { LocalizerContract } from '@big-calendar/core'
+import type { LocalizerContract, ViewKey } from '@big-calendar/core'
 import { defineComponent, h } from 'vue'
 import type { Component } from 'vue'
 import { mount } from '@vue/test-utils'
@@ -12,7 +12,7 @@ import type { KeyboardDnd } from './useKeyboardDnd'
 function makeWrapper(
   localizer: LocalizerContract,
   child: ReturnType<typeof defineComponent>,
-  defaultView = Views.MONTH,
+  defaultView: ViewKey = Views.MONTH,
 ) {
   return mount(
     defineComponent({

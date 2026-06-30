@@ -1,0 +1,93 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/injectMonthView" />
+
+# injectMonthView
+
+A composable that provides all the data needed to render a custom month grid. Call it inside a component that lives inside a `<bc-calendar-provider>`. See **Advanced → Headless API** for the general pattern.
+
+```ts
+import { injectMonthView } from '@big-calendar/angular'
+```
+
+## Return value
+
+`injectMonthView()` returns an object containing Angular signals:
+
+<table>
+<thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>grid()</code></td><td><code>MonthGrid | null</code></td><td>The rendered month model. <code>null</code> when the active view is not <code>'month'</code>. Use as a gate with <code>@if</code>.</td></tr>
+<tr><td><code>announcement()</code></td><td><code>string</code></td><td>Text for the keyboard-DnD live region. Render inside an element with <code>role="status"</code>.</td></tr>
+<tr><td><code>getWeekSelectionBand(weekIndex)</code></td><td><code>function</code></td><td>Returns the selection highlight for a week row, or <code>null</code> when there is no active selection in that row.</td></tr>
+<tr><td><code>getWeekPreviewBand(week)</code></td><td><code>function</code></td><td>Returns the drag-preview highlight for a week row, or <code>null</code>.</td></tr>
+</tbody>
+</table>
+
+## The `MonthGrid` shape
+
+<table>
+<thead><tr><th>Field</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>weeks</code></td><td>Array of week objects. Each has <code>key</code>, <code>days</code>, and <code>segments</code>.</td></tr>
+<tr><td><code>weekdays</code></td><td>Array of 7 <code>&#123; day, long, short &#125;</code> objects for the column headers.</td></tr>
+</tbody>
+</table>
+
+### Week object
+
+<table>
+<thead><tr><th>Field</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>days</code></td><td>Array of 7 <code>MonthDayCell</code> objects.</td></tr>
+<tr><td><code>segments</code></td><td>Array of event segment rows that span this week row.</td></tr>
+</tbody>
+</table>
+
+### Day cell (`MonthDayCell`)
+
+<table>
+<thead><tr><th>Field</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>day</code></td><td>ISO date string for this day.</td></tr>
+<tr><td><code>label</code></td><td>Display string for the day number (e.g. <code>"15"</code>).</td></tr>
+<tr><td><code>isToday</code></td><td><code>true</code> if this cell is the current date.</td></tr>
+<tr><td><code>isOffRange</code></td><td><code>true</code> if this cell is outside the displayed month (padding days).</td></tr>
+<tr><td><code>extra</code></td><td>Overflow info (<code>count</code>, <code>events</code>) when <code>weekEventLimit</code> is set and there are more events than fit. <code>null</code> otherwise.</td></tr>
+</tbody>
+</table>
+
+## Minimal example
+
+```ts
+@Component({
+  standalone: true,
+  selector: 'my-month-view',
+  template: `
+    @if (view.grid(); as grid) {
+      <div role="status" aria-live="polite" class="bc-sr-only">
+        {{ view.announcement() }}
+      </div>
+      <div class="my-month-grid">
+        <div class="my-header">
+          @for (wd of grid.weekdays; track wd.day) {
+            <span>{{ wd.short }}</span>
+          }
+        </div>
+        @for (week of grid.weeks; track week.key) {
+          <div class="my-week">
+            @for (cell of week.days; track cell.day) {
+              <div [class.off-range]="cell.isOffRange" [class.today]="cell.isToday">
+                {{ cell.label }}
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  `,
+})
+export class MyMonthViewComponent {
+  readonly view = injectMonthView()
+}
+```

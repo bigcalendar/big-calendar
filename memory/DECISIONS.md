@@ -5,6 +5,30 @@
 
 ---
 
+## Standing rule — Cross-framework adapter parity (Phase 11+, ongoing)
+
+### 2026-06-30 — ADAPTER_STANDARDS.md is the single source of truth for all adapter work
+
+**What was decided:** All framework adapter work (new adapters, feature additions, HTML/CSS changes, Storybook wiring) must satisfy the rules in `memory/ADAPTER_STANDARDS.md` before being declared done. The rules are:
+
+- `@big-calendar/*` packages accessed only via alias (defined in `packages/aliases.ts`; wired in each Storybook's `viteFinal` and each vitest config).
+- DECISIONS.md and DECISIONS-ARCHIVE.md reviewed before starting; ERRORS.md checked for similar past failures.
+- Every adapter ships the full canonical story file list, in the same order, with the same story names and the same `argTypes` descriptions.
+- Storybook toolbar localizer controls always wired to change rendered output (via `useLocalizerContext` / `localizerRef`).
+- All rendered HTML uses the same `bc-*` class names and `data-bc-*` attributes as defined in `packages/styles`; no adapter-specific class names.
+- All Controls panel inputs drive story output; no dead controls.
+- All `on*` callbacks wired via Storybook `fn()` and logged to the Actions panel.
+- DnD and resize functional and wired (`onEventDrop`, `onEventResize`); keyboard DnD works.
+- Each adapter passes the 8-step verification checklist (build, tests, Storybook startup, visual parity via Playwright, styles, Actions, Controls, storybook-site composite).
+
+**Why:** React, Vue, and Angular adapters each required the same class of debugging work — missing all-day rows, wrong class names, dead Controls, unlogged Actions, DnD not wired — caught after the fact and fixed one adapter at a time. These rules force the issues to be caught at build time or before sign-off rather than discovered in a follow-up session.
+
+**What was rejected:**
+- Per-adapter checklists in individual memory entries — too scattered; a single authoritative document is easier to enforce and update.
+- "Best-effort parity" — too vague; specific verifiable criteria are required.
+
+---
+
 ## Standing rule — Documentation and MCP sync (Phase 10+, ongoing)
 
 ### 2026-06-26 — All new code ships with documentation; MCP resources stay in sync
