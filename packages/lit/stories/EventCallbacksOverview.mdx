@@ -1,0 +1,122 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="EventCallbacks/Overview" />
+
+# Event Callbacks
+
+Big Calendar fires four callbacks when a user interacts with an existing event block. They work on every view and do not require `.selectable` to be enabled.
+
+## The callbacks
+
+<table>
+<thead><tr><th>Property</th><th>Signature</th><th>Description</th></tr></thead>
+<tbody>
+<tr>
+<td><code>.onEventClick</code></td>
+<td><code>(event: TEvent, domEvent: MouseEvent | KeyboardEvent) =&gt; void</code></td>
+<td>Single click on an event block, or Enter / Space when the event button has focus.</td>
+</tr>
+<tr>
+<td><code>.onEventDoubleClick</code></td>
+<td><code>(event: TEvent, domEvent: MouseEvent | KeyboardEvent) =&gt; void</code></td>
+<td>Double-click on an event block, or F2 when the event button has focus.</td>
+</tr>
+<tr>
+<td><code>.onEventRightClick</code></td>
+<td><code>(event: TEvent, domEvent: MouseEvent) =&gt; void</code></td>
+<td>Right-click on an event block. Call <code>domEvent.preventDefault()</code> to suppress the browser's native context menu.</td>
+</tr>
+<tr>
+<td><code>.onEventMiddleClick</code></td>
+<td><code>(event: TEvent, domEvent: MouseEvent) =&gt; void</code></td>
+<td>Middle-button (scroll-wheel) click on an event block. Some browsers suppress this inside iframes.</td>
+</tr>
+</tbody>
+</table>
+
+## Usage
+
+Pass the callbacks as properties on `<bc-calendar>`:
+
+```ts
+const handleEventClick = (event, domEvent) => {
+  console.log('Clicked event:', event.title)
+  selectedEvent = event
+  requestUpdate()
+}
+
+html`
+  <bc-calendar
+    .localizer=${localizer}
+    .events=${events}
+    .onEventClick=${handleEventClick}
+    .onEventDoubleClick=${(event) => console.log('Double clicked:', event.title)}
+  >
+    <bc-default-toolbar></bc-default-toolbar>
+    <bc-month-view></bc-month-view>
+    <bc-time-grid-view></bc-time-grid-view>
+    <bc-agenda-view></bc-agenda-view>
+  </bc-calendar>
+`
+```
+
+## The event payload
+
+The first argument to every callback is your original event object — the exact same object you passed in `.events`. You never need to look up the event by id; it arrives ready to use.
+
+## Keyboard navigation
+
+Users can Tab between events in the calendar and interact with the focused event using the keyboard:
+
+- **Enter** or **Space** — fires `onEventClick`
+- **F2** — fires `onEventDoubleClick`
+- **Arrow keys** — move focus to the next/previous event in reading order
+
+No extra setup is needed — keyboard support is built into the event buttons.
+
+## Typical pattern: open a detail dialog
+
+```ts
+import '@big-calendar/lit'
+
+class MyCalendarElement extends LitElement {
+  override createRenderRoot() { return this }
+
+  private _selectedEvent = null
+  private _dialogOpen = false
+
+  private _openDetail = (event) => {
+    this._selectedEvent = event
+    this._dialogOpen = true
+    this.requestUpdate()
+  }
+
+  override render() {
+    return html`
+      <bc-calendar
+        .localizer=${localizer}
+        .events=${this._events}
+        .onEventClick=${this._openDetail}
+      >
+        <bc-default-toolbar></bc-default-toolbar>
+        <bc-month-view></bc-month-view>
+        <bc-time-grid-view></bc-time-grid-view>
+        <bc-agenda-view></bc-agenda-view>
+      </bc-calendar>
+
+      <bc-dialog
+        .open=${this._dialogOpen}
+        .onBcClose=${() => { this._dialogOpen = false; this.requestUpdate() }}
+        aria-label="Event detail"
+      >
+        ${this._selectedEvent
+          ? html`<h2>${this._selectedEvent.title}</h2>
+                 <button type="button" @click=${() => { this._dialogOpen = false; this.requestUpdate() }}>Close</button>`
+          : ''}
+      </bc-dialog>
+    `
+  }
+}
+```
+
+See the **Events → Event Callbacks** story for a live demo.

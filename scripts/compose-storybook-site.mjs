@@ -24,6 +24,7 @@ const REFS = [
   { name: 'react',   dist: join(ROOT, 'packages/react/storybook-static') },
   { name: 'vue',     dist: join(ROOT, 'packages/vue/storybook-static') },
   { name: 'angular', dist: join(ROOT, 'packages/angular/storybook-static') },
+  { name: 'lit',     dist: join(ROOT, 'packages/lit/storybook-static') },
 ]
 
 const ensureExists = async (path, label) => {

@@ -1,0 +1,234 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="LitPatterns" />
+
+# Lit Patterns
+
+`@big-calendar/lit` is a set of standard web components. This page covers the Lit-specific patterns and idioms that come up most often when building with the calendar.
+
+---
+
+## Light DOM — no shadow DOM
+
+Every element in `@big-calendar/lit` overrides `createRenderRoot()` to return `this` instead of a shadow root:
+
+```ts
+override createRenderRoot() {
+  return this
+}
+```
+
+This means:
+
+- All rendered HTML lives in the regular page DOM (light DOM).
+- Your page's global stylesheet can target any `.bc-*` class directly — no `::part()` or `::slotted()` needed.
+- Browser devtools show the real element tree without shadow DOM indirection.
+
+If you extend a view element, call `createRenderRoot() { return this }` in your subclass too.
+
+---
+
+## Property binding syntax
+
+In Lit templates, use `.propName=${value}` to set a JavaScript property (an object, function, array, etc.). Use `attr="value"` (no dot) for plain string HTML attributes.
+
+```ts
+html`
+  <bc-calendar
+    .localizer=${localizer}       <!-- JS property — object -->
+    .events=${events}             <!-- JS property — array -->
+    .onEventClick=${handleClick}  <!-- JS property — function -->
+    defaultView="week"            <!-- HTML attribute — string -->
+    defaultDate="2026-06-15"      <!-- HTML attribute — string -->
+  >
+    <bc-default-toolbar></bc-default-toolbar>
+    <bc-month-view></bc-month-view>
+    <bc-time-grid-view></bc-time-grid-view>
+    <bc-agenda-view></bc-agenda-view>
+  </bc-calendar>
+`
+```
+
+> A common mistake: forgetting the dot and writing `events=${events}`. Without the dot, Lit serialises the value to a string attribute, which breaks objects and arrays.
+
+---
+
+## Extending elements
+
+To customise the calendar beyond CSS, extend the exported element class and register a new tag:
+
+```ts
+import { MonthViewElement } from '@big-calendar/lit'
+import { customElement } from 'lit/decorators.js'
+import { html } from 'lit'
+
+@customElement('my-month-view')
+class MyMonthViewElement extends MonthViewElement {
+  override render() {
+    return html`
+      <div class="my-wrapper">
+        ${super.render()}
+      </div>
+    `
+  }
+}
+
+// Then use <my-month-view> inside <bc-calendar>
+```
+
+The same works for `TimeGridViewElement`, `AgendaViewElement`, and `DefaultToolbarElement`.
+
+---
+
+## Context consumers
+
+Any custom element that lives inside `<bc-calendar>` can read the calendar store via `@lit/context`:
+
+```ts
+import { LitElement, html } from 'lit'
+import { customElement } from 'lit/decorators.js'
+import { ContextConsumer } from '@lit/context'
+import { calendarContext } from '@big-calendar/lit'
+
+@customElement('my-calendar-sidebar')
+class MyCalendarSidebar extends LitElement {
+  override createRenderRoot() { return this }
+
+  private _ctx = new ContextConsumer(this, {
+    context: calendarContext,
+    subscribe: true,
+  })
+
+  override render() {
+    const store = this._ctx.value?.store
+    if (!store) return html``
+    return html`<p>Active view: ${store.view.value}</p>`
+  }
+}
+```
+
+Place `<my-calendar-sidebar>` as a child of `<bc-calendar>` and it will automatically receive the context.
+
+---
+
+## Reactive controllers
+
+`CalendarController` and `CalendarDndController` are both Lit `ReactiveController` implementations. Add them in the class body — they attach themselves to the host via `host.addController(this)`:
+
+```ts
+@customElement('my-calendar')
+class MyCalendar extends LitElement {
+  override createRenderRoot() { return this }
+
+  // CalendarDndController wires DnD to this host element automatically
+  private _dnd = new CalendarDndController(this)
+
+  private _events = [...initialEvents]
+
+  override render() {
+    return html`
+      <bc-calendar
+        .localizer=${localizer}
+        .events=${this._events}
+        .onEventDrop=${this._apply.bind(this)}
+        .onEventResize=${this._apply.bind(this)}
+      >
+        <bc-default-toolbar></bc-default-toolbar>
+        <bc-month-view></bc-month-view>
+        <bc-time-grid-view></bc-time-grid-view>
+        <bc-agenda-view></bc-agenda-view>
+      </bc-calendar>
+    `
+  }
+
+  private _apply({ event, start, end, allDay }) {
+    this._events = this._events.map(e =>
+      e.id === event.id ? { ...e, start, end, allDay } : e
+    )
+    this.requestUpdate()
+  }
+}
+```
+
+---
+
+## Vanilla JS usage (no build step)
+
+Because `@big-calendar/lit` produces standard web components, you can use it directly from a CDN in a plain HTML page using `<script type="module">`:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="https://esm.sh/@big-calendar/styles/index.css" />
+</head>
+<body>
+  <div id="root" style="height:100dvh"></div>
+
+  <script type="module">
+    import 'https://esm.sh/@big-calendar/lit'
+    import { createTemporalLocalizer } from 'https://esm.sh/@big-calendar/localizer-temporal'
+
+    const localizer = await createTemporalLocalizer({ locale: 'en-US', timeZone: 'UTC' })
+
+    const calendar = document.createElement('bc-calendar')
+    calendar.localizer = localizer
+    calendar.events = []
+    calendar.defaultView = 'week'
+    calendar.innerHTML = `
+      <bc-default-toolbar></bc-default-toolbar>
+      <bc-month-view></bc-month-view>
+      <bc-time-grid-view></bc-time-grid-view>
+      <bc-agenda-view></bc-agenda-view>
+    `
+
+    document.getElementById('root').appendChild(calendar)
+  </script>
+</body>
+</html>
+```
+
+> **Note:** The `esm.sh` CDN URL above is illustrative — verify the exact URLs for the packages you are using, as CDN paths may vary by version.
+
+---
+
+## Keyboard navigation and accessibility
+
+`@big-calendar/lit` implements the same accessibility pattern as the React, Vue, and Angular adapters:
+
+- **Roving tabindex** — each slot grid has exactly one focusable cell at a time. Arrow keys move focus through cells without requiring the user to tab through every single one.
+- **Keyboard selection** — once a cell is focused, `Shift+Arrow` extends a slot selection; `Enter` or `Space` commits it; `Escape` cancels.
+- **Keyboard DnD** — `Space` picks up a focused event; arrow keys move or resize it; `Enter` drops it; `Escape` cancels.
+- **Screen-reader announcements** — a visually hidden `aria-live="polite"` region announces grab, move, and drop events.
+
+Enable selection by setting `.selectable` on `<bc-calendar>`:
+
+```ts
+html`
+  <bc-calendar .selectable=${true} .onSlotSelect=${handleSelect} ...>
+`
+```
+
+No extra work is needed to enable keyboard navigation — it is always on.
+
+---
+
+## RTL support
+
+Set the `dir` attribute on `<bc-calendar>` or any ancestor element to switch to right-to-left layout:
+
+```ts
+html`
+  <div dir="rtl" lang="ar">
+    <bc-calendar .localizer=${arabicLocalizer} .events=${events}>
+      <bc-default-toolbar></bc-default-toolbar>
+      <bc-month-view></bc-month-view>
+      <bc-time-grid-view></bc-time-grid-view>
+      <bc-agenda-view></bc-agenda-view>
+    </bc-calendar>
+  </div>
+`
+```
+
+The calendar's CSS uses logical properties (`inline-start`, `block-start`, etc.) throughout, so directional flipping happens automatically.

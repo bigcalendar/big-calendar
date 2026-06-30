@@ -1,0 +1,212 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Calendar/CalendarProvider" />
+
+# CalendarProvider — `<bc-calendar>`
+
+`CalendarElement` (`<bc-calendar>`) is both the provider and the renderer for Big Calendar in Lit. It creates the internal calendar store, shares it with its children via `@lit/context`, and projects child elements through a `<slot>`.
+
+Unlike the React and Angular adapters there is no separate `<bc-calendar-provider>` element — `<bc-calendar>` does everything.
+
+```ts
+import '@big-calendar/lit'
+import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
+
+const localizer = await createTemporalLocalizer({ locale: 'en-US', timeZone: 'UTC' })
+
+html`
+  <bc-calendar
+    .localizer=${localizer}
+    .events=${events}
+    defaultDate="2026-06-15"
+  >
+    <bc-default-toolbar></bc-default-toolbar>
+    <bc-month-view></bc-month-view>
+    <bc-time-grid-view></bc-time-grid-view>
+    <bc-agenda-view></bc-agenda-view>
+  </bc-calendar>
+`
+```
+
+---
+
+## Required property
+
+<table>
+<thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr>
+<td><code>.localizer</code></td>
+<td><code>LocalizerContract</code></td>
+<td>The engine that handles all date formatting and arithmetic. Create one with <code>createTemporalLocalizer</code> or <code>createLuxonLocalizer</code> and pass it here. Changing this property recreates the store.</td>
+</tr>
+</tbody>
+</table>
+
+> **Property vs attribute:** Use `.localizer=${value}` (dot prefix) for objects and functions. Use `attr="value"` (no dot) for plain strings.
+
+---
+
+## Data properties
+
+<table>
+<thead><tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+<tbody>
+<tr>
+<td><code>.events</code></td>
+<td><code>TEvent[]</code></td>
+<td><code>[]</code></td>
+<td>Your foreground event objects. Each needs at minimum a start date, an end date, and a title — configure field names via <code>.accessors</code>.</td>
+</tr>
+<tr>
+<td><code>.backgroundEvents</code></td>
+<td><code>TEvent[]</code></td>
+<td><code>[]</code></td>
+<td>Background events render as coloured bands behind foreground events. Clicks and drags pass straight through them.</td>
+</tr>
+<tr>
+<td><code>.resources</code></td>
+<td><code>TResource[]</code></td>
+<td><em>none</em></td>
+<td>Resource objects for multi-resource time grids (rooms, staff). When supplied, each day column splits into one sub-column per resource.</td>
+</tr>
+</tbody>
+</table>
+
+---
+
+## Date and view
+
+### Uncontrolled (calendar manages its own state)
+
+<table>
+<thead><tr><th>Property / Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+<tbody>
+<tr>
+<td><code>defaultView</code></td>
+<td><code>ViewKey</code></td>
+<td><code>'month'</code></td>
+<td>Which view the calendar opens on: <code>'month'</code>, <code>'week'</code>, <code>'work_week'</code>, <code>'day'</code>, <code>'agenda'</code>. Set as an attribute (no dot).</td>
+</tr>
+<tr>
+<td><code>defaultDate</code></td>
+<td><code>string</code></td>
+<td>Today</td>
+<td>The date the calendar focuses on when it first loads, as an ISO 8601 string. Set as an attribute (no dot).</td>
+</tr>
+</tbody>
+</table>
+
+### Controlled (your state drives the calendar)
+
+```ts
+html`
+  <bc-calendar
+    .localizer=${localizer}
+    .events=${events}
+    .view=${currentView}
+    .date=${currentDate}
+    .onView=${({ view }) => { currentView = view; requestUpdate() }}
+    .onNavigate=${({ date }) => { currentDate = date; requestUpdate() }}
+  >
+    <bc-default-toolbar></bc-default-toolbar>
+    <bc-month-view></bc-month-view>
+    <bc-time-grid-view></bc-time-grid-view>
+    <bc-agenda-view></bc-agenda-view>
+  </bc-calendar>
+`
+```
+
+---
+
+## Time grid properties
+
+<table>
+<thead><tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>.step</code></td><td><code>number</code></td><td><code>30</code></td><td>Size of each time slot in minutes.</td></tr>
+<tr><td><code>.timeslots</code></td><td><code>number</code></td><td><code>2</code></td><td>Slot sub-rows under each labelled time.</td></tr>
+<tr><td><code>.min</code></td><td><code>&#123; hour: number; minute?: number &#125;</code></td><td>Start of day</td><td>Earliest time shown in the grid.</td></tr>
+<tr><td><code>.max</code></td><td><code>&#123; hour: number; minute?: number &#125;</code></td><td>End of day</td><td>Latest time shown (exclusive).</td></tr>
+<tr><td><code>.scrollToTime</code></td><td><code>&#123; hour: number; minute?: number &#125;</code></td><td>Current time</td><td>Wall-clock time the grid scrolls to on first load.</td></tr>
+<tr><td><code>.dayLayoutAlgorithm</code></td><td><code>'overlap' | 'no-overlap'</code></td><td><code>'overlap'</code></td><td>How overlapping events pack side-by-side.</td></tr>
+<tr><td><code>.showAllEvents</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Remove the 2-row cap on the all-day strip.</td></tr>
+</tbody>
+</table>
+
+---
+
+## Month view properties
+
+<table>
+<thead><tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>.weekEventLimit</code></td><td><code>number</code></td><td><em>auto</em></td><td>Maximum event rows before a "+ N more" button appears.</td></tr>
+</tbody>
+</table>
+
+---
+
+## Accessors
+
+By default Big Calendar reads `title`, `start`, `end`, `allDay`, `id`, `resourceId`, `type`, `draggable`, and `resizable` from your event objects. Override with `.accessors` to match your data shape:
+
+```ts
+const accessors = {
+  title: 'name',
+  start: (event) => event.startsAt,
+  end:   (event) => event.endsAt,
+}
+
+html`<bc-calendar .accessors=${accessors} ...>`
+```
+
+---
+
+## Callbacks
+
+### Event interaction
+
+<table>
+<thead><tr><th>Property</th><th>Signature</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>.onEventClick</code></td><td><code>(event, domEvent) =&gt; void</code></td><td>Single click or Enter/Space on an event.</td></tr>
+<tr><td><code>.onEventDoubleClick</code></td><td><code>(event, domEvent) =&gt; void</code></td><td>Double-click or F2 on an event.</td></tr>
+<tr><td><code>.onEventRightClick</code></td><td><code>(event, domEvent) =&gt; void</code></td><td>Right-click on an event.</td></tr>
+<tr><td><code>.onEventMiddleClick</code></td><td><code>(event, domEvent) =&gt; void</code></td><td>Middle-button click on an event.</td></tr>
+</tbody>
+</table>
+
+### Slot selection (requires `.selectable`)
+
+<table>
+<thead><tr><th>Property</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>.onSlotClick</code></td><td>A single slot or day was clicked.</td></tr>
+<tr><td><code>.onSlotDoubleClick</code></td><td>A single slot or day was double-clicked.</td></tr>
+<tr><td><code>.onSlotSelect</code></td><td>A drag across multiple slots was committed.</td></tr>
+<tr><td><code>.onSlotSelecting</code></td><td>Fires on every step while dragging; return <code>false</code> to cancel.</td></tr>
+</tbody>
+</table>
+
+### Navigation
+
+<table>
+<thead><tr><th>Property</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>.onNavigate</code></td><td>Fires when the focus date changes. Receives <code>&#123; date, view &#125;</code>.</td></tr>
+<tr><td><code>.onView</code></td><td>Fires when the user switches views. Receives <code>&#123; view &#125;</code>.</td></tr>
+<tr><td><code>.onRangeChange</code></td><td>Fires on initial render and on every date/view change. Receives <code>&#123; range: &#123; start, end &#125;, view &#125;</code>. Use to fetch events for the visible window.</td></tr>
+</tbody>
+</table>
+
+### Drag and drop (requires `CalendarDndController`)
+
+<table>
+<thead><tr><th>Property</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>.onEventDrop</code></td><td>Event dropped at a new slot. Receives <code>&#123; event, start, end, allDay &#125;</code>.</td></tr>
+<tr><td><code>.onEventResize</code></td><td>Event resize handle released. Same shape as <code>onEventDrop</code>.</td></tr>
+<tr><td><code>.onDropFromOutside</code></td><td>External drag landed on a slot. Receives <code>&#123; start, end, allDay &#125;</code>.</td></tr>
+</tbody>
+</table>

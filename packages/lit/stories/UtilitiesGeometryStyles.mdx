@@ -1,0 +1,165 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Utilities/GeometryStyles" />
+
+# Geometry Styles
+
+The geometry style functions translate the numeric layout values produced by the view model into plain style objects you can apply as inline styles. They are the bridge between the calendar's internal coordinate system and the CSS that positions every event, segment, slot, and indicator on screen.
+
+You only need these when building a **fully custom headless view** (see **Advanced → Headless API**). The built-in view elements call them internally, so nothing here is required for CSS customisation.
+
+These utilities are exported from `@big-calendar/core/utils`:
+
+```ts
+import {
+  eventBoxStyle,
+  segmentStyle,
+  monthGridStyle,
+  dayCountStyle,
+  slotCountStyle,
+  slotGroupStyle,
+  agendaRowsStyle,
+  nowIndicatorStyle,
+  selectionStyle,
+} from '@big-calendar/core/utils'
+```
+
+---
+
+## How they work
+
+Every function returns a plain object of CSS custom-property assignments (e.g. `{ '--bc-event-top': '25%' }`). Apply the result as an inline style using Lit's `.style` binding or `styleMap()`:
+
+```ts
+import { styleMap } from 'lit/directives/style-map.js'
+import { eventBoxStyle } from '@big-calendar/core/utils'
+
+html`
+  <div
+    class="bc-event"
+    style=${styleMap(eventBoxStyle({ top, height, left, width, zIndex }))}
+  >
+    ...
+  </div>
+`
+```
+
+---
+
+## Event positioning
+
+### `eventBoxStyle(geometry)`
+
+Positions a timed event box inside a day column.
+
+**`EventBoxGeometry` properties**
+
+<table>
+<thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>top</code></td><td><code>number</code></td><td>Distance from the column top, as a percentage of total column height.</td></tr>
+<tr><td><code>height</code></td><td><code>number</code></td><td>Event height, as a percentage of total column height.</td></tr>
+<tr><td><code>left</code></td><td><code>number</code></td><td>Horizontal offset within the column's overlap group (0–1).</td></tr>
+<tr><td><code>width</code></td><td><code>number</code></td><td>Horizontal span within the column's overlap group (0–1).</td></tr>
+<tr><td><code>zIndex</code></td><td><code>number</code></td><td>Stack order for events that share vertical space.</td></tr>
+</tbody>
+</table>
+
+---
+
+### `segmentStyle(geometry)`
+
+Positions a month-view event segment (or an all-day segment) inside a grid row.
+
+**`SegmentGeometry` properties**
+
+<table>
+<thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>left</code></td><td><code>number</code></td><td>1-based start column in the week row.</td></tr>
+<tr><td><code>span</code></td><td><code>number</code></td><td>Number of columns the segment spans.</td></tr>
+<tr><td><code>row</code></td><td><code>number</code></td><td>1-based stack level (first event is row 1).</td></tr>
+</tbody>
+</table>
+
+---
+
+## Grid sizing
+
+### `monthGridStyle(columnCount)`
+
+Sets the number of day columns in a month grid. Call once on the grid container.
+
+**`columnCount`** — number of columns (almost always `7`).
+
+---
+
+### `dayCountStyle(dayCount)`
+
+Sets the number of day columns in a time-grid header or body.
+
+**`dayCount`** — number of visible day columns (5 for work-week, 7 for week, 1 for day).
+
+---
+
+### `slotCountStyle(slotCount)`
+
+Sets the number of time-slot rows in a single day column.
+
+**`slotCount`** — total number of minor slots in the column.
+
+---
+
+### `slotGroupStyle(groupSize)`
+
+Groups minor time slots under one major label in the gutter.
+
+**`groupSize`** — number of minor slots per labelled group (e.g. `4` for 15-min slots under hourly labels).
+
+---
+
+### `agendaRowsStyle(rowCount)`
+
+Sets the number of agenda day-group rows in the agenda grid.
+
+**`rowCount`** — number of day groups currently rendered.
+
+---
+
+## Indicators
+
+### `nowIndicatorStyle(offset)`
+
+Positions the "now" line within a day column as a percentage of the column height.
+
+**`offset`** — fractional position from the top (0 = midnight, 0.5 = noon, 1 = end of day).
+
+---
+
+### `selectionStyle(geometry)`
+
+Positions the visual selection highlight inside a day column during an in-progress slot selection.
+
+**`SelectionGeometry` properties**
+
+<table>
+<thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>top</code></td><td><code>number</code></td><td>Distance from the column top, as a percentage of total column height.</td></tr>
+<tr><td><code>height</code></td><td><code>number</code></td><td>Selection height, as a percentage of total column height.</td></tr>
+</tbody>
+</table>
+
+---
+
+## Types
+
+<table>
+<thead><tr><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>EventBoxGeometry</code></td><td>Input shape for <code>eventBoxStyle</code>.</td></tr>
+<tr><td><code>SegmentGeometry</code></td><td>Input shape for <code>segmentStyle</code>.</td></tr>
+<tr><td><code>SelectionGeometry</code></td><td>Input shape for <code>selectionStyle</code>.</td></tr>
+<tr><td><code>CSSVars</code></td><td>The CSS custom-property bag returned by all style functions. Apply it as an inline style object via Lit's <code>styleMap()</code> directive.</td></tr>
+</tbody>
+</table>

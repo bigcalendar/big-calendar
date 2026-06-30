@@ -17,6 +17,7 @@ export function packageAliases(pkgsDir: string): Record<string, string> {
     '@big-calendar/localizer-luxon': resolve(pkgsDir, 'localizer-luxon/src/index.ts'),
     '@big-calendar/localizer-temporal': resolve(pkgsDir, 'localizer-temporal/src/index.ts'),
     '@big-calendar/angular': resolve(pkgsDir, 'angular/src/index.ts'),
+    '@big-calendar/lit': resolve(pkgsDir, 'lit/src/index.ts'),
     '@big-calendar/react': resolve(pkgsDir, 'react/src/index.ts'),
     '@big-calendar/storybook-shared': resolve(pkgsDir, 'storybook-shared/src/index.ts'),
     '@big-calendar/styles': resolve(pkgsDir, 'styles/src'),

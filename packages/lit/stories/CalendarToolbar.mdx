@@ -1,0 +1,67 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Calendar/Toolbar" />
+
+# Toolbar
+
+Big Calendar includes `DefaultToolbarElement` (`<bc-default-toolbar>`) — a simple navigation toolbar with Previous / Today / Next buttons and a row of view selector buttons. Add it as the first child of `<bc-calendar>`.
+
+```ts
+html`
+  <bc-calendar .localizer=${localizer} .events=${events}>
+    <bc-default-toolbar></bc-default-toolbar>
+    <bc-month-view></bc-month-view>
+    <bc-time-grid-view></bc-time-grid-view>
+    <bc-agenda-view></bc-agenda-view>
+  </bc-calendar>
+`
+```
+
+## What the default toolbar does
+
+- **Previous / Today / Next** — navigate the focus date backward, to today, or forward one period (one month, one week, one day, etc. depending on the active view).
+- **View buttons** — switch between the views listed in `.views` (defaults to all five).
+- **Date label** — shows the current range as a human-readable string formatted by the localizer.
+
+## Omitting the toolbar
+
+Simply leave `<bc-default-toolbar>` out of the children. The calendar will still render all views — you just won't have built-in navigation controls. Wire your own buttons to the calendar store via `CalendarController` or `calendarContext` if you need custom navigation.
+
+## Messages / labels
+
+All strings the toolbar renders are driven by the `.messages` property on `<bc-calendar>`. Override any key to translate the labels:
+
+```ts
+const messages = {
+  previous: 'Prev',
+  next: 'Next',
+  today: 'Current',
+  month: 'Mo',
+  week: 'Wk',
+  day: 'Day',
+  work_week: 'M–F',
+  agenda: 'List',
+}
+
+html`
+  <bc-calendar .localizer=${localizer} .messages=${messages} .events=${events}>
+    <bc-default-toolbar></bc-default-toolbar>
+    <bc-month-view></bc-month-view>
+    <bc-time-grid-view></bc-time-grid-view>
+    <bc-agenda-view></bc-agenda-view>
+  </bc-calendar>
+`
+```
+
+## Navigation callbacks
+
+The toolbar fires three callbacks on `<bc-calendar>` that you can listen to for controlled-mode state synchronisation:
+
+<table>
+<thead><tr><th>Callback</th><th>When it fires</th></tr></thead>
+<tbody>
+<tr><td><code>.onNavigate</code></td><td>Prev / Today / Next clicked — receives <code>&#123; date, view &#125;</code></td></tr>
+<tr><td><code>.onView</code></td><td>A view button clicked — receives <code>&#123; view &#125;</code></td></tr>
+<tr><td><code>.onRangeChange</code></td><td>After any navigation — receives <code>&#123; range: &#123; start, end &#125;, view &#125;</code></td></tr>
+</tbody>
+</table>

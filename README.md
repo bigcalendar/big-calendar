@@ -20,11 +20,12 @@ Big Calendar is a monorepo — one repository made up of several smaller package
 | [`@big-calendar/localizer-luxon`](packages/localizer-luxon) | An alternative localizer for teams already using Luxon. |
 | [`@big-calendar/styles`](packages/styles) | All the CSS — design tokens, layout, and component styles. |
 | [`@big-calendar/dnd`](packages/dnd) | Optional drag-and-drop support for moving and resizing events. |
-| [`@big-calendar/react`](packages/react) | The React UI package. This is what most developers will install. |
+| [`@big-calendar/react`](packages/react) | The React UI package. Built with standard React hooks and component composition. |
+| [`@big-calendar/vue`](packages/vue) | The Vue 3 UI package. Uses Vue's `provide`/`inject` for context and composables for headless access. |
+| [`@big-calendar/angular`](packages/angular) | The Angular 21+ UI package. Uses Angular's `InjectionToken` for context and inject composables for headless access. |
+| [`@big-calendar/lit`](packages/lit) | The Lit v3 UI package. Delivers the calendar as standard web components — works in any framework or vanilla HTML. |
 | [`@big-calendar/codemods`](packages/codemods) | A CLI tool that automatically updates your code when migrating from `react-big-calendar`. |
 | [`@big-calendar/mcp`](packages/mcp) | An MCP server that gives AI coding assistants direct knowledge of the Big Calendar API and your project's configuration. |
-
-Vue / Angular / Lit packages are planned after the React base is complete.
 
 ---
 
@@ -80,6 +81,111 @@ function MyCalendar() {
 ```
 
 See the [`@big-calendar/react` README](packages/react) for the full prop reference and customization options.
+
+---
+
+## Getting started (Vue 3)
+
+```bash
+pnpm add @big-calendar/vue @big-calendar/localizer-temporal @big-calendar/styles
+```
+
+```vue
+<script setup>
+import { CalendarProvider, Calendar } from '@big-calendar/vue'
+import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
+import '@big-calendar/styles/index.css'
+
+const localizer = await createTemporalLocalizer()
+const events = [
+  { id: '1', title: 'Team standup', start: '2025-09-01T09:00:00Z', end: '2025-09-01T09:30:00Z' }
+]
+</script>
+
+<template>
+  <CalendarProvider :localizer="localizer" :events="events">
+    <Calendar />
+  </CalendarProvider>
+</template>
+```
+
+See the [`@big-calendar/vue` README](packages/vue) for the full API reference.
+
+---
+
+## Getting started (Angular)
+
+```bash
+npm install @big-calendar/angular @big-calendar/localizer-temporal @big-calendar/styles
+```
+
+```ts
+// app.component.ts
+import { Component } from '@angular/core'
+import { CalendarProviderComponent, CalendarComponent } from '@big-calendar/angular'
+import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
+import '@big-calendar/styles/index.css'
+
+const localizer = await createTemporalLocalizer()
+
+@Component({
+  standalone: true,
+  imports: [CalendarProviderComponent, CalendarComponent],
+  template: `
+    <bc-calendar-provider [localizer]="loc" [events]="events">
+      <bc-calendar />
+    </bc-calendar-provider>
+  `,
+})
+export class AppComponent {
+  readonly loc = localizer
+  readonly events = [
+    { id: '1', title: 'Team standup', start: '2025-09-01T09:00:00Z', end: '2025-09-01T09:30:00Z' }
+  ]
+}
+```
+
+See the [`@big-calendar/angular` README](packages/angular) for the full API reference.
+
+---
+
+## Getting started (Lit / Web Components)
+
+```bash
+npm install @big-calendar/lit @big-calendar/localizer-temporal @big-calendar/styles
+```
+
+```ts
+import { html, LitElement } from 'lit'
+import { customElement } from 'lit/decorators.js'
+import '@big-calendar/lit'
+import '@big-calendar/styles/index.css'
+import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
+
+const localizer = await createTemporalLocalizer()
+const events = [
+  { id: '1', title: 'Team standup', start: '2025-09-01T09:00:00Z', end: '2025-09-01T09:30:00Z' }
+]
+
+@customElement('my-calendar')
+class MyCalendar extends LitElement {
+  override createRenderRoot() { return this }
+  override render() {
+    return html`
+      <bc-calendar .localizer=${localizer} .events=${events}>
+        <bc-default-toolbar></bc-default-toolbar>
+        <bc-month-view></bc-month-view>
+        <bc-time-grid-view></bc-time-grid-view>
+        <bc-agenda-view></bc-agenda-view>
+      </bc-calendar>
+    `
+  }
+}
+```
+
+Because `@big-calendar/lit` exports standard web components, you can also use it in any other framework (Svelte, Solid, vanilla HTML) or in a plain `<script type="module">` tag.
+
+See the [`@big-calendar/lit` README](packages/lit) for the full API reference.
 
 ---
 

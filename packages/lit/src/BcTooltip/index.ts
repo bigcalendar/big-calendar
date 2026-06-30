@@ -1,0 +1,1 @@
+export { BcTooltipElement } from './BcTooltipElement'

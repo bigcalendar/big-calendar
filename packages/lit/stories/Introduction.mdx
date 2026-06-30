@@ -1,0 +1,82 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Introduction" />
+
+# Big Calendar — Lit
+
+Big Calendar is a framework-agnostic calendar engine with a thin Lit adapter. This Storybook documents the `@big-calendar/lit` package.
+
+## Architecture
+
+`@big-calendar/lit` is a set of **standard web components** built with Lit v3 on top of the shared `@big-calendar/core` engine. Because everything is a custom element, the calendar works in any web project — plain HTML, React, Vue, Angular, or no framework at all.
+
+Key architectural ideas:
+
+- **No shadow DOM** — all elements use the light DOM (`createRenderRoot() { return this }`). Your page's stylesheet can target every `.bc-*` class directly without `::part()` or `::slotted()`.
+- **`<bc-calendar>` is both provider and renderer** — unlike the React and Angular adapters, there is no separate `CalendarProvider` element. `<bc-calendar>` creates the store internally and shares it with its children via `@lit/context`.
+- **Light DOM slots** — child elements (`<bc-default-toolbar>`, `<bc-month-view>`, etc.) project into `<bc-calendar>`'s `<slot>`. They receive context automatically when they connect.
+- **`@lit/context` for reactive state** — the `calendarContext` is provided by `<bc-calendar>` and consumed by child elements. No prop drilling needed.
+- **`CalendarDndController`** — a Lit `ReactiveController` that wires drag-and-drop to any host element that contains the calendar grid. The Angular equivalent is `CalendarDndDirective`.
+
+## Packages
+
+<table>
+<thead>
+<tr><th>Package</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>@big-calendar/core</code></td><td>Shared engine — store, view models, layout, selection FSM</td></tr>
+<tr><td><code>@big-calendar/lit</code></td><td>Lit v3 web components and reactive controllers</td></tr>
+<tr><td><code>@big-calendar/dnd</code></td><td>Drag-and-drop engine (optional peer dep)</td></tr>
+<tr><td><code>@big-calendar/styles</code></td><td>CSS custom-property design tokens</td></tr>
+<tr><td><code>@big-calendar/localizer</code></td><td>Base localizer interface</td></tr>
+<tr><td><code>@big-calendar/localizer-luxon</code></td><td>Luxon-backed localizer</td></tr>
+<tr><td><code>@big-calendar/localizer-temporal</code></td><td><code>Temporal</code>-backed localizer</td></tr>
+</tbody>
+</table>
+
+## Quick start
+
+```bash
+npm install @big-calendar/lit @big-calendar/localizer-temporal @big-calendar/styles
+```
+
+```ts
+import '@big-calendar/lit'
+import '@big-calendar/styles/index.css'
+import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
+
+const localizer = await createTemporalLocalizer({ locale: 'en-US', timeZone: 'UTC' })
+
+// In a Lit template:
+html`
+  <bc-calendar
+    .localizer=${localizer}
+    .events=${[]}
+    defaultView="week"
+  >
+    <bc-default-toolbar></bc-default-toolbar>
+    <bc-month-view></bc-month-view>
+    <bc-time-grid-view></bc-time-grid-view>
+    <bc-agenda-view></bc-agenda-view>
+  </bc-calendar>
+`
+```
+
+## What is exported
+
+```ts
+import {
+  CalendarElement,        // <bc-calendar>
+  MonthViewElement,       // <bc-month-view>
+  TimeGridViewElement,    // <bc-time-grid-view>
+  AgendaViewElement,      // <bc-agenda-view>
+  DefaultToolbarElement,  // <bc-default-toolbar>
+  BcDialogElement,        // <bc-dialog>
+  BcPopoverElement,       // <bc-popover>
+  BcTooltipElement,       // <bc-tooltip>
+  CalendarController,     // Reactive controller — create/manage the store yourself
+  calendarContext,        // @lit/context key — consume the store in custom elements
+  CalendarDndController,  // Reactive controller — wires drag-and-drop
+} from '@big-calendar/lit'
+```

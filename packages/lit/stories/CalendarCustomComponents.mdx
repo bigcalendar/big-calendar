@@ -1,0 +1,116 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Calendar/CustomComponents" />
+
+# Custom Components
+
+Because `@big-calendar/lit` uses the light DOM, the most direct way to customise the calendar's appearance is **plain CSS**. Every element the calendar renders carries a `.bc-*` class that you can target from any stylesheet on the page — no `::part()` or `::slotted()` workarounds needed.
+
+See the **Calendar → Custom Rendering** stories for live examples of each CSS customisation point.
+
+---
+
+## CSS customisation
+
+```css
+/* Make weekday column headers bold purple */
+.bc-weekday {
+  font-weight: 700;
+  color: rebeccapurple;
+}
+
+/* Highlight today's date number with a filled circle */
+.bc-today .bc-date-number {
+  background: rebeccapurple;
+  color: white;
+  border-radius: 50%;
+}
+
+/* Add a coloured left border to agenda event cells */
+.bc-agenda-event-cell {
+  border-left: 3px solid rebeccapurple;
+  padding-inline-start: 0.75rem;
+}
+```
+
+---
+
+## CSS classes reference
+
+<table>
+<thead><tr><th>Class</th><th>Element</th><th>View</th></tr></thead>
+<tbody>
+<tr><td><code>.bc-weekday</code></td><td>Day-column header (Mon, Tue, …)</td><td>Month</td></tr>
+<tr><td><code>.bc-date-number</code></td><td>Drilldown button inside a date cell</td><td>Month</td></tr>
+<tr><td><code>.bc-segment</code></td><td>Event bar</td><td>Month / all-day strip</td></tr>
+<tr><td><code>.bc-event-title</code></td><td>Text inside an event bar or timed event block</td><td>All</td></tr>
+<tr><td><code>.bc-today</code></td><td>Applied to any cell or column that is today's date</td><td>All</td></tr>
+<tr><td><code>.bc-off-range</code></td><td>Applied to padding day cells outside the displayed month</td><td>Month</td></tr>
+<tr><td><code>.bc-day-heading</code></td><td>Column heading button in the time grid</td><td>Week / Work Week / Day</td></tr>
+<tr><td><code>.bc-gutter-label</code></td><td>Time label in the left gutter</td><td>Week / Work Week / Day</td></tr>
+<tr><td><code>.bc-event</code></td><td>Timed event block</td><td>Week / Work Week / Day</td></tr>
+<tr><td><code>.bc-agenda-date-cell</code></td><td>Date heading in the agenda list</td><td>Agenda</td></tr>
+<tr><td><code>.bc-agenda-event-cell</code></td><td>Event row in the agenda list</td><td>Agenda</td></tr>
+<tr><td><code>.bc-agenda-empty</code></td><td>Empty-state element when no events exist</td><td>Agenda</td></tr>
+</tbody>
+</table>
+
+---
+
+## Extending view elements
+
+For deeper customisation — changing DOM structure, adding custom event content, or injecting render logic — you can extend the view element classes and register your own custom element tag.
+
+```ts
+import { MonthViewElement } from '@big-calendar/lit'
+import { customElement } from 'lit/decorators.js'
+
+@customElement('my-month-view')
+class MyMonthViewElement extends MonthViewElement {
+  // Override methods or add properties here
+}
+```
+
+Then use `<my-month-view>` instead of `<bc-month-view>` inside `<bc-calendar>`:
+
+```ts
+html`
+  <bc-calendar .localizer=${localizer} .events=${events}>
+    <bc-default-toolbar></bc-default-toolbar>
+    <my-month-view></my-month-view>
+    <bc-time-grid-view></bc-time-grid-view>
+    <bc-agenda-view></bc-agenda-view>
+  </bc-calendar>
+`
+```
+
+> **Note:** Render function customisation (the `components` prop from the React/Vue/Angular adapters) is on the Lit roadmap. For the current release, CSS and class extension are the primary customisation surfaces.
+
+---
+
+## Injecting styles at runtime
+
+When you need to add styles from JavaScript (for example, in a story or a component that manages its own lifecycle), create and remove a `<style>` element:
+
+```ts
+class MyCalendarComponent extends LitElement {
+  private _styleEl: HTMLStyleElement | null = null
+
+  override connectedCallback() {
+    super.connectedCallback()
+    this._styleEl = document.createElement('style')
+    this._styleEl.textContent = `
+      .bc-weekday { text-transform: uppercase; letter-spacing: 0.08em; }
+    `
+    document.head.appendChild(this._styleEl)
+  }
+
+  override disconnectedCallback() {
+    super.disconnectedCallback()
+    this._styleEl?.remove()
+    this._styleEl = null
+  }
+}
+```
+
+For production use, add the rules to your global stylesheet instead.

@@ -7,6 +7,7 @@ import * as localizers from './api/localizers.js'
 import * as basicSetup from './recipes/basic-setup.js'
 import * as basicSetupVue from './recipes/basic-setup-vue.js'
 import * as basicSetupAngular from './recipes/basic-setup-angular.js'
+import * as basicSetupLit from './recipes/basic-setup-lit.js'
 import * as eventEditing from './recipes/event-editing.js'
 import * as createEvent from './recipes/create-event.js'
 import * as dataFetching from './recipes/data-fetching.js'
@@ -67,6 +68,12 @@ const RESOURCES: ResourceEntry[] = [
     name: 'Basic setup recipe (Angular)',
     description: 'A minimal working Big Calendar integration in Angular 17+',
     content: basicSetupAngular.CONTENT,
+  },
+  {
+    uri: basicSetupLit.URI,
+    name: 'Basic setup recipe (Lit)',
+    description: 'A minimal working Big Calendar integration using Lit web components',
+    content: basicSetupLit.CONTENT,
   },
   {
     uri: eventEditing.URI,
