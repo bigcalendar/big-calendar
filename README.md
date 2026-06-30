@@ -173,10 +173,12 @@ class MyCalendar extends LitElement {
   override render() {
     return html`
       <bc-calendar .localizer=${localizer} .events=${events}>
-        <bc-default-toolbar></bc-default-toolbar>
-        <bc-month-view></bc-month-view>
-        <bc-time-grid-view></bc-time-grid-view>
-        <bc-agenda-view></bc-agenda-view>
+        <div class="bc-calendar">
+          <bc-default-toolbar></bc-default-toolbar>
+          <bc-month-view></bc-month-view>
+          <bc-time-grid-view></bc-time-grid-view>
+          <bc-agenda-view></bc-agenda-view>
+        </div>
       </bc-calendar>
     `
   }

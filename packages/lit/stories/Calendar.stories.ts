@@ -74,10 +74,12 @@ export const Standard: StoryObj<{
         .dayLayoutAlgorithm=${args.dayLayoutAlgorithm}
         .onRangeChange=${args.onRangeChange}
       >
-        <bc-default-toolbar></bc-default-toolbar>
-        <bc-month-view></bc-month-view>
-        <bc-time-grid-view></bc-time-grid-view>
-        <bc-agenda-view></bc-agenda-view>
+        <div class="bc-calendar">
+          <bc-default-toolbar></bc-default-toolbar>
+          <bc-month-view></bc-month-view>
+          <bc-time-grid-view></bc-time-grid-view>
+          <bc-agenda-view></bc-agenda-view>
+        </div>
       </bc-calendar>
     </div>
   `,
@@ -116,10 +118,12 @@ export const ScrollToTime: StoryObj<{ scrollToHour: number }> = {
           .defaultView=${'week'}
           .scrollToTime=${scrollToTime}
         >
-          <bc-default-toolbar></bc-default-toolbar>
-          <bc-month-view></bc-month-view>
-          <bc-time-grid-view></bc-time-grid-view>
-          <bc-agenda-view></bc-agenda-view>
+          <div class="bc-calendar">
+            <bc-default-toolbar></bc-default-toolbar>
+            <bc-month-view></bc-month-view>
+            <bc-time-grid-view></bc-time-grid-view>
+            <bc-agenda-view></bc-agenda-view>
+          </div>
         </bc-calendar>
       </div>
     `
@@ -168,10 +172,12 @@ export const TimeWindow: StoryObj<{ minHour: number; maxHour: number }> = {
         .min=${{ hour: args.minHour }}
         .max=${{ hour: args.maxHour }}
       >
-        <bc-default-toolbar></bc-default-toolbar>
-        <bc-month-view></bc-month-view>
-        <bc-time-grid-view></bc-time-grid-view>
-        <bc-agenda-view></bc-agenda-view>
+        <div class="bc-calendar">
+          <bc-default-toolbar></bc-default-toolbar>
+          <bc-month-view></bc-month-view>
+          <bc-time-grid-view></bc-time-grid-view>
+          <bc-agenda-view></bc-agenda-view>
+        </div>
       </bc-calendar>
     </div>
   `,

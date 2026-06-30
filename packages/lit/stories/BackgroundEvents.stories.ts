@@ -69,10 +69,12 @@ class DndBgElement extends LitElement {
           apply(a)
         }}
       >
-        <bc-default-toolbar></bc-default-toolbar>
-        <bc-month-view></bc-month-view>
-        <bc-time-grid-view></bc-time-grid-view>
-        <bc-agenda-view></bc-agenda-view>
+        <div class="bc-calendar">
+          <bc-default-toolbar></bc-default-toolbar>
+          <bc-month-view></bc-month-view>
+          <bc-time-grid-view></bc-time-grid-view>
+          <bc-agenda-view></bc-agenda-view>
+        </div>
       </bc-calendar>
     `
   }
@@ -135,10 +137,12 @@ export const WithBackgroundEvents: StoryObj<BgArgs> = {
         .backgroundEvents=${args.overlapping ? overlappingBg : singleDayBg}
         .dayLayoutAlgorithm=${args.dayLayoutAlgorithm}
       >
-        <bc-default-toolbar></bc-default-toolbar>
-        <bc-month-view></bc-month-view>
-        <bc-time-grid-view></bc-time-grid-view>
-        <bc-agenda-view></bc-agenda-view>
+        <div class="bc-calendar">
+          <bc-default-toolbar></bc-default-toolbar>
+          <bc-month-view></bc-month-view>
+          <bc-time-grid-view></bc-time-grid-view>
+          <bc-agenda-view></bc-agenda-view>
+        </div>
       </bc-calendar>
     </div>
   `,
@@ -183,10 +187,12 @@ export const SelectableWithBackgroundEvents: StoryObj<BgArgs> = {
         .onSlotSelect=${args.onSlotSelect}
         .onSlotSelecting=${args.onSlotSelecting}
       >
-        <bc-default-toolbar></bc-default-toolbar>
-        <bc-month-view></bc-month-view>
-        <bc-time-grid-view></bc-time-grid-view>
-        <bc-agenda-view></bc-agenda-view>
+        <div class="bc-calendar">
+          <bc-default-toolbar></bc-default-toolbar>
+          <bc-month-view></bc-month-view>
+          <bc-time-grid-view></bc-time-grid-view>
+          <bc-agenda-view></bc-agenda-view>
+        </div>
       </bc-calendar>
     </div>
   `,

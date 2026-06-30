@@ -54,10 +54,12 @@ class MyCalendar extends LitElement {
     return html`
       <div style="height: 600px">
         <bc-calendar .localizer=${localizer} .events=${events} defaultView="month">
-          <bc-default-toolbar></bc-default-toolbar>
-          <bc-month-view></bc-month-view>
-          <bc-time-grid-view></bc-time-grid-view>
-          <bc-agenda-view></bc-agenda-view>
+          <div class="bc-calendar">
+            <bc-default-toolbar></bc-default-toolbar>
+            <bc-month-view></bc-month-view>
+            <bc-time-grid-view></bc-time-grid-view>
+            <bc-agenda-view></bc-agenda-view>
+          </div>
         </bc-calendar>
       </div>
     `
@@ -94,10 +96,12 @@ Because `@big-calendar/lit` exports standard web components, you can use them wi
     const container = document.getElementById('cal')
     container.innerHTML = `
       <bc-calendar>
-        <bc-default-toolbar></bc-default-toolbar>
-        <bc-month-view></bc-month-view>
-        <bc-time-grid-view></bc-time-grid-view>
-        <bc-agenda-view></bc-agenda-view>
+        <div class="bc-calendar">
+          <bc-default-toolbar></bc-default-toolbar>
+          <bc-month-view></bc-month-view>
+          <bc-time-grid-view></bc-time-grid-view>
+          <bc-agenda-view></bc-agenda-view>
+        </div>
       </bc-calendar>
     `
     const cal = container.querySelector('bc-calendar')
@@ -117,13 +121,16 @@ Big Calendar separates **state** from **rendering**. `<bc-calendar>` owns all th
 ```html
 <!-- bc-calendar: owns the state -->
 <bc-calendar .localizer=${localizer} .events=${events}>
-  <!-- Optional toolbar renders navigation and view switcher -->
-  <bc-default-toolbar></bc-default-toolbar>
+  <!-- bc-calendar div: provides the CSS layout grid for views -->
+  <div class="bc-calendar">
+    <!-- Optional toolbar renders navigation and view switcher -->
+    <bc-default-toolbar></bc-default-toolbar>
 
-  <!-- View elements render the grid — only the active one renders content -->
-  <bc-month-view></bc-month-view>
-  <bc-time-grid-view></bc-time-grid-view>
-  <bc-agenda-view></bc-agenda-view>
+    <!-- View elements render the grid — only the active one renders content -->
+    <bc-month-view></bc-month-view>
+    <bc-time-grid-view></bc-time-grid-view>
+    <bc-agenda-view></bc-agenda-view>
+  </div>
 </bc-calendar>
 ```
 
@@ -201,7 +208,9 @@ html`
       // Open a create-event modal here
     }}
   >
-    <bc-time-grid-view></bc-time-grid-view>
+    <div class="bc-calendar">
+      <bc-time-grid-view></bc-time-grid-view>
+    </div>
   </bc-calendar>
 `
 ```
@@ -226,7 +235,9 @@ html`
       // Update your events state here
     }}
   >
-    <bc-time-grid-view></bc-time-grid-view>
+    <div class="bc-calendar">
+      <bc-time-grid-view></bc-time-grid-view>
+    </div>
   </bc-calendar>
 `
 ```

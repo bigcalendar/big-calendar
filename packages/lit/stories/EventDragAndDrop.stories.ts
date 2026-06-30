@@ -44,10 +44,12 @@ class DndDemoElement extends LitElement {
         .onEventDrop=${apply}
         .onEventResize=${apply}
       >
-        <bc-default-toolbar></bc-default-toolbar>
-        <bc-month-view></bc-month-view>
-        <bc-time-grid-view></bc-time-grid-view>
-        <bc-agenda-view></bc-agenda-view>
+        <div class="bc-calendar">
+          <bc-default-toolbar></bc-default-toolbar>
+          <bc-month-view></bc-month-view>
+          <bc-time-grid-view></bc-time-grid-view>
+          <bc-agenda-view></bc-agenda-view>
+        </div>
       </bc-calendar>
     `
   }

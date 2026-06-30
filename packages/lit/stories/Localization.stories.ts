@@ -61,10 +61,12 @@ export const ArabicRTL: Story = {
     calEl.messages = arabicMessages
 
     calEl.innerHTML = `
-      <bc-default-toolbar></bc-default-toolbar>
-      <bc-month-view></bc-month-view>
-      <bc-time-grid-view></bc-time-grid-view>
-      <bc-agenda-view></bc-agenda-view>
+      <div class="bc-calendar">
+        <bc-default-toolbar></bc-default-toolbar>
+        <bc-month-view></bc-month-view>
+        <bc-time-grid-view></bc-time-grid-view>
+        <bc-agenda-view></bc-agenda-view>
+      </div>
     `
 
     el.appendChild(calEl)
@@ -122,10 +124,12 @@ export const SpanishMessages: Story = {
     calEl.messages = spanishMessages
 
     calEl.innerHTML = `
-      <bc-default-toolbar></bc-default-toolbar>
-      <bc-month-view></bc-month-view>
-      <bc-time-grid-view></bc-time-grid-view>
-      <bc-agenda-view></bc-agenda-view>
+      <div class="bc-calendar">
+        <bc-default-toolbar></bc-default-toolbar>
+        <bc-month-view></bc-month-view>
+        <bc-time-grid-view></bc-time-grid-view>
+        <bc-agenda-view></bc-agenda-view>
+      </div>
     `
 
     el.appendChild(calEl)
