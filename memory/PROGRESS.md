@@ -6,14 +6,14 @@
 
 - [x] Phase 0–10 — Foundations, Core, Styles, React, DnD, Luxon, API refactor, Codemods, MCP, Vue
 - [x] Phase 11 — Angular adapter (`@big-calendar/angular` + DnD, stories, MDX, MCP recipe, Playwright suite)
-- [ ] **Phase 12 — Lit adapter (`@big-calendar/lit`)** ← current
-- [ ] Phase 13+ — Additional frameworks (Svelte, one at a time)
+- [x] Phase 12 — Lit adapter (`@big-calendar/lit` + DnD, stories, MDX, MCP recipe, Playwright spec)
+- [ ] **Phase 13+ — Additional frameworks (Svelte, one at a time)** ← next
 
 ---
 
 ## ⚠ NEXT TASK
 
-**Commit Phase 12.** All tasks complete except MDX docs (in progress). Run final validation after MDX agent finishes, then stage and commit.
+**Phase 13: Svelte adapter** (or other prioritized work — confirm with Cutter).
 
 ---
 
