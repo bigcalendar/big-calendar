@@ -21,7 +21,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -33,7 +33,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Derive affected SHAs
-        uses: nrwl/nx-set-shas@v4
+        uses: nrwl/nx-set-shas@v5
 
-      - name: Lint, typecheck, test (affected)
-        run: pnpm exec nx affected -t lint typecheck test --parallel=3
+      - name: Lint, typecheck, test, build (affected)
+        run: pnpm exec nx affected -t lint typecheck test build --parallel=3

@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { RESOURCES } from './index.js'
 
 describe('MCP resources', () => {
-  it('exports 13 resources', () => {
-    expect(RESOURCES).toHaveLength(13)
+  it('exports 14 resources', () => {
+    expect(RESOURCES).toHaveLength(14)
   })
 
   it('every resource URI starts with bc://', () => {
@@ -25,12 +25,13 @@ describe('MCP resources', () => {
 
   it('recipe resources have bc://recipes/ URIs', () => {
     const recipeResources = RESOURCES.filter((r) => r.uri.startsWith('bc://recipes/'))
-    expect(recipeResources).toHaveLength(8)
+    expect(recipeResources).toHaveLength(9)
     const uris = recipeResources.map((r) => r.uri)
     expect(uris).toContain('bc://recipes/basic-setup')
     expect(uris).toContain('bc://recipes/basic-setup-vue')
     expect(uris).toContain('bc://recipes/basic-setup-angular')
     expect(uris).toContain('bc://recipes/basic-setup-lit')
+    expect(uris).toContain('bc://recipes/basic-setup-svelte')
     expect(uris).toContain('bc://recipes/event-editing')
     expect(uris).toContain('bc://recipes/create-event')
     expect(uris).toContain('bc://recipes/data-fetching')
