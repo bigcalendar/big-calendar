@@ -1,0 +1,300 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Calendar/Custom Components" />
+
+# Custom Components
+
+Every visual piece of the calendar is replaceable via the `components` prop on `CalendarProvider`. In Svelte, a "component" is any `.svelte` file — pass the imported component class directly. No special base class or wrapper is required.
+
+More specific (per-view) slots always take precedence over shared ones. You can override as many or as few as you like; unset slots use the built-in defaults.
+
+```svelte
+<!-- App.svelte -->
+<script>
+  import { CalendarProvider, Calendar } from '@big-calendar/svelte'
+  import MyToolbar from './MyToolbar.svelte'
+  import MyMonthEvent from './MyMonthEvent.svelte'
+  import MyTimeEvent from './MyTimeEvent.svelte'
+</script>
+
+<CalendarProvider
+  components={{
+    toolbar: MyToolbar,
+    month: { event: MyMonthEvent },
+    time:  { event: MyTimeEvent },
+  }}
+>
+  <Calendar />
+</CalendarProvider>
+```
+
+---
+
+## Svelte vs React
+
+In React, a slot component is a function. In Svelte, it is a **Svelte component** — a `.svelte` file imported and passed as a class reference. The pattern is:
+
+```svelte
+<!-- BoldWeekday.svelte — a slot component -->
+<script lang="ts">
+  let { long, day, short }: { long: string; day: string; short: string } = $props()
+</script>
+<strong style="text-transform:uppercase">{long}</strong>
+```
+
+```svelte
+<!-- App.svelte — pass it via components -->
+<script>
+  import { CalendarProvider, Calendar } from '@big-calendar/svelte'
+  import BoldWeekday from './BoldWeekday.svelte'
+</script>
+
+<CalendarProvider components={{ month: { weekday: BoldWeekday } }}>
+  <Calendar />
+</CalendarProvider>
+```
+
+The `eventSlot` prop in `MonthShowMoreProps` and `TimeShowMoreProps` is a Svelte component class. Render it with `<svelte:component this={eventSlot} event={item.event} title={item.title} />`.
+
+---
+
+## Shared slot
+
+### `toolbar`
+
+Replaces the navigation toolbar. See **Calendar → Toolbar** for the full props reference and usage example.
+
+---
+
+## Month view slots (`components.month`)
+
+### `weekday`
+
+A column heading in the weekday header row (Sun, Mon, Tue, …).
+
+```svelte
+<!-- MyWeekday.svelte -->
+<script lang="ts">
+  let { day, long, short }: { day: string; long: string; short: string } = $props()
+</script>
+<abbr title={long}>{short}</abbr>
+```
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>day</code></td><td><code>string</code></td><td>Day-start ISO string for the representative day.</td></tr>
+    <tr><td><code>long</code></td><td><code>string</code></td><td>Full weekday name ("Monday").</td></tr>
+    <tr><td><code>short</code></td><td><code>string</code></td><td>Abbreviated name ("Mon").</td></tr>
+  </tbody>
+</table>
+
+### `dateCell`
+
+The date header inside a day cell — the number, today/off-range state, and drill-down handler.
+
+```svelte
+<!-- MyDateCell.svelte -->
+<script lang="ts">
+  let { label, isToday, isOffRange, onDrillDown, day }: {
+    label: string; isToday: boolean; isOffRange: boolean
+    onDrillDown: () => void; day: string
+  } = $props()
+</script>
+<button type="button" onclick={onDrillDown} aria-label={`Drill down to ${label}`}>
+  {label}
+</button>
+```
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>day</code></td><td><code>string</code></td><td>Day-start ISO string.</td></tr>
+    <tr><td><code>label</code></td><td><code>string</code></td><td>Localized day-of-month number.</td></tr>
+    <tr><td><code>isToday</code></td><td><code>boolean</code></td><td>Whether this day is today.</td></tr>
+    <tr><td><code>isOffRange</code></td><td><code>boolean</code></td><td>Whether this day belongs to an adjacent month.</td></tr>
+    <tr><td><code>onDrillDown</code></td><td><code>() =&gt; void</code></td><td>Navigate into this day.</td></tr>
+  </tbody>
+</table>
+
+### `event`
+
+A single event segment within a week row.
+
+```svelte
+<!-- MyMonthEvent.svelte -->
+<script lang="ts">
+  let { event, title }: { event: { color?: string }; title: string } = $props()
+</script>
+<span style:color={event.color}>{title}</span>
+```
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>event</code></td><td><code>TEvent</code></td><td>Your original event object.</td></tr>
+    <tr><td><code>title</code></td><td><code>string</code></td><td>Resolved event title.</td></tr>
+  </tbody>
+</table>
+
+### `showMore`
+
+The "+N more" overflow indicator shown when a week row exceeds `weekEventLimit`. The `eventSlot` prop is a Svelte component class — use it to render each hidden event consistently.
+
+```svelte
+<!-- MyShowMore.svelte -->
+<script lang="ts">
+  import type { Component } from 'svelte'
+  import type { ShowMoreEvent } from '@big-calendar/svelte'
+
+  let { count, label, day, events, eventSlot: EventSlot }: {
+    count: number; label: string; day: string
+    events: ReadonlyArray<ShowMoreEvent>; eventSlot: Component
+  } = $props()
+</script>
+<details>
+  <summary>{label}</summary>
+  {#each events as item (item.key)}
+    <svelte:component this={EventSlot} event={item.event} title={item.title} />
+  {/each}
+</details>
+```
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>count</code></td><td><code>number</code></td><td>How many events overflowed.</td></tr>
+    <tr><td><code>label</code></td><td><code>string</code></td><td>Localized label ("+2 more").</td></tr>
+    <tr><td><code>day</code></td><td><code>string</code></td><td>Day-start string of the overflow anchor.</td></tr>
+    <tr><td><code>events</code></td><td><code>ReadonlyArray&lt;ShowMoreEvent&lt;TEvent&gt;&gt;</code></td><td>The hidden events.</td></tr>
+    <tr><td><code>eventSlot</code></td><td><code>Component</code></td><td>The configured month event slot — use it to render each hidden event consistently.</td></tr>
+  </tbody>
+</table>
+
+---
+
+## Time-grid slots (`components.time`)
+
+### `dayHeading`
+
+The day column heading (date label + today state + drill-down).
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>day</code></td><td><code>string</code></td><td>Day-start ISO string.</td></tr>
+    <tr><td><code>label</code></td><td><code>string</code></td><td>Localized heading label.</td></tr>
+    <tr><td><code>isToday</code></td><td><code>boolean</code></td><td>Whether this column is today.</td></tr>
+    <tr><td><code>onDrillDown</code></td><td><code>() =&gt; void</code></td><td>Navigate into this day.</td></tr>
+  </tbody>
+</table>
+
+### `timeLabel`
+
+A labelled time in the left gutter ("9 AM", "9:30").
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>time</code></td><td><code>string</code></td><td>Slot time relative to day start.</td></tr>
+    <tr><td><code>label</code></td><td><code>string</code></td><td>Localized label.</td></tr>
+  </tbody>
+</table>
+
+### `event`
+
+A timed event box in a day column.
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>event</code></td><td><code>TEvent</code></td><td>Your original event object.</td></tr>
+    <tr><td><code>title</code></td><td><code>string</code></td><td>Resolved title.</td></tr>
+    <tr><td><code>time</code></td><td><code>string</code></td><td>Formatted "start – end" range.</td></tr>
+  </tbody>
+</table>
+
+### `allDayEvent`
+
+An event segment in the all-day row above the time grid.
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>event</code></td><td><code>TEvent</code></td><td>Your original event object.</td></tr>
+    <tr><td><code>title</code></td><td><code>string</code></td><td>Resolved title.</td></tr>
+  </tbody>
+</table>
+
+### `showMore`
+
+The "+N more" overflow indicator in the all-day row.
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>count</code></td><td><code>number</code></td><td>How many events overflowed.</td></tr>
+    <tr><td><code>label</code></td><td><code>string</code></td><td>Localized label.</td></tr>
+    <tr><td><code>events</code></td><td><code>ReadonlyArray&lt;ShowMoreEvent&lt;TEvent&gt;&gt;</code></td><td>The hidden events.</td></tr>
+    <tr><td><code>eventSlot</code></td><td><code>Component</code></td><td>The configured all-day event slot.</td></tr>
+  </tbody>
+</table>
+
+### `backgroundEvent`
+
+Content rendered inside a background event box.
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>event</code></td><td><code>TEvent</code></td><td>Your original event object.</td></tr>
+    <tr><td><code>title</code></td><td><code>string</code></td><td>Resolved title.</td></tr>
+  </tbody>
+</table>
+
+---
+
+## Agenda view slots (`components.agenda`)
+
+### `date`
+
+The date label for a day group.
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>day</code></td><td><code>string</code></td><td>Day-start ISO string.</td></tr>
+    <tr><td><code>label</code></td><td><code>string</code></td><td>Localized date label.</td></tr>
+  </tbody>
+</table>
+
+### `event`
+
+A single event row.
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>event</code></td><td><code>TEvent</code></td><td>Your original event object.</td></tr>
+    <tr><td><code>title</code></td><td><code>string</code></td><td>Resolved title.</td></tr>
+    <tr><td><code>time</code></td><td><code>string</code></td><td>Formatted time or all-day label.</td></tr>
+    <tr><td><code>allDay</code></td><td><code>boolean</code></td><td>Whether the event is all-day.</td></tr>
+  </tbody>
+</table>
+
+### `empty`
+
+The empty state shown when no events fall in the agenda's range.
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>message</code></td><td><code>string</code></td><td>Localized "no events in range" string.</td></tr>
+  </tbody>
+</table>
+
+---
+
+## See it in action
+
+The **Calendar → Custom Rendering** stories each replace exactly one slot and show the live result. There is a story per slot, so you can jump straight to the one you want to customize.

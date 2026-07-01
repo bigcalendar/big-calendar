@@ -1,0 +1,53 @@
+/*
+ * Coarse-pointer (touch) adaptations — plan §7.7. On devices whose primary
+ * pointer is coarse, or that cannot hover, discrete controls grow to the
+ * `--bc-touch-target` (44px) hit-target floor, and no affordance is hover-only:
+ * the "+N more" overflow, the popover, and the tooltip all open on tap (the
+ * tooltip toggles on tap in the adapter), and event actions are reachable by
+ * tap / double-tap / long-press.
+ *
+ * Geometry-sized event boxes (`.bc-event` / `.bc-segment`) and slot cells
+ * (`.bc-time-slot` etc.) are intentionally NOT forced to 44px — their size
+ * encodes duration / the slot grid, so enlarging them would corrupt the
+ * layout. Their actions stay reachable (tap / long-press) regardless of size;
+ * `touch-action` on the selectable surfaces (layout.css) keeps drag from
+ * fighting scroll.
+ */
+@layer bc.components {
+  @media (pointer: coarse), (hover: none) {
+    /* Toolbar: today / prev / next / view-switch buttons. */
+    .bc-toolbar button {
+      min-block-size: var(--bc-touch-target);
+      min-inline-size: var(--bc-touch-target);
+    }
+
+    /* Drilldown controls. The day heading already spans its column (only needs
+       height); the month date number is a corner control (needs both dims). */
+    button.bc-day-heading {
+      min-block-size: var(--bc-touch-target);
+    }
+
+    button.bc-date-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-block-size: var(--bc-touch-target);
+      min-inline-size: var(--bc-touch-target);
+    }
+
+    /* "+N more" overflow indicator (month + all-day): a real button opening the
+       popover on tap — grow its tap area and center its label. */
+    .bc-show-more {
+      display: inline-flex;
+      align-items: center;
+      min-block-size: var(--bc-touch-target);
+    }
+
+    /* Agenda event title (link-styled button): full-height tap area. */
+    button.bc-agenda-event {
+      display: inline-flex;
+      align-items: center;
+      min-block-size: var(--bc-touch-target);
+    }
+  }
+}

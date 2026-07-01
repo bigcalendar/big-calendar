@@ -1,0 +1,35 @@
+{
+  "name": "storybook-site",
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/wait-for-storybooks.mjs"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "pnpm exec nx run react:build-storybook",
+          "pnpm exec nx run vue:build-storybook",
+          "pnpm exec nx run angular:build-storybook",
+          "pnpm exec nx run lit:build-storybook",
+          "pnpm exec nx run svelte:build-storybook",
+          "pnpm exec nx run core:build-storybook",
+          "node scripts/compose-storybook-site.mjs"
+        ],
+        "parallel": false,
+        "env": {
+          "STORYBOOK_BUILD": "true"
+        }
+      }
+    },
+    "compose-site": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/compose-storybook-site.mjs"
+      }
+    }
+  }
+}

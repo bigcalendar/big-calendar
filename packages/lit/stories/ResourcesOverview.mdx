@@ -1,0 +1,117 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Resources/Overview" />
+
+# Resources
+
+Big Calendar supports multi-resource time grids — views where each day column is split into sub-columns, one per resource (room, person, equipment, etc.). Resource calendars work in the Week, Work Week, and Day views.
+
+## Setup
+
+Pass a `.resources` array to `<bc-calendar>`. Each resource needs at least an `id` and a `title`:
+
+```ts
+const rooms = [
+  { id: 'board',    title: 'Board room' },
+  { id: 'training', title: 'Training room' },
+  { id: 'mtg1',    title: 'Meeting room 1' },
+]
+
+const events = [
+  { id: 1, title: 'All hands',          resourceId: 'board',    start: '...', end: '...' },
+  { id: 2, title: 'New hire onboarding', resourceId: 'training', start: '...', end: '...' },
+]
+
+html`
+  <bc-calendar
+    .localizer=${localizer}
+    .events=${events}
+    .resources=${rooms}
+    defaultView="week"
+  >
+    <bc-default-toolbar></bc-default-toolbar>
+    <bc-month-view></bc-month-view>
+    <bc-time-grid-view></bc-time-grid-view>
+    <bc-agenda-view></bc-agenda-view>
+  </bc-calendar>
+`
+```
+
+## Layout modes
+
+The `.resourceLayout` property controls how resource columns are arranged:
+
+<table>
+<thead><tr><th>Value</th><th>Description</th><th>Best for</th></tr></thead>
+<tbody>
+<tr>
+<td><em>omitted</em> (default)</td>
+<td>All days for resource A, then all days for resource B, etc.</td>
+<td>Comparing resources side-by-side across a week.</td>
+</tr>
+<tr>
+<td><code>'day'</code></td>
+<td>All resources for Monday, then all resources for Tuesday, etc.</td>
+<td>A daily room schedule where you need to see all rooms at a glance.</td>
+</tr>
+</tbody>
+</table>
+
+```ts
+html`
+  <bc-calendar
+    .localizer=${localizer}
+    .events=${events}
+    .resources=${rooms}
+    .resourceLayout=${'day'}
+    defaultView="week"
+  >
+    ...
+  </bc-calendar>
+`
+```
+
+For the single-day resource view (one column per resource, Day view only), omit `.resourceLayout` and use `defaultView="day"` with `.resources`.
+
+## Slot selection with resources
+
+When `.selectable` is `true` and `.resources` is configured, the slot selection payload includes the `resourceId` of the column where the user clicked or dragged:
+
+```ts
+const onSlotSelect = (selection) => {
+  console.log('resourceId:', selection.resourceId)
+  // Create an event pre-assigned to that resource
+}
+```
+
+## DnD with resources
+
+`.onEventDrop` includes a `resourceId` field when the event was dropped into a different resource's column:
+
+```ts
+const applyDrop = ({ event, start, end, allDay, resourceId }) => {
+  events = events.map(e =>
+    e.id === event.id
+      ? { ...e, start, end, allDay, resourceId: resourceId ?? e.resourceId }
+      : e
+  )
+  requestUpdate()
+}
+```
+
+## Custom field names
+
+By default Big Calendar reads `id`, `title`, and `resourceId` from resources and events. Override with `.accessors`:
+
+```ts
+const accessors = {
+  // Events use 'roomId' instead of 'resourceId'
+  resource: 'roomId',
+  // Resources use 'name' instead of 'title'
+  resourceTitle: 'name',
+}
+
+html`<bc-calendar .accessors=${accessors} ...>`
+```
+
+See **Resources → Resource Type Accessor** for an example of colouring resource lanes with CSS custom properties.

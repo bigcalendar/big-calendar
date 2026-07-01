@@ -1,0 +1,33 @@
+{
+  "name": "vue",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/vue/src",
+  "tags": ["scope:ui"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": { "command": "vite build", "cwd": "packages/vue" }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": { "command": "vitest run", "cwd": "packages/vue" }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": { "command": "eslint packages/vue/src" }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": { "command": "vue-tsc --noEmit -p packages/vue/tsconfig.json" }
+    },
+    "storybook": {
+      "executor": "nx:run-commands",
+      "options": { "command": "storybook dev -p 6008", "cwd": "packages/vue" }
+    },
+    "build-storybook": {
+      "executor": "nx:run-commands",
+      "options": { "command": "storybook build", "cwd": "packages/vue" }
+    }
+  }
+}

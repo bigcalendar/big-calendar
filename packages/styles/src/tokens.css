@@ -1,0 +1,109 @@
+/*
+ * Big Calendar — design tokens. Every visual value is an overridable CSS custom
+ * property, prefixed `--bc-*` (plan §6). Defaults lean on CSS system colors
+ * (Canvas/CanvasText/AccentColor) so the calendar adapts to the host's light/dark
+ * scheme out of the box; override any token to theme.
+ *
+ * Defined on `:where(.bc-calendar)` AND `:where(:has(> .bc-calendar))` (both zero
+ * specificity) so host overrides win easily, inside the `bc.tokens` cascade layer.
+ * The `:has(> .bc-calendar)` selector matches the direct parent of the view
+ * container, making tokens available to sibling elements like `<Toolbar>`.
+ */
+@layer bc.tokens {
+  :where(.bc-calendar),
+  :where(:has(> .bc-calendar)) {
+  /* ── color: surfaces ───────────────────────────────────────────────── */
+  --bc-color-bg: Canvas;
+  --bc-color-fg: CanvasText;
+  --bc-color-muted: color-mix(in oklab, CanvasText 60%, Canvas);
+  --bc-color-border: color-mix(in oklab, CanvasText 15%, Canvas);
+  /* Lighter divider for intra-hour (half-hour) slot lines vs. the hour borders. */
+  --bc-color-slot-border: color-mix(in oklab, CanvasText 8%, Canvas);
+  --bc-color-accent: AccentColor;
+  --bc-color-accent-fg: AccentColorText;
+
+  /* ── color: calendar surfaces ──────────────────────────────────────── */
+  --bc-color-today-bg: color-mix(in oklab, AccentColor 10%, Canvas);
+  --bc-color-offrange-bg: hsl(0, 0%, 90%);
+  --bc-color-hover-bg: color-mix(in oklab, CanvasText 4%, Canvas);
+
+  /* ── color: events ─────────────────────────────────────────────────── */
+  --bc-color-event-bg: #0c41ff;
+  --bc-color-event-fg: #fff;
+  --bc-color-event-hover-bg: color-mix(in oklab, var(--bc-color-event-bg), CanvasText 30%);
+  --bc-color-event-border: color-mix(in oklab, var(--bc-color-event-bg), CanvasText 25%);
+  --bc-color-bg-event-bg: #BFC6FF;
+  --bc-color-bg-event-fg: #000000;
+  --bc-color-bg-event-border: color-mix(in oklab, var(--bc-color-bg-event-bg), CanvasText 25%);
+
+  /* ── color: now indicator + selection ──────────────────────────────── */
+  --bc-color-now: color-mix(in oklab, red 75%, CanvasText);
+  /* Periwinkle (matches the event fill) at ~50% opacity so the slot/hour grid
+     shows through the highlight while a selection is being dragged. */
+  --bc-color-selection-bg: color-mix(in srgb, var(--bc-color-event-bg) 50%, transparent);
+  --bc-color-selection-border: color-mix(in srgb, var(--bc-color-event-bg) 70%, CanvasText);
+
+  /* ── color: focus ──────────────────────────────────────────────────── */
+  --bc-color-focus-ring: AccentColor;
+
+  /* ── spacing scale ─────────────────────────────────────────────────── */
+  --bc-space-0: 0;
+  --bc-space-1: 0.25rem;
+  --bc-space-2: 0.5rem;
+  --bc-space-3: 0.75rem;
+  --bc-space-4: 1rem;
+  --bc-space-5: 1.5rem;
+
+  /* ── typography ────────────────────────────────────────────────────── */
+  --bc-font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --bc-font-size: 0.875rem;
+  --bc-font-size-sm: 0.75rem;
+  --bc-font-size-xs: 0.625rem;
+  --bc-font-size-lg: 1rem;
+  --bc-line-height: 1.4;
+  --bc-font-weight: 400;
+  --bc-font-weight-bold: 600;
+
+  /* ── border + radius ───────────────────────────────────────────────── */
+  --bc-border-width: 1px;
+  --bc-border: var(--bc-border-width) solid var(--bc-color-border);
+  --bc-radius: 0.375rem;
+  --bc-radius-sm: 0.1875rem;
+
+  /* ── focus ring (composed) ─────────────────────────────────────────── */
+  --bc-focus-ring-width: 2px;
+  --bc-focus-ring-offset: 2px;
+  --bc-focus-ring: var(--bc-focus-ring-width) solid var(--bc-color-focus-ring);
+
+  /* ── density / sizing ──────────────────────────────────────────────── */
+  /* Minimum height of a month day cell. */
+  --bc-month-row-min: 8.25rem;
+  /* Height of one time-grid slot row (a `step` of minutes). */
+  --bc-slot-height: 2.25rem;
+  /* Minimum height of the all-day row in the time grid. Sized for 2 event rows
+     plus one empty segment row, so there is always a visible, reachable hit
+     target to create new all-day events even when both rows are fully occupied. */
+  --bc-allday-row-min-height: calc(3 * var(--bc-segment-height));
+  /* Width of the time-grid time gutter (inline-start labels column). */
+  --bc-gutter-width: 9ch;
+  /* Minimum width for each date column in all time-grid views. */
+  --bc-col-min: calc(305px - var(--bc-gutter-width));
+  /* Gap painted between adjacent overlapping events within a column. */
+  --bc-event-gap: 1px;
+  /* Selectable strip reserved on the trailing (inline-end) edge of each time-grid
+     day column, so a full-width event never covers the whole column and a slot
+     selection can still be started alongside it. */
+  --bc-event-gutter: 0.625rem;
+  /* Thickness of the now-indicator line. */
+  --bc-now-width: 2px;
+  /* Height of a single stacked event row in the month / all-day grid. */
+  --bc-segment-height: 2.25rem;
+  /* Minimum hit-target size for discrete controls on coarse pointers (touch),
+     applied via `@media (pointer: coarse)` in components/coarse-pointer.css.
+     2.75rem = 44px, the WCAG 2.5.5 / platform touch-target floor (plan §7.7). */
+  --bc-touch-target: 2.75rem;
+
+  /* ── elevation (top-layer popovers) ────────────────────────────────── */
+  --bc-shadow-popover: 0 4px 16px color-mix(in oklab, CanvasText 25%, transparent);
+  }
+}

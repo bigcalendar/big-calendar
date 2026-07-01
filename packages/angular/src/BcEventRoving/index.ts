@@ -1,0 +1,1 @@
+export { BcEventRovingDirective } from './BcEventRovingDirective'

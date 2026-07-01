@@ -1,0 +1,113 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Resources/Overview" />
+
+# Resources
+
+Give the calendar a `resources` array and the **day** and **week** views automatically split into per-resource columns. A "rooms" schedule, a "people" calendar, a "lanes" planner — any list of named entities works.
+
+## Basic setup
+
+```svelte
+<script>
+  import { CalendarProvider, Calendar } from '@big-calendar/svelte'
+
+  const rooms = [
+    { id: 'board',    title: 'Board room' },
+    { id: 'training', title: 'Training room' },
+    { id: 'mtg1',    title: 'Meeting room 1' },
+  ]
+</script>
+
+<CalendarProvider {resources} {events} ...>
+  <Calendar />
+</CalendarProvider>
+```
+
+Events route to their resource column via the `resource` accessor, which reads `event.resourceId` by default. Change the field name with `accessors.resourceId`, or pass a function:
+
+```svelte
+<!-- Field name shorthand: -->
+<CalendarProvider accessors={{ resourceId: 'roomId' }} ...>
+
+<!-- Function accessor: -->
+<CalendarProvider accessors={{ resourceId: (e) => e.room.id }} ...>
+```
+
+Similarly, `accessors.resourceTitle` controls which field becomes the column header (defaults to `resource.title`).
+
+## Layout modes
+
+Two layout orderings are available.
+
+### Resource-major (default)
+
+All days for one resource appear together, then all days for the next:
+
+```
+[ Board room: Mon Tue Wed Thu Fri ] [ Training: Mon Tue Wed Thu Fri ]
+```
+
+```svelte
+<CalendarProvider {resources} defaultView="week" ...>
+```
+
+### Day-major
+
+All resources for a day appear together, then the next day:
+
+```
+[ Monday: Board room  Training  Mtg1 ] [ Tuesday: Board room  Training  Mtg1 ]
+```
+
+```svelte
+<CalendarProvider {resources} resourceLayout="day" defaultView="week" ...>
+```
+
+Day-major is useful when you want to compare all resources' availability within a single day at a glance.
+
+## Selection with resources
+
+When `selectable={true}` is on, the slot callbacks (`onSlotClick`, `onSlotDoubleClick`, `onSlotSelect`) also report the `resourceId` of the column the user clicked or dragged in:
+
+```svelte
+<CalendarProvider
+  {resources}
+  selectable={true}
+  onSlotSelect={({ start, end, allDay, resourceId }) => {
+    openCreateDialog({ start, end, allDay, resourceId })
+  }}
+>
+  <Calendar />
+</CalendarProvider>
+```
+
+## Drag and drop with resources
+
+Move and resize work exactly the same as in the standard calendar. The difference is that `onEventDrop` and `onEventResize` now also report the `resourceId` of the column the event landed in:
+
+```svelte
+<script>
+  let events = $state(myEvents)
+
+  const onEventDrop = ({ event, start, end, allDay, resourceId }) => {
+    events = events.map((e) =>
+      e.id === event.id
+        ? { ...e, start, end, allDay, resourceId }
+        : e,
+    )
+  }
+</script>
+```
+
+Dragging an event into a **different** resource's column is a real edit: the `resourceId` changes. Your update assigns the event to its new resource — Big Calendar just reports it.
+
+`onDropFromOutside` and `onEventResize` also include `resourceId` when resources are active.
+
+## Events without a resource
+
+Events that have no `resourceId` (or whose `resourceId` does not match any resource in the `resources` array) are not rendered in resource views. They simply do not appear — they are not dropped or hidden. Make sure every event has a valid `resourceId` when `resources` is set, or filter your event list accordingly.
+
+## See it in action
+
+The **Resources → With Resources** story shows a room calendar with selection and drag-and-drop enabled. Use the **Controls** panel to switch between day, resource-major week, and day-major week layouts.

@@ -1,0 +1,197 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/useTimeGridView" />
+
+# useTimeGridView
+
+A composed composable that drives a custom time-grid view (Day, Week, Work-Week). Call it inside a component that lives inside a `CalendarProvider`. See **Advanced → Headless API** for the general pattern.
+
+```ts
+import { useTimeGridView } from '@big-calendar/vue'
+```
+
+## Return value
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>grid</code></td><td><code>TimeGrid | null</code></td><td>The resolved time grid model. <code>null</code> when the active view is not a time-grid — use as a gate with <code>v-if</code>.</td></tr>
+    <tr><td><code>announcement</code></td><td><code>string</code></td><td>Text for the keyboard-DnD live region. Render inside <code>role="status"</code>.</td></tr>
+    <tr><td><code>root</code></td><td><code>object</code></td><td>Element-spread props for the outermost <code>&lt;div&gt;</code>: roving <code>ref</code> and keyboard-DnD handlers. Use <code>v-bind="root"</code>.</td></tr>
+    <tr><td><code>getRootStyle(leafCount)</code></td><td><code>function</code></td><td>Returns a CSS style object for the root <code>&lt;div&gt;</code>. Pass the number of leaf columns (days in plain mode). Bind with <code>:style="getRootStyle(...)"</code>.</td></tr>
+    <tr><td><code>header</code></td><td><code>object</code></td><td>Everything needed to render the header section. See below.</td></tr>
+    <tr><td><code>body</code></td><td><code>object</code></td><td>Everything needed to render the scrollable body. See below.</td></tr>
+  </tbody>
+</table>
+
+### `header` contents
+
+<table>
+  <thead><tr><th>Property</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>components.DayHeading</code></td><td>Resolved day heading slot component.</td></tr>
+    <tr><td><code>components.AllDayEvent</code></td><td>Resolved all-day event slot component.</td></tr>
+    <tr><td><code>components.ShowMore</code></td><td>Resolved all-day show-more slot component.</td></tr>
+    <tr><td><code>messages</code></td><td>Localized strings.</td></tr>
+    <tr><td><code>timeHead</code></td><td>Element-spread for the <code>&lt;div&gt;</code> wrapping the full header. Use <code>v-bind</code>.</td></tr>
+    <tr><td><code>timeHeader</code></td><td>Element-spread for the inner day-heading row.</td></tr>
+    <tr><td><code>timeHeaderGutter</code></td><td>Element-spread for the gutter spacer.</td></tr>
+    <tr><td><code>allDayRow</code></td><td>Element-spread for the all-day row container.</td></tr>
+    <tr><td><code>allDayLabel</code></td><td>Element-spread for the "All day" label.</td></tr>
+    <tr><td><code>allDaySlots</code></td><td>Element-spread for the slot hit-target container.</td></tr>
+    <tr><td><code>allDaySegments</code></td><td>Element-spread for the event segment container.</td></tr>
+    <tr><td><code>getHeadingProps(heading)</code></td><td>Props for a <code>DayHeading</code> component.</td></tr>
+    <tr><td><code>getAllDaySlotProps(column, colIndex)</code></td><td>Props for an all-day slot hit-target.</td></tr>
+    <tr><td><code>getAllDaySegmentProps(segment)</code></td><td>All <code>EventButton</code> props for an all-day segment.</td></tr>
+  </tbody>
+</table>
+
+### `body` contents
+
+<table>
+  <thead><tr><th>Property</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>components.TimeLabel</code></td><td>Resolved time label slot component.</td></tr>
+    <tr><td><code>components.EventSlot</code></td><td>Resolved timed event slot component.</td></tr>
+    <tr><td><code>components.BgEventSlot</code></td><td>Resolved background event slot component.</td></tr>
+    <tr><td><code>body</code></td><td>Element-spread for the scrollable body container.</td></tr>
+    <tr><td><code>gutter</code></td><td>Element-spread for the time gutter.</td></tr>
+    <tr><td><code>timeSlotsContainer</code></td><td>Element-spread for the slot hit-target container.</td></tr>
+    <tr><td><code>getColumnProps(column)</code></td><td>Props for a day column <code>&lt;div&gt;</code>.</td></tr>
+    <tr><td><code>getSlotProps(column, colIndex, slotIndex)</code></td><td>Props for a time slot hit-target.</td></tr>
+    <tr><td><code>getEventProps(event)</code></td><td>All <code>EventButton</code> props for a timed event.</td></tr>
+    <tr><td><code>getBgEventProps(bg)</code></td><td>Props for a background event box.</td></tr>
+    <tr><td><code>bodyNowIndicatorProps</code></td><td>Props for the now-indicator line, or <code>null</code> if not today.</td></tr>
+  </tbody>
+</table>
+
+## Layout variants
+
+The time grid has three layout paths, identified by checking the `grid` object:
+
+<table>
+  <thead><tr><th>Condition</th><th>Layout</th></tr></thead>
+  <tbody>
+    <tr><td><code>grid.resources === null &amp;&amp; grid.dayGroups === null</code></td><td><strong>Plain</strong> — one column per day.</td></tr>
+    <tr><td><code>grid.resources !== null</code></td><td><strong>Resource-major</strong> — resources as the outer grouping.</td></tr>
+    <tr><td><code>grid.dayGroups !== null</code></td><td><strong>Day-major</strong> — days as the outer grouping (<code>resourceLayout="day"</code>).</td></tr>
+  </tbody>
+</table>
+
+## Composed vs. granular composables
+
+`useTimeGridView` wraps three lower-level composables:
+
+1. **`useTimeGrid()`** — builds the grid model from the store.
+2. **`useTimeGridHeader(grid)`** — header state, all-day-row interaction, roving focus, segment geometry.
+3. **`useTimeGridBody(grid)`** — body state, time-slot interaction, event positioning, background events, now indicator.
+
+Call those directly if you only need to replace the header or body, not the whole layout.
+
+## Usage example (plain layout)
+
+```vue
+<script setup>
+import { EventButton, useTimeGridView } from '@big-calendar/vue'
+
+const { grid, announcement, root, getRootStyle, header, body } =
+  useTimeGridView()
+
+const {
+  components: { DayHeading, AllDayEvent },
+  timeHead, timeHeader, timeHeaderGutter,
+  allDayRow, allDayLabel, allDaySlots, allDaySegments,
+  getHeadingProps, getAllDaySlotProps, getAllDaySegmentProps,
+} = header
+
+const {
+  components: { TimeLabel, EventSlot },
+  body: bodyRoot, gutter, timeSlotsContainer,
+  getColumnProps, getSlotProps, getEventProps,
+  bodyNowIndicatorProps,
+} = body
+</script>
+
+<template>
+  <template v-if="grid !== null">
+    <div :style="getRootStyle(grid.headings.length)" v-bind="root">
+      <div role="status" aria-live="polite" class="bc-sr-only">
+        {{ announcement }}
+      </div>
+      <div v-bind="timeHead">
+        <div v-bind="timeHeader">
+          <div v-bind="timeHeaderGutter" />
+          <component
+            v-for="h in grid.headings"
+            :key="h.day"
+            :is="DayHeading"
+            v-bind="getHeadingProps(h)"
+          />
+        </div>
+        <div v-bind="allDayRow">
+          <div v-bind="allDayLabel">All day</div>
+          <div v-bind="allDaySlots">
+            <div
+              v-for="(col, ci) in grid.columns"
+              :key="col.key"
+              v-bind="getAllDaySlotProps(col, ci)"
+            />
+          </div>
+          <div v-bind="allDaySegments">
+            <EventButton
+              v-for="seg in grid.allDay.segments"
+              :key="seg.key"
+              v-bind="getAllDaySegmentProps(seg)"
+            >
+              <component :is="AllDayEvent" :event="seg.event" :title="seg.title" />
+            </EventButton>
+          </div>
+        </div>
+      </div>
+      <div v-bind="bodyRoot">
+        <div v-bind="gutter">
+          <component
+            v-for="l in grid.gutter"
+            :key="l.key"
+            :is="TimeLabel"
+            :time="l.time"
+            :label="l.label"
+          />
+        </div>
+        <div
+          v-for="(column, ci) in grid.columns"
+          :key="column.key"
+          v-bind="getColumnProps(column)"
+        >
+          <div v-bind="timeSlotsContainer">
+            <div
+              v-for="(_, si) in grid.slotCount"
+              :key="si"
+              v-bind="getSlotProps(column, ci, si)"
+            />
+          </div>
+          <EventButton
+            v-for="event in column.events"
+            :key="event.key"
+            v-bind="getEventProps(event)"
+          >
+            <component
+              :is="EventSlot"
+              :event="event.event"
+              :title="event.title"
+              :time="event.time"
+            />
+          </EventButton>
+        </div>
+        <div v-if="bodyNowIndicatorProps" v-bind="bodyNowIndicatorProps" />
+      </div>
+    </div>
+  </template>
+</template>
+```
+
+## When to use this vs. `<TimeGridView>`
+
+Use `<TimeGridView>` when the default rendering is sufficient. Use `useTimeGridView` when you need to change the HTML structure — render the all-day row differently, replace the column layout, or add custom wrappers.
+
+For changing individual cells or labels without restructuring, use `components.time` slot overrides on `CalendarProvider` — no composable required.

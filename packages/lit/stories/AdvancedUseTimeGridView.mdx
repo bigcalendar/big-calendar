@@ -1,0 +1,130 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/TimeGridViewController" />
+
+# TimeGridViewElement
+
+`TimeGridViewElement` (`<bc-time-grid-view>`) renders the time grid for the Week, Work Week, and Day views. It consumes `calendarContext` via `@lit/context` and renders nothing when the active view is `'month'` or `'agenda'`.
+
+## How it works internally
+
+`TimeGridViewElement` follows this lifecycle:
+
+1. Creates a `ContextConsumer` for `calendarContext`.
+2. When context arrives, subscribes to `store.view`, `store.events`, `store.date`, etc. via `effect()`.
+3. Computes the time grid model on every render.
+4. Renders a column layout with a time gutter on the left and one day column per visible day (or per resource, in resource mode).
+
+## The time grid model
+
+<table>
+<thead><tr><th>Field</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>columns</code></td><td>Array of <code>TimeColumn</code> objects, one per day (or per resource column in resource views).</td></tr>
+<tr><td><code>gutterLabels</code></td><td>Array of <code>TimeGutterLabel</code> objects for the left-side time labels.</td></tr>
+<tr><td><code>allDay</code></td><td>All-day event strip data: <code>segments</code> (visible rows) and <code>extra</code> (overflow info).</td></tr>
+<tr><td><code>dayGroups</code></td><td>Non-null only in resource + day-major mode. Groups columns by date.</td></tr>
+<tr><td><code>resources</code></td><td>Non-null only in resource mode. Groups columns by resource.</td></tr>
+</tbody>
+</table>
+
+### Column (`TimeColumn`)
+
+<table>
+<thead><tr><th>Field</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>heading</code></td><td>Day heading data: <code>label</code>, <code>day</code>, <code>isToday</code>.</td></tr>
+<tr><td><code>slots</code></td><td>Array of time slot rows. Each slot has <code>label</code>, <code>time</code>, and <code>isMinor</code>.</td></tr>
+<tr><td><code>events</code></td><td>Positioned timed events for this column (top/height/left/width as percentages).</td></tr>
+</tbody>
+</table>
+
+## Extending TimeGridViewElement
+
+```ts
+import { TimeGridViewElement } from '@big-calendar/lit'
+import { customElement } from 'lit/decorators.js'
+import { html } from 'lit'
+
+@customElement('my-time-grid-view')
+class MyTimeGridViewElement extends TimeGridViewElement {
+  override render() {
+    return html`
+      <div class="my-time-grid-wrapper">
+        ${super.render()}
+      </div>
+    `
+  }
+}
+```
+
+Use `<my-time-grid-view>` inside `<bc-calendar>`:
+
+```ts
+html`
+  <bc-calendar .localizer=${localizer} .events=${events}>
+    <bc-default-toolbar></bc-default-toolbar>
+    <bc-month-view></bc-month-view>
+    <my-time-grid-view></my-time-grid-view>
+    <bc-agenda-view></bc-agenda-view>
+  </bc-calendar>
+`
+```
+
+## CSS customisation points
+
+<table>
+<thead><tr><th>Class</th><th>Element</th></tr></thead>
+<tbody>
+<tr><td><code>.bc-time-grid</code></td><td>Root time grid container</td></tr>
+<tr><td><code>.bc-gutter-label</code></td><td>Time label in the left gutter</td></tr>
+<tr><td><code>.bc-day-column</code></td><td>Individual day column</td></tr>
+<tr><td><code>.bc-today</code></td><td>Applied to today's day column</td></tr>
+<tr><td><code>.bc-day-heading</code></td><td>Column heading button</td></tr>
+<tr><td><code>.bc-event</code></td><td>Timed event block inside a column</td></tr>
+<tr><td><code>.bc-event-title</code></td><td>Text content inside a timed event block</td></tr>
+<tr><td><code>.bc-now-indicator</code></td><td>The horizontal "now" line inside today's column</td></tr>
+</tbody>
+</table>
+
+## Controlling the visible time window
+
+Set `.min` and `.max` on `<bc-calendar>` to restrict what hours are shown:
+
+```ts
+html`
+  <bc-calendar
+    .localizer=${localizer}
+    .events=${events}
+    .min=${{ hour: 8 }}
+    .max=${{ hour: 18 }}
+    defaultView="week"
+  >
+    <bc-default-toolbar></bc-default-toolbar>
+    <bc-month-view></bc-month-view>
+    <bc-time-grid-view></bc-time-grid-view>
+    <bc-agenda-view></bc-agenda-view>
+  </bc-calendar>
+`
+```
+
+The grid clamps events at the `min` / `max` boundaries. Events outside the window are still tracked — they just don't appear on screen.
+
+## Scroll position
+
+`.scrollToTime` accepts a `{ hour, minute? }` object. The grid scrolls to that time when it first mounts:
+
+```ts
+html`
+  <bc-calendar
+    .localizer=${localizer}
+    .events=${events}
+    .scrollToTime=${{ hour: 9 }}
+    defaultView="week"
+  >
+    ...
+  </bc-calendar>
+`
+```
+
+When omitted, the grid scrolls to the current time in the configured time zone.

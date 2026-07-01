@@ -1,0 +1,97 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Calendar/Toolbar" />
+
+# Toolbar
+
+The default toolbar provides **navigation** (Prev / Today / Next buttons) and a **view switcher** (one button per enabled view). It lives outside the `.bc-calendar` element so its height does not shrink the calendar's scrollable body.
+
+## Hiding the toolbar
+
+Pass `toolbar={false}` to `<Calendar>` to remove it:
+
+```tsx
+<Calendar toolbar={false} />
+```
+
+Useful when your application provides its own navigation controls or when embedding a calendar widget without chrome.
+
+## Customizing labels and messages
+
+The toolbar reads from the `messages` prop on `CalendarProvider`. Override any string:
+
+```tsx
+<CalendarProvider
+  messages={{
+    today: 'Jump to today',
+    previous: '‹',
+    next: '›',
+    month: 'Month',
+    week: 'Week',
+    work_week: 'Work',
+    day: 'Day',
+    agenda: 'Agenda',
+  }}
+>
+```
+
+## Replacing the toolbar entirely
+
+Provide your own component via `components.toolbar`. It receives the same props as the default toolbar:
+
+```tsx
+import type { ToolbarProps } from '@big-calendar/react'
+
+function MyToolbar({ label, view, views, messages, onNavigate, onView }: ToolbarProps) {
+  return (
+    <header>
+      <button onClick={() => onNavigate('PREV')}>Previous</button>
+      <span>{label}</span>
+      <button onClick={() => onNavigate('NEXT')}>Next</button>
+      <button onClick={() => onNavigate('TODAY')}>Today</button>
+      <nav>
+        {views.map((v) => (
+          <button key={v} onClick={() => onView(v)} aria-pressed={v === view}>
+            {messages[v] ?? v}
+          </button>
+        ))}
+      </nav>
+    </header>
+  )
+}
+
+<CalendarProvider components={{ toolbar: MyToolbar }}>
+  <Calendar />
+</CalendarProvider>
+```
+
+## ToolbarProps reference
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>label</code></td><td><code>string</code></td><td>Localized title for the active view + focus date (e.g. "June 2026").</td></tr>
+    <tr><td><code>view</code></td><td><code>ViewKey</code></td><td>The currently active view key.</td></tr>
+    <tr><td><code>views</code></td><td><code>ViewKey[]</code></td><td>The enabled views to show buttons for.</td></tr>
+    <tr><td><code>messages</code></td><td><code>Messages</code></td><td>Resolved UI strings.</td></tr>
+    <tr><td><code>onNavigate</code></td><td><code>(direction: NavigateDirection) =&gt; void</code></td><td>Call with <code>'PREV'</code>, <code>'NEXT'</code>, or <code>'TODAY'</code>.</td></tr>
+    <tr><td><code>onView</code></td><td><code>(view: ViewKey) =&gt; void</code></td><td>Call with the target view key to switch views.</td></tr>
+  </tbody>
+</table>
+
+## Using the Toolbar component standalone
+
+`<Toolbar>` is exported and can be placed anywhere inside a `CalendarProvider` — it does not have to be inside `<Calendar>`. This is how the `Calendar` component itself uses it:
+
+```tsx
+<CalendarProvider ...>
+  <Toolbar />             {/* navigation lives here, outside .bc-calendar */}
+  <div className="bc-calendar">
+    <MonthView />
+    <TimeGridView />
+    <AgendaView />
+  </div>
+</CalendarProvider>
+```
+
+If you are building a custom layout with the headless hooks, this gives you full control over where navigation sits relative to the calendar body.

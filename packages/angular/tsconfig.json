@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@big-calendar/core/utils": ["../core/dist/utils/index.d.ts"],
+      "@big-calendar/core": ["../core/dist/index.d.ts"],
+      "@big-calendar/dnd": ["../dnd/dist/index.d.ts"],
+      "@big-calendar/localizer": ["../localizer/dist/index.d.ts"],
+      "@big-calendar/localizer-luxon": ["../localizer-luxon/dist/index.d.ts"],
+      "@big-calendar/localizer-temporal": ["../localizer-temporal/dist/index.d.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}

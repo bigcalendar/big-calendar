@@ -1,0 +1,682 @@
+/*
+ * Big Calendar — structural layout (grid / subgrid / flex) plus the geometry
+ * contract that turns `@big-calendar/core`'s normalized numbers into placement.
+ * Visual skin (colors, borders, type) lives in components/*.css; this file is
+ * structure + positioning only. All box edges use CSS logical properties so RTL
+ * is handled by the document direction + `:dir()` with no JS.
+ *
+ * ── Geometry contract (set by the framework adapter as inline custom props) ──
+ *
+ * Time-grid event box (in a `.bc-day-column`, which is the positioning context):
+ *   --bc-top, --bc-height   fractions 0..1 of the column height (slot metrics)
+ *   --bc-left, --bc-width    fractions 0..1 of the column width (day-layout algo)
+ *   --bc-z                   integer paint order (zIndex)
+ *
+ * Month / all-day segment (a grid item spanning day columns):
+ *   --bc-seg-left            1-based start column
+ *   --bc-seg-span            column count to span
+ *   --bc-seg-row             1-based stack level (row within the segment grid)
+ *
+ * Now-indicator line:
+ *   --bc-now-top             fraction 0..1 down the column
+ *
+ * Counts the adapter sets on containers:
+ *   --bc-day-count           number of day columns (time grid / all-day row)
+ *   --bc-week-count          number of week rows (month grid)
+ *   --bc-slot-count          number of slot rows (time-grid body height)
+ */
+
+@layer bc.layout {
+  /* ── utilities ───────────────────────────────────────────────────────── */
+  /*
+   * Visually-hidden but available to assistive tech. Used for the
+   * `aria-describedby` keyboard-instruction elements. Not scoped under
+   * `.bc-calendar` — the provider may render these alongside, not inside, it.
+   */
+  .bc-sr-only {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* ── root ────────────────────────────────────────────────────────────── */
+  .bc-calendar {
+    display: grid;
+    /* Views only — the toolbar renders as a sibling outside `.bc-calendar`. */
+    grid-template-rows: 1fr;
+    block-size: 100%;
+    min-block-size: 0;
+    /* Components respond to the calendar's own size, not the viewport. */
+    container: bc / inline-size;
+  }
+
+  /* View host elements (Lit / Angular custom element wrappers).
+     All three view elements must share the same grid row so that only the active
+     one (with rendered content) fills the 1fr track. Without grid-row:1, the
+     first element claims the explicit 1fr row and the others go into implicit auto
+     rows — the inactive 1fr element creates the gap, and the active view in an
+     auto row has no definite height so block-size:100% resolves as auto.
+     display:block ensures children can resolve block-size:100% against the
+     element's grid-track height (custom elements default to display:inline). */
+  bc-month-view,
+  bc-time-grid-view,
+  bc-agenda-view {
+    display: block;
+    grid-row: 1;
+    min-block-size: 0;
+  }
+
+  bc-calendar-dnd {
+    display: block;
+    min-block-size: 0;
+  }
+
+  .bc-viewport {
+    min-block-size: 0;
+    overflow: hidden;
+    display: grid;
+  }
+
+  /* ── toolbar / headers (flex) ────────────────────────────────────────── */
+  .bc-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--bc-space-2);
+    padding: 10px;
+  }
+
+  .bc-toolbar-group {
+    display: flex;
+    align-items: center;
+  }
+
+  @media (max-width: 420px) {
+    .bc-toolbar {
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+
+  /* ── month view ──────────────────────────────────────────────────────── */
+  .bc-month {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    min-block-size: 0;
+  }
+
+  .bc-month-header,
+  .bc-month-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .bc-month-grid {
+    grid-auto-rows: minmax(var(--bc-month-row-min), 1fr);
+    min-block-size: 0;
+    /* Selectable surface (day-mode drag): allow vertical page scroll but reserve
+       the gesture so a day-drag doesn't fight native horizontal pan/zoom on
+       touch (the long-press in useSlotSelection then captures the pointer). */
+    touch-action: pan-y;
+  }
+
+  /* A week spans all seven columns and re-exposes them via subgrid so day
+     cells and multi-day event segments share one column track set. */
+  .bc-month-week {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-template-rows: 1fr;
+    min-block-size: var(--bc-month-row-min);
+  }
+
+  /* Two overlapping full-width subgrids: backgrounds (date cells) under the
+     event segments. Both occupy the same single row/column area. */
+  .bc-week-backgrounds,
+  .bc-week-events {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    display: grid;
+    grid-template-columns: subgrid;
+  }
+
+  .bc-week-backgrounds {
+    grid-auto-rows: 1fr;
+    /* Empty cell area falls through to the slot hit layer beneath; only the
+       date number (below) re-enables pointer events to keep drilldown working. */
+    pointer-events: none;
+  }
+
+  .bc-date-number {
+    position: relative;
+    pointer-events: auto;
+  }
+
+  /* Transparent grid of per-day hit targets, one subgrid row under the date
+     cells. The non-overridable base layer for month day selection (pointer +
+     keyboard); date numbers and event segments paint above and stay clickable. */
+  .bc-month-slots {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    display: grid;
+    grid-template-columns: subgrid;
+  }
+
+  .bc-month-slot {
+    min-inline-size: 0;
+    /* Positioning context for the keyboard focus ring (see "slot focus" below). */
+    position: relative;
+  }
+
+  .bc-date-cell {
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+    padding: var(--bc-space-1);
+  }
+
+  .bc-week-events {
+    grid-auto-rows: var(--bc-segment-height);
+    /* Clear the date-number line that sits at the top of each cell. */
+    padding-block-start: var(--bc-segment-height);
+    pointer-events: none;
+  }
+
+  /* A multi-day (or single-day) segment placed by column + level. */
+  .bc-segment {
+    grid-column: var(--bc-seg-left) / span var(--bc-seg-span);
+    grid-row: var(--bc-seg-row);
+    min-inline-size: 0;
+    margin-inline: var(--bc-event-gap);
+    pointer-events: auto;
+  }
+
+  /* ── time grid (day / week / work_week) ──────────────────────────────── */
+  /* Single 2-D scroll container for all time-grid views. Column tracks with
+     minimum widths are owned here so all three inner rows share the same track
+     definitions via `subgrid`. `overflow: auto` scrolls horizontally when
+     columns hit their minimum floor, and vertically when the slot body is
+     taller than the visible area. */
+  .bc-time-grid {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    grid-template-columns: var(--bc-gutter-width) repeat(var(--bc-day-count), minmax(var(--bc-col-min), 1fr));
+    block-size: 100%;
+    min-block-size: 0;
+    overflow: auto;
+    /* Leave room below the grid's closing border (timegrid.css) so it isn't
+       flush against the container edge. */
+    margin-block-end: 2px;
+  }
+
+  /* The sticky header band (day names + all-day row) sits in grid row 1 and
+     sticks to the block-start so it remains visible while the slot body
+     scrolls. Plain and resource grids both use this wrapper. */
+  .bc-time-grid > .bc-time-head {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-template-rows: auto auto;
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 3;
+    background: var(--bc-color-bg);
+  }
+
+  /* Inner header/allday/body rows inherit the outer grid's column tracks via
+     subgrid so the gutter column and all day columns stay aligned across rows
+     without duplicating the track definition. */
+  .bc-time-header,
+  .bc-allday-row,
+  .bc-time-body {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+  }
+
+  /* All-day header: segments stack like a month week across the day columns.
+     The label, hit layer, selection band, and segments all overlap in row 1
+     (each in its own layer), so the day-column area lines up across them. */
+  .bc-allday-row {
+    align-items: start;
+    /* A consistent baseline height across every time-grid view, so the all-day
+       strip reads as a band rather than collapsing to its content. Grows past
+       this when more segment rows stack. Overridable via the var. */
+    block-size: var(--bc-allday-row-height, 6.75rem);
+    overflow: hidden;
+    /* Selectable surface (all-day day-mode drag) — same touch-action rationale
+       as `.bc-month-grid` / `.bc-time-body`. */
+    touch-action: pan-y;
+  }
+
+  .bc-allday-label {
+    grid-row: 1;
+  }
+
+  /* Transparent per-day hit targets (the base layer for all-day day-mode
+     selection). A min height keeps an empty all-day strip selectable. */
+  .bc-allday-slots {
+    grid-column: 2 / -1;
+    grid-row: 1;
+    align-self: stretch;
+    display: grid;
+    grid-template-columns: repeat(var(--bc-day-count), minmax(0, 1fr));
+    min-block-size: var(--bc-segment-height);
+  }
+
+  .bc-allday-slot {
+    min-inline-size: 0;
+    position: relative;
+  }
+
+  /* Selection band overlay: a day-column grid carrying one placed `.bc-selection`. */
+  .bc-allday-selection {
+    grid-column: 2 / -1;
+    grid-row: 1;
+    align-self: stretch;
+    display: grid;
+    grid-template-columns: repeat(var(--bc-day-count), minmax(0, 1fr));
+    pointer-events: none;
+  }
+
+  .bc-allday-segments {
+    grid-column: 2 / -1;
+    grid-row: 1;
+    display: grid;
+    grid-template-columns: repeat(var(--bc-day-count), minmax(0, 1fr));
+    grid-auto-rows: var(--bc-segment-height);
+    gap: var(--bc-event-gap);
+    /* Empty cell area falls through to the hit layer beneath; segments and the
+       show-more re-enable pointer events themselves. */
+    pointer-events: none;
+  }
+
+  /* Slot body: visible overflow so the outer `.bc-time-grid` scroll container
+     owns both axes. `pan-y` lets a finger scroll vertically; touch-based slot
+     selection starts only after a long-press that captures the pointer.
+     `position: relative` makes it the containing block for the body-level
+     now-indicator, which spans gutter + all day columns via `inset-inline: 0`. */
+  .bc-time-body {
+    position: relative;
+    overflow: visible;
+    min-block-size: 0;
+    touch-action: pan-y;
+  }
+
+  /* Each labelled group spans `--bc-slots-per-group` slot rows, so the gutter is
+     the same height as the body (slot-count rows) and every label covers its block. */
+  .bc-time-gutter {
+    grid-column: 1;
+    display: grid;
+    grid-auto-rows: calc(var(--bc-slot-height) * var(--bc-slots-per-group, 1));
+  }
+
+  /* The stack of day columns; each column is a positioning context for events. */
+  .bc-day-column {
+    position: relative;
+    min-inline-size: 0;
+    block-size: calc(var(--bc-slot-count) * var(--bc-slot-height));
+  }
+
+  /* Transparent grid of real per-slot hit targets covering the column. It's the
+     base layer for slot selection (pointer + keyboard); events paint above it.
+     Visual slot/hour lines are the background-image gradient on .bc-day-column. */
+  .bc-time-slots {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-auto-rows: var(--bc-slot-height);
+  }
+
+  .bc-time-slot {
+    min-inline-size: 0;
+    min-block-size: 0;
+    position: relative;
+  }
+
+  /* ── resource time grid (day / week) ─────────────────────────────────
+     One column per resource (day) or per resource×day (week). Columns enforce the
+     same `--bc-col-min` as regular time-grid views so both scroll horizontally at
+     the same floor.
+
+     The whole grid is a single 2-D scroll container: the parent owns the leaf-
+     column tracks; the header + all-day "head" is sticky to the top (stays put on
+     vertical scroll) and the gutter column is sticky to the inline-start (stays
+     put on horizontal scroll). Head and body inherit the parent's exact tracks via
+     `subgrid`, so every row stays aligned at any scroll offset. */
+  .bc-time-grid-resources {
+    display: grid;
+    grid-template-columns:
+      var(--bc-gutter-width)
+      repeat(var(--bc-day-count), minmax(var(--bc-col-min), 1fr));
+    /* head (auto) then body (natural, tall) — the container scrolls to reveal. */
+    grid-template-rows: auto auto;
+    block-size: 100%;
+    min-block-size: 0;
+    overflow: auto;
+  }
+
+  /* Frozen gutter: the time-label column (and its header/all-day counterparts)
+     stay pinned at the inline-start while day columns scroll horizontally.
+     The trailing border is the fixed gutter/content divider; `align-self: stretch`
+     fills the cell's opaque background so scrolled content can't bleed through.
+     These rules cover both the plain and resource time-grid via `.bc-time-grid`. */
+  .bc-time-grid .bc-time-gutter {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 2;
+    background: var(--bc-color-bg);
+    border-inline-end: var(--bc-border);
+  }
+
+  .bc-time-grid .bc-time-header-gutter,
+  .bc-time-grid .bc-allday-label {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 4;
+    align-self: stretch;
+    background: var(--bc-color-bg);
+    border-inline-end: var(--bc-border);
+  }
+
+  /* Single-tier resource title cell. */
+  .bc-resource-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 0;
+    font-weight: var(--bc-font-weight-bold, 600);
+  }
+
+  /* One resource's all-day lane: a hit-target fill with its events stacked above.
+     Stretch to fill the all-day band (the row sets `align-items: start`) so the
+     lane's column divider spans the band's full height, not just its content. */
+  .bc-allday-resource {
+    position: relative;
+    align-self: stretch;
+    min-block-size: var(--bc-segment-height);
+    padding: var(--bc-event-gap);
+  }
+
+  .bc-allday-resource > .bc-allday-slot {
+    position: absolute;
+    inset: 0;
+  }
+
+  .bc-allday-resource-stack {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--bc-event-gap);
+  }
+
+  /* A stacked all-day segment flows in the lane (no month-style grid placement). */
+  .bc-segment-stacked {
+    position: relative;
+  }
+
+  /* ── resource WEEK layout ────────────────────────────────────────────
+     Two-tier header (resource titles over day names) and per-resource all-day
+     lanes that each span the resource's day columns. */
+
+  /* Divider before each resource header, matching the body day-column dividers.
+     Applies to both the day single-tier header and the week two-tier title row. */
+  .bc-time-grid-resources .bc-resource-header {
+    border-inline-start: var(--bc-border);
+  }
+
+  /* Week two-tier only: separator beneath the resource titles (row 1) and a
+     leading divider before each day name (row 2), so the header reads as a grid
+     that lines up with the body. */
+  .bc-time-header-tiered .bc-resource-header {
+    border-block-end: var(--bc-border);
+  }
+
+  /* Grid so the (content-width) heading button stretches to fill the cell, the
+     way it does as a direct child in the flat header — its centered text then
+     reads centered. */
+  .bc-time-header-tiered .bc-resource-day-head {
+    display: grid;
+    border-inline-start: var(--bc-border);
+  }
+
+  /* All-day lane day cells: a divider before EACH day, including the first — that
+     first border is the resource-boundary divider. The week lane therefore drops
+     the shared leading resource border (below) so its internal day sub-grid isn't
+     shifted off the body columns by a border eating into the lane's content box. */
+  .bc-allday-resource-slots > .bc-allday-slot {
+    border-inline-start: var(--bc-border);
+  }
+
+  /* One resource's WEEK all-day lane spans its day columns; its hit targets and
+     segments sit on a sub-grid of those days. The per-day cells draw their own
+     dividers (incl. the resource boundary), so the lane drops the shared leading
+     resource border — done in `timegrid.css` (bc.components) so it outranks the
+     shared `.bc-allday-resource` border, which lives in that later layer. */
+  .bc-allday-resource-week {
+    padding: 0;
+  }
+
+  .bc-allday-resource-slots {
+    position: absolute;
+    inset: 0;
+    display: grid; /* one column per day (template set inline) */
+  }
+
+  .bc-allday-resource-segments {
+    position: relative;
+    display: grid; /* one column per day (template set inline) */
+    grid-auto-rows: var(--bc-segment-height);
+    gap: var(--bc-event-gap);
+    padding: var(--bc-event-gap);
+    /* Empty cells fall through to the hit layer; segments re-enable themselves. */
+    pointer-events: none;
+  }
+
+  /* ── day-major resource layout ──────────────────────────────────────
+     Day-major flips the grouping: days are the outer tier (row 1), resources the
+     inner tier (row 2). The scroll architecture (sticky head, frozen gutter,
+     subgrid) is identical to resource-major; only the header tiers differ. */
+
+  /* Day-major columns are full per-resource columns — same `--bc-col-min` default
+     as regular time-grid date columns, no override needed. */
+
+  /* Top-tier: day name spanning its resource columns. Shares the bold/centered
+     base style from `.bc-resource-header` via the parent selector below, but
+     needs a block-end divider (row 1 / row 2 separator). */
+  .bc-time-grid-resources-day-major .bc-day-major-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 0;
+    font-weight: var(--bc-font-weight-bold, 600);
+    border-block-end: var(--bc-border);
+    border-inline-start: var(--bc-border);
+  }
+
+  /* Resource label in row 2 of the day-major tiered header: centered text. */
+  .bc-resource-header-label {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+    padding-inline: var(--bc-space-1);
+    font-size: var(--bc-font-size-sm);
+    color: var(--bc-color-text-subtle);
+  }
+
+  /* ── slot focus ──────────────────────────────────────────────────────
+     The slot cells are the bottom layer of their surface — date cells, events,
+     and the selection/now overlays all paint above them — so a plain outline on
+     a focused cell would be hidden. Draw the keyboard focus ring on a high
+     pseudo-element instead (inset so it isn't clipped by the scroll container or
+     neighbouring cells); `pointer-events: none` keeps the cell itself the hit
+     target and leaves events clickable. */
+  .bc-month-slot:focus-visible,
+  .bc-allday-slot:focus-visible,
+  .bc-time-slot:focus-visible {
+    outline: none;
+  }
+
+  .bc-month-slot:focus-visible::after,
+  .bc-allday-slot:focus-visible::after,
+  .bc-time-slot:focus-visible::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 103;
+    pointer-events: none;
+    outline: var(--bc-focus-ring);
+    outline-offset: calc(-1 * var(--bc-focus-ring-width));
+  }
+
+  /* Background events sit behind, foreground events above; both use the same
+     fraction-based box. */
+  .bc-event,
+  .bc-bg-event {
+    position: absolute;
+    inset-block-start: calc(var(--bc-top) * 100%);
+    block-size: calc(var(--bc-height) * 100%);
+    /* The fractional layout is squeezed into `100% - gutter`, leaving the
+       `--bc-event-gutter` strip on the trailing edge over a bare `.bc-time-slot`
+       so a slot selection can start even where a full-width event sits. */
+    inset-inline-start: calc(var(--bc-left) * (100% - var(--bc-event-gutter)));
+    inline-size: calc(var(--bc-width) * (100% - var(--bc-event-gutter)));
+    min-block-size: 0;
+    overflow: hidden;
+  }
+
+  .bc-event {
+    z-index: var(--bc-z, 1);
+  }
+
+  .bc-bg-event {
+    z-index: 0;
+    pointer-events: none;
+    /* pointer-events: none means the gutter is irrelevant — extend to the full column width. */
+    inset-inline-start: calc(var(--bc-left) * 100%);
+    inline-size: calc(var(--bc-width) * 100%);
+  }
+
+  /* Now-indicator: spans from the grid-side edge of the gutter to the far right.
+     Uses slot vars instead of 100% so the position is the correct fraction of the
+     full scrollable column height, not the (viewport-dependent) .bc-time-body box
+     height. */
+  .bc-now-indicator {
+    position: absolute;
+    inset-inline-start: var(--bc-gutter-width);
+    inset-inline-end: 0;
+    inset-block-start: calc(var(--bc-now-top) * var(--bc-slot-count) * var(--bc-slot-height));
+    block-size: var(--bc-now-width);
+    z-index: 102;
+    pointer-events: none;
+  }
+
+  /* Drag-to-select overlay: a grid-placed box (time grid or day cells). */
+  .bc-selection,
+  .bc-drag-preview {
+    position: absolute;
+    inset-block-start: calc(var(--bc-top) * 100%);
+    block-size: calc(var(--bc-height) * 100%);
+    inset-inline: 0;
+    z-index: 101;
+    pointer-events: none;
+  }
+
+  /* Month variant: not an absolute box but a full-height grid item spanning the
+     selected day columns of one week row. Overrides the time-grid placement.
+     The drag-preview band (move / drop-from-outside) shares the same placement. */
+  .bc-selection-month,
+  .bc-drag-preview-month {
+    position: relative;
+    inset: auto;
+    grid-row: 1;
+    grid-column: var(--bc-seg-left) / span var(--bc-seg-span);
+    block-size: auto;
+    margin: var(--bc-event-gap);
+  }
+
+  /* All-day variant: a full-height grid item spanning the selected day columns of
+     the time-grid all-day row. Like the month variant, grid-placed not absolute. */
+  .bc-selection-allday {
+    position: relative;
+    inset: auto;
+    grid-row: 1;
+    grid-column: var(--bc-seg-left) / span var(--bc-seg-span);
+    block-size: auto;
+    margin: var(--bc-event-gap);
+  }
+
+  /* ── agenda view ─────────────────────────────────────────────────────── */
+  /* One shared column set (date | time | event) drives the header and the
+     scrolling body via subgrid, so the three columns line up like a table. */
+  .bc-agenda {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    grid-template-rows: auto 1fr;
+    min-block-size: 0;
+  }
+
+  .bc-agenda-header {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+  }
+
+  .bc-agenda-body {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-auto-rows: min-content;
+    align-content: start;
+    overflow-y: auto;
+    min-block-size: 0;
+  }
+
+  /* A day group re-exposes the columns; its rows are one per event so the date
+     cell can span them and show once per day. */
+  .bc-agenda-day {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-template-rows: repeat(var(--bc-agenda-rows, 1), auto);
+  }
+
+  .bc-agenda-date {
+    grid-column: 1;
+    grid-row: 1 / -1;
+  }
+
+  /* Each event is one row spanning the time + event columns (subgrid again). */
+  .bc-agenda-row {
+    grid-column: 2 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+  }
+
+  /* ── responsive collapsing (container, not viewport) ─────────────────── */
+  @container bc (inline-size < 34rem) {
+    .bc-calendar {
+      --bc-gutter-width: 3rem;
+      --bc-font-size: 0.8125rem;
+    }
+    /* Long weekday names give way to their short form. */
+    .bc-weekday-long {
+      display: none;
+    }
+  }
+
+  @container bc (inline-size >= 34rem) {
+    .bc-weekday-short {
+      display: none;
+    }
+  }
+}

@@ -1,0 +1,99 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/Data Hooks" />
+
+# Data Hooks
+
+In the React and Vue adapters, the view model data is exposed through composable functions like `useMonthView()`. In the Angular adapter the equivalent is `injectMonthView()`. In the Lit adapter, there are no hook-style functions — instead, the view elements (`MonthViewElement`, `TimeGridViewElement`, `AgendaViewElement`) are classes that consume `calendarContext` and compute their own view models internally.
+
+This page explains how data flows from the store to the DOM, and how you can access the same data when building custom views.
+
+---
+
+## How the built-in view elements get their data
+
+Every view element does the same thing under the hood:
+
+1. Consume `calendarContext` via `ContextConsumer` from `@lit/context`.
+2. Read the raw preact-signals store from `ctx.store`.
+3. Compute a view-specific model (month grid, time grid, agenda rows) using functions from `@big-calendar/core`.
+4. Use `@preact/signals-core`'s `effect()` to subscribe to signal changes and call `requestUpdate()` when data changes.
+
+You can follow the same pattern in your own custom element.
+
+---
+
+## Accessing the store directly
+
+```ts
+import { LitElement } from 'lit'
+import { customElement } from 'lit/decorators.js'
+import { ContextConsumer } from '@lit/context'
+import { calendarContext } from '@big-calendar/lit'
+
+@customElement('my-sidebar')
+class MySidebar extends LitElement {
+  override createRenderRoot() { return this }
+
+  private _ctx = new ContextConsumer(this, {
+    context: calendarContext,
+    subscribe: true,
+  })
+
+  // Navigate programmatically
+  goToToday() {
+    const store = this._ctx.value?.store
+    store?.navigate({ action: 'TODAY' })
+  }
+
+  // Read the current view
+  getCurrentView() {
+    return this._ctx.value?.store.view.value
+  }
+}
+```
+
+---
+
+## Reactive subscription
+
+The signals in the store are preact signals. Subscribe to them with `effect()` from `@preact/signals-core`:
+
+```ts
+import { effect } from '@preact/signals-core'
+
+// Inside a LitElement:
+private _disposeEffect?: () => void
+
+override connectedCallback() {
+  super.connectedCallback()
+  // Wait for context, then subscribe
+  this._ctx.subscribe((ctx) => {
+    this._disposeEffect?.()
+    if (!ctx?.store) return
+    this._disposeEffect = effect(() => {
+      // Access any signal — effect re-runs when it changes
+      const _view = ctx.store.view.value
+      this.requestUpdate()
+    })
+  })
+}
+
+override disconnectedCallback() {
+  super.disconnectedCallback()
+  this._disposeEffect?.()
+}
+```
+
+---
+
+## Summary
+
+The Lit adapter does not export hook functions because Lit elements manage their own lifecycle and context subscriptions. The right entry point for custom data access is:
+
+- `calendarContext` — consume this in any child element to get the store.
+- `store.view.value`, `store.events.value`, `store.date.value` — reactive signal values.
+- `store.navigate({ action })` — call to change the focus date.
+- `store.setView(viewKey)` — call to change the active view.
+
+See **Advanced → Headless API** for the full `CalendarController` and `calendarContext` reference.

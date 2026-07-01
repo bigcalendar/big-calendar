@@ -1,0 +1,61 @@
+{
+  "name": "@big-calendar/react",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Big Calendar — @big-calendar/react",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bigcalendar/big-calendar.git",
+    "directory": "packages/react"
+  },
+  "sideEffects": false,
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./*": {
+      "import": "./dist/*/index.js",
+      "types": "./dist/*/index.d.ts",
+      "default": "./dist/*/index.js"
+    }
+  },
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@big-calendar/core": "workspace:*",
+    "@big-calendar/styles": "workspace:*",
+    "@preact/signals-core": "^1.14.2",
+    "clsx": "^2.1.1"
+  },
+  "peerDependencies": {
+    "@big-calendar/dnd": "workspace:*",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "@big-calendar/dnd": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@big-calendar/dnd": "workspace:*",
+    "@big-calendar/localizer-luxon": "workspace:*",
+    "@big-calendar/localizer-temporal": "workspace:*",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.2.16",
+    "@types/react-dom": "^19.2.3",
+    "jsdom": "^29.1.1",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  }
+}

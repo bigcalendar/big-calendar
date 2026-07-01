@@ -1,0 +1,62 @@
+{
+  "name": "@big-calendar/svelte",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Big Calendar — @big-calendar/svelte",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bigcalendar/big-calendar.git",
+    "directory": "packages/svelte"
+  },
+  "sideEffects": false,
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "svelte": "./src/index.ts",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./*": {
+      "svelte": "./src/*/index.ts",
+      "import": "./dist/*/index.js",
+      "types": "./dist/*/index.d.ts",
+      "default": "./dist/*/index.js"
+    }
+  },
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@big-calendar/core": "workspace:*",
+    "@big-calendar/styles": "workspace:*",
+    "@preact/signals-core": "^1.14.2",
+    "clsx": "^2.1.1"
+  },
+  "peerDependencies": {
+    "@big-calendar/dnd": "workspace:*",
+    "svelte": ">=5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@big-calendar/dnd": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@big-calendar/dnd": "workspace:*",
+    "@big-calendar/localizer-luxon": "workspace:*",
+    "@big-calendar/localizer-temporal": "workspace:*",
+    "@storybook/svelte-vite": "^10.4.6",
+    "@sveltejs/vite-plugin-svelte": "^6.2.0",
+    "@testing-library/svelte": "^5.2.0",
+    "jsdom": "^29.1.1",
+    "svelte": "^5.0.0",
+    "svelte-check": "^4.0.0"
+  }
+}

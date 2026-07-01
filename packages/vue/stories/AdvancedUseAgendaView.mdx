@@ -1,0 +1,93 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/useAgendaView" />
+
+# useAgendaView
+
+A composable that composes all the data and element-spread props needed to render a custom agenda view. Call it inside a component that lives inside a `CalendarProvider`. See **Advanced → Headless API** for the general pattern.
+
+```ts
+import { useAgendaView } from '@big-calendar/vue'
+```
+
+## Return value
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>rows</code></td><td><code>AgendaRow[] | null</code></td><td>The list of day groups to render, each with a date and its events. <code>null</code> when the active view is not the agenda — use as a gate with <code>v-if</code>.</td></tr>
+    <tr><td><code>components</code></td><td><code>object</code></td><td>Resolved slot components: <code>DateSlot</code>, <code>EventSlot</code>, <code>EmptySlot</code>.</td></tr>
+    <tr><td><code>messages</code></td><td><code>Messages</code></td><td>Localized strings for column headings and the empty state.</td></tr>
+    <tr><td><code>root</code></td><td><code>object</code></td><td>Element-spread props for the outer <code>&lt;div&gt;</code>. Use <code>v-bind="root"</code>.</td></tr>
+    <tr><td><code>header</code></td><td><code>object</code></td><td>Element-spread props for the sticky heading row.</td></tr>
+    <tr><td><code>body</code></td><td><code>object</code></td><td>Element-spread props for the scrollable list.</td></tr>
+    <tr><td><code>getRowProps(row)</code></td><td><code>function</code></td><td>Returns <code>class</code> and a CSS <code>style</code> for each day-group <code>&lt;div&gt;</code>.</td></tr>
+  </tbody>
+</table>
+
+## Usage example
+
+```vue
+<script setup>
+import { useAgendaView } from '@big-calendar/vue'
+
+const { rows, components, messages, root, header, body, getRowProps } =
+  useAgendaView()
+
+const { DateSlot, EventSlot, EmptySlot } = components
+</script>
+
+<template>
+  <template v-if="rows !== null">
+    <div v-bind="root">
+      <div v-bind="header">
+        <span>{{ messages.date }}</span>
+        <span>{{ messages.time }}</span>
+        <span>{{ messages.event }}</span>
+      </div>
+      <component
+        v-if="rows.length === 0"
+        :is="EmptySlot"
+        :message="messages.noEventsInRange"
+      />
+      <div v-else v-bind="body">
+        <div
+          v-for="row in rows"
+          :key="row.day"
+          v-bind="getRowProps(row)"
+        >
+          <component :is="DateSlot" :day="row.day" :label="row.label" />
+          <component
+            v-for="item in row.events"
+            :key="item.key"
+            :is="EventSlot"
+            :event="item.event"
+            :title="item.title"
+            :time="item.time"
+            :allDay="item.allDay"
+          />
+        </div>
+      </div>
+    </div>
+  </template>
+</template>
+```
+
+Place your component inside `CalendarProvider`:
+
+```vue
+<template>
+  <CalendarProvider defaultView="agenda" :events="events">
+    <Toolbar />
+    <div class="bc-calendar">
+      <MyAgendaView />
+    </div>
+  </CalendarProvider>
+</template>
+```
+
+## When to use this vs. `<AgendaView>`
+
+Use `<AgendaView>` when the default rendering is sufficient. Use `useAgendaView` when you need to change the HTML structure — render events in a `<table>`, add custom wrapper elements, or change how the date and event columns are laid out.
+
+For changing individual cells or labels without restructuring, use `components.agenda` slot overrides on `CalendarProvider` — no composable required.

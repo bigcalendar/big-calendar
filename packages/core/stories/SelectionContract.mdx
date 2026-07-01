@@ -1,0 +1,87 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Core/Selection contract" />
+
+# Slot-selection contract
+
+This is the **framework-agnostic** definition of what a slot selection emits. It
+lives in `@big-calendar/core` (the store translates raw slot indices into these
+dates), so **every** adapter — React today, others later — emits the *identical*
+payload. For how to actually drive selection in the browser (pointer, keyboard,
+touch), see the **React → Selection** page; this page is the data contract only.
+
+## The two callbacks
+
+You supply these in the calendar config. Both receive **plain ISO date strings —
+never `Date` objects** (matching the rest of core's public surface).
+
+```ts
+// Fires repeatedly while a range is being dragged or extended.
+// Return false to veto the in-progress change.
+onSlotSelecting?: (args: { start: string; end: string; allDay: boolean }) => boolean | void
+
+// One of these fires once, when a selection is committed. *Which* one fires
+// encodes how it was committed — so there is no `action` field on the payload.
+onSlotClick?:       (args: SlotSelectionDates) => void  // a single slot/day
+onSlotDoubleClick?: (args: SlotSelectionDates) => void  // a double-click
+onSlotSelect?:      (args: SlotSelectionDates) => void  // a drag / keyboard Shift+Arrow range
+```
+
+These are a focused, separate concern from the **event-interaction** callbacks
+(`onEventClick` / `onEventDoubleClick` / `onEventRightClick` /
+`onEventMiddleClick` / `onEventSelect`), which receive the event object (and, for
+right/middle, the native DOM `MouseEvent`) rather than a slot payload.
+
+## `SlotSelectionDates`
+
+```ts
+interface SlotSelectionDates {
+  start: string   // ISO; start of the first slot/day
+  end: string     // ISO; EXCLUSIVE end (see the end-of-day rule)
+  slots: string[] // ISO; each selected slot-start (time) or day-start (day), in order
+  allDay: boolean
+}
+```
+
+How the selection was committed is encoded by **which** callback fired
+(`onSlotClick` / `onSlotDoubleClick` / `onSlotSelect`), not by a field on the
+payload. The adapter disambiguates click vs double-click with a 250 ms timer, so
+the two never both fire for one gesture.
+
+## What `allDay` means
+
+`allDay` is `true` whenever the selection represents **whole days** _or_ a span
+that crosses a day boundary while keeping its instant times:
+
+<table>
+  <thead><tr><th>selection</th><th><code>allDay</code></th><th><code>start</code> / <code>end</code></th><th><code>slots</code></th></tr></thead>
+  <tbody>
+    <tr><td>within-day timed drag/click (time grid)</td><td><code>false</code></td><td>the real slot instants; exclusive slot end</td><td>each slot-start</td></tr>
+    <tr><td><strong>full-day</strong> drag (full midnight→end-of-day window, every slot)</td><td><code>true</code></td><td>00:00:00 → 23:59:59</td><td><code>[day]</code></td></tr>
+    <tr><td><strong>cross-day</strong> time drag (starts one day, ends another)</td><td><code>true</code></td><td><strong>kept instant</strong> start/end times</td><td>each slot-start across the spanned days</td></tr>
+    <tr><td>month / day-grid selection</td><td><code>true</code></td><td>day bounds (00:00 → 23:59:59)</td><td>each day-start</td></tr>
+  </tbody>
+</table>
+
+A cross-day time drag is **not** flattened to whole-day bounds — it keeps its
+real instant `start`/`end` and still lists every slot it spans.
+
+## End-of-day rule
+
+A selection's `end` is **exclusive** at the slot level (selecting the 9:00 and
+9:30 slots ends at 10:00). The one exception is the **last slot of a full day**:
+it ends at `23:59:59.999` (end of day), because the next instant already belongs
+to the next day — not at the following midnight. A partial window (say a 9–5
+grid) ends at its window edge (`17:00`).
+
+## Why translation lives in core
+
+The selection state machine works purely in **slot-index space** (a 1-D index).
+A time-body index only becomes a date once you know the anchor day, so the
+**store** captures the anchor and does the index → ISO-date translation on
+commit. Putting it here — rather than in each adapter — is what guarantees React,
+and any future Vue/Angular/Lit adapter, all emit the same `SlotSelectionDates`.
+
+For the full three-layer picture — the core FSM, this store translation, and how
+an adapter binds DOM pointer/keyboard events to slot coordinates and drives it —
+see **React → Selection → "Architecture: core FSM ↔ adapter mapping"**.

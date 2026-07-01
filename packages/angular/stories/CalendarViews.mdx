@@ -1,0 +1,78 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Calendar/Views" />
+
+# Views
+
+Big Calendar includes five built-in views. The active view is controlled by `defaultView` (uncontrolled) or `[view]` (controlled). The toolbar lets users switch between whichever views are listed in `[views]`.
+
+## The five views
+
+<table>
+<thead><tr><th>Key</th><th>Name</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>'month'</code></td><td>Month</td><td>A traditional month grid. Events appear as short bars; overflow shows a "+ N more" link.</td></tr>
+<tr><td><code>'week'</code></td><td>Week</td><td>A 7-column time grid showing Mon–Sun (or Sun–Sat depending on the localizer's first-day-of-week).</td></tr>
+<tr><td><code>'work_week'</code></td><td>Work Week</td><td>Same as Week but showing only Mon–Fri.</td></tr>
+<tr><td><code>'day'</code></td><td>Day</td><td>A single-column time grid for one day.</td></tr>
+<tr><td><code>'agenda'</code></td><td>Agenda</td><td>A flat list of upcoming events starting from the focus date, grouped by day.</td></tr>
+</tbody>
+</table>
+
+## Restricting the available views
+
+Pass `[views]` to show only a subset in the toolbar:
+
+```html
+<!-- Only show Month and Agenda -->
+<bc-calendar-provider [views]="['month', 'agenda']" ...>
+  <bc-calendar />
+</bc-calendar-provider>
+```
+
+## Opening on a specific view
+
+```html
+<!-- Open on the Week view -->
+<bc-calendar-provider defaultView="week" ...>
+  <bc-calendar />
+</bc-calendar-provider>
+```
+
+## Using individual view components
+
+Instead of `<bc-calendar>` (which auto-dispatches the correct view), you can render a single view component directly. This is useful when you need to pass `ng-template` slot overrides:
+
+```html
+<bc-calendar-provider [localizer]="loc" [events]="events" defaultView="month">
+  <bc-month-view [bcMonthEvent]="myEventTemplate" />
+</bc-calendar-provider>
+
+<ng-template #myEventTemplate let-ctx>
+  <strong>{{ ctx.title }}</strong>
+</ng-template>
+```
+
+The individual view components are:
+
+<table>
+<thead><tr><th>Selector</th><th>Class</th><th>Import from</th></tr></thead>
+<tbody>
+<tr><td><code>bc-month-view</code></td><td><code>MonthViewComponent</code></td><td><code>@big-calendar/angular</code></td></tr>
+<tr><td><code>bc-time-grid-view</code></td><td><code>TimeGridViewComponent</code></td><td><code>@big-calendar/angular</code></td></tr>
+<tr><td><code>bc-agenda-view</code></td><td><code>AgendaViewComponent</code></td><td><code>@big-calendar/angular</code></td></tr>
+</tbody>
+</table>
+
+## Drilldown
+
+Clicking a day number in the month grid or a column heading in the week grid navigates ("drills down") to the day view for that date. Control this with:
+
+<table>
+<thead><tr><th>Input</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>[drilldownView]</code></td><td><code>ViewKey | null</code></td><td><code>'day'</code></td><td>Which view to land on. Pass <code>null</code> to disable drilldown entirely.</td></tr>
+<tr><td><code>[getDrilldownView]</code></td><td><code>Function</code></td><td><em>none</em></td><td>A function called with the clicked date and current view. Return a view key or <code>null</code>. Overrides <code>drilldownView</code>.</td></tr>
+<tr><td><code>[onDrillDown]</code></td><td><code>Function</code></td><td><em>none</em></td><td>When supplied, the calendar hands full drilldown control to you — it will not change the view itself. Use to drive your own router.</td></tr>
+</tbody>
+</table>

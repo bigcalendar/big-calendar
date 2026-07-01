@@ -1,0 +1,189 @@
+/* Time grid: day headings, time gutter labels, slot lines, now-indicator. */
+@layer bc.components {
+  /* Opening + closing edge for the whole grid; the 2px outer margin (layout.css)
+     keeps the closing border off the container edge so it stays visible. The
+     opening border sits between the toolbar and the headers (it belongs to the
+     grid, not the toolbar). */
+  .bc-time-grid {
+    border-block-start: var(--bc-border);
+    border-block-end: var(--bc-border);
+    border-inline-start: var(--bc-border);
+  }
+
+  .bc-time-header {
+    border-block-end: var(--bc-border);
+  }
+
+  /* Plain time-grid header: each day heading carries the lane's leading border,
+     matching the body day columns. The `>` keeps this off the resource grid,
+     where `.bc-day-heading` is nested inside `.bc-resource-day-head` (not a
+     direct child) and that wrapper already owns the border. */
+  .bc-time-header > .bc-day-heading {
+    border-inline-start: var(--bc-border);
+  }
+
+  /* Bottom border separating the all-day band from the scrollable time body. */
+  .bc-allday-row {
+    border-block-end: var(--bc-border);
+  }
+
+  /* When showAllEvents is set, remove the fixed height so the row expands to fit all events. */
+  .bc-allday-row.bc-show-all-events {
+    block-size: auto;
+    overflow: visible;
+  }
+
+  /* Plain time-grid all-day row: column dividers on each per-day hit cell. */
+  .bc-allday-slots > .bc-allday-slot {
+    border-inline-start: var(--bc-border);
+  }
+
+  .bc-day-heading {
+    padding: var(--bc-space-1);
+    text-align: center;
+    font-weight: var(--bc-font-weight-bold);
+  }
+
+  .bc-day-heading.bc-today {
+    color: var(--bc-color-accent);
+  }
+
+  .bc-allday-label,
+  .bc-time-gutter {
+    color: var(--bc-color-muted);
+    font-size: var(--bc-font-size-sm);
+  }
+
+  .bc-allday-label {
+    grid-column: 1;
+    padding: var(--bc-space-1);
+    text-align: end;
+  }
+
+  /* Gutter time labels sit at the top of their slot group, marking the time
+     the block begins (so the first label, 12 AM, is visible at the very top).
+     NOTE: detailed vertical alignment (e.g. straddling the boundary line) is
+     deferred styling — revisit with the broader component-styling pass. */
+  .bc-time-label {
+    padding-inline-end: var(--bc-space-1);
+    text-align: end;
+    /* Top line per labelled group, marking each hour boundary in the gutter so
+       the grouping reads (aligns with the columns' hour lines). */
+    border-block-start: var(--bc-border);
+  }
+
+  /* isolation: isolate makes each column its own stacking context so that the
+     ::after grid line overlay (z-index: -1) renders above the column's own
+     background but below all positioned event children (z-index: 0+). Without
+     isolation, z-index: -1 escapes to the nearest ancestor stacking context and
+     disappears behind the page background. */
+  .bc-day-column {
+    border-inline-start: var(--bc-border);
+    isolation: isolate;
+  }
+
+  /* Slot boundary lines as a repeating-gradient on ::after. z-index: -1 keeps
+     the lines below event boxes so they don't draw over event content.
+     pointer-events: none ensures all hit targets below remain clickable. */
+  .bc-day-column::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    background-image:
+      repeating-linear-gradient(
+        to bottom,
+        color-mix(in oklab, CanvasText 30%, Canvas) 0,
+        color-mix(in oklab, CanvasText 30%, Canvas) var(--bc-border-width),
+        transparent var(--bc-border-width),
+        transparent calc(var(--bc-slot-height) * var(--bc-slots-per-group, 1))
+      ),
+      repeating-linear-gradient(
+        to bottom,
+        color-mix(in oklab, CanvasText 15%, Canvas) 0,
+        color-mix(in oklab, CanvasText 15%, Canvas) var(--bc-border-width),
+        transparent var(--bc-border-width),
+        transparent var(--bc-slot-height)
+      );
+  }
+
+  .bc-day-column.bc-today {
+    background-color: var(--bc-color-today-bg);
+  }
+
+  /* Extend the today highlight into the all-day strip: the slot cell (plain grid
+     and resource-week per-day cells) and the resource lane (day view + day-major). */
+  .bc-allday-slot.bc-today,
+  .bc-allday-resource.bc-today {
+    background-color: var(--bc-color-today-bg);
+  }
+
+  /* Resource grid: give each all-day lane the same leading divider as the body
+     day columns, so a resource's all-day allocation lines up under its column. */
+  .bc-time-grid-resources .bc-allday-resource {
+    border-inline-start: var(--bc-border);
+  }
+
+  /* WEEK lane exception: the multi-day lane's own per-day cells draw the dividers
+     (including the resource boundary), so the lane drops this leading border —
+     otherwise it doubles at the boundary and shifts the day cells off the body
+     columns. Must sit in this layer (bc.components) to outrank the rule above. */
+  .bc-time-grid-resources .bc-allday-resource-week {
+    border-inline-start: none;
+  }
+
+  /* The frozen gutter's trailing border (layout.css) owns the divider at the
+     gutter↔content line. The first content cell in each row must drop its own
+     leading border — otherwise the two stack and only the gutter's border stays
+     fixed while the columns scroll under it. Rules in bc.components to outrank
+     the leading-border rules wherever they live.
+
+     `.bc-time-grid` covers both plain and resource grids (shared gutter sticky).
+     Resource-specific suppressions retain `.bc-time-grid-resources` so they only
+     fire where those element types exist. */
+
+  /* Plain + resource: first body column after the gutter. */
+  .bc-time-grid .bc-time-gutter + .bc-day-column {
+    border-inline-start: none;
+  }
+
+  /* Plain grid only: first day heading and first all-day slot. */
+  .bc-time-header-gutter + .bc-day-heading,
+  .bc-allday-slots > .bc-allday-slot:first-child {
+    border-inline-start: none;
+  }
+
+  /* Resource grid only: first resource header and first resource all-day lane. */
+  .bc-time-grid-resources .bc-time-header-gutter + .bc-resource-header,
+  .bc-time-grid-resources .bc-allday-label + .bc-allday-resource {
+    border-inline-start: none;
+  }
+  /* Two-tier week: first day-head in the tiered header; first all-day slot in the
+     week lane's per-day sub-grid sits on the same gutter boundary. */
+  .bc-time-grid-resources .bc-time-header-tiered .bc-resource-day-head:nth-child(3),
+  .bc-time-grid-resources
+    .bc-allday-label
+    + .bc-allday-resource-week
+    .bc-allday-resource-slots
+    > .bc-allday-slot:first-child {
+    border-inline-start: none;
+  }
+
+  .bc-now-indicator {
+    background: var(--bc-color-now);
+  }
+
+  /* A small knob at the inline-start end of the now line. */
+  .bc-now-indicator::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0;
+    inset-block-start: 50%;
+    inline-size: var(--bc-space-2);
+    block-size: var(--bc-space-2);
+    border-radius: 50%;
+    background: var(--bc-color-now);
+    translate: -50% -50%;
+  }
+}

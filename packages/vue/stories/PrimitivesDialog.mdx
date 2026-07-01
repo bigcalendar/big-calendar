@@ -1,0 +1,62 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Primitives/Dialog" />
+
+# Dialog
+
+A modal dialog built on the browser's native `<dialog>` element, rendered in the browser's top layer with a backdrop. Unlike `<Popover>`, a dialog is modal — it traps focus until closed and applies a semi-transparent backdrop behind it.
+
+## Where it is used
+
+Big Calendar exports `<Dialog>` as a building block for custom slot components that need a modal panel — for example, a "create event" or "edit event" form that opens when the user clicks a slot or event. The library does not open any dialogs internally; that is intentionally left to your application.
+
+## API
+
+```ts
+import { Dialog } from '@big-calendar/vue'
+```
+
+In Vue, `Dialog` exposes an `open` prop and emits `close`. Content goes in the default slot:
+
+```vue
+<script setup>
+import { ref } from 'vue'
+import { Dialog } from '@big-calendar/vue'
+
+const event = ref(null)
+const close = () => { event.value = null }
+</script>
+
+<template>
+  <Dialog :open="!!event" @close="close">
+    <h2>Edit event</h2>
+    <form method="dialog">
+      <!-- your form fields -->
+      <button>Save</button>
+      <button type="button" @click="close">Cancel</button>
+    </form>
+  </Dialog>
+</template>
+```
+
+<table>
+  <thead><tr><th>Prop / Event</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>open</code></td><td><code>boolean</code></td><td>When <code>true</code>, the dialog is shown; when <code>false</code>, it is hidden.</td></tr>
+    <tr><td><code>@close</code></td><td><code>() =&gt; void</code></td><td>Emitted when the dialog closes — either by the user pressing Escape or by a <code>&lt;button&gt;</code> with <code>method="dialog"</code>.</td></tr>
+    <tr><td><code>#default</code></td><td>slot</td><td>Content rendered inside the dialog.</td></tr>
+    <tr><td><code>class</code></td><td><code>string</code></td><td>Additional class applied to the <code>&lt;dialog&gt;</code> element.</td></tr>
+  </tbody>
+</table>
+
+## Styling
+
+The base class is `bc-dialog`. The backdrop uses:
+
+```css
+.bc-dialog::backdrop {
+  background: rgb(0 0 0 / 0.32);
+}
+```
+
+Override either via your own CSS.

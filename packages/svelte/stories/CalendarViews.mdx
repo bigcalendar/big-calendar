@@ -1,0 +1,136 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Calendar/Views" />
+
+# Views
+
+Big Calendar ships five built-in views. The active view is controlled by the toolbar, or by setting `defaultView` on `CalendarProvider`. Limit which views appear in the toolbar via the `views` prop.
+
+```svelte
+<CalendarProvider
+  defaultView="week"
+  views={['month', 'week', 'day', 'agenda']}
+  ...
+>
+  <Calendar />
+</CalendarProvider>
+```
+
+---
+
+## Month
+
+The classic monthly grid. Events appear as coloured segments across the week rows they span. When more events fall in a day column than the row can show, a **+ N more** button opens a top-layer popover listing the hidden ones.
+
+**How the show-more works by default:**
+
+Big Calendar measures the height of each week row and calculates how many event rows physically fit. When all events for a day fit in the available space they all display with no button. When events overflow, one row is reserved for the **+ N more** button so it always sits inside the visible cell rather than spilling outside it.
+
+**Props that affect this view:**
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Default</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>weekEventLimit</code></td>
+      <td><code>number</code></td>
+      <td><em>auto</em></td>
+      <td>
+        Fix the maximum number of event rows per week cell. When unset (the default) the
+        cell height is measured at runtime so the calendar fills every available row. Set
+        this to a number to cap visible rows regardless of cell height — useful when you
+        want a consistent row count across all screen sizes.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+> `showAllEvents` does **not** apply to the month view. The month view's only overflow
+> mechanism is the **+ N more** show-more system described above.
+
+---
+
+## Week
+
+Seven-day time grid. A fixed gutter on the left labels the time slots; each day gets a column. Events are positioned as a fraction of the column height based on their start/end time. Overlapping events share the column width.
+
+A horizontal **all-day strip** above the time grid holds all-day and multi-day events. By default the strip is capped at two rows — when more events exist a **+ N more** indicator appears. `showAllEvents` removes that cap.
+
+**Props that affect this view:**
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Default</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>showAllEvents</code></td>
+      <td><code>boolean</code></td>
+      <td><code>false</code></td>
+      <td>
+        Remove the 2-row cap on the all-day strip. When <code>true</code>, every all-day
+        and multi-day event is always visible and no show-more indicator appears. When
+        <code>false</code> (the default), the strip shows at most 2 rows and any additional
+        events overflow into a <strong>+ N more</strong> button.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Work Week
+
+Same layout as Week but shows Monday–Friday only. Useful when your users never schedule on weekends. Shares the same all-day strip and `showAllEvents` behaviour as Week.
+
+---
+
+## Day
+
+A single-day time grid. One column, same layout as Week. Navigate with the toolbar's Prev/Next buttons. The all-day strip above the time column follows the same `showAllEvents` behaviour as Week.
+
+---
+
+## Agenda
+
+A chronological list of events over a range (default: 30 days forward from the focus date). Events group by day. If no events fall in the range, a customizable empty state renders.
+
+**Props that affect this view:**
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Default</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr><td><code>length</code></td><td><code>number</code></td><td><code>30</code></td><td>Number of days the agenda looks ahead.</td></tr>
+  </tbody>
+</table>
+
+---
+
+## Configuring the first view
+
+`defaultView` sets which view opens first. `view` makes the active view fully controlled (you manage the state and respond to `onView` to update it):
+
+```svelte
+<!-- Uncontrolled — calendar manages it, opens on week: -->
+<CalendarProvider defaultView="week" ...>
+
+<!-- Controlled — your state drives it: -->
+<script>
+  let view = $state('week')
+</script>
+
+<CalendarProvider {view} onView={(v) => (view = v)} ...>
+  <Calendar />
+</CalendarProvider>
+```
+
+---
+
+## Drilling down
+
+Clicking a day number in the month grid, or a day heading in the time grid, navigates to that day in the "drill-down" view (Day by default). Control the target with `drilldownView`:
+
+```svelte
+<!-- Clicking a month day now opens week view on that day -->
+<CalendarProvider drilldownView="week" ...>
+```
+
+Pass `null` to disable drill-down entirely.

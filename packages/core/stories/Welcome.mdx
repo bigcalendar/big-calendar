@@ -1,0 +1,21 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import LinkTo from '@storybook/addon-links/react'
+
+<Meta title="Core/Welcome" />
+
+# @big-calendar/core
+
+The framework-agnostic calendar engine. It owns all the date math, view models,
+event layout, and the reactive store — and renders **nothing**. UI lives in the
+thin per-framework packages (for example `@big-calendar/react`).
+
+## What's in here
+
+- <LinkTo title="Core/createCalendarStore" story="docs">createCalendarStore</LinkTo> — the complete configuration reference for the core store
+- <LinkTo title="Core/Localizers" story="docs">Localizers</LinkTo> — how to create and configure a localizer
+- <LinkTo title="Core/Selection" story="docs">Selection</LinkTo> — the slot-selection contract
+- <LinkTo title="Core/Styles" story="docs">Styles</LinkTo> — CSS custom properties and theming
+
+## Where to look for rendered components
+
+See the **Calendar** and **React** sections of this Storybook for live examples.

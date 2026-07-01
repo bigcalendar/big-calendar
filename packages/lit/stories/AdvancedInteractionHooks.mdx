@@ -1,0 +1,85 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/Interaction Hooks" />
+
+# Interaction Hooks
+
+The Lit adapter handles keyboard interactions and accessibility through patterns built into the view elements themselves. When you use `<bc-month-view>`, `<bc-time-grid-view>`, or `<bc-agenda-view>`, these behaviours are active by default and require no extra configuration.
+
+This page describes what those behaviours are and how to replicate them if you build a fully custom view.
+
+---
+
+## Roving tabindex for event buttons
+
+The calendar implements a **roving tabindex** pattern for all event buttons in a view. A calendar can show dozens of event buttons at once — if every button were in the normal tab order, keyboard users would have to press Tab many times just to get past the calendar. Roving tabindex solves this by making the entire set of events a single tab stop, with arrow key navigation inside.
+
+**How it works in the built-in views:**
+
+- Each view element scans its own subtree for `[data-bc-event]` elements after every render.
+- Exactly one element gets `tabindex="0"` at any time (the focused one, or the first if nothing is focused).
+- All others get `tabindex="-1"`.
+- Arrow keys move focus to the adjacent button without triggering Tab order navigation.
+
+**Replicating it in a custom element:**
+
+```ts
+// After your render, scan for event buttons and apply roving tabindex
+private _applyRovingTabindex(root: HTMLElement) {
+  const buttons = [...root.querySelectorAll<HTMLElement>('[data-bc-event]')]
+  const focused = document.activeElement
+  buttons.forEach((btn, i) => {
+    btn.tabIndex = btn === focused || (!root.contains(focused) && i === 0) ? 0 : -1
+  })
+  root.addEventListener('keydown', (e) => {
+    const current = document.activeElement as HTMLElement
+    if (!root.contains(current)) return
+    const idx = buttons.indexOf(current)
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      buttons[idx + 1]?.focus()
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      buttons[idx - 1]?.focus()
+    }
+  }, { passive: true })
+}
+```
+
+---
+
+## Keyboard slot selection
+
+When `.selectable` is enabled, the grid cells support keyboard-driven range selection. This is handled internally by the view elements via the core selection FSM (finite state machine) in `@big-calendar/core`.
+
+**Keyboard controls (built in, no setup needed):**
+
+- **Arrow keys** — move the focused cell.
+- **Shift + Arrow** — extend the selection range.
+- **Enter** or **Space** — commit the selection (fires `onSlotSelect`).
+- **Escape** — cancel the in-progress selection.
+
+When building a headless custom view that needs keyboard slot selection, wire cell elements to the store's `startSlotSelect`, `extendSlotSelect`, and `commitSlotSelect` methods via the `calendarContext`.
+
+---
+
+## Keyboard drag and drop
+
+Keyboard DnD is handled by `CalendarDndController` via `@big-calendar/dnd`. When `CalendarDndController` is attached to a host element that contains a calendar grid, the following keyboard controls become active automatically on event buttons:
+
+- **Space** — pick up the focused event.
+- **Arrow keys** — move the preview one cell/slot at a time.
+- **Shift + Arrow** — resize the event from the trailing edge.
+- **Enter** — drop and commit.
+- **Escape** — cancel and restore the original position.
+
+An ARIA live region (rendered by `<bc-calendar>`) announces pick-up, move, and drop actions for screen reader users.
+
+---
+
+## ARIA live region
+
+`<bc-calendar>` renders two visually-hidden `<p>` elements with `class="bc-sr-only"`:
+
+- One carries `id` from `descriptionIds.selection` and announces slot selection instructions.
+- One carries `id` from `descriptionIds.event` and announces keyboard DnD state (pick-up, move, drop).
+
+These IDs are exposed via `calendarContext.descriptionIds`. Reference them with `aria-describedby` on your custom interactive elements if needed.

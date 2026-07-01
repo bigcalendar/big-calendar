@@ -1,0 +1,79 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Primitives/Dialog" />
+
+# Dialog
+
+`BcDialogComponent` (`<bc-dialog>`) wraps the native `<dialog>` HTML element. It uses `showModal()` to display the dialog as a modal overlay with a backdrop, and `close()` to dismiss it. All browser-native focus trapping and `Escape` key handling are included automatically.
+
+## Basic usage
+
+```html
+<bc-dialog [open]="isOpen()" (bcClose)="isOpen.set(false)" aria-label="Event details">
+  <h2>Meeting with Alice</h2>
+  <p>Mon June 15 · 9:00 – 9:30 AM</p>
+  <button type="button" (click)="isOpen.set(false)">Close</button>
+</bc-dialog>
+```
+
+```ts
+readonly isOpen = signal(false)
+```
+
+## Inputs
+
+<table>
+<thead><tr><th>Input</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+<tbody>
+<tr>
+<td><code>[open]</code></td>
+<td><code>boolean</code></td>
+<td><code>false</code></td>
+<td>When <code>true</code>, calls <code>showModal()</code> and reveals the dialog. When <code>false</code>, calls <code>close()</code>.</td>
+</tr>
+</tbody>
+</table>
+
+## Outputs
+
+<table>
+<thead><tr><th>Output</th><th>Payload</th><th>Description</th></tr></thead>
+<tbody>
+<tr>
+<td><code>(bcClose)</code></td>
+<td><em>none</em></td>
+<td>Emitted when the user presses <strong>Escape</strong> to dismiss the dialog. Update your <code>isOpen</code> state here to keep it in sync.</td>
+</tr>
+</tbody>
+</table>
+
+## Accessibility
+
+- Pass `aria-label` or `aria-labelledby` on `<bc-dialog>` to describe the dialog for screen readers.
+- The native `<dialog>` element provides built-in focus trapping — the first focusable element inside receives focus when the dialog opens.
+- Pressing **Escape** fires the native `cancel` event, which `BcDialogComponent` converts to the `(bcClose)` output.
+
+## Typical pattern: event detail modal
+
+```ts
+@Component({
+  standalone: true,
+  imports: [CalendarProviderComponent, CalendarComponent, BcDialogComponent],
+  template: `
+    <bc-calendar-provider [localizer]="loc" [events]="events" [onEventClick]="openDetail">
+      <bc-calendar />
+    </bc-calendar-provider>
+
+    <bc-dialog [open]="!!selectedEvent()" (bcClose)="selectedEvent.set(null)" aria-label="Event detail">
+      @if (selectedEvent(); as event) {
+        <h2>{{ event.title }}</h2>
+        <button type="button" (click)="selectedEvent.set(null)">Close</button>
+      }
+    </bc-dialog>
+  `,
+})
+export class CalendarPageComponent {
+  readonly selectedEvent = signal<MyEvent | null>(null)
+  readonly openDetail = (event: MyEvent) => this.selectedEvent.set(event)
+}
+```

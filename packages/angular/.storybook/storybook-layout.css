@@ -1,0 +1,16 @@
+/* Storybook-only layout fixes for Angular host elements.
+ * Applied via angular.json "storybook" target styles[].
+ * NOT included in the published package. */
+
+bc-calendar-provider {
+  display: block;
+  block-size: 100%;
+}
+
+bc-calendar {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  block-size: 100%;
+  inline-size: 100%;
+  min-block-size: 0;
+}

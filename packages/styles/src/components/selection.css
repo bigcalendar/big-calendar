@@ -1,0 +1,18 @@
+/* Drag-to-select highlight overlay (time grid + month/all-day cells). */
+@layer bc.components {
+  .bc-selection {
+    border: var(--bc-border-width) solid var(--bc-color-selection-border);
+    border-radius: var(--bc-radius-sm);
+    background: var(--bc-color-selection-bg);
+  }
+
+  /* Live resize-preview box: the proposed event extent shown while a resize drag
+     is in flight. A dashed outline distinguishes it from a committed event and
+     from the (solid) selection band. */
+  .bc-drag-preview {
+    border: var(--bc-border-width) dashed var(--bc-color-selection-border);
+    border-radius: var(--bc-radius-sm);
+    background: var(--bc-color-selection-bg);
+    opacity: 0.7;
+  }
+}

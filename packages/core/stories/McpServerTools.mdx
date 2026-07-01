@@ -1,0 +1,374 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="MCP Server/Tools Reference" />
+
+# MCP Server — Tools Reference
+
+The `@big-calendar/mcp` server exposes six tools, eleven resources, and two prompts.
+Tools take arguments and return generated code or status text.
+Resources are read-only documents your AI assistant can pull in as context.
+Prompts are conversation starters that chain tools together.
+
+---
+
+## Tools
+
+### init
+
+Checks for an existing `bc.md` memory file or writes a new one.
+
+**With no arguments**, returns a status report of the current `bc.md` (or a warning if it does not exist).
+
+**With any content argument**, writes or overwrites `bc.md` with the provided values.
+
+<table>
+  <thead>
+    <tr>
+      <th>Argument</th>
+      <th>Type</th>
+      <th>Required</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>dir</code></td>
+      <td>string</td>
+      <td>No</td>
+      <td>Directory to write <code>bc.md</code> into. Defaults to <code>process.cwd()</code>.</td>
+    </tr>
+    <tr>
+      <td><code>version</code></td>
+      <td>string</td>
+      <td>No</td>
+      <td>The Big Calendar package version in use (e.g. <code>@big-calendar/react</code> or <code>@big-calendar/vue</code>), e.g. <code>"1.20.0"</code>.</td>
+    </tr>
+    <tr>
+      <td><code>views</code></td>
+      <td>string[]</td>
+      <td>No</td>
+      <td>Enabled view names: <code>month</code>, <code>week</code>, <code>work_week</code>, <code>day</code>, <code>agenda</code>.</td>
+    </tr>
+    <tr>
+      <td><code>features</code></td>
+      <td>string[]</td>
+      <td>No</td>
+      <td>Active features: <code>dnd</code>, <code>selection</code>, <code>resources</code>.</td>
+    </tr>
+    <tr>
+      <td><code>accessors</code></td>
+      <td>object</td>
+      <td>No</td>
+      <td>Mapping of Big Calendar accessor key → field name on your event objects.</td>
+    </tr>
+    <tr>
+      <td><code>context</code></td>
+      <td>string</td>
+      <td>No</td>
+      <td>Free-form prose describing your app — data sources, editing UI, DnD strategy, etc.</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### scaffold-calendar
+
+Generates a ready-to-use `Calendar` component using your `bc.md` configuration.
+
+The generated component targets **React** by default and includes:
+- `createTemporalLocalizer` setup (no extra dependencies required)
+- `CalendarProvider` with your `accessors` wired to the correct field names
+- All enabled `views` in the provider's view list
+- `useCalendarDnd` + `CalendarWithDnd` wrapper if `dnd` is listed in features
+
+For a **Vue 3** starting point, fetch the `bc://recipes/basic-setup-vue` resource directly instead.
+
+<table>
+  <thead>
+    <tr>
+      <th>Argument</th>
+      <th>Type</th>
+      <th>Required</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>dir</code></td>
+      <td>string</td>
+      <td>No</td>
+      <td>Project root to locate <code>bc.md</code>. Defaults to <code>process.cwd()</code>.</td>
+    </tr>
+    <tr>
+      <td><code>componentName</code></td>
+      <td>string</td>
+      <td>No</td>
+      <td>Name for the generated component. Defaults to <code>MyCalendar</code>.</td>
+    </tr>
+    <tr>
+      <td><code>outputPath</code></td>
+      <td>string</td>
+      <td>No</td>
+      <td>Suggested file path for the component. Does not write the file — just includes it in the returned code block.</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### add-feature
+
+Generates the code needed to add a specific feature to an existing calendar integration,
+and records the feature in `bc.md` so future tool calls know it is active.
+
+<table>
+  <thead>
+    <tr>
+      <th>Argument</th>
+      <th>Type</th>
+      <th>Required</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>feature</code></td>
+      <td>string</td>
+      <td>Yes</td>
+      <td>One of: <code>dnd</code>, <code>selection</code>, <code>resources</code>.</td>
+    </tr>
+    <tr>
+      <td><code>dir</code></td>
+      <td>string</td>
+      <td>No</td>
+      <td>Project root to locate and update <code>bc.md</code>. Defaults to <code>process.cwd()</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### add-handler
+
+Returns the prop signature and inline documentation for a specific Big Calendar event handler.
+Useful when you know the callback name but want to verify the exact signature and argument shape.
+
+<table>
+  <thead>
+    <tr>
+      <th>Argument</th>
+      <th>Type</th>
+      <th>Required</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>handler</code></td>
+      <td>string</td>
+      <td>Yes</td>
+      <td>One of: <code>onEventSelect</code>, <code>onEventDrop</code>, <code>onEventResize</code>, <code>onSlotSelect</code>, <code>onRangeChange</code>, <code>onNavigate</code>, <code>onView</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### generate-sample-events
+
+Generates a TypeScript interface and a typed `const` array of sample events using your `bc.md` accessor mapping.
+
+Field names in the output match the accessor values from `bc.md`, not the Big Calendar key names.
+For example, if `title: name` is set in your accessor map, the generated interface has a `name: string` field, not `title`.
+
+<table>
+  <thead>
+    <tr>
+      <th>Argument</th>
+      <th>Type</th>
+      <th>Required</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>dir</code></td>
+      <td>string</td>
+      <td>No</td>
+      <td>Project root to locate <code>bc.md</code>. Defaults to <code>process.cwd()</code>.</td>
+    </tr>
+    <tr>
+      <td><code>count</code></td>
+      <td>number</td>
+      <td>No</td>
+      <td>Number of sample events to generate. Defaults to <code>5</code>, max <code>50</code>.</td>
+    </tr>
+    <tr>
+      <td><code>baseDate</code></td>
+      <td>string</td>
+      <td>No</td>
+      <td>ISO 8601 date to anchor generated events around. Defaults to today.</td>
+    </tr>
+    <tr>
+      <td><code>interfaceName</code></td>
+      <td>string</td>
+      <td>No</td>
+      <td>Name for the generated TypeScript interface. Defaults to <code>CalendarEvent</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### update-memory
+
+Updates specific fields in an existing `bc.md` without overwriting the whole file.
+Use this after any change to your event data shape, enabled views, or app context.
+
+<table>
+  <thead>
+    <tr>
+      <th>Argument</th>
+      <th>Type</th>
+      <th>Required</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>dir</code></td>
+      <td>string</td>
+      <td>No</td>
+      <td>Project root to locate <code>bc.md</code>. Defaults to <code>process.cwd()</code>.</td>
+    </tr>
+    <tr>
+      <td><code>version</code></td>
+      <td>string</td>
+      <td>No</td>
+      <td>Update the recorded Big Calendar package version.</td>
+    </tr>
+    <tr>
+      <td><code>views</code></td>
+      <td>string[]</td>
+      <td>No</td>
+      <td>Replace the views list.</td>
+    </tr>
+    <tr>
+      <td><code>features</code></td>
+      <td>string[]</td>
+      <td>No</td>
+      <td>Replace the features list.</td>
+    </tr>
+    <tr>
+      <td><code>accessors</code></td>
+      <td>object</td>
+      <td>No</td>
+      <td>Shallow-merge into the existing accessor map (only the keys you provide are updated).</td>
+    </tr>
+    <tr>
+      <td><code>context</code></td>
+      <td>string</td>
+      <td>No</td>
+      <td>Replace the prose body entirely.</td>
+    </tr>
+    <tr>
+      <td><code>appendContext</code></td>
+      <td>string</td>
+      <td>No</td>
+      <td>Append text to the existing prose body without replacing it.</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Resources
+
+Resources are read-only documents your AI assistant fetches for context.
+All URIs use the `bc://` scheme.
+
+### API Reference
+
+<table>
+  <thead>
+    <tr>
+      <th>URI</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>bc://api/calendar-provider</code></td>
+      <td>Full <code>CalendarProvider</code> props reference — all props with types, defaults, and descriptions</td>
+    </tr>
+    <tr>
+      <td><code>bc://api/accessors</code></td>
+      <td>How to map Big Calendar's accessor keys to your event object's field names</td>
+    </tr>
+    <tr>
+      <td><code>bc://api/views</code></td>
+      <td>All built-in views, their configuration options, and when to use each one</td>
+    </tr>
+    <tr>
+      <td><code>bc://api/dnd</code></td>
+      <td>Drag-and-drop setup: <code>useCalendarDnd</code>, <code>CalendarWithDnd</code>, and the DnD callbacks</td>
+    </tr>
+    <tr>
+      <td><code>bc://api/localizers</code></td>
+      <td>Localizer setup for <code>LuxonLocalizer</code> and <code>TemporalLocalizer</code></td>
+    </tr>
+  </tbody>
+</table>
+
+### Integration Recipes
+
+<table>
+  <thead>
+    <tr>
+      <th>URI</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>bc://recipes/basic-setup</code></td>
+      <td>Installation and minimal working calendar with <code>TemporalLocalizer</code> (React)</td>
+    </tr>
+    <tr>
+      <td><code>bc://recipes/basic-setup-vue</code></td>
+      <td>Installation and minimal working calendar with <code>TemporalLocalizer</code> (Vue 3)</td>
+    </tr>
+    <tr>
+      <td><code>bc://recipes/event-editing</code></td>
+      <td>Opening an edit modal when a user clicks an event (<code>onEventSelect</code>)</td>
+    </tr>
+    <tr>
+      <td><code>bc://recipes/create-event</code></td>
+      <td>Creating a new event from a slot click or drag (<code>onSlotSelect</code>)</td>
+    </tr>
+    <tr>
+      <td><code>bc://recipes/data-fetching</code></td>
+      <td>Fetching events from an API as the visible date range changes (<code>onRangeChange</code>)</td>
+    </tr>
+    <tr>
+      <td><code>bc://recipes/custom-event</code></td>
+      <td>Rendering a custom event component with your own content and styling</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Prompts
+
+### bootstrap-calendar
+
+Runs the full onboarding flow in a single prompt: checks for `bc.md`, collects your event field names and feature choices, writes `bc.md`, then runs `scaffold-calendar` to generate a starter component.
+
+**No arguments required.** Invoke via your client's prompt picker.
+
+### add-feature
+
+Opens a guided flow to add one feature (`dnd`, `selection`, or `resources`) to an existing integration.
+Optionally accepts a `feature` argument to skip the selection step.

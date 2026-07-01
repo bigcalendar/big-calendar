@@ -1,0 +1,22 @@
+/*
+ * Big Calendar — the everything bundle: reset → tokens → layout → components,
+ * in a documented cascade-layer order so host styles always win predictably
+ * (target `bc.overrides`, or sit outside all layers, plan §6).
+ *
+ * Each imported file self-assigns its own `bc.*` layer, so this file only
+ * declares the order and pulls them in. Prefer the granular exports
+ * (`tokens.css`, `layout.css`, `components/*.css`) to ship only what you need.
+ */
+@layer bc.reset, bc.tokens, bc.layout, bc.components, bc.theme, bc.overrides;
+
+@import './reset.css';
+@import './tokens.css';
+@import './layout.css';
+@import './components/toolbar.css';
+@import './components/month.css';
+@import './components/timegrid.css';
+@import './components/event.css';
+@import './components/agenda.css';
+@import './components/popover.css';
+@import './components/selection.css';
+@import './components/coarse-pointer.css';

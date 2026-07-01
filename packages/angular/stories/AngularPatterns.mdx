@@ -1,0 +1,178 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Concepts/Angular Patterns" />
+
+# Angular Patterns
+
+`@big-calendar/angular` is a thin Angular layer over the shared `@big-calendar/core` engine. It maps the same public API as the React and Vue adapters, but in Angular idioms. This page covers the main differences a developer coming from the React or Vue version will notice.
+
+---
+
+## Inject composables instead of hooks or composables
+
+In React, you call `useMonthView()` inside a function component. In Vue, you call it at the top of `<script setup>`. In Angular, you call the equivalent `injectMonthView()` inside a component's class body — it uses Angular's `inject()` function internally:
+
+```ts
+@Component({ standalone: true, ... })
+export class MyMonthViewComponent {
+  readonly view = injectMonthView()
+}
+```
+
+The returned value contains Angular `Signal<T>` objects. Read them in a template by calling them like functions (`view.grid()`), or in class methods with the same syntax.
+
+---
+
+## `ng-template` slots instead of `components` prop
+
+The React adapter uses a `components` prop to swap out visual pieces. For example, to replace the default event block in the month grid you would pass `components={{ monthEvent: MyEvent }}`.
+
+The Angular adapter uses `ng-template` directives on the individual view components. Each slot directive accepts a `TemplateRef` — you define the template inline using `#myTemplate`, then bind it to the slot input.
+
+For a **named template inside the same component**:
+
+```ts
+@Component({
+  standalone: true,
+  imports: [
+    CalendarProviderComponent,
+    MonthViewComponent,
+    BcMonthEventDirective,
+  ],
+  template: `
+    <bc-calendar-provider [localizer]="localizer" [events]="events" defaultView="month">
+      <bc-month-view [bcMonthEvent]="myEventTpl"></bc-month-view>
+    </bc-calendar-provider>
+
+    <ng-template #myEventTpl let-event>
+      <span class="my-event">{{ event.title }}</span>
+    </ng-template>
+  `,
+})
+export class MyCalendarComponent {
+  @ViewChild('myEventTpl') myEventTpl!: TemplateRef<any>
+  localizer = localizer
+  events = myEvents
+}
+```
+
+> **`@ViewChild` is required.** The `[bcMonthEvent]="myEventTpl"` binding is evaluated after `ngOnInit`, not at construction time. Accessing the template ref through a property (not inline) ensures it is defined before Angular resolves the binding.
+
+---
+
+## Angular Signals instead of Vue `ref`
+
+Where Vue uses `ref<T>()` for reactive state, Angular uses `signal<T>()`. In DnD stories and other stateful patterns you'll write:
+
+```ts
+import { signal } from '@angular/core'
+
+events = signal<MyEvent[]>(initialEvents)
+
+onEventDrop({ event, start, end }: EventDropResult) {
+  this.events.update((prev) =>
+    prev.map((e) => (e.id === event.id ? { ...e, start, end } : e))
+  )
+}
+```
+
+Pass signals to template inputs using the signal call: `[events]="events()"` reads the signal's current value, or `[events]="events"` passes the signal itself (use whichever the input expects — `CalendarProviderComponent` accepts an array, so use `events()`).
+
+---
+
+## `calendarDnd` directive instead of `useCalendarDnd`
+
+React DnD is enabled by wrapping `<Calendar>` in `<WithDragAndDrop>`. Vue uses `useCalendarDnd(ref)`. In Angular, apply the `calendarDnd` attribute directive to a wrapper `<div>` inside `<bc-calendar-provider>`:
+
+```ts
+import { CalendarProviderComponent, CalendarDndDirective } from '@big-calendar/angular'
+import '@big-calendar/dnd' // optional peer dep — must be installed separately
+
+@Component({
+  standalone: true,
+  imports: [CalendarProviderComponent, CalendarDndDirective, ...],
+  template: `
+    <bc-calendar-provider [localizer]="localizer" [events]="events()" ...>
+      <div calendarDnd>
+        <bc-month-view></bc-month-view>
+      </div>
+    </bc-calendar-provider>
+  `,
+})
+export class MyCalendarComponent {
+  readonly events = signal<MyEvent[]>(demoEvents)
+}
+```
+
+The `@big-calendar/dnd` package is an optional peer dependency. If it is not installed, `calendarDnd` is a no-op — drag and drop simply will not activate.
+
+---
+
+## `[attr.*]` bindings for RTL and localisation
+
+Angular template binding requires explicit `[attr.*]` syntax to set HTML attributes (as opposed to DOM properties). When localising for right-to-left locales, set `dir` and `lang` on the calendar wrapper:
+
+```html
+<div [attr.dir]="'rtl'" [attr.lang]="'ar'">
+  <bc-calendar-provider [localizer]="arabicLocalizer" [events]="events">
+    <bc-time-grid-view></bc-time-grid-view>
+  </bc-calendar-provider>
+</div>
+```
+
+---
+
+## `moduleMetadata` in Storybook stories
+
+Angular Storybook stories use `moduleMetadata` to declare the imports needed for the template. Instead of Vue's `{ components: { ... } }` or React's `{ args }` alone, an Angular story looks like:
+
+```ts
+import { moduleMetadata } from '@storybook/angular'
+import type { Meta, StoryObj } from '@storybook/angular'
+
+const meta: Meta = {
+  title: 'Calendar/Standard',
+  decorators: [
+    moduleMetadata({
+      imports: [CalendarProviderComponent, MonthViewComponent],
+    }),
+  ],
+}
+export default meta
+
+export const Standard: StoryObj = {
+  render: (args) => ({
+    props: args,
+    template: `
+      <bc-calendar-provider [localizer]="localizer" [events]="events" defaultView="month">
+        <bc-month-view></bc-month-view>
+      </bc-calendar-provider>
+    `,
+  }),
+  args: {
+    localizer: localizer,
+    events: demoEvents,
+  },
+}
+```
+
+For stories that need reactive state (e.g. DnD event updates), define an inline `@Component` class directly in the story file and use `component:` instead of `render:`.
+
+---
+
+## Keyboard navigation and accessibility
+
+`@big-calendar/angular` implements the same accessibility pattern as the React and Vue adapters:
+
+- **Roving tabindex** — each slot grid has exactly one focusable cell at a time. Arrow keys move focus through cells without requiring the user to tab through every single one.
+- **Keyboard selection** — once a cell is focused, `Shift+Arrow` extends a slot selection; `Enter` or `Space` commits it; `Escape` cancels.
+- **Keyboard DnD** — `Space` picks up a focused event; arrow keys move or resize it; `Enter` drops it; `Escape` cancels.
+- **Screen-reader announcements** — a visually hidden `aria-live="polite"` region announces grab, move, and drop events.
+
+Enable selection by setting `[selectable]="true"` on `<bc-calendar-provider>`:
+
+```html
+<bc-calendar-provider [selectable]="true" (slotSelect)="handleSelect($event)" ...>
+```
+
+No extra work is needed to enable keyboard navigation — it is always on.

@@ -1,0 +1,297 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Core/Selection" />
+
+# Slot selection
+
+> Code examples on this page use the **React adapter** (`@big-calendar/react`).
+> Every other framework adapter exposes the same props and emits identical payloads.
+
+**Slot selection** is how a user picks an empty time range or a span of days on the
+calendar — the gesture you would use to start creating a new event. It is completely
+separate from **event selection** (clicking an existing event); see the note at the
+bottom.
+
+You can try every gesture below in the **Calendar → Selectable** story (a playground
+with a `selectable` toggle and a live read-out of what each gesture emits), and in the
+**MonthView → Selectable** and **TimeGridView → Selectable** stories.
+
+## Turning it on
+
+Selection is **off by default**. Switch it on with the `selectable` prop:
+
+```tsx
+<Calendar selectable />
+// or, to let event clicks win over starting a selection on top of an event:
+<Calendar selectable="ignoreEvents" />
+```
+
+<table>
+  <thead><tr><th>value</th><th>meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>false</code></td><td>(default) selection disabled.</td></tr>
+    <tr><td><code>true</code></td><td>selection enabled. A press that lands <strong>on an event</strong> is left to the event.</td></tr>
+    <tr><td><code>'ignoreEvents'</code></td><td>enabled; behaves the same here — events always own their own pointer.</td></tr>
+  </tbody>
+</table>
+
+> Both `true` and `'ignoreEvents'` defer to events: a selection only starts on **empty**
+> area. Dragging a selection _through_ an existing event (a quirk of the old
+> react-big-calendar) is intentionally not supported.
+
+## What your callbacks receive
+
+The callbacks all carry **plain ISO date strings — never `Date` objects**. Slot
+callbacks are a **separate, focused concern** from event callbacks (see the bottom
+of this page) so the two never overlap:
+
+```ts
+// Fires repeatedly while a range is being dragged/extended. Return false to veto.
+onSlotSelecting?: (args: { start: string; end: string; allDay: boolean }) => boolean | void
+
+// One of these fires once, when a slot selection is committed. *Which* one fires
+// tells you how — so there is no `action` discriminator to switch on.
+onSlotClick?:       (args: SlotSelection) => void  // a single slot/day
+onSlotDoubleClick?: (args: SlotSelection) => void  // a double-click
+onSlotSelect?:      (args: SlotSelection) => void  // a drag, or a keyboard Shift+Arrow range
+
+// the committed payload:
+type SlotSelection = {
+  start: string            // ISO start
+  end: string              // ISO end
+  slots: string[]          // every slot/day the selection covers, in order
+  allDay: boolean
+}
+```
+
+Wire only the gesture you care about. The names mirror the event callbacks
+(`onSlotClick` ↔ `onEventClick`, `onSlotDoubleClick` ↔ `onEventDoubleClick`).
+
+### What `allDay` means
+
+`allDay` is `true` whenever the selection represents **whole days** _or_ a span that
+crosses a day boundary:
+
+<table>
+  <thead><tr><th>selection</th><th><code>allDay</code></th><th>notes</th></tr></thead>
+  <tbody>
+    <tr><td>a time range <strong>within one day</strong> (e.g. 9:00–10:30)</td><td><code>false</code></td><td>instant <code>start</code>/<code>end</code> times.</td></tr>
+    <tr><td>the <strong>whole day</strong> end-to-end in a full-day time grid</td><td><code>true</code></td><td><code>start</code> = 00:00:00, <code>end</code> = 23:59:59 of that day.</td></tr>
+    <tr><td>a time drag that <strong>crosses days</strong> (e.g. Mon 9pm→Tue 2am)</td><td><code>true</code></td><td>keeps the instant <code>start</code>/<code>end</code> times <strong>and</strong> lists each slot.</td></tr>
+    <tr><td>day(s) picked in the <strong>month</strong> grid or <strong>all-day</strong> row</td><td><code>true</code></td><td>whole days; <code>end</code> is the end-of-day of the last day.</td></tr>
+  </tbody>
+</table>
+
+### End-of-day rule
+
+A selection's `end` is **exclusive** at the slot level (selecting the 9:00 and 9:30
+slots ends at 10:00). The one exception is the **last slot of a full day**: it ends at
+**23:59:59…** (end of day), because the next instant already belongs to the next day —
+not at the following midnight. A partial window (say a 9–5 grid) ends at its window edge.
+
+## Pointer
+
+- **Drag** across slots/days → a range. `onSlotSelecting` fires as it grows;
+  release → `onSlotSelect`.
+- **Click** a single slot/day → `onSlotClick`.
+- **Double-click** → `onSlotDoubleClick`.
+
+Single- and double-click are disambiguated by a **250 ms** timer, so the two never both
+fire for the same gesture. A press that starts **on an event** is ignored (the event
+handles it).
+
+## Keyboard
+
+Selection is fully keyboard-operable — something the original react-big-calendar lacked.
+A view exposes **two bounded tab stops** (so `Tab` stays predictable even on a busy
+calendar):
+
+**1. The slot grid** (one tab stop over the day/time cells):
+
+<table>
+  <thead><tr><th>key</th><th>action</th></tr></thead>
+  <tbody>
+    <tr><td><kbd>Arrow</kbd></td><td>move the focused cell (time grid: ↑/↓ a slot, ←/→ a day; month: ←/→ a day, ↑/↓ a week; all-day row: ←/→ a day).</td></tr>
+    <tr><td><kbd>Shift</kbd>+<kbd>Arrow</kbd></td><td>extend the selection (the first one anchors at the focused cell).</td></tr>
+    <tr><td><kbd>Enter</kbd> / <kbd>Space</kbd></td><td>commit — finish a range if one is in progress, otherwise click the focused cell.</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>cancel an in-progress selection.</td></tr>
+  </tbody>
+</table>
+
+**2. The events** (a second tab stop over the event buttons):
+
+<table>
+  <thead><tr><th>key</th><th>action</th></tr></thead>
+  <tbody>
+    <tr><td><kbd>Arrow</kbd></td><td>move among the event buttons.</td></tr>
+    <tr><td><kbd>Enter</kbd> / <kbd>Space</kbd></td><td>primary action — select the event + <code>onEventClick</code>.</td></tr>
+    <tr><td><kbd>F2</kbd></td><td>secondary action — select the event + <code>onEventDoubleClick</code>.</td></tr>
+  </tbody>
+</table>
+
+There is **no keyboard double-click**: per WCAG 2.1.1 the secondary action gets its own
+key (**F2**). Double-click stays a pointer-only shortcut to the same thing F2 does. Keys
+are advertised on each event button via `aria-keyshortcuts`. The keyboard-focused cell
+shows a focus ring (drawn above the other layers so it is always visible).
+
+Because ARIA describes role/state/shortcuts but not *gestures*, each focusable slot cell
+and each event button also points `aria-describedby` at a visually-hidden instructions
+element, so a screen reader announces how to drive selection. The text comes from two
+overridable message keys — `selectionInstructions` (slot grid) and `eventInstructions`
+(event buttons) — so it localizes alongside every other string.
+
+`Home` / `End` / `PageUp` / `PageDown` are reserved for **navigation** (a later step),
+not selection.
+
+## Touch
+
+Touch needs to coexist with scrolling, so selection is gated behind a **long-press**:
+
+- **Tap** a slot/day → `onSlotClick` (or `onSlotDoubleClick` on a quick second tap),
+  exactly like a mouse tap.
+- **Press and hold** (default **500 ms**) → a selection begins at that slot; keep the
+  finger down and drag to extend the range, then lift to commit (`onSlotSelect`).
+- **Move before the hold elapses** → read as a scroll: the gesture is abandoned and the
+  calendar body scrolls normally (no selection, no click).
+
+Tune the hold with the `longPressThreshold` prop (milliseconds):
+
+```tsx
+<Calendar selectable longPressThreshold={400} />
+```
+
+Under the hood the scrollable time body sets `touch-action: pan-y`, so a finger scrolls
+it as usual until a long-press engages; once it does, the pointer is captured and native
+scroll is suppressed for the rest of the drag. Mouse and pen are unaffected — they start
+a drag immediately (see **Pointer** above).
+
+## Under the hood
+
+There is **no pixel hit-testing**. Every cell is a real, focusable DOM node carrying its
+coordinate, and the adapter maps events → coordinates → the core selection state machine:
+
+- Month / all-day cells: `data-date` (ISO day-start) + a linear day index in
+  `data-slot-index`.
+- Time-body cells: `data-date` + a **global** `data-slot-index` (`dayIndex * slotCount +
+  slot`), which is what lets a single drag span day columns.
+- Event buttons carry `data-bc-event`; the slot handlers skip anything inside one.
+
+The core state machine works purely in slot-index space; the store translates the
+committed indices back into the ISO dates described above, so **every framework adapter
+emits the identical payload**.
+
+## Architecture: core FSM ↔ adapter mapping
+
+Selection is deliberately split across two packages so the *behaviour* is shared and the
+*DOM wiring* is swappable. There are three layers:
+
+<table>
+  <thead><tr><th>layer</th><th>package</th><th>owns</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>1. The state machine</strong> (<code>createSelection</code>)</td>
+      <td><code>@big-calendar/core</code></td>
+      <td>The pure FSM in <strong>slot-index space</strong> — <code>idle</code> ↔ <code>selecting(anchor, head)</code>, the <code>start</code>/<code>to</code>/<code>complete</code>/<code>click</code>/<code>doubleClick</code>/<code>cancel</code> transitions, the live normalized <code>range</code>, and the <code>onSelecting</code> veto. Knows nothing about dates, the DOM, or pixels.</td>
+    </tr>
+    <tr>
+      <td><strong>2. Index → date translation</strong> (the store)</td>
+      <td><code>@big-calendar/core</code></td>
+      <td>On <em>commit</em>, turns the FSM's slot indices into the ISO <code>SlotSelectionDates</code> payload (the end-of-day rule, the <code>allDay</code> promotion, cross-day spans). It captures the <strong>anchor</strong> (day + mode + <code>slotCount</code>) when a gesture starts so it can decode a global index back into a day + slot.</td>
+    </tr>
+    <tr>
+      <td><strong>3. The adapter</strong> (DOM ↔ coordinates)</td>
+      <td>framework package (e.g. <code>@big-calendar/react</code>)</td>
+      <td>The only layer that touches the DOM. It maps pointer / keyboard / touch events to a slot coordinate (reading <code>data-slot-index</code> + <code>data-date</code> off the focused / hit cell — <strong>no pixel hit-testing</strong>), drives the FSM via <code>store.selection.*</code>, and reads <code>store.selection.range</code> + <code>store.selection.anchor</code> to paint the live <code>.bc-selection</code> overlay.</td>
+    </tr>
+  </tbody>
+</table>
+
+### The round trip (a pointer drag)
+
+1. **pointerdown** on a `[data-slot-index]` cell → the adapter (`useSlotSelection`) reads
+   that cell's `data-date` + `data-slot-index` and calls
+   `store.selection.start({ slot, date, mode, slotCount })`. The store stashes the anchor;
+   the FSM moves to `selecting`.
+2. **pointermove** → the adapter resolves the cell under the pointer
+   (`document.elementFromPoint`), reads its index, and calls `store.selection.to({ slot })`.
+   The FSM updates `head`; its `range` signal changes; `onSlotSelecting(...)` fires (in date
+   space) and may return `false` to veto. The adapter re-renders the overlay from `range`.
+3. **pointerup** → `store.selection.complete()`. The store translates the committed index
+   range to ISO dates and fires the matching commit callback (`onSlotSelect`, or
+   `onSlotClick` / `onSlotDoubleClick` for a tap).
+
+**Keyboard** drives the *same* FSM with no pixels at all: `useRovingSelection` moves the
+focused cell via a view-supplied `neighbor(index, dir)` map, then `Shift+Arrow` →
+`start` + `to`, `Enter`/`Space` → `complete`/`click`, `Esc` → `cancel`. The focused cell's
+`data-*` attributes are the source of truth, so keyboard and pointer converge on identical
+coordinates.
+
+### Why the split
+
+- **One behaviour, many adapters.** The FSM + the date translation live in core, so React
+  today — and any future Vue / Angular / Lit adapter — emit the *identical* `SlotSelectionDates`.
+  An adapter only has to answer "what slot is this DOM event over?"; it never re-implements
+  selection logic.
+- **Testable in isolation.** The FSM is a pure unit (`createSelection`), the translation is a
+  pure store concern, and the DOM mapping is the only part that needs jsdom.
+- **The view owns its geometry.** Each view decides how its cells map to indices (time grid:
+  vertical slots / a **global** `dayIndex*slotCount + slot`; month + all-day: a linear day
+  index) and supplies the keyboard `neighbor` map — without the core FSM knowing any of it.
+
+## Slot selection vs event selection
+
+These are two different things on two different layers:
+
+- **Slot selection** (this page) → empty space → `onSlotSelecting` / `onSlotClick`
+  / `onSlotDoubleClick` / `onSlotSelect`.
+- **Event selection** → an existing event → `store.selected` + `onEventClick` /
+  `onEventDoubleClick` (+ `onEventSelect` fires when the selected id changes).
+
+An event interaction never also triggers a slot selection.
+
+### Event interaction callbacks
+
+Every event (in any view) responds to four optional callbacks:
+
+<table>
+  <thead><tr><th>callback</th><th>fires on</th><th>receives</th></tr></thead>
+  <tbody>
+    <tr><td><code>onEventClick</code></td><td>click · Enter · Space</td><td><code>(event)</code></td></tr>
+    <tr><td><code>onEventDoubleClick</code></td><td>double-click · <kbd>F2</kbd></td><td><code>(event)</code></td></tr>
+    <tr><td><code>onEventRightClick</code></td><td>right-click · the keyboard Menu key · touch long-press</td><td><code>(event, domEvent)</code></td></tr>
+    <tr><td><code>onEventMiddleClick</code></td><td>middle ("scroll wheel") click — pointer only</td><td><code>(event, domEvent)</code></td></tr>
+  </tbody>
+</table>
+
+In the grid views (month / time grid) both the **primary** (click · Enter · Space)
+and **secondary** (double-click · <kbd>F2</kbd>) gestures **select** the event
+(`store.selected` updates, `onEventSelect` fires) in addition to firing their
+callback. The agenda is the exception — it has no selection, so it only fires the
+callbacks (see below).
+
+The right- and middle-click handlers also receive the **native DOM `MouseEvent`**
+(the same web-standard event in every framework adapter — not React's synthetic
+wrapper), so you can read `clientX`/`clientY` to position a custom context menu and
+call `preventDefault()` to suppress the native one:
+
+```tsx
+<Calendar
+  onEventRightClick={(event, e) => {
+    e.preventDefault()
+    openMenu(event, e.clientX, e.clientY)
+  }}
+/>
+```
+
+Each listener is wired **only when you provide its handler**. Omit
+`onEventRightClick` and no `contextmenu` listener is attached at all, so the
+browser's native context menu is left completely untouched.
+
+#### Agenda is the exception
+
+The agenda is a list, not a geometric grid — no drag, no resize, no selection. So
+its event **title** is the interactive target, and it only becomes a real
+`<button>` (styled as a link) when you wire at least one of the callbacks above;
+with none wired it stays a plain, non-interactive `<span>`. Unlike the grid views'
+single arrow-roving tab stop, agenda buttons are an ordinary tab order — `Tab`
+walks them, Enter activates, F2 is the double-click equivalent.

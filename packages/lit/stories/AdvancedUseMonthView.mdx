@@ -1,0 +1,116 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/MonthViewController" />
+
+# MonthViewElement
+
+`MonthViewElement` (`<bc-month-view>`) renders the month grid. It consumes `calendarContext` via `@lit/context` and renders nothing when the active view is not `'month'`.
+
+## How it works internally
+
+`MonthViewElement` follows this lifecycle:
+
+1. Creates a `ContextConsumer` for `calendarContext`.
+2. When context arrives, subscribes to `store.view`, `store.events`, `store.date`, etc. via `effect()`.
+3. Computes the month grid model from the store on every render.
+4. Renders a 7-column grid of week rows and day cells.
+
+## The month grid model
+
+<table>
+<thead><tr><th>Field</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>weeks</code></td><td>Array of week objects. Each has <code>key</code>, <code>days</code>, and <code>segments</code>.</td></tr>
+<tr><td><code>weekdays</code></td><td>Array of 7 objects for the column headers — each has <code>day</code>, <code>long</code>, <code>short</code>.</td></tr>
+</tbody>
+</table>
+
+### Week object
+
+<table>
+<thead><tr><th>Field</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>days</code></td><td>Array of 7 <code>MonthDayCell</code> objects.</td></tr>
+<tr><td><code>segments</code></td><td>Array of event segment rows that span this week row.</td></tr>
+</tbody>
+</table>
+
+### Day cell
+
+<table>
+<thead><tr><th>Field</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>day</code></td><td>ISO date string for this day.</td></tr>
+<tr><td><code>label</code></td><td>Display string for the day number (e.g. <code>"15"</code>).</td></tr>
+<tr><td><code>isToday</code></td><td><code>true</code> if this cell is the current date.</td></tr>
+<tr><td><code>isOffRange</code></td><td><code>true</code> if this cell is outside the displayed month (padding days).</td></tr>
+<tr><td><code>extra</code></td><td>Overflow info (<code>count</code>, <code>events</code>) when <code>weekEventLimit</code> is set and there are more events than fit. <code>null</code> otherwise.</td></tr>
+</tbody>
+</table>
+
+## Extending MonthViewElement
+
+```ts
+import { MonthViewElement } from '@big-calendar/lit'
+import { customElement } from 'lit/decorators.js'
+import { html } from 'lit'
+
+@customElement('my-month-view')
+class MyMonthViewElement extends MonthViewElement {
+  // Add a custom header above the default month grid
+  override render() {
+    return html`
+      <header class="my-custom-header">
+        <h2>My Calendar</h2>
+      </header>
+      ${super.render()}
+    `
+  }
+}
+```
+
+Use `<my-month-view>` inside `<bc-calendar>`:
+
+```ts
+html`
+  <bc-calendar .localizer=${localizer} .events=${events}>
+    <bc-default-toolbar></bc-default-toolbar>
+    <my-month-view></my-month-view>
+    <bc-time-grid-view></bc-time-grid-view>
+    <bc-agenda-view></bc-agenda-view>
+  </bc-calendar>
+`
+```
+
+## CSS customisation points
+
+<table>
+<thead><tr><th>Class</th><th>Element</th></tr></thead>
+<tbody>
+<tr><td><code>.bc-month</code></td><td>The root month grid container</td></tr>
+<tr><td><code>.bc-weekday</code></td><td>Day-column header (Mon, Tue, …)</td></tr>
+<tr><td><code>.bc-day-cell</code></td><td>Individual day cell</td></tr>
+<tr><td><code>.bc-today</code></td><td>Applied to today's day cell</td></tr>
+<tr><td><code>.bc-off-range</code></td><td>Applied to padding days outside the displayed month</td></tr>
+<tr><td><code>.bc-date-number</code></td><td>The drilldown button inside each day cell</td></tr>
+<tr><td><code>.bc-segment</code></td><td>Event bar inside the month grid</td></tr>
+<tr><td><code>.bc-event-title</code></td><td>Text content inside an event bar</td></tr>
+</tbody>
+</table>
+
+## The `weekEventLimit` property
+
+Set `.weekEventLimit` on `<bc-calendar>` to cap the number of visible event rows per week before a "+ N more" button appears:
+
+```ts
+html`
+  <bc-calendar .localizer=${localizer} .events=${events} .weekEventLimit=${3}>
+    <bc-default-toolbar></bc-default-toolbar>
+    <bc-month-view></bc-month-view>
+    <bc-time-grid-view></bc-time-grid-view>
+    <bc-agenda-view></bc-agenda-view>
+  </bc-calendar>
+`
+```
+
+When omitted, the row count is measured automatically from the available cell height.

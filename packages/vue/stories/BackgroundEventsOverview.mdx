@@ -1,0 +1,141 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Background Events/Overview" />
+
+# Background Events
+
+Background events appear **behind** regular events as coloured bands across the time grid. They are visual only — no click, drag, or resize handlers are wired to them. Pointer events pass straight through to the slots and events underneath, so selection and interaction still work anywhere on a background event's surface.
+
+Typical uses: office hours, blocked time, availability windows, focus periods.
+
+## Adding background events
+
+Pass a `:backgroundEvents` array to `CalendarProvider`. The shape is identical to your regular events — the same accessors (`start`, `end`, `title`, etc.) apply:
+
+```vue
+<CalendarProvider
+  :events="myEvents"
+  :backgroundEvents="[
+    { id: 'bg1', title: 'Focus time', start: '2026-06-15T09:00:00.000Z', end: '2026-06-15T12:00:00.000Z' },
+    { id: 'bg2', title: 'Sprint focus', start: '2026-06-16T09:00:00.000Z', end: '2026-06-18T17:00:00.000Z' },
+  ]"
+>
+```
+
+Background events are separate from your regular `events` — they are never returned by `onEventDrop`, `onEventClick`, or any other callback.
+
+## Rendering in time-grid views
+
+Background events only appear in the **day**, **week**, and **work-week** views. They do not appear in the month or agenda views.
+
+Corner rounding follows the event's day boundaries:
+
+- **Single-day** — both top and bottom corners are rounded (`bc-bg-event--start` + `bc-bg-event--end`).
+- **Multi-day, first column** — top corners only (`bc-bg-event--start`).
+- **Multi-day, last column** — bottom corners only (`bc-bg-event--end`).
+- **Multi-day, middle columns** — no rounding.
+
+## Overlapping background events
+
+Two background events that overlap on the same day are placed side by side using the same layout algorithm as regular timed events — each gets a fraction of the column width. Regular (foreground) events always render on top.
+
+## Styling
+
+Background events use the `bc-bg-event` class. Override the colour with CSS:
+
+```css
+.bc-bg-event {
+  background: oklch(0.92 0.05 145 / 0.4);  /* soft green */
+}
+```
+
+To style individual background events based on their data, use the `backgroundEvent` slot in `components.time`. In Vue, the slot component receives `{ event, title }` as props:
+
+```vue
+<script setup>
+const bgEventComp = {
+  props: ['event', 'title'],
+  template: `<div :style="{ background: event.color, blockSize: '100%' }" />`,
+}
+</script>
+
+<template>
+  <CalendarProvider :components="{ time: { backgroundEvent: bgEventComp } }">
+    <Calendar />
+  </CalendarProvider>
+</template>
+```
+
+## Selection integration
+
+When `:selectable="true"` is enabled on a time-grid view that has `backgroundEvents`, every slot callback payload includes a `backgroundEvents` field with the background events that overlap the selection. The field is **omitted entirely** when nothing overlaps.
+
+```vue
+<script setup>
+import { getContainingBgEvents } from '@big-calendar/core'
+
+const onSlotSelect = (selection) => {
+  const { backgroundEvents } = selection
+
+  if (!backgroundEvents) {
+    // ① No overlap — selection is entirely outside every background event
+    alert('Please select a time within an available block')
+    return
+  }
+
+  const containers = getContainingBgEvents({ selection })
+
+  if (containers.length > 0) {
+    // ② Fully contained — selection sits completely inside at least one background event
+    openCreateDialog(selection)
+  } else {
+    // ③ Partial overlap — selection crosses the edge of a background event
+    alert('Your selection must fit completely within an available block')
+  }
+}
+</script>
+```
+
+`getContainingBgEvents` is exported from `@big-calendar/core`. It filters the `backgroundEvents` already on the payload down to only those that **fully wrap** the selection. If your event objects use different field names for the dates:
+
+```ts
+const containers = getContainingBgEvents({
+  selection,
+  bgStartAccessor: (ev) => ev.startsAt,
+  bgEndAccessor:   (ev) => ev.endsAt,
+})
+```
+
+## Drag and drop integration
+
+When drag and drop is active (`useCalendarDnd`), moving or resizing an event and dropping an item from outside the calendar all follow the same rule: if the resulting bounds overlap a background event, a `backgroundEvents` field appears in the callback payload.
+
+```vue
+<template>
+  <CalendarProvider
+    :backgroundEvents="focusBlocks"
+    :onEventDrop="({ event, start, end, allDay, backgroundEvents }) => {
+      if (!backgroundEvents) return  // dropped outside every focus block
+      events.value = events.value.map((e) =>
+        e.id === event.id ? { ...e, start, end, allDay } : e,
+      )
+    }"
+    :onEventResize="({ event, start, end, allDay, backgroundEvents }) => {
+      // Same field, same rules as onEventDrop
+      events.value = events.value.map((e) =>
+        e.id === event.id ? { ...e, start, end, allDay } : e,
+      )
+    }"
+  >
+    <DraggableCalendar />
+  </CalendarProvider>
+</template>
+```
+
+## See it in action
+
+The **Background Events → With Background Events** story shows single-day and multi-day background events in the week view. Toggle **Overlapping** in Controls to see two background events share column width on the same day.
+
+The **Background Events → Selectable With Background Events** story adds `:selectable="true"` to the same setup. Drag a selection across the grid and watch the full payload — including the `backgroundEvents` field — appear in the **Actions** panel.
+
+The **Background Events → Drag And Drop With Background Events** story shows drag, resize, and background event intersection together. Move or resize any event over a coloured band and check the **Actions** panel to see the `backgroundEvents` field in the drop payload.

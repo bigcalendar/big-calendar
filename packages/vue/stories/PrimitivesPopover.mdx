@@ -1,0 +1,60 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Primitives/Popover" />
+
+# Popover
+
+A top-layer floating panel built on the browser's native [Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API). The element renders in the browser's top layer, above all other content, with no stacking-context or z-index issues.
+
+## Where it is used
+
+Big Calendar uses `<Popover>` for the month grid's **show-more** overlay (the panel that lists overflowed events when you click "+N more") and the time-grid's **all-day show-more** overlay. It is also available for use in your own custom slot components.
+
+## API
+
+```ts
+import { Popover } from '@big-calendar/vue'
+```
+
+In Vue, `<Popover>` uses a `trigger` scoped slot to give you the anchor element refs and popover-target wiring, and a default slot for the panel content:
+
+```vue
+<template>
+  <Popover placement="bottom-start" :sameWidth="false" class="my-popover">
+    <template #trigger="{ setAnchor, popoverTarget, popoverAction }">
+      <button :ref="setAnchor" :popovertarget="popoverTarget" :popovertargetaction="popoverAction">
+        Open
+      </button>
+    </template>
+    <p>Popover content</p>
+  </Popover>
+</template>
+```
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>placement</code></td><td><code>FloatingPlacement</code></td><td><code>'bottom-start'</code></td><td>Preferred placement. The popover flips automatically if there is not enough space.</td></tr>
+    <tr><td><code>sameWidth</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Match the trigger's rendered inline size.</td></tr>
+    <tr><td><code>class</code></td><td><code>string</code></td><td>—</td><td>Applied to the popover panel element.</td></tr>
+    <tr><td><code>#trigger</code></td><td>scoped slot</td><td>—</td><td>Receives <code>{ setAnchor, popoverTarget, popoverAction }</code>. Bind <code>:ref="setAnchor"</code>, <code>:popovertarget</code>, and <code>:popovertargetaction</code> to your trigger button.</td></tr>
+    <tr><td><code>#default</code></td><td>slot</td><td>—</td><td>Content rendered inside the panel.</td></tr>
+  </tbody>
+</table>
+
+## Positioning
+
+`<Popover>` uses `@floating-ui/core` (lazily loaded) with `offset`, `flip`, `shift`, and `size` middleware to keep the panel within the viewport. The available height is written as a CSS custom property (`--bc-float-avail-h`) on the panel element, so your CSS can constrain height with `min(Npx, var(--bc-float-avail-h))` without being overridden by inline styles.
+
+## Styling
+
+The base class is `bc-popover` (from `@big-calendar/styles`). The show-more variant adds `bc-show-more-popover`, which caps height at `min(300px, var(--bc-float-avail-h, 100vh))` with vertical scroll.
+
+Override appearance via CSS custom properties:
+
+```css
+.bc-popover {
+  --bc-radius: 8px;
+  --bc-shadow-popover: 0 4px 24px rgb(0 0 0 / 0.12);
+}
+```

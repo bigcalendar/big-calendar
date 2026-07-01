@@ -1,0 +1,93 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Calendar/Event Type Accessor" />
+
+# Event Type Accessor
+
+The `type` accessor lets you assign a category string to each event and then target the calendar's rendered markup with CSS to colour each event block differently.
+
+## How it works
+
+The recommended approach is to inject CSS variables via a `:has()` selector on the outer `.bc-event` or `.bc-segment` class, targeting a type class on an inner element. Because `@big-calendar/lit` uses the light DOM, your stylesheet can reach these elements directly:
+
+```css
+.bc-event:has(.bc-event-type-meeting) {
+  --bc-color-event-bg: #b8d4f5;
+  --bc-color-event-fg: #1a3a5c;
+}
+.bc-event:has(.bc-event-type-standup) {
+  --bc-color-event-bg: #b8f0c8;
+  --bc-color-event-fg: #1a4d2a;
+}
+```
+
+Because the CSS custom properties cascade into the event button's hover, focus, and resize-handle styles, the entire event card picks up the correct palette without any inline-style hacks.
+
+## Setup
+
+Add a `type` field to your event objects:
+
+```ts
+const events = [
+  { id: 1, title: 'Standup', type: 'standup', start: '...', end: '...' },
+  { id: 2, title: 'Review',  type: 'review',  start: '...', end: '...' },
+]
+```
+
+Because the Lit adapter uses CSS for customisation (rather than render prop slots like React/Vue/Angular), you need to extend the view element to inject the type class into event markup, or add a `data-*` attribute via CSS custom rendering.
+
+The simplest approach for the current release is to rely on `data-bc-event-type` being written to event elements by the store, and target it directly with CSS:
+
+```css
+[data-bc-event-type="standup"] {
+  --bc-color-event-bg: #b8f0c8;
+  --bc-color-event-fg: #1a4d2a;
+}
+[data-bc-event-type="review"] {
+  --bc-color-event-bg: #fdf5b0;
+  --bc-color-event-fg: #4d3e00;
+}
+```
+
+Configure the accessor so the engine knows which field to read:
+
+```ts
+html`
+  <bc-calendar
+    .localizer=${localizer}
+    .events=${events}
+    .accessors=${{ type: 'type' }}
+  >
+    <bc-default-toolbar></bc-default-toolbar>
+    <bc-month-view></bc-month-view>
+    <bc-time-grid-view></bc-time-grid-view>
+    <bc-agenda-view></bc-agenda-view>
+  </bc-calendar>
+`
+```
+
+## Injecting styles at runtime
+
+```ts
+class MyCalendarElement extends LitElement {
+  private _styleEl: HTMLStyleElement | null = null
+
+  override connectedCallback() {
+    super.connectedCallback()
+    this._styleEl = document.createElement('style')
+    this._styleEl.textContent = [
+      `[data-bc-event-type="standup"] { --bc-color-event-bg: #b8f0c8; --bc-color-event-fg: #1a4d2a; }`,
+      `[data-bc-event-type="review"]  { --bc-color-event-bg: #fdf5b0; --bc-color-event-fg: #4d3e00; }`,
+    ].join('\n')
+    document.head.appendChild(this._styleEl)
+  }
+
+  override disconnectedCallback() {
+    super.disconnectedCallback()
+    this._styleEl?.remove()
+    this._styleEl = null
+  }
+}
+```
+
+See **Event Type Accessor** story for a live demo with multiple event types across month and week views.

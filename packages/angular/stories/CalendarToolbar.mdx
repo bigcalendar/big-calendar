@@ -1,0 +1,58 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Calendar/Toolbar" />
+
+# Toolbar
+
+Big Calendar includes `DefaultToolbarComponent` (`<bc-default-toolbar>`) — a simple navigation toolbar with Previous / Today / Next buttons and a row of view selector buttons. It is included automatically when you use `<bc-calendar>`.
+
+## What the default toolbar does
+
+- **Previous / Today / Next** — navigate the focus date backward, to today, or forward one period (one month, one week, one day, etc. depending on the active view).
+- **View buttons** — switch between the views listed in `[views]` (defaults to all five).
+- **Date label** — shows the current range as a human-readable string formatted by the localizer.
+
+## Replacing the toolbar
+
+Supply your own toolbar by passing a `[bcToolbar]` ng-template to the `<bc-calendar>` component, **or** by not using `<bc-calendar>` at all and wiring the store yourself via `injectCalendarStore()`.
+
+To suppress the toolbar entirely while keeping the default view layout, pass a no-op template:
+
+```html
+<bc-calendar-provider [localizer]="loc" [events]="events">
+  <bc-calendar [bcToolbar]="noToolbar" />
+</bc-calendar-provider>
+<ng-template #noToolbar></ng-template>
+```
+
+## Messages
+
+All strings the toolbar renders are driven by the `messages` input on `CalendarProviderComponent`. Override any key to translate the labels:
+
+```ts
+readonly messages: Partial<Messages> = {
+  previous: 'Prev',
+  next: 'Next',
+  today: 'Current',
+  month: 'Mo',
+  week: 'Wk',
+  day: 'Day',
+  work_week: 'M–F',
+  agenda: 'List',
+}
+```
+
+See **Calendar → Localization** for a full worked example in Arabic and Spanish.
+
+## Navigation callbacks
+
+The toolbar fires three callbacks on `CalendarProviderComponent` that you can listen to for controlled-mode state synchronisation:
+
+<table>
+<thead><tr><th>Callback</th><th>When it fires</th></tr></thead>
+<tbody>
+<tr><td><code>[onNavigate]</code></td><td>Prev / Today / Next clicked — receives <code>&#123; date, view &#125;</code></td></tr>
+<tr><td><code>[onView]</code></td><td>A view button clicked — receives <code>&#123; view &#125;</code></td></tr>
+<tr><td><code>[onRangeChange]</code></td><td>After any navigation — receives <code>&#123; range: &#123; start, end &#125;, view &#125;</code></td></tr>
+</tbody>
+</table>

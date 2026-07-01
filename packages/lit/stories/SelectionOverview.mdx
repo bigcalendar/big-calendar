@@ -1,0 +1,130 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Selection/Overview" />
+
+# Selection
+
+Slot selection lets users click or drag on empty time to indicate they want to create a new event. It is disabled by default.
+
+## Enabling selection
+
+```ts
+html`
+  <bc-calendar
+    .localizer=${localizer}
+    .events=${events}
+    .selectable=${true}
+    .onSlotClick=${handleSlotClick}
+    .onSlotSelect=${handleSlotSelect}
+  >
+    <bc-default-toolbar></bc-default-toolbar>
+    <bc-month-view></bc-month-view>
+    <bc-time-grid-view></bc-time-grid-view>
+    <bc-agenda-view></bc-agenda-view>
+  </bc-calendar>
+`
+```
+
+## The `selectable` values
+
+<table>
+<thead><tr><th>Value</th><th>Behaviour</th></tr></thead>
+<tbody>
+<tr><td><code>false</code> (default)</td><td>No slot selection. Clicking and dragging the grid does nothing.</td></tr>
+<tr><td><code>true</code></td><td>Slot selection is enabled. Clicking or dragging anywhere in the grid starts a selection.</td></tr>
+<tr><td><code>'ignoreEvents'</code></td><td>Slot selection is enabled, but clicking directly on an existing event block does not start a selection. Useful when you have both event click and slot selection wired and do not want them to conflict.</td></tr>
+</tbody>
+</table>
+
+## The selection callbacks
+
+<table>
+<thead><tr><th>Property</th><th>Description</th></tr></thead>
+<tbody>
+<tr>
+<td><code>.onSlotClick</code></td>
+<td>Fires when the user clicks (or taps) a single slot or day cell. Receives a selection payload.</td>
+</tr>
+<tr>
+<td><code>.onSlotDoubleClick</code></td>
+<td>Fires when the user double-clicks a single slot or day cell.</td>
+</tr>
+<tr>
+<td><code>.onSlotSelect</code></td>
+<td>Fires when the user finishes dragging across multiple slots. Receives a selection payload with a range.</td>
+</tr>
+<tr>
+<td><code>.onSlotSelecting</code></td>
+<td>Fires on every step while the user is still dragging. Return <code>false</code> to cancel the current selection at that point.</td>
+</tr>
+</tbody>
+</table>
+
+## The selection payload shape
+
+Every selection callback receives an object with:
+
+<table>
+<thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>start</code></td><td><code>string</code></td><td>ISO string for the start of the selected range (inclusive).</td></tr>
+<tr><td><code>end</code></td><td><code>string</code></td><td>ISO string for the end of the selected range (exclusive in the time grid, inclusive in the month grid).</td></tr>
+<tr><td><code>slots</code></td><td><code>string[]</code></td><td>The individual slot boundaries within the selection, as ISO strings.</td></tr>
+<tr><td><code>allDay</code></td><td><code>boolean</code></td><td><code>true</code> when the selection was made in the month grid or the all-day strip.</td></tr>
+<tr><td><code>resourceId</code></td><td><code>string | undefined</code></td><td>The resource the user selected within, when <code>.resources</code> is configured.</td></tr>
+<tr><td><code>backgroundEvents</code></td><td><code>TEvent[] | undefined</code></td><td>Background events that overlap the selection range, if any.</td></tr>
+</tbody>
+</table>
+
+## Typical pattern: open a create-event dialog
+
+```ts
+class MyCalendarElement extends LitElement {
+  override createRenderRoot() { return this }
+
+  private _pendingSlot = null
+  private _events = []
+
+  private _openCreate = (selection) => {
+    // Store the selection so a dialog can use it
+    this._pendingSlot = selection
+    this.requestUpdate()
+  }
+
+  private _createEvent = (title) => {
+    if (!this._pendingSlot) return
+    const { start, end, allDay } = this._pendingSlot
+    this._events = [...this._events, { id: Date.now(), title, start, end, allDay }]
+    this._pendingSlot = null
+    this.requestUpdate()
+  }
+
+  override render() {
+    return html`
+      <bc-calendar
+        .localizer=${localizer}
+        .events=${this._events}
+        .selectable=${true}
+        .onSlotSelect=${this._openCreate}
+      >
+        <bc-default-toolbar></bc-default-toolbar>
+        <bc-month-view></bc-month-view>
+        <bc-time-grid-view></bc-time-grid-view>
+        <bc-agenda-view></bc-agenda-view>
+      </bc-calendar>
+    `
+  }
+}
+```
+
+## Keyboard selection
+
+Users can make slot selections without touching the mouse:
+
+1. Tab into the calendar grid.
+2. Arrow keys to move between cells.
+3. Hold **Shift** and arrow to extend a selection.
+4. **Enter** or **Space** to commit — fires `onSlotSelect`.
+5. **Escape** to cancel.
+
+No extra setup is required.

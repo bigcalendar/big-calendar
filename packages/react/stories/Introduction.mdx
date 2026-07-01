@@ -1,0 +1,71 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import LinkTo from '@storybook/addon-links/react'
+
+<Meta title="Introduction" />
+
+# Big Calendar
+
+Big Calendar is a first-class set of React components for building inline event calendar systems — the kind you see in Google Calendar or Outlook — for use inside your own web applications. It is the successor to React Big Calendar and addresses the foundational limits of that project with a cleaner architecture built for modern web standards.
+
+## What changed from React Big Calendar
+
+React Big Calendar was built around JavaScript's native `Date` object and moment.js. Every localizer had to bridge the gap between those two things, which leaked into the public API and made timezone handling brittle.
+
+Big Calendar removes that dependency entirely. All dates are plain **ISO 8601 strings** throughout the public API — `start`, `end`, and accessor values are all strings. Formatting and arithmetic are handled by the localizer, with formatting built on the browser's built-in **[`Intl.DateTimeFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat)** API. This gives you consistent, spec-compliant internationalization without bundling a date library (unless you want one — a [Luxon](https://moment.github.io/luxon/) localizer is also available).
+
+The result: timezone-aware rendering works correctly by default, and the localizer is swappable without touching your event data or component code.
+
+## Architecture
+
+Big Calendar is split into focused packages:
+
+- **`@big-calendar/core`** — the headless engine. All date math, view models, layout algorithms, and the calendar store live here. It has no React dependency.
+- **`@big-calendar/react`** — the React UI layer. Components read from the store and render class names from the stylesheet. They ship no CSS of their own.
+- **`@big-calendar/styles`** — the stylesheet. All layout and skin live in `@big-calendar/styles/index.css`, built on `--bc-*` CSS custom properties that you can override per-theme.
+- **`@big-calendar/dnd`** — optional drag-and-drop powered by [Pragmatic Drag and Drop](https://atlassian.design/components/pragmatic-drag-and-drop/about). Install only when you need it.
+- **`@big-calendar/localizer-temporal`** — the default localizer, built on the [Temporal API](https://tc39.es/proposal-temporal/) polyfill.
+- **`@big-calendar/localizer-luxon`** — an optional [Luxon](https://moment.github.io/luxon/)-based localizer for teams already using Luxon.
+
+## CalendarProvider
+
+Everything is driven by a single `CalendarProvider`. It holds the calendar store (view, focus date, events, config), and every component inside it reads from that store via context. You never pass events or view state down manually.
+
+```tsx
+import { CalendarProvider, Calendar } from '@big-calendar/react'
+import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
+import '@big-calendar/styles/index.css'
+
+const localizer = await createTemporalLocalizer({ locale: 'en-US', timeZone: 'UTC' })
+
+function App() {
+  return (
+    <CalendarProvider localizer={localizer} events={myEvents} defaultDate="2026-06-15">
+      <Calendar />
+    </CalendarProvider>
+  )
+}
+```
+
+`<Calendar>` is the all-in-one composed component: it renders a `<Toolbar>` for navigation and a view component (Month, TimeGrid, or Agenda) based on the active view. It is the fastest way to get a working calendar. For full layout control, see <LinkTo title="Advanced/Headless API" story="docs">Advanced → Headless API</LinkTo>.
+
+## Responsive by design
+
+Big Calendar is built for real application layouts. The viewport fills the container (`block-size: 100%` by default), time-grid views scroll vertically within a fixed container, and resource columns scroll horizontally. There are no fixed pixel heights hard-coded into the library — size the container, and the calendar fills it.
+
+## Headless API
+
+For cases where the default HTML structure is not enough, every view has a corresponding hook that exposes the full model and element-spread props:
+
+- <LinkTo title="Advanced/useMonthView" story="docs"><code>useMonthView()</code></LinkTo> — month grid: weeks, day cells, segments, overflow.
+- <LinkTo title="Advanced/useTimeGridView" story="docs"><code>useTimeGridView()</code></LinkTo> — time grid: columns, all-day row, gutter, events.
+- <LinkTo title="Advanced/useAgendaView" story="docs"><code>useAgendaView()</code></LinkTo> — agenda: day groups, event rows, empty state.
+
+Spread the returned props onto your own markup and compose exactly the layout you need. See <LinkTo title="Advanced/Headless API" story="docs">Advanced → Headless API</LinkTo> for the full pattern.
+
+## Where to start
+
+- <LinkTo title="Calendar/Standard" story="Standard">Calendar → Standard</LinkTo> — a working calendar with all five views and the toolbar. Start here.
+- **Guides in Calendar/** — <LinkTo title="Calendar/Views" story="docs">Views</LinkTo>, <LinkTo title="Calendar/Toolbar" story="docs">Toolbar</LinkTo>, <LinkTo title="Calendar/Custom Components" story="docs">Custom Components</LinkTo>, and <LinkTo title="Calendar/Custom Views" story="docs">Custom Views</LinkTo> explained.
+- <LinkTo title="Selection/Overview" story="docs">Selection</LinkTo>, <LinkTo title="Drag & Drop/Overview" story="docs">Drag & Drop</LinkTo>, <LinkTo title="Resources/Overview" story="docs">Resources</LinkTo>, <LinkTo title="Background Events/Overview" story="docs">Background Events</LinkTo> — each feature has an interactive story and a documentation page.
+- <LinkTo title="Advanced/Headless API" story="docs">Advanced</LinkTo> — the headless API and hook reference.
+- **Primitives** — the <LinkTo title="Primitives/Popover" story="docs">Popover</LinkTo>, <LinkTo title="Primitives/Dialog" story="docs">Dialog</LinkTo>, and <LinkTo title="Primitives/Tooltip" story="docs">Tooltip</LinkTo> building blocks used internally and available for custom components.

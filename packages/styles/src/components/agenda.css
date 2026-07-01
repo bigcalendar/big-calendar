@@ -1,0 +1,66 @@
+/* Agenda: day groups with date / time / event columns. */
+@layer bc.components {
+  .bc-agenda-header {
+    border-block-end: var(--bc-border);
+    font-weight: var(--bc-font-weight-bold);
+  }
+
+  .bc-agenda-heading,
+  .bc-agenda-date,
+  .bc-agenda-time,
+  .bc-agenda-event {
+    padding: var(--bc-space-1);
+  }
+
+  /* Day boundary line (heavier); the date cell spans the group so it shows once. */
+  .bc-agenda-day {
+    border-block-start: var(--bc-border);
+  }
+
+  .bc-agenda-day:first-child {
+    border-block-start: 0;
+  }
+
+  .bc-agenda-date,
+  .bc-agenda-time {
+    color: var(--bc-color-muted);
+    white-space: nowrap;
+  }
+
+  /* Column separators: date | time and time | event, in the header and body. The
+     date cell spans its group, so its border runs the full group height. */
+  .bc-agenda-heading:not(:last-child),
+  .bc-agenda-date,
+  .bc-agenda-time {
+    border-inline-end: var(--bc-border);
+  }
+
+  /* Lighter divider between events within the same day. */
+  .bc-agenda-row + .bc-agenda-row {
+    border-block-start: var(--bc-border-width) solid var(--bc-color-slot-border);
+  }
+
+  /* The default event title becomes a real <button> when the app wires an event
+     handler (click / double-click / right / middle). reset.css already strips the
+     native button chrome; style it to read as a link (an action, not a box), and
+     shrink the hit target to the text via justify-self. */
+  button.bc-agenda-event {
+    appearance: none;
+    font: inherit;
+    text-align: start;
+    justify-self: start;
+    color: var(--bc-color-accent);
+    text-decoration: underline;
+  }
+
+  button.bc-agenda-event:hover {
+    text-decoration: none;
+  }
+
+  .bc-agenda-empty {
+    grid-column: 1 / -1;
+    padding: var(--bc-space-4);
+    text-align: center;
+    color: var(--bc-color-muted);
+  }
+}

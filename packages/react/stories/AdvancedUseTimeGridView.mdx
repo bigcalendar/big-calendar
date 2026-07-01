@@ -1,0 +1,172 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import LinkTo from '@storybook/addon-links/react'
+
+<Meta title="Advanced/useTimeGridView" />
+
+# useTimeGridView
+
+A composed hook that drives a custom time-grid view (Day, Week, Work-Week). Call it inside a component that lives inside a `CalendarProvider`. See <LinkTo title="Advanced/Headless API" story="docs">Advanced → Headless API</LinkTo> for the general pattern.
+
+## Return value
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>grid</code></td><td><code>TimeGrid | null</code></td><td>The resolved time grid model. <code>null</code> when the active view is not a time-grid — use as a gate.</td></tr>
+    <tr><td><code>announcement</code></td><td><code>string</code></td><td>Text for the keyboard-DnD live region. Render inside <code>role="status"</code>.</td></tr>
+    <tr><td><code>root</code></td><td><code>object</code></td><td>Element-spread props for the outermost <code>&lt;div&gt;</code>: roving <code>ref</code> and keyboard-DnD handlers.</td></tr>
+    <tr><td><code>getRootStyle(leafCount)</code></td><td><code>function</code></td><td>Returns a CSS style object for the root <code>&lt;div&gt;</code>. Pass the number of leaf columns (days in plain mode).</td></tr>
+    <tr><td><code>header</code></td><td><code>object</code></td><td>Everything needed to render the header section. See below.</td></tr>
+    <tr><td><code>body</code></td><td><code>object</code></td><td>Everything needed to render the scrollable body. See below.</td></tr>
+  </tbody>
+</table>
+
+### `header` contents
+
+<table>
+  <thead><tr><th>Property</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>components.DayHeading</code></td><td>Resolved day heading slot component.</td></tr>
+    <tr><td><code>components.AllDayEvent</code></td><td>Resolved all-day event slot component.</td></tr>
+    <tr><td><code>components.ShowMore</code></td><td>Resolved all-day show-more slot component.</td></tr>
+    <tr><td><code>messages</code></td><td>Localized strings.</td></tr>
+    <tr><td><code>timeHead</code></td><td>Element-spread for the <code>&lt;div&gt;</code> wrapping the full header.</td></tr>
+    <tr><td><code>timeHeader</code></td><td>Element-spread for the inner day-heading row.</td></tr>
+    <tr><td><code>timeHeaderGutter</code></td><td>Element-spread for the gutter spacer.</td></tr>
+    <tr><td><code>allDayRow</code></td><td>Element-spread for the all-day row container.</td></tr>
+    <tr><td><code>allDayLabel</code></td><td>Element-spread for the "All day" label.</td></tr>
+    <tr><td><code>allDaySlots</code></td><td>Element-spread for the slot hit-target container.</td></tr>
+    <tr><td><code>allDaySegments</code></td><td>Element-spread for the event segment container.</td></tr>
+    <tr><td><code>getHeadingProps(heading)</code></td><td>Props for a <code>DayHeading</code> component.</td></tr>
+    <tr><td><code>getAllDaySlotProps(column, colIndex)</code></td><td>Props for an all-day slot hit-target.</td></tr>
+    <tr><td><code>getAllDaySegmentProps(segment)</code></td><td>All <code>EventButton</code> props for an all-day segment.</td></tr>
+  </tbody>
+</table>
+
+### `body` contents
+
+<table>
+  <thead><tr><th>Property</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>components.TimeLabel</code></td><td>Resolved time label slot component.</td></tr>
+    <tr><td><code>components.EventSlot</code></td><td>Resolved timed event slot component.</td></tr>
+    <tr><td><code>components.BgEventSlot</code></td><td>Resolved background event slot component.</td></tr>
+    <tr><td><code>body</code></td><td>Element-spread for the scrollable body container.</td></tr>
+    <tr><td><code>gutter</code></td><td>Element-spread for the time gutter.</td></tr>
+    <tr><td><code>timeSlotsContainer</code></td><td>Element-spread for the slot hit-target container.</td></tr>
+    <tr><td><code>getColumnProps(column)</code></td><td>Props for a day column <code>&lt;div&gt;</code>.</td></tr>
+    <tr><td><code>getSlotProps(column, colIndex, slotIndex)</code></td><td>Props for a time slot hit-target.</td></tr>
+    <tr><td><code>getEventProps(event)</code></td><td>All <code>EventButton</code> props for a timed event.</td></tr>
+    <tr><td><code>getBgEventProps(bg)</code></td><td>Props for a background event box.</td></tr>
+    <tr><td><code>bodyNowIndicatorProps</code></td><td>Props for the now-indicator line, or <code>null</code> if not today.</td></tr>
+  </tbody>
+</table>
+
+## Layout variants
+
+The time grid has three layout paths, identified by checking the `grid` object:
+
+<table>
+  <thead><tr><th>Condition</th><th>Layout</th></tr></thead>
+  <tbody>
+    <tr><td><code>grid.resources === null &amp;&amp; grid.dayGroups === null</code></td><td><strong>Plain</strong> — one column per day.</td></tr>
+    <tr><td><code>grid.resources !== null</code></td><td><strong>Resource-major</strong> — resources as the outer grouping.</td></tr>
+    <tr><td><code>grid.dayGroups !== null</code></td><td><strong>Day-major</strong> — days as the outer grouping (<code>resourceLayout="day"</code>).</td></tr>
+  </tbody>
+</table>
+
+## Composed vs. granular hooks
+
+`useTimeGridView` wraps three lower-level hooks:
+
+1. **`useTimeGrid()`** — builds the grid model from the store.
+2. **`useTimeGridHeader(grid)`** — header state, all-day-row interaction, roving focus, segment geometry.
+3. **`useTimeGridBody(grid)`** — body state, time-slot interaction, event positioning, background events, now indicator.
+
+Call those directly if you only need to replace the header or body, not the whole layout.
+
+## Usage example (plain layout)
+
+```tsx
+import { EventButton, useTimeGridView } from '@big-calendar/react'
+
+function MyTimeGridView() {
+  const { grid, announcement, root, getRootStyle, header, body } =
+    useTimeGridView()
+
+  if (grid === null) return null
+
+  const {
+    components: { DayHeading, AllDayEvent },
+    timeHead, timeHeader, timeHeaderGutter,
+    allDayRow, allDayLabel, allDaySlots, allDaySegments,
+    getHeadingProps, getAllDaySlotProps, getAllDaySegmentProps,
+  } = header
+
+  const {
+    components: { TimeLabel, EventSlot },
+    body: bodyRoot, gutter, timeSlotsContainer,
+    getColumnProps, getSlotProps, getEventProps,
+    bodyNowIndicatorProps,
+  } = body
+
+  return (
+    <div style={getRootStyle(grid.headings.length)} {...root}>
+      <div role="status" aria-live="polite" className="bc-sr-only">
+        {announcement}
+      </div>
+      <div {...timeHead}>
+        <div {...timeHeader}>
+          <div {...timeHeaderGutter} />
+          {grid.headings.map((h) => (
+            <DayHeading key={h.day} {...getHeadingProps(h)} />
+          ))}
+        </div>
+        <div {...allDayRow}>
+          <div {...allDayLabel}>All day</div>
+          <div {...allDaySlots}>
+            {grid.columns.map((col, ci) => (
+              <div key={col.key} {...getAllDaySlotProps(col, ci)} />
+            ))}
+          </div>
+          <div {...allDaySegments}>
+            {grid.allDay.segments.map((seg) => (
+              <EventButton key={seg.key} {...getAllDaySegmentProps(seg)}>
+                <AllDayEvent event={seg.event} title={seg.title} />
+              </EventButton>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div {...bodyRoot}>
+        <div {...gutter}>
+          {grid.gutter.map((l) => (
+            <TimeLabel key={l.key} time={l.time} label={l.label} />
+          ))}
+        </div>
+        {grid.columns.map((column, ci) => (
+          <div key={column.key} {...getColumnProps(column)}>
+            <div {...timeSlotsContainer}>
+              {Array.from({ length: grid.slotCount }, (_, si) => (
+                <div key={si} {...getSlotProps(column, ci, si)} />
+              ))}
+            </div>
+            {column.events.map((event) => (
+              <EventButton key={event.key} {...getEventProps(event)}>
+                <EventSlot event={event.event} title={event.title} time={event.time} />
+              </EventButton>
+            ))}
+          </div>
+        ))}
+        {bodyNowIndicatorProps && <div {...bodyNowIndicatorProps} />}
+      </div>
+    </div>
+  )
+}
+```
+
+## When to use this vs. `TimeGridView`
+
+Use `TimeGridView` when the default rendering is sufficient. Use `useTimeGridView` when you need to change the HTML structure — render the all-day row differently, replace the column layout, or add custom wrappers.
+
+For changing individual cells or labels without restructuring, use `components.time` slot overrides — no hook required.

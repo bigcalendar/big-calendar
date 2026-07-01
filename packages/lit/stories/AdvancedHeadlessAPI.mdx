@@ -1,0 +1,117 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/Headless API" />
+
+# Headless API
+
+Big Calendar ships a headless API that lets you build a completely custom calendar UI from scratch. Instead of using the pre-built view elements (`<bc-month-view>`, etc.), you consume the `calendarContext` directly in your own custom elements to get the raw calendar store and compute your own view model.
+
+## When to use the headless API
+
+- You need a calendar layout that differs significantly from the built-in views.
+- You want full control over the DOM structure and class names.
+- You are integrating with a component library that has its own event, grid, or popover primitives.
+
+## The key exports
+
+```ts
+import {
+  CalendarController,  // Reactive controller — creates and owns the calendar store
+  calendarContext,     // @lit/context key — consume the store in child elements
+} from '@big-calendar/lit'
+```
+
+## `CalendarController`
+
+`CalendarController` is a Lit `ReactiveController` that manages the calendar store lifecycle. `CalendarElement` (`<bc-calendar>`) uses it internally. You can use it yourself when building a fully custom calendar element:
+
+```ts
+import { LitElement, html } from 'lit'
+import { customElement } from 'lit/decorators.js'
+import { ContextProvider } from '@lit/context'
+import { CalendarController, calendarContext } from '@big-calendar/lit'
+
+@customElement('my-custom-calendar')
+class MyCustomCalendar extends LitElement {
+  override createRenderRoot() { return this }
+
+  private _ctrl = new CalendarController(this, {
+    localizer: myLocalizer,
+    events: myEvents,
+    defaultView: 'month',
+  })
+
+  private _provider = new ContextProvider(this, {
+    context: calendarContext,
+    initialValue: {
+      store: this._ctrl.store,
+      messages: this._ctrl.messages,
+      descriptionIds: this._ctrl.descriptionIds,
+    },
+  })
+
+  override render() {
+    return html`
+      <!-- Your custom view markup here -->
+      <slot></slot>
+    `
+  }
+}
+```
+
+### `CalendarController` API
+
+<table>
+<thead><tr><th>Member</th><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>store</code></td><td><code>CalendarStore</code></td><td>The raw preact-signals store. Read <code>store.view.value</code>, call <code>store.navigate()</code>, etc.</td></tr>
+<tr><td><code>messages</code></td><td><code>Messages</code></td><td>Resolved message strings (for rendering toolbar labels, etc.).</td></tr>
+<tr><td><code>descriptionIds</code></td><td><code>&#123; selection: string; event: string &#125;</code></td><td>ARIA description IDs generated for this controller instance.</td></tr>
+<tr><td><code>updateConfig(updates)</code></td><td><code>method</code></td><td>Reactively update <code>events</code>, <code>view</code>, <code>date</code>, etc. without recreating the store.</td></tr>
+<tr><td><code>recreateStore()</code></td><td><code>method</code></td><td>Destroy and recreate the store. Called automatically when <code>localizer</code> changes.</td></tr>
+</tbody>
+</table>
+
+## `calendarContext`
+
+`calendarContext` is the `@lit/context` context key. Any custom element that lives inside a `<bc-calendar>` (or your own provider element) can consume it:
+
+```ts
+import { LitElement, html } from 'lit'
+import { customElement } from 'lit/decorators.js'
+import { ContextConsumer } from '@lit/context'
+import { calendarContext } from '@big-calendar/lit'
+
+@customElement('my-view-element')
+class MyViewElement extends LitElement {
+  override createRenderRoot() { return this }
+
+  private _ctx = new ContextConsumer(this, {
+    context: calendarContext,
+    subscribe: true,
+  })
+
+  override render() {
+    const store = this._ctx.value?.store
+    if (!store) return html``
+
+    // store.view.value — active ViewKey
+    // store.date.value — focus date string
+    // store.events.value — current event array
+    return html`<p>Active view: ${store.view.value}</p>`
+  }
+}
+```
+
+## Available composable patterns
+
+<table>
+<thead><tr><th>Pattern</th><th>Active when</th><th>What you get</th></tr></thead>
+<tbody>
+<tr><td>Consume <code>calendarContext</code> and call <code>computeMonthGrid(store)</code></td><td>Active view is <code>'month'</code></td><td>Month grid model (weeks → days → segments)</td></tr>
+<tr><td>Consume <code>calendarContext</code> and call <code>computeTimeGrid(store)</code></td><td>Active view is <code>'week'</code>, <code>'work_week'</code>, or <code>'day'</code></td><td>Time grid model (columns → slots → events)</td></tr>
+<tr><td>Consume <code>calendarContext</code> and call <code>computeAgendaRows(store)</code></td><td>Active view is <code>'agenda'</code></td><td>Agenda row list (date groups → event rows)</td></tr>
+</tbody>
+</table>
+
+See the individual **Advanced** pages for how `MonthViewElement`, `TimeGridViewElement`, and `AgendaViewElement` use these internally.

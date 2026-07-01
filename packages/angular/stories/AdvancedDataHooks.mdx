@@ -1,0 +1,118 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/Data Hooks" />
+
+# Data Composables
+
+Three inject composables expose the raw view model data as Angular signals so you can loop over them in **fully custom headless views**. The built-in view components call these internally; they are exported so you can use them when building your own layout from scratch.
+
+All composables must be called in a component that lives inside a `<bc-calendar-provider>`. The returned signal is `null` when a different view is currently active — use `@if (view.grid(); as grid)` to gate the template.
+
+```ts
+import { injectMonthView, injectTimeGridView, injectAgendaView } from '@big-calendar/angular'
+```
+
+---
+
+## `injectMonthView()`
+
+Returns the month grid as a typed, signal-wrapped structure. See **Advanced → injectMonthView** for the full return-value shape.
+
+```ts
+@Component({
+  standalone: true,
+  selector: 'my-month-view',
+  template: `
+    @if (view.grid(); as grid) {
+      @for (week of grid.weeks; track week.key) {
+        <div>
+          @for (day of week.days; track day.day) {
+            <span [class.today]="day.isToday">{{ day.label }}</span>
+          }
+        </div>
+      }
+    }
+  `,
+})
+export class MyMonthViewComponent {
+  readonly view = injectMonthView()
+}
+```
+
+---
+
+## `injectTimeGridView()`
+
+Returns the time grid as a typed, signal-wrapped structure. See **Advanced → injectTimeGridView** for the full return-value shape.
+
+```ts
+@Component({
+  standalone: true,
+  selector: 'my-time-view',
+  template: `
+    @if (view.grid(); as grid) {
+      @for (col of grid.columns; track col.heading.day) {
+        <div>
+          <h3>{{ col.heading.label }}</h3>
+          @for (event of col.events; track event.key) {
+            <div>{{ event.title }}</div>
+          }
+        </div>
+      }
+    }
+  `,
+})
+export class MyTimeViewComponent {
+  readonly view = injectTimeGridView()
+}
+```
+
+---
+
+## `injectAgendaView()`
+
+Returns the agenda rows as a typed, signal-wrapped array. See **Advanced → injectAgendaView** for the full return-value shape.
+
+```ts
+@Component({
+  standalone: true,
+  selector: 'my-agenda-view',
+  template: `
+    @if (view.rows(); as rows) {
+      @for (row of rows; track row.day) {
+        <div>
+          <h3>{{ row.label }}</h3>
+          @for (event of row.events; track event.key) {
+            <p>{{ event.time }} — {{ event.title }}</p>
+          }
+        </div>
+      }
+    }
+  `,
+})
+export class MyAgendaViewComponent {
+  readonly view = injectAgendaView()
+}
+```
+
+---
+
+## Low-level store access
+
+If you need access to the raw preact-signals store (for example, to call `store.navigate()` or read `store.view.value` directly), inject the calendar context via `injectCalendar()`:
+
+```ts
+import { injectCalendar } from '@big-calendar/angular'
+
+@Component({ ... })
+export class MySidebarComponent {
+  private readonly ctx = injectCalendar()
+
+  navigateToToday() {
+    const store = this.ctx.storeSignal()
+    store?.navigate({ action: 'TODAY' })
+  }
+}
+```
+
+`ctx.storeSignal()` is an Angular `Signal<CalendarStore | null>` — it is `null` until the parent `CalendarProviderComponent`'s first effect has run, so always null-check before calling store methods.

@@ -1,0 +1,160 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Core/Localization/RTL" />
+
+# Right-to-Left (RTL) Layout
+
+> These patterns apply to any Big Calendar framework adapter. Code examples use `createCalendarStore` directly — your framework adapter wraps this same API.
+
+Big Calendar supports right-to-left languages without any special prop. When you set `dir="rtl"` on the element wrapping the calendar, the entire layout flips — toolbar buttons, day column order, time gutter, event blocks, and the all-day strip — all driven by CSS with no JavaScript involved.
+
+---
+
+## How to enable RTL
+
+Create your localizer with an RTL locale and read the direction from it. Pass both `localizer.direction` and `localizer.language` to your framework adapter so it can set `dir` and `lang` on the container element:
+
+```ts
+import { createCalendarStore } from '@big-calendar/core'
+import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
+
+const localizer = await createTemporalLocalizer({
+  locale: 'ar',
+  timeZone: 'Asia/Riyadh',
+})
+
+const store = createCalendarStore({ localizer, events })
+
+// localizer.direction → 'rtl'
+// localizer.language  → 'ar'
+// Your framework adapter sets dir and lang on the calendar's container element
+```
+
+That is all. The direction comes from the localizer automatically — no extra prop on the store or your adapter.
+
+---
+
+## What flips automatically
+
+When `dir="rtl"` is present on an ancestor element, CSS takes over:
+
+<table>
+  <thead>
+    <tr>
+      <th>Part of the calendar</th>
+      <th>What changes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Toolbar</td>
+      <td>Prev/Next buttons swap sides. The date label stays centered.</td>
+    </tr>
+    <tr>
+      <td>Month grid columns</td>
+      <td>Days flow right-to-left. The first day of the week appears in the rightmost column.</td>
+    </tr>
+    <tr>
+      <td>Week / Day time grid</td>
+      <td>Day columns are ordered right-to-left. The time gutter moves to the right side.</td>
+    </tr>
+    <tr>
+      <td>All-day strip</td>
+      <td>Event segments extend from right to left.</td>
+    </tr>
+    <tr>
+      <td>Event blocks</td>
+      <td>Text alignment, padding, and border sides follow the RTL flow.</td>
+    </tr>
+    <tr>
+      <td>Agenda view</td>
+      <td>Date column appears on the right; event text flows from right to left.</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## How this works under the hood
+
+Big Calendar's stylesheet uses **CSS logical properties** instead of physical ones. For example:
+
+- `padding-inline-start` instead of `padding-left`
+- `border-inline-end` instead of `border-right`
+- `margin-block-start` instead of `margin-top`
+
+Logical properties respond to the writing direction of the element they belong to. When the direction is RTL, `inline-start` maps to the right side and `inline-end` maps to the left — the opposite of LTR. No overrides are needed.
+
+For cases where the direction change requires a layout rule to flip (not just a side to swap), the stylesheet uses the **`:dir(rtl)`** CSS pseudo-class:
+
+```css
+/* default: time gutter on the left */
+.bc-time-gutter { grid-column: 1; }
+
+/* flip to the right in RTL */
+:dir(rtl) .bc-time-gutter { grid-column: -1; }
+```
+
+This is a Baseline 2024 feature supported in all modern browsers.
+
+---
+
+## Translating the UI strings
+
+Setting `dir="rtl"` changes the layout, but the built-in button labels and status messages remain in English. Use `resolveMessages` to override them and pass the result to your framework adapter:
+
+```ts
+import { resolveMessages } from '@big-calendar/core'
+
+const messages = resolveMessages({
+  today:           'اليوم',
+  previous:        'السابق',
+  next:            'التالي',
+  month:           'شهر',
+  week:            'أسبوع',
+  day:             'يوم',
+  agenda:          'جدول أعمال',
+  noEventsInRange: 'لا توجد أحداث في هذا النطاق.',
+  showMore:        (total) => `+${total} المزيد`,
+})
+// Pass messages to your framework adapter's provider
+```
+
+For a full list of every key you can override, see the [Messages](./LocalizationMessages) doc.
+
+> **Don't forget screen readers.** The `selectionInstructions` and `eventInstructions` keys are read aloud by screen readers. Translate those too for a fully accessible Arabic experience.
+
+---
+
+## Localizing dates and times
+
+Date and time formatting is handled by the **localizer**, not the `messages` object. Pass the correct `locale` to your localizer so month names, weekday labels, and time formats appear in Arabic:
+
+```ts
+import { createTemporalLocalizer } from '@big-calendar/localizer-temporal'
+
+const localizer = await createTemporalLocalizer({
+  locale: 'ar',
+  timeZone: 'Asia/Riyadh',
+})
+```
+
+The `Intl` API handles the rest — month names, weekday abbreviations, and AM/PM labels will all render in Arabic script automatically.
+
+---
+
+## Other RTL languages
+
+Hebrew and Persian (Farsi) work the same way. Only the `locale` string and `messages` translations differ. Because the localizer resolves `direction` from the locale automatically, no other code changes:
+
+```ts
+// Hebrew — localizer.direction → 'rtl'
+const localizer = await createTemporalLocalizer({ locale: 'he', timeZone: 'Asia/Jerusalem' })
+
+// Persian — localizer.direction → 'rtl'
+const localizer = await createTemporalLocalizer({ locale: 'fa', timeZone: 'Asia/Tehran' })
+
+// The same store setup works for any RTL locale
+const store = createCalendarStore({ localizer, events })
+// store.localizer.direction → 'rtl' for all of the above
+```

@@ -1,0 +1,64 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Calendar/Event Type Accessor" />
+
+# Event Type Accessor
+
+The `type` accessor lets you assign a category string to each event and then target the calendar's rendered markup with CSS to colour each event block.
+
+## How it works
+
+The recommended approach is to inject CSS variables via a `:has()` selector on the outer `.bc-event` or `.bc-segment` class, using a `<span>` inside your custom `ng-template` to carry the type class:
+
+```css
+.bc-event:has(.bc-event-type-meeting) {
+  --bc-color-event-bg: #b8d4f5;
+  --bc-color-event-fg: #1a3a5c;
+}
+```
+
+Because the CSS custom properties cascade into the event button's hover, focus, and resize-handle styles, the entire event card picks up the correct palette without any inline-style hacks.
+
+## Setup
+
+Add a `type` field to your event objects:
+
+```ts
+const events = [
+  { id: 1, title: 'Standup', type: 'standup', start: '...', end: '...' },
+  { id: 2, title: 'Review', type: 'review', start: '...', end: '...' },
+]
+```
+
+Configure the accessor and a custom `ng-template` slot that emits the type class:
+
+```html
+<bc-calendar-provider
+  [localizer]="loc"
+  [events]="events"
+  [accessors]="{ type: 'type' }"
+  defaultView="month"
+>
+  <bc-month-view [bcMonthEvent]="typedEvent" />
+</bc-calendar-provider>
+
+<ng-template #typedEvent let-ctx>
+  <span [class]="ctx.event?.type ? 'bc-event-type-' + ctx.event.type : ''">
+    {{ ctx.title }}
+  </span>
+</ng-template>
+```
+
+## Full colour palette example
+
+```ts
+const TYPE_STYLES_CSS = [
+  `.bc-event:has(.bc-event-type-standup) { --bc-color-event-bg: #b8f0c8; --bc-color-event-fg: #1a4d2a; }`,
+  `.bc-event:has(.bc-event-type-review)  { --bc-color-event-bg: #fdf5b0; --bc-color-event-fg: #4d3e00; }`,
+  // ... more types
+].join('\n')
+```
+
+Inject and clean up in `ngOnInit` / `ngOnDestroy` (see the live story for the full implementation).
+
+See **Calendar → Event Type Accessor** for a live demo with ten event types across month and week views.

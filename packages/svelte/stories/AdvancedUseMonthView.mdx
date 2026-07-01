@@ -1,0 +1,212 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/useMonthView" />
+
+# useMonthView
+
+A composable that composes all the logic needed to render a custom month grid. Call it inside a component that lives inside a `CalendarProvider`. See **Advanced → Headless API** for the general pattern.
+
+```ts
+import { useMonthView } from '@big-calendar/svelte'
+```
+
+## Signature
+
+```ts
+useMonthView<TEvent = unknown>(
+  getRootEl: () => HTMLElement | null,
+  getGridEl: () => HTMLElement | null,
+): UseMonthViewReturn<TEvent>
+```
+
+`useMonthView` takes **two getter functions** that return the root and grid DOM elements. Use `$state` variables with `bind:this` to supply them.
+
+## Return value
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>grid</code></td>
+      <td><code>&#123; readonly current: MonthGrid | null &#125;</code></td>
+      <td>The rendered month model. Access via <code>grid.current</code>. <code>null</code> when the active view is not the month — use as a gate with <code>&#123;#if grid.current !== null&#125;</code>.</td>
+    </tr>
+    <tr>
+      <td><code>components</code></td>
+      <td><code>object</code></td>
+      <td>Resolved slot components: <code>Weekday</code>, <code>DateCell</code>, <code>EventSlot</code>, <code>ShowMore</code>.</td>
+    </tr>
+    <tr>
+      <td><code>getMessages()</code></td>
+      <td><code>() =&gt; &#123; showMore: (count: number) =&gt; string &#125;</code></td>
+      <td>Returns the localised message functions. Call at render time.</td>
+    </tr>
+    <tr>
+      <td><code>announcement()</code></td>
+      <td><code>() =&gt; string</code></td>
+      <td>Text for the keyboard-DnD live region. Call at render time and render inside <code>role="status"</code>.</td>
+    </tr>
+    <tr>
+      <td><code>announcer</code></td>
+      <td><code>object</code></td>
+      <td>Static props (<code>class</code>, <code>role="status"</code>, <code>aria-live="polite"</code>) for the live-region element. Spread with <code>&#123;...announcer&#125;</code>.</td>
+    </tr>
+    <tr>
+      <td><code>getRootProps()</code></td>
+      <td><code>() =&gt; object</code></td>
+      <td>Props for the outermost <code>&lt;div&gt;</code>: class, keyboard-DnD handlers. Call at render time and spread.</td>
+    </tr>
+    <tr>
+      <td><code>getMonthGridProps()</code></td>
+      <td><code>() =&gt; object</code></td>
+      <td>Props for the CSS grid <code>&lt;div&gt;</code>. Call at render time and spread.</td>
+    </tr>
+    <tr>
+      <td><code>monthHeader</code></td>
+      <td><code>&#123; class: string &#125;</code></td>
+      <td>Static props for the weekday heading row.</td>
+    </tr>
+    <tr>
+      <td><code>weekRow</code></td>
+      <td><code>&#123; class: string &#125;</code></td>
+      <td>Static props for each week row.</td>
+    </tr>
+    <tr>
+      <td><code>slotsContainer</code></td>
+      <td><code>&#123; class: string &#125;</code></td>
+      <td>Static props for the invisible slot hit-target container inside a week row.</td>
+    </tr>
+    <tr>
+      <td><code>backgroundsContainer</code></td>
+      <td><code>&#123; class: string &#125;</code></td>
+      <td>Static props for the background cell container.</td>
+    </tr>
+    <tr>
+      <td><code>eventsContainer</code></td>
+      <td><code>&#123; class: string &#125;</code></td>
+      <td>Static props for the event segment container inside a week row.</td>
+    </tr>
+    <tr>
+      <td><code>getDaySlotProps(cell, weekIndex, dayIndex)</code></td>
+      <td><code>function</code></td>
+      <td>Props for the invisible slot hit-target inside each day cell (slot selection + roving focus).</td>
+    </tr>
+    <tr>
+      <td><code>getWeekSelectionBand(weekIndex)</code></td>
+      <td><code>function</code></td>
+      <td>Returns the selection highlight props for a week row, or <code>null</code>.</td>
+    </tr>
+    <tr>
+      <td><code>getWeekPreviewBand(week)</code></td>
+      <td><code>function</code></td>
+      <td>Returns the drag-preview highlight props for a week row, or <code>null</code>.</td>
+    </tr>
+    <tr>
+      <td><code>getSegmentProps(segment)</code></td>
+      <td><code>function</code></td>
+      <td>All <code>EventButton</code> props for a placed event segment.</td>
+    </tr>
+    <tr>
+      <td><code>getShowMoreCellProps(cell, dayIndex, moreRow)</code></td>
+      <td><code>function</code></td>
+      <td>Wrapper and <code>ShowMore</code> props for an overflowed day, or <code>null</code> when there is no overflow.</td>
+    </tr>
+  </tbody>
+</table>
+
+## Usage example
+
+```svelte
+<!-- MyMonthView.svelte -->
+<script>
+  import { EventButton, useMonthView } from '@big-calendar/svelte'
+
+  let rootEl = $state(null)
+  let gridEl = $state(null)
+
+  const {
+    grid, components, getMessages, announcement, announcer,
+    getRootProps, getMonthGridProps, monthHeader, weekRow,
+    slotsContainer, backgroundsContainer, eventsContainer,
+    getDaySlotProps, getWeekSelectionBand, getWeekPreviewBand,
+    getSegmentProps, getShowMoreCellProps,
+  } = useMonthView(
+    () => rootEl,
+    () => gridEl,
+  )
+
+  const { Weekday, DateCell, EventSlot, ShowMore } = components
+</script>
+
+{#if grid.current !== null}
+  <div bind:this={rootEl} {...getRootProps()}>
+    <div {...announcer}>{announcement()}</div>
+
+    <div {...monthHeader}>
+      {#each grid.current.weekdays as wd (wd.day)}
+        <svelte:component this={Weekday} day={wd.day} long={wd.long} short={wd.short} />
+      {/each}
+    </div>
+
+    <div bind:this={gridEl} {...getMonthGridProps()}>
+      {#each grid.current.weeks as week, wi (week.key)}
+        <div {...weekRow}>
+          <div {...slotsContainer}>
+            {#each week.days as cell, di (cell.day)}
+              <div {...getDaySlotProps(cell, wi, di)} />
+            {/each}
+          </div>
+
+          <div {...backgroundsContainer}>
+            {#each week.days as cell, di (cell.day)}
+              <div>
+                <svelte:component this={DateCell} {...cell} onDrillDown={() => {}} />
+
+                {#if getShowMoreCellProps(cell, di, week.moreRow) as more}
+                  <div {...more.wrapper}>
+                    <svelte:component
+                      this={ShowMore}
+                      {...more.showMore}
+                      label={getMessages().showMore(more.showMore.count)}
+                      eventSlot={EventSlot}
+                    />
+                  </div>
+                {/if}
+              </div>
+            {/each}
+          </div>
+
+          {#if getWeekSelectionBand(wi)}
+            <div {...getWeekSelectionBand(wi)} />
+          {/if}
+          {#if getWeekPreviewBand(week)}
+            <div {...getWeekPreviewBand(week)} />
+          {/if}
+
+          <div {...eventsContainer}>
+            {#each week.segments as seg (seg.key)}
+              <EventButton {...getSegmentProps(seg)}>
+                <svelte:component this={EventSlot} event={seg.event} title={seg.title} />
+              </EventButton>
+            {/each}
+          </div>
+        </div>
+      {/each}
+    </div>
+  </div>
+{/if}
+```
+
+> **Key Svelte differences from Vue:**
+> - `grid.current` not `grid` — always access the data through `.current`.
+> - `getRootProps()` and `getMonthGridProps()` are called **as functions** at render time.
+> - `announcement()` is a function — call it in the template.
+> - Element refs use `bind:this={el}` and getter functions `() => el` passed to `useMonthView`.
+> - Slot components render with `<svelte:component this={...} />` instead of `<component :is="...">`.
+> - `{...obj}` spreads props; no `v-bind` needed.
+
+## When to use this vs. `<MonthView>`
+
+Use `<MonthView>` when the default rendering is sufficient. Use `useMonthView` when you need to change the HTML structure — render the grid as a `<table>`, add custom row wrappers, or change how segments are positioned.
+
+For changing individual cells or labels without restructuring the HTML, use `components.month` slot overrides on `CalendarProvider` instead — no composable required.

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Big Calendar — styles visual spike</title>
+    <!-- Phase-3 exit spike: render every view from hand-fed "core geometry"
+         (the same normalized numbers @big-calendar/core emits) using only the
+         class + custom-property contract. Build the package first:
+           pnpm exec nx build styles
+         then open this file. -->
+    <link rel="stylesheet" href="../dist/index.css" />
+    <style>
+      body { margin: 0; padding: 1.5rem; display: grid; gap: 2rem; background: #fff; }
+      section { block-size: 22rem; border: 1px solid #ccc; }
+      h2 { font: 600 0.9rem system-ui; margin: 0 0 0.25rem; }
+    </style>
+  </head>
+  <body>
+    <h2>Month</h2>
+    <section>
+      <div class="bc-calendar">
+        <div class="bc-viewport">
+          <div class="bc-month">
+            <div class="bc-month-header">
+              <div class="bc-weekday">Mon</div><div class="bc-weekday">Tue</div>
+              <div class="bc-weekday">Wed</div><div class="bc-weekday">Thu</div>
+              <div class="bc-weekday">Fri</div><div class="bc-weekday">Sat</div>
+              <div class="bc-weekday">Sun</div>
+            </div>
+            <div class="bc-month-grid" style="--bc-week-count: 2">
+              <div class="bc-month-week">
+                <div class="bc-week-backgrounds">
+                  <div class="bc-date-cell bc-today"><span class="bc-date-number">1</span></div>
+                  <div class="bc-date-cell"><span class="bc-date-number">2</span></div>
+                  <div class="bc-date-cell"><span class="bc-date-number">3</span></div>
+                  <div class="bc-date-cell"><span class="bc-date-number">4</span></div>
+                  <div class="bc-date-cell"><span class="bc-date-number">5</span></div>
+                  <div class="bc-date-cell"><span class="bc-date-number">6</span></div>
+                  <div class="bc-date-cell"><span class="bc-date-number">7</span></div>
+                </div>
+                <div class="bc-week-events">
+                  <div class="bc-segment" style="--bc-seg-left: 1; --bc-seg-span: 3; --bc-seg-row: 1">
+                    <span class="bc-event-title">Conference</span>
+                  </div>
+                  <div class="bc-segment" style="--bc-seg-left: 4; --bc-seg-span: 2; --bc-seg-row: 2">
+                    <span class="bc-event-title">Review</span>
+                  </div>
+                </div>
+              </div>
+              <div class="bc-month-week">
+                <div class="bc-week-backgrounds">
+                  <div class="bc-date-cell"><span class="bc-date-number">8</span></div>
+                  <div class="bc-date-cell"><span class="bc-date-number">9</span></div>
+                  <div class="bc-date-cell"><span class="bc-date-number">10</span></div>
+                  <div class="bc-date-cell"><span class="bc-date-number">11</span></div>
+                  <div class="bc-date-cell"><span class="bc-date-number">12</span></div>
+                  <div class="bc-date-cell bc-off-range"><span class="bc-date-number">13</span></div>
+                  <div class="bc-date-cell bc-off-range"><span class="bc-date-number">14</span></div>
+                </div>
+                <div class="bc-week-events">
+                  <div class="bc-segment" style="--bc-seg-left: 2; --bc-seg-span: 1; --bc-seg-row: 1">
+                    <span class="bc-event-title">1:1</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <h2>Week (time grid)</h2>
+    <section>
+      <div class="bc-calendar">
+        <div class="bc-viewport">
+          <div class="bc-time-grid" style="--bc-day-count: 3; --bc-slot-count: 20">
+            <div class="bc-time-header">
+              <div></div>
+              <div class="bc-day-heading bc-today">Mon 1</div>
+              <div class="bc-day-heading">Tue 2</div>
+              <div class="bc-day-heading">Wed 3</div>
+            </div>
+            <div class="bc-allday-row">
+              <div class="bc-allday-label">all-day</div>
+              <div class="bc-allday-segments">
+                <div class="bc-segment" style="--bc-seg-left: 1; --bc-seg-span: 2; --bc-seg-row: 1">
+                  <span class="bc-event-title">Holiday</span>
+                </div>
+              </div>
+            </div>
+            <div class="bc-time-body">
+              <div class="bc-time-gutter">
+                <div class="bc-time-label">8am</div><div class="bc-time-label">9am</div>
+                <div class="bc-time-label">10am</div><div class="bc-time-label">11am</div>
+              </div>
+              <div class="bc-day-column bc-today">
+                <div class="bc-bg-event" style="--bc-top: 0; --bc-height: 1"></div>
+                <div class="bc-event" style="--bc-top: 0.1; --bc-height: 0.18; --bc-left: 0; --bc-width: 0.6; --bc-z: 1">
+                  <span class="bc-event-time">9:00</span> <span class="bc-event-title">Standup</span>
+                </div>
+                <div class="bc-event" style="--bc-top: 0.15; --bc-height: 0.2; --bc-left: 0.5; --bc-width: 0.5; --bc-z: 2">
+                  <span class="bc-event-title">Sync</span>
+                </div>
+                <div class="bc-now-indicator" style="--bc-now-top: 0.32"></div>
+              </div>
+              <div class="bc-day-column">
+                <div class="bc-event" style="--bc-top: 0.25; --bc-height: 0.25; --bc-left: 0; --bc-width: 1; --bc-z: 1">
+                  <span class="bc-event-title">Focus block</span>
+                </div>
+              </div>
+              <div class="bc-day-column"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <h2>Agenda</h2>
+    <section>
+      <div class="bc-calendar">
+        <div class="bc-viewport">
+          <div class="bc-agenda">
+            <div class="bc-agenda-header"><span>Date</span><span>Time</span><span>Event</span></div>
+            <div class="bc-agenda-body">
+              <div class="bc-agenda-day">
+                <span class="bc-agenda-date">Mon Jun 1</span>
+                <span class="bc-agenda-time">9:00 – 10:00</span>
+                <span class="bc-event"><span class="bc-event-title">Standup</span></span>
+              </div>
+              <div class="bc-agenda-day">
+                <span class="bc-agenda-date">Wed Jun 3</span>
+                <span class="bc-agenda-time">all day</span>
+                <span class="bc-event"><span class="bc-event-title">Holiday</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>

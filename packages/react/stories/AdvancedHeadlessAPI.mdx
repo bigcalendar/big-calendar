@@ -1,0 +1,101 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import LinkTo from '@storybook/addon-links/react'
+
+<Meta title="Advanced/Headless API" />
+
+# Headless API
+
+The `<Calendar>` component and the `<MonthView>`, `<TimeGridView>`, `<AgendaView>` components are the default path — they render a complete, styled calendar using the library's HTML structure. The **headless API** gives you the view model and all element-spread props so you can build exactly the markup you need, while the library still handles all the logic.
+
+## When to use the hooks
+
+Use the view components when the default rendering is good enough, or when you only need to swap individual slots via `components.month`, `components.time`, or `components.agenda`.
+
+Use the hooks when you need to change the **HTML structure** of a view — for example, rendering the month grid as a `<table>`, adding custom wrapper elements between the slots, or building a completely custom layout.
+
+## The pattern
+
+Every hook follows the same pattern:
+
+1. Call the hook inside a component that lives inside a `CalendarProvider`.
+2. Guard on the returned `grid` (or `rows`) — it is `null` when a different view is active.
+3. Spread the returned element-spread props onto your DOM elements.
+4. Use the returned getter functions to build per-item props.
+
+```tsx
+import { useMonthView, EventButton } from '@big-calendar/react'
+
+function MyMonthView() {
+  const { grid, components, root, monthGrid, getDaySlotProps, getSegmentProps } =
+    useMonthView()
+
+  if (grid === null) return null  // not the active view
+
+  const { Weekday, DateCell, EventSlot } = components
+
+  return (
+    <div {...root}>
+      {/* ... your custom HTML structure ... */}
+    </div>
+  )
+}
+```
+
+Place your component inside `CalendarProvider` alongside the toolbar:
+
+```tsx
+<CalendarProvider events={events} defaultView="month">
+  <Toolbar />
+  <div className="bc-calendar">
+    <MyMonthView />
+  </div>
+</CalendarProvider>
+```
+
+## Element-spread props
+
+The hooks return objects like `root`, `monthGrid`, `body`, `header`, etc. Each is a plain object of HTML attributes — `className`, `ref`, `aria-*`, event handlers — designed to be spread directly onto a DOM element:
+
+```tsx
+<div {...root}>        {/* ← applies className, ref, keyboard handlers */}
+  <div {...monthGrid}> {/* ← applies className and the CSS grid role */}
+```
+
+Do not destructure or pick from these objects individually — spread the whole thing so no attributes are dropped.
+
+## Slot components from the hook
+
+Each hook returns a `components` object with the resolved slot components — either the defaults or the `components.month` / `components.time` / `components.agenda` overrides you passed to `CalendarProvider`. Use these to render individual pieces:
+
+```tsx
+const { Weekday, DateCell, EventSlot, ShowMore } = components
+```
+
+This ensures your custom layout respects the `components` overrides just like the default view does.
+
+## EventButton
+
+When rendering event segments yourself, wrap them in `<EventButton>` and spread the props returned by the hook's getter (e.g. `getSegmentProps`, `getEventProps`). `EventButton` is what wires up click, keyboard, and drag-and-drop interactions for an event:
+
+```tsx
+import { EventButton } from '@big-calendar/react'
+
+{week.segments.map((seg) => (
+  <EventButton key={seg.key} {...getSegmentProps(seg)}>
+    <EventSlot event={seg.event} title={seg.title} />
+  </EventButton>
+))}
+```
+
+## Available hooks
+
+<table>
+  <thead><tr><th>Hook</th><th>View</th><th>See also</th></tr></thead>
+  <tbody>
+    <tr><td><code>useMonthView()</code></td><td>Month</td><td><LinkTo title="Advanced/useMonthView" story="docs">Advanced → useMonthView</LinkTo></td></tr>
+    <tr><td><code>useTimeGridView()</code></td><td>Day / Week / Work-Week</td><td><LinkTo title="Advanced/useTimeGridView" story="docs">Advanced → useTimeGridView</LinkTo></td></tr>
+    <tr><td><code>useAgendaView()</code></td><td>Agenda</td><td><LinkTo title="Advanced/useAgendaView" story="docs">Advanced → useAgendaView</LinkTo></td></tr>
+  </tbody>
+</table>
+
+Each page has a full return-value reference and an annotated usage example.

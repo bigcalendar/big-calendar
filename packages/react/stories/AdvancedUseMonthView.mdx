@@ -1,0 +1,104 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+import LinkTo from '@storybook/addon-links/react'
+
+<Meta title="Advanced/useMonthView" />
+
+# useMonthView
+
+A hook that composes all the logic needed to render a custom month grid. Call it inside a component that lives inside a `CalendarProvider`. See <LinkTo title="Advanced/Headless API" story="docs">Advanced → Headless API</LinkTo> for the general pattern.
+
+## Return value
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>grid</code></td><td><code>MonthGrid | null</code></td><td>The rendered month model. <code>null</code> when the active view is not the month — use as a gate.</td></tr>
+    <tr><td><code>components</code></td><td><code>object</code></td><td>Resolved slot components: <code>Weekday</code>, <code>DateCell</code>, <code>EventSlot</code>, <code>ShowMore</code>.</td></tr>
+    <tr><td><code>messages</code></td><td><code>Messages</code></td><td>Localized strings (e.g. the show-more label).</td></tr>
+    <tr><td><code>announcement</code></td><td><code>string</code></td><td>Text for the keyboard-DnD live region. Render inside <code>role="status"</code>.</td></tr>
+    <tr><td><code>root</code></td><td><code>object</code></td><td>Element-spread props for the outermost <code>&lt;div&gt;</code>. Spread directly.</td></tr>
+    <tr><td><code>monthGrid</code></td><td><code>object</code></td><td>Element-spread props for the CSS grid <code>&lt;div&gt;</code>.</td></tr>
+    <tr><td><code>getDaySlotProps(cell, weekIndex, dayIndex)</code></td><td><code>function</code></td><td>Props for the invisible slot hit-target inside each day cell (slot selection + roving focus).</td></tr>
+    <tr><td><code>getWeekSelectionBand(weekIndex)</code></td><td><code>function</code></td><td>Returns the selection highlight for a week row, or <code>null</code>.</td></tr>
+    <tr><td><code>getWeekPreviewBand(week)</code></td><td><code>function</code></td><td>Returns the drag-preview highlight for a week row, or <code>null</code>.</td></tr>
+    <tr><td><code>getSegmentProps(segment)</code></td><td><code>function</code></td><td>All <code>EventButton</code> props for a placed event segment.</td></tr>
+    <tr><td><code>getShowMoreCellProps(cell, dayIndex, moreRow)</code></td><td><code>function</code></td><td>Wrapper and <code>ShowMore</code> props for an overflowed day, or <code>null</code> when there is no overflow.</td></tr>
+  </tbody>
+</table>
+
+## Usage example
+
+```tsx
+import { EventButton, useMonthView } from '@big-calendar/react'
+
+function MyMonthView() {
+  const { grid, components, messages, announcement, root, monthGrid,
+          getDaySlotProps, getSegmentProps, getShowMoreCellProps } =
+    useMonthView()
+
+  if (grid === null) return null
+
+  const { Weekday, DateCell, EventSlot, ShowMore } = components
+
+  return (
+    <div {...root}>
+      <div role="status" aria-live="polite" className="bc-sr-only">
+        {announcement}
+      </div>
+      <div className="bc-month-header">
+        {grid.weekdays.map((wd) => (
+          <Weekday key={wd.day} day={wd.day} long={wd.long} short={wd.short} />
+        ))}
+      </div>
+      <div {...monthGrid}>
+        {grid.weeks.map((week, wi) => {
+          const selBand = getWeekSelectionBand(wi)
+          const prevBand = getWeekPreviewBand(week)
+          return (
+            <div key={week.key} className="bc-month-week">
+              <div className="bc-month-slots">
+                {week.days.map((cell, di) => (
+                  <div key={cell.day} {...getDaySlotProps(cell, wi, di)} />
+                ))}
+              </div>
+              <div className="bc-week-backgrounds">
+                {week.days.map((cell, di) => {
+                  const more = getShowMoreCellProps(cell, di, week.moreRow)
+                  return (
+                    <div key={cell.day}>
+                      <DateCell {...cell} onDrillDown={() => {}} />
+                      {more && (
+                        <div {...more.wrapper}>
+                          <ShowMore {...more.showMore}
+                            label={messages.showMore(more.showMore.count)}
+                            EventSlot={EventSlot}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              {selBand && <div {...selBand} />}
+              {prevBand && <div {...prevBand} />}
+              <div className="bc-week-events">
+                {week.segments.map((seg) => (
+                  <EventButton key={seg.key} {...getSegmentProps(seg)}>
+                    <EventSlot event={seg.event} title={seg.title} />
+                  </EventButton>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+```
+
+## When to use this vs. `MonthView`
+
+Use `MonthView` when the default rendering is sufficient. Use `useMonthView` when you need to change the HTML structure — render the grid as a `<table>`, add custom row wrappers, or change how segments are positioned.
+
+For changing individual cells or labels without restructuring the HTML, use `components.month` slot overrides instead — no hook required.

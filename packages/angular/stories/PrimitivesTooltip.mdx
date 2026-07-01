@@ -1,0 +1,64 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Primitives/Tooltip" />
+
+# Tooltip
+
+`BcTooltipComponent` (`<bc-tooltip>`) is the tooltip primitive used internally by Big Calendar to show event titles when they overflow their container. You can use it directly in custom event slot templates to show any content on hover or focus.
+
+## Architecture
+
+`BcTooltipComponent` uses Angular CDK Overlay together with `@floating-ui/dom` for positioning. It opens on `mouseenter` / `focusin` and closes on `mouseleave` / `focusout`.
+
+## Basic usage
+
+Wrap the element you want to trigger the tooltip, and add the content inside `<bc-tooltip>`:
+
+```html
+<bc-tooltip>
+  <button type="button" slot="trigger">Hover me</button>
+  <span slot="content">This is a tooltip</span>
+</bc-tooltip>
+```
+
+## Inputs
+
+<table>
+<thead><tr><th>Input</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+<tbody>
+<tr>
+<td><code>placement</code></td>
+<td><code>Placement</code></td>
+<td><code>'top'</code></td>
+<td>Preferred placement relative to the trigger. Accepts any <code>@floating-ui/dom</code> placement string.</td>
+</tr>
+<tr>
+<td><code>content</code></td>
+<td><code>string</code></td>
+<td><em>none</em></td>
+<td>Plain text content for the tooltip. Use this for simple labels. For richer content, project into the <code>slot="content"</code> slot instead.</td>
+</tr>
+</tbody>
+</table>
+
+## Accessibility
+
+`BcTooltipComponent` automatically:
+
+- Assigns a unique `id` to the tooltip panel.
+- Sets `aria-describedby` on the trigger element pointing to that `id`.
+- Hides the tooltip panel from the accessibility tree when closed (`aria-hidden="true"`).
+
+This means screen readers announce the tooltip content when the trigger receives focus, without requiring any extra markup from you.
+
+## Using in a custom event slot
+
+```html
+<ng-template #myEvent let-ctx>
+  <bc-tooltip [content]="ctx.title">
+    <span slot="trigger" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
+      {{ ctx.title }}
+    </span>
+  </bc-tooltip>
+</ng-template>
+```

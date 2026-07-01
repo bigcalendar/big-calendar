@@ -1,0 +1,184 @@
+/* Events: timed boxes, multi-day segments, background events. */
+@layer bc.components {
+  .bc-event,
+  .bc-segment {
+    border: var(--bc-border-width) solid var(--bc-color-event-border);
+    border-radius: var(--bc-radius-sm);
+    background: var(--bc-color-event-bg);
+    color: var(--bc-color-event-fg);
+    padding-inline: var(--bc-space-1);
+    padding-block: var(--bc-space-1);
+    font-size: var(--bc-font-size-xs);
+    line-height: var(--bc-line-height);
+    min-height: calc(1em * var(--bc-line-height) + var(--bc-space-1) * 2);
+    cursor: pointer;
+  }
+
+  .bc-event {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.125rem;
+    overflow: hidden;
+  }
+
+  .bc-segment {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .bc-event:hover,
+  .bc-segment:hover {
+    background-color: var(--bc-color-event-hover-bg);
+  }
+
+  button.bc-event:disabled,
+  button.bc-segment:disabled {
+    opacity: 0.4;
+  }
+
+  /* Show a grab cursor only when DnD is active and the event opts in. */
+  .bc-event.bc-event-draggable,
+  .bc-segment.bc-event-draggable {
+    cursor: grab;
+  }
+
+  .bc-event.bc-event-draggable:active,
+  .bc-segment.bc-event-draggable:active {
+    cursor: grabbing;
+  }
+
+  /* EventButton renders .bc-event / .bc-segment as real <button>s. Neutralize
+     the native button chrome so they match the former skin (the box geometry +
+     colors above still apply), and add a keyboard focus ring. */
+  button.bc-event,
+  button.bc-segment {
+    appearance: none;
+    font-family: inherit;
+    text-align: start;
+  }
+
+  button.bc-event:focus-visible,
+  button.bc-segment:focus-visible {
+    outline: var(--bc-focus-ring);
+    outline-offset: -1px;
+  }
+
+  .bc-event.bc-selected,
+  .bc-segment.bc-selected,
+  .bc-event[aria-selected='true'],
+  .bc-segment[aria-selected='true'] {
+    outline: var(--bc-focus-ring);
+    outline-offset: -1px;
+  }
+
+  /* An event held in a keyboard grab: lifted and dimmed so it reads as "in hand"
+     while the dashed .bc-drag-preview box shows where it will land. */
+  .bc-event-grabbed {
+    opacity: 0.6;
+    box-shadow: var(--bc-shadow-md, 0 4px 12px rgb(0 0 0 / 0.25));
+    z-index: 103;
+  }
+
+  .bc-event-title {
+    flex: 1 0 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: var(--bc-font-weight-bold);
+  }
+
+  .bc-event-time {
+    flex-shrink: 0;
+    white-space: nowrap;
+    opacity: 0.85;
+  }
+
+  .bc-bg-event {
+    border-radius: 0;
+    border: var(--bc-border-width) solid var(--bc-color-bg-event-border);
+    background: var(--bc-color-bg-event-bg);
+    color: var(--bc-color-bg-event-fg);
+  }
+
+  .bc-bg-event--start {
+    border-start-start-radius: var(--bc-radius-sm);
+    border-start-end-radius: var(--bc-radius-sm);
+  }
+
+  .bc-bg-event--end {
+    border-end-start-radius: var(--bc-radius-sm);
+    border-end-end-radius: var(--bc-radius-sm);
+  }
+
+  /* Time-grid resize handles: thin grab strips on a timed event's top/bottom
+     edges. The DnD addon (`@big-calendar/dnd`) binds them by their
+     `data-bc-resize` edge. `touch-action: none` lets a touch drag resize the
+     event without the slot body scrolling underneath (§7.7). */
+  .bc-resize-handle {
+    position: absolute;
+    inset-inline: 0;
+    block-size: var(--bc-resize-handle-size, 0.5rem);
+    cursor: ns-resize;
+    touch-action: none;
+    z-index: 4;
+  }
+
+  .bc-resize-handle-start {
+    inset-block-start: 0;
+  }
+
+  .bc-resize-handle-end {
+    inset-block-end: 0;
+  }
+
+  /* A subtle grab bar, shown only while the event is hovered or focused. */
+  .bc-event:hover .bc-resize-handle::after,
+  .bc-event:focus-within .bc-resize-handle::after {
+    content: '';
+    position: absolute;
+    inset-inline: 35%;
+    inset-block-start: calc(50% - 1px);
+    block-size: 2px;
+    border-radius: 1px;
+    background: var(--bc-color-event-fg);
+    opacity: 0.5;
+  }
+
+  /* Month resize handles: the same `data-bc-resize` strips, but on a segment's
+     leading/trailing INLINE edges (a whole-day resize) rather than its block
+     edges. The segment is the positioning context for them. CSS keys off the
+     parent class, so EventButton needs no orientation prop. */
+  .bc-segment {
+    position: relative;
+  }
+
+  .bc-segment .bc-resize-handle {
+    inset-inline: auto;
+    inset-block: 0;
+    inline-size: var(--bc-resize-handle-size, 0.5rem);
+    block-size: auto;
+    cursor: ew-resize;
+  }
+
+  .bc-segment .bc-resize-handle-start {
+    inset-inline-start: 0;
+  }
+
+  .bc-segment .bc-resize-handle-end {
+    inset-inline-end: 0;
+  }
+
+  .bc-segment:hover .bc-resize-handle::after,
+  .bc-segment:focus-within .bc-resize-handle::after {
+    content: '';
+    position: absolute;
+    inset-block: 35%;
+    inset-inline-start: calc(50% - 1px);
+    inline-size: 2px;
+    border-radius: 1px;
+    background: var(--bc-color-event-fg);
+    opacity: 0.5;
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "@big-calendar/codemods",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Big Calendar — @big-calendar/codemods",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bigcalendar/big-calendar.git",
+    "directory": "packages/codemods"
+  },
+  "sideEffects": false,
+  "bin": {
+    "@big-calendar/codemods": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "jscodeshift": "^17.3.0"
+  },
+  "peerDependencies": {},
+  "devDependencies": {
+    "@types/jscodeshift": "^17.3.0",
+    "@types/node": "^25.9.1"
+  }
+}

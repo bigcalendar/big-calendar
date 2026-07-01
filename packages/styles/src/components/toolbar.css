@@ -1,0 +1,68 @@
+/* Toolbar: navigation buttons, view switch, current-range label. */
+@layer bc.components {
+  .bc-toolbar-label {
+    font-size: var(--bc-font-size-lg);
+    font-weight: var(--bc-font-weight-bold);
+  }
+
+  .bc-toolbar button {
+    padding-block: var(--bc-space-1);
+    padding-inline: var(--bc-space-2);
+    border: var(--bc-border);
+    border-radius: var(--bc-radius-sm);
+    background: var(--bc-color-bg);
+    color: var(--bc-color-fg);
+  }
+
+  .bc-toolbar button:hover {
+    background: var(--bc-color-hover-bg);
+  }
+
+  .bc-toolbar button[aria-pressed='true'],
+  .bc-toolbar button.bc-active {
+    background: var(--bc-color-accent);
+    color: var(--bc-color-accent-fg);
+    border-color: transparent;
+  }
+
+  /* Button group: flush buttons, border-collapse via negative margin, outer corners only.
+     Colors match event buttons (event-bg/fg/border) rather than the surface defaults. */
+  .bc-toolbar-group button {
+    position: relative;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bc-color-event-bg);
+    color: var(--bc-color-event-fg);
+    border-color: var(--bc-color-event-border);
+    font-size: 1.25rem;
+    font-weight: var(--bc-font-weight-bold);
+    line-height: 1;
+  }
+
+  .bc-toolbar-group button:hover {
+    background: var(--bc-color-event-hover-bg);
+  }
+
+  .bc-toolbar-group button:not(:first-child) {
+    margin-inline-start: -1px;
+    border-inline-start-color: var(--bc-color-event-border);
+  }
+
+  .bc-toolbar-group button:first-child {
+    border-start-start-radius: var(--bc-radius-sm);
+    border-end-start-radius: var(--bc-radius-sm);
+  }
+
+  .bc-toolbar-group button:last-child {
+    border-start-end-radius: var(--bc-radius-sm);
+    border-end-end-radius: var(--bc-radius-sm);
+  }
+
+  .bc-toolbar-group button:hover,
+  .bc-toolbar-group button:focus-visible,
+  .bc-toolbar-group button[aria-pressed='true'] {
+    z-index: 1;
+  }
+}

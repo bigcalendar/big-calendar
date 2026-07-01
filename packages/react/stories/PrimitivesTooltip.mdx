@@ -1,0 +1,50 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Primitives/Tooltip" />
+
+# Tooltip
+
+A lightweight hover tooltip built on the same top-layer positioning stack as `<Popover>`. It appears on mouse-over and disappears when the pointer leaves.
+
+## Where it is used
+
+Big Calendar does not attach tooltips to events automatically. `<Tooltip>` is exported as a building block for custom event slot components that need hover text — for example, a truncated event title with a full-text tooltip, or a hover card with extended event details.
+
+## API
+
+```tsx
+import { Tooltip } from '@big-calendar/react'
+
+function MyEvent({ event, title }) {
+  return (
+    <Tooltip content={`${title} — ${event.location}`} placement="top">
+      <span className="my-event-label">{title}</span>
+    </Tooltip>
+  )
+}
+```
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>content</code></td><td><code>ReactNode</code></td><td>—</td><td>Content shown inside the tooltip panel.</td></tr>
+    <tr><td><code>placement</code></td><td><code>FloatingPlacement</code></td><td><code>'top'</code></td><td>Preferred placement. Flips automatically if there is not enough space.</td></tr>
+    <tr><td><code>children</code></td><td><code>ReactElement</code></td><td>—</td><td>The element that triggers the tooltip on hover. Must accept <code>ref</code>.</td></tr>
+    <tr><td><code>className</code></td><td><code>string</code></td><td>—</td><td>Additional class applied to the tooltip panel.</td></tr>
+  </tbody>
+</table>
+
+## Styling
+
+The base class is `bc-tooltip`. It uses a dark background and light text by default:
+
+```css
+.bc-tooltip {
+  background: var(--bc-color-fg);
+  color: var(--bc-color-bg);
+  border-radius: var(--bc-radius-sm);
+  font-size: var(--bc-font-size-sm);
+}
+```
+
+Override via CSS custom properties or target `.bc-tooltip` directly.

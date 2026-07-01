@@ -1,0 +1,162 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Calendar/Event Type Accessor" />
+
+# Event Type Accessor
+
+The **type accessor** lets you assign a category string to each event and use that
+category to drive visual styling — without touching the event components themselves.
+
+It is part of the `accessors` prop, alongside other field mappings like `title` and `start`.
+
+---
+
+## How it works
+
+You add a `type` field (or whatever field name you choose) to your event data. You then
+tell the calendar which field to read by setting `:accessors="{ type: 'type' }"`. That is
+the default mapping, so if your field is called `type` you don't have to write it at all —
+but being explicit is always clearer.
+
+The calendar does not apply any styling from the type value on its own. What it does is
+make the type string available to your custom event components, so you can build a class
+name from it and let CSS do the rest.
+
+---
+
+## Step 1 — Add a `type` field to your events
+
+```ts
+interface MyEvent {
+  id: number
+  title: string
+  start: string
+  end: string
+  type?: string
+}
+
+const events: MyEvent[] = [
+  { id: 1, title: 'Team standup',    start: '2026-06-15T09:00:00Z', end: '2026-06-15T09:30:00Z', type: 'standup' },
+  { id: 2, title: 'Design review',   start: '2026-06-15T14:00:00Z', end: '2026-06-15T15:00:00Z', type: 'review' },
+  { id: 3, title: 'Sprint planning', start: '2026-06-16T10:00:00Z', end: '2026-06-16T12:00:00Z', type: 'planning' },
+]
+```
+
+---
+
+## Step 2 — Configure the accessor
+
+Pass `:accessors` to `<CalendarProvider>`. The `type` key maps to the field name on your
+event objects.
+
+```html
+<CalendarProvider
+  :localizer="localizer"
+  :events="events"
+  :accessors="{ type: 'type' }"
+>
+  <Calendar />
+</CalendarProvider>
+```
+
+If your field has a different name — say `category` — change it to `:accessors="{ type: 'category' }"`.
+
+You can also pass a function if the value isn't a direct field:
+
+```html
+<CalendarProvider
+  :accessors="{ type: (event) => event.metadata?.category ?? '' }"
+>
+  <Calendar />
+</CalendarProvider>
+```
+
+---
+
+## Step 3 — Build a class name in your event component
+
+Create a custom event component for the view you want to style. The component receives the
+full event object via its `event` prop, so you can derive a CSS class name from the type string.
+
+```ts
+// TypedMonthEvent.vue (or as an inline component object)
+const TypedMonthEvent = {
+  props: ['event', 'title'],
+  template: `<span :class="event?.type ? 'bc-event-type-' + event.type : ''">{{ title }}</span>`,
+}
+```
+
+For time-grid views (week, day, work week) the component also receives a `time` prop:
+
+```ts
+const TypedTimeEvent = {
+  props: ['event', 'title', 'time'],
+  template: `
+    <span
+      :class="event?.type ? 'bc-event-type-' + event.type : ''"
+      style="display:flex;flex-direction:column;gap:0.1em;overflow:hidden;"
+    >
+      <strong style="font-size:0.85em;line-height:1.2;">{{ title }}</strong>
+      <span style="font-size:0.7em;opacity:0.75;">{{ time }}</span>
+    </span>
+  `,
+}
+```
+
+Register the components via `:components` on `<CalendarProvider>`:
+
+```html
+<CalendarProvider
+  :accessors="{ type: 'type' }"
+  :components="{ month: { event: TypedMonthEvent }, time: { event: TypedTimeEvent } }"
+>
+  <Calendar />
+</CalendarProvider>
+```
+
+---
+
+## Step 4 — Style by type with CSS `:has()`
+
+The custom component puts a `<span class="bc-event-type-standup">` inside the event
+button. The `:has()` pseudo-class on the outer `.bc-event` lets you target the whole event
+card from that inner span, then override the `--bc-color-event-*` CSS custom properties
+that the base styles already consume.
+
+```css
+.bc-event:has(.bc-event-type-standup),
+.bc-segment:has(.bc-event-type-standup) {
+  --bc-color-event-bg:       #b8f0c8;
+  --bc-color-event-fg:       #1a4d2a;
+  --bc-color-event-hover-bg: color-mix(in oklab, #b8f0c8, CanvasText 20%);
+}
+
+.bc-event:has(.bc-event-type-review),
+.bc-segment:has(.bc-event-type-review) {
+  --bc-color-event-bg: #fdf5b0;
+  --bc-color-event-fg: #4d3e00;
+  --bc-color-event-hover-bg: color-mix(in oklab, #fdf5b0, CanvasText 20%);
+}
+
+/* repeat for each type … */
+```
+
+The `.bc-segment` selector covers multi-day spans that appear in the all-day row and in
+month view. Targeting both ensures consistent colours wherever an event is rendered.
+
+Because you're overriding CSS custom properties, the full event card — including hover
+state and drag-resize handles — automatically picks up the right palette. There are no
+inline-style hacks to maintain.
+
+---
+
+## Live examples
+
+The stories in this section show the pattern working across two views, with ten event
+types each assigned a distinct pastel palette:
+
+- **Month View — Event Types** — month grid with `TypedMonthEvent`
+- **Week View — Event Types** — time grid with `TypedTimeEvent`
+
+Both use the same events data and the same CSS, so the colours stay consistent as you
+switch views.

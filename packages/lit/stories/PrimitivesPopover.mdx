@@ -1,0 +1,85 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Primitives/Popover" />
+
+# Popover
+
+`BcPopoverElement` (`<bc-popover>`) is a floating panel primitive used internally by Big Calendar's show-more overflow buttons. You can also use it directly in custom elements to build event detail popovers, date pickers, or any anchored overlay.
+
+## Architecture
+
+`BcPopoverElement` uses `@floating-ui/dom` for positioning. The element manages open/close state through the browser's native Popover API when available, with a fallback for older browsers.
+
+## Basic usage
+
+The popover is split into two parts:
+
+1. A trigger element — the button that opens the popover. Wire it to the popover's `show()` / `toggle()` method via a click handler.
+2. A `<bc-popover>` element that holds the floating panel content.
+
+```ts
+html`
+  <button
+    type="button"
+    @click=${(e) => myPopover.showRelativeTo(e.currentTarget)}
+  >
+    Open popover
+  </button>
+
+  <bc-popover id="myPopover" placement="bottom-start">
+    <p>Popover content goes here.</p>
+  </bc-popover>
+`
+```
+
+## Properties
+
+<table>
+<thead><tr><th>Property / Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+<tbody>
+<tr>
+<td><code>placement</code></td>
+<td><code>string</code></td>
+<td><code>'bottom'</code></td>
+<td>Preferred placement relative to the anchor. Accepts any <code>@floating-ui/dom</code> placement string: <code>'top'</code>, <code>'bottom-start'</code>, <code>'right'</code>, etc.</td>
+</tr>
+<tr>
+<td><code>.sameWidth</code></td>
+<td><code>boolean</code></td>
+<td><code>false</code></td>
+<td>When <code>true</code>, the popover is sized to match the trigger element's width. Useful for dropdown menus.</td>
+</tr>
+<tr>
+<td><code>className</code></td>
+<td><code>string</code></td>
+<td><em>none</em></td>
+<td>Additional CSS class names applied to the floating panel.</td>
+</tr>
+</tbody>
+</table>
+
+## Accessibility
+
+`BcPopoverElement` automatically:
+
+- Assigns a unique `id` to the popover panel.
+- The browser Popover API handles focus management and `Escape` key dismissal natively.
+- Content inside the popover is reachable by Tab when open.
+
+## Using with a custom show-more slot
+
+The internal show-more overlay in the calendar uses `<bc-popover>` internally. When you extend a view element to add custom show-more behaviour, you can use `<bc-popover>` to keep the same anchored-overlay behaviour:
+
+```ts
+html`
+  <button
+    type="button"
+    @click=${(e) => pop.showRelativeTo(e.currentTarget)}
+  >
+    ${count} more
+  </button>
+  <bc-popover placement="bottom-start" class="bc-popover bc-show-more-popover">
+    ${events.map(item => html`<div class="bc-segment">${item.title}</div>`)}
+  </bc-popover>
+`
+```

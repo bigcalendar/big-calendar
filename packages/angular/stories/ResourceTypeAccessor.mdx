@@ -1,0 +1,71 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Resources/Resource Type Accessor" />
+
+# Resource Type Accessor
+
+The `resourceType` accessor lets you assign a category string to each resource object and then target the calendar's rendered markup with CSS to colour each resource lane.
+
+## How it works
+
+Big Calendar writes a `data-bc-resource-type` attribute on every resource column element. Target it with a CSS attribute selector to apply lane colours:
+
+```css
+.bc-day-column[data-bc-resource-type="conference"] {
+  background-color: #d4e8f5;
+}
+.bc-allday-resource[data-bc-resource-type="conference"] {
+  background-color: #d4e8f5;
+}
+```
+
+Because `data-bc-resource-type` sits directly on `.bc-day-column`, no `:has()` indirection is needed.
+
+## Setup
+
+Add a `resourceType` field to your resource objects:
+
+```ts
+const rooms = [
+  { id: 'board', title: 'Board room', resourceType: 'conference' },
+  { id: 'mtg1',  title: 'Meeting room 1', resourceType: 'meeting' },
+]
+```
+
+Then configure the accessor (the default field name is already `'resourceType'`, so this is only needed if your field has a different name):
+
+```html
+<bc-calendar-provider
+  [resources]="rooms"
+  [accessors]="{ resourceType: 'resourceType' }"
+  ...
+>
+```
+
+## Injecting styles at runtime
+
+In Angular, the cleanest way to inject component-scoped styles is via `ngOnInit` / `ngOnDestroy`:
+
+```ts
+@Component({ ... })
+export class CalendarWithLanesComponent implements OnInit, OnDestroy {
+  private styleEl!: HTMLStyleElement
+
+  ngOnInit() {
+    this.styleEl = document.createElement('style')
+    this.styleEl.textContent = `
+      .bc-day-column[data-bc-resource-type="conference"] { background-color: #d4e8f5; }
+      .bc-day-column[data-bc-resource-type="meeting"]    { background-color: #f5f0d4; }
+    `
+    document.head.appendChild(this.styleEl)
+  }
+
+  ngOnDestroy() {
+    document.head.removeChild(this.styleEl)
+  }
+}
+```
+
+For production use, add the rules to your global stylesheet.
+
+See **Resources → Resource Type Accessor** for a live demo with all four resource types across Day, Week, and Day-major layouts.

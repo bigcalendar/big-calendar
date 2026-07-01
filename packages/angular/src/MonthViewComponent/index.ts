@@ -1,0 +1,1 @@
+export { MonthViewComponent } from './MonthViewComponent'
