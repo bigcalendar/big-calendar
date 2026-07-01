@@ -87,7 +87,7 @@ export const MonthViewTyped: Story = {
     el.addEventListener('disconnected-bc-story', cleanup, { once: true })
 
     const calEl = document.createElement('bc-calendar') as HTMLElement & Record<string, unknown>
-    calEl.style.cssText = 'display:block;block-size:100dvh;inline-size:100%'
+    calEl.style.cssText = 'display:grid;grid-template-rows:auto 1fr;row-gap:0.5rem;block-size:100%;inline-size:100%'
     calEl.localizer = litLocalizer.current
     calEl.events = demoEvents
     calEl.defaultDate = FOCUS
@@ -101,8 +101,8 @@ export const MonthViewTyped: Story = {
     })
 
     calEl.innerHTML = `
+      <bc-default-toolbar></bc-default-toolbar>
       <div class="bc-calendar">
-        <bc-default-toolbar></bc-default-toolbar>
         <bc-month-view></bc-month-view>
         <bc-time-grid-view></bc-time-grid-view>
         <bc-agenda-view></bc-agenda-view>
@@ -142,7 +142,7 @@ export const WeekViewTyped: Story = {
     el.style.cssText = 'block-size:100dvh;inline-size:100%'
 
     const calEl = document.createElement('bc-calendar') as HTMLElement & Record<string, unknown>
-    calEl.style.cssText = 'display:block;block-size:100dvh;inline-size:100%'
+    calEl.style.cssText = 'display:grid;grid-template-rows:auto 1fr;row-gap:0.5rem;block-size:100%;inline-size:100%'
     calEl.localizer = litLocalizer.current
     calEl.events = demoEvents
     calEl.defaultDate = FOCUS
@@ -156,8 +156,8 @@ export const WeekViewTyped: Story = {
     })
 
     calEl.innerHTML = `
+      <bc-default-toolbar></bc-default-toolbar>
       <div class="bc-calendar">
-        <bc-default-toolbar></bc-default-toolbar>
         <bc-month-view></bc-month-view>
         <bc-time-grid-view></bc-time-grid-view>
         <bc-agenda-view></bc-agenda-view>

@@ -4,7 +4,7 @@ import { DestroyRef } from '@angular/core'
 import { createSlotMetrics, wrapAccessor } from '@big-calendar/core'
 import type { CalendarViewModel, ResourceId, SelectionRange } from '@big-calendar/core'
 import { formatEventTime } from '@big-calendar/core/utils'
-import { dayCountStyle, selectionStyle, slotGroupStyle } from '@big-calendar/core/utils'
+import { dayCountStyle, selectionStyle, slotCountStyle, slotGroupStyle } from '@big-calendar/core/utils'
 import { injectCalendar } from '../CalendarProvider/injectCalendar'
 import { injectSlotSelection } from '../internal/injectSlotSelection'
 
@@ -151,6 +151,8 @@ export interface InjectTimeGridViewReturn<TEvent> {
   }
   /** Localised "All day" label for the all-day row gutter. */
   allDayLabel: string
+  /** Whether to expand the all-day row (`config.showAllEvents`); adds `bc-show-all-events` class. */
+  showAllEvents: boolean
   /** `pointerdown` handler to bind on each `.bc-time-body` for timed slot selection. */
   onSlotsPointerDown: (e: PointerEvent) => void
   /** `pointerdown` handler to bind on the `.bc-allday-slots` container for all-day selection. */
@@ -495,9 +497,11 @@ export function injectTimeGridView<TEvent = unknown>(): InjectTimeGridViewReturn
     getRootClass: computeRootClass,
     getRootStyle: (leafCount: number): Record<string, string> => {
       const store = ctx.storeSignal()
+      const slotCount = grid()?.slotCount ?? 0
       return {
         ...(dayCountStyle(leafCount) as Record<string, string>),
         ...(slotGroupStyle(store ? store.timeslots : 2) as Record<string, string>),
+        ...(slotCount > 0 ? slotCountStyle(slotCount) as Record<string, string> : {}),
       }
     },
     getSlotProps: (column, colIndex, slotIndex) => ({
@@ -507,6 +511,7 @@ export function injectTimeGridView<TEvent = unknown>(): InjectTimeGridViewReturn
       'aria-describedby': descriptionIds.selection,
     }),
     allDayLabel: rawMessages.allDay,
+    showAllEvents: ctx.storeSignal()?.showAllEvents ?? false,
     onSlotsPointerDown,
     onAllDayPointerDown,
     isDraggable: (event) => _dndEnabled() && (ctx.storeSignal()?.isDraggable(event) ?? false),

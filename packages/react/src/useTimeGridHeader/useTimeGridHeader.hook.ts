@@ -390,14 +390,14 @@ export function useTimeGridHeader<TEvent = unknown>(
     allDayResourceStack: { className: 'bc-allday-resource-stack', 'data-bc-allday-segments': '' as const },
     resourceSingleHead: { className: 'bc-header bc-resource-header', role: 'columnheader' },
     allDayRow: {
-      className: 'bc-allday-row',
+      className: store.showAllEvents ? 'bc-allday-row bc-show-all-events' : 'bc-allday-row',
       ref: allDayRoving.containerRef,
       onPointerDown: onAllDayPointerDown,
       onKeyDown: allDayRoving.onKeyDown,
       onFocusCapture: allDayRoving.onFocusCapture,
     },
     resourceAllDayRow: {
-      className: 'bc-allday-row',
+      className: store.showAllEvents ? 'bc-allday-row bc-show-all-events' : 'bc-allday-row',
       onPointerDown: onAllDayPointerDown,
     },
     getHeadingProps: (heading: TimeDayHeading) => ({

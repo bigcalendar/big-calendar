@@ -11,6 +11,7 @@ const preview: Preview = {
         order: [
           'Introduction',
           'Concepts',
+          ['Lit Patterns'],
           'Calendar',
           ['Standard', 'CalendarProvider', 'Views', 'Toolbar', 'Custom Components', 'Custom Rendering', 'Event Type Accessor', 'Localization'],
           'Events',
@@ -26,7 +27,7 @@ const preview: Preview = {
           'Primitives',
           ['Popover', 'Tooltip', 'Dialog'],
           'Advanced',
-          ['Headless API', 'MonthViewController', 'TimeGridViewController', 'AgendaViewController', 'Interaction Hooks', 'Data Hooks', 'useFloatingAnchor'],
+          ['Headless API', 'MonthViewController', 'TimeGridViewController', 'AgendaViewController', 'Interaction Hooks', 'Data Hooks'],
           'Utilities',
           ['Geometry Styles', 'Event Time'],
         ],

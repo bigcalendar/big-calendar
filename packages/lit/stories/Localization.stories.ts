@@ -53,7 +53,7 @@ export const ArabicRTL: Story = {
     el.setAttribute('lang', arabicLocalizer.language)
 
     const calEl = document.createElement('bc-calendar') as HTMLElement & Record<string, unknown>
-    calEl.style.cssText = 'display:block;block-size:100dvh;inline-size:100%'
+    calEl.style.cssText = 'display:grid;grid-template-rows:auto 1fr;row-gap:0.5rem;block-size:100%;inline-size:100%'
     calEl.localizer = arabicLocalizer
     calEl.events = demoEvents
     calEl.defaultDate = FOCUS
@@ -61,8 +61,8 @@ export const ArabicRTL: Story = {
     calEl.messages = arabicMessages
 
     calEl.innerHTML = `
+      <bc-default-toolbar></bc-default-toolbar>
       <div class="bc-calendar">
-        <bc-default-toolbar></bc-default-toolbar>
         <bc-month-view></bc-month-view>
         <bc-time-grid-view></bc-time-grid-view>
         <bc-agenda-view></bc-agenda-view>
@@ -116,7 +116,7 @@ export const SpanishMessages: Story = {
     el.style.cssText = 'block-size:100dvh;inline-size:100%'
 
     const calEl = document.createElement('bc-calendar') as HTMLElement & Record<string, unknown>
-    calEl.style.cssText = 'display:block;block-size:100dvh;inline-size:100%'
+    calEl.style.cssText = 'display:grid;grid-template-rows:auto 1fr;row-gap:0.5rem;block-size:100%;inline-size:100%'
     calEl.localizer = spanishLocalizer
     calEl.events = demoEvents
     calEl.defaultDate = FOCUS
@@ -124,8 +124,8 @@ export const SpanishMessages: Story = {
     calEl.messages = spanishMessages
 
     calEl.innerHTML = `
+      <bc-default-toolbar></bc-default-toolbar>
       <div class="bc-calendar">
-        <bc-default-toolbar></bc-default-toolbar>
         <bc-month-view></bc-month-view>
         <bc-time-grid-view></bc-time-grid-view>
         <bc-agenda-view></bc-agenda-view>

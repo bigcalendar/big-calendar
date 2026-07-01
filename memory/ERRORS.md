@@ -65,6 +65,14 @@ and don't have this problem, but a function accessor that closes over changing s
 
 **Note for next time:** In Storybook composition, the manager and hub preview share `localStorage` (same origin). The event name for setting globals in SB8–10 is `'setGlobals'` (camelCase string), not `'SET_GLOBALS'`. The `stories.json`/`metadata.json` 404s in the console are harmless backward-compat probes — they do NOT cause the spinner to stall; only extra same-origin event sources do.
 
+## Time grid layout: gap between all-day row and time slots
+
+**What didn't work:** Setting `block-size: 100%` on `.bc-time-grid` and adding `grid-row: 1` to view host elements (`bc-month-view`, `bc-time-grid-view`, `bc-agenda-view`) to ensure all three occupied the same explicit `1fr` row in `.bc-calendar`. This addressed the circular height resolution for `overflow: auto`, but still left a visual gap between the all-day row and the scrollable time body.
+
+**What worked:** Changing `.bc-time-grid`'s `grid-template-rows` from `auto auto` to `auto 1fr`. The first `auto` row sizes the header/all-day section to content; the `1fr` row gives the time slot body all remaining space, eliminating the gap.
+
+**Note for next time:** When a grid contains a fixed-height header and a scrollable body, `auto 1fr` is the right pattern — not `auto auto`. `auto auto` leaves leftover space unallocated, which appears as a gap below the header rows.
+
 ## @storybook/angular: getting Angular Storybook to build
 
 **What didn't work:** `storybook dev` (throws `AngularLegacyBuildOptionsError`); `angular.json` without a build target; `render: () => ({ component: X })` (not in `StoryFnAngularReturnType`); `component: X` on `: StoryObj` stories (TS2353 — not in `StoryAnnotations`); importing CSS in `preview.ts` (no webpack CSS loader); adding `style-loader`/`css-loader` via `webpackFinal` (not resolvable as pnpm transitive deps).

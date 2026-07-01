@@ -56,6 +56,27 @@
     container: bc / inline-size;
   }
 
+  /* View host elements (Lit / Angular custom element wrappers).
+     All three view elements must share the same grid row so that only the active
+     one (with rendered content) fills the 1fr track. Without grid-row:1, the
+     first element claims the explicit 1fr row and the others go into implicit auto
+     rows — the inactive 1fr element creates the gap, and the active view in an
+     auto row has no definite height so block-size:100% resolves as auto.
+     display:block ensures children can resolve block-size:100% against the
+     element's grid-track height (custom elements default to display:inline). */
+  bc-month-view,
+  bc-time-grid-view,
+  bc-agenda-view {
+    display: block;
+    grid-row: 1;
+    min-block-size: 0;
+  }
+
+  bc-calendar-dnd {
+    display: block;
+    min-block-size: 0;
+  }
+
   .bc-viewport {
     min-block-size: 0;
     overflow: hidden;
@@ -185,8 +206,9 @@
      taller than the visible area. */
   .bc-time-grid {
     display: grid;
-    grid-template-rows: auto auto;
+    grid-template-rows: auto 1fr;
     grid-template-columns: var(--bc-gutter-width) repeat(var(--bc-day-count), minmax(var(--bc-col-min), 1fr));
+    block-size: 100%;
     min-block-size: 0;
     overflow: auto;
     /* Leave room below the grid's closing border (timegrid.css) so it isn't
@@ -227,7 +249,8 @@
     /* A consistent baseline height across every time-grid view, so the all-day
        strip reads as a band rather than collapsing to its content. Grows past
        this when more segment rows stack. Overridable via the var. */
-    min-block-size: var(--bc-allday-row-min-height, 6rem);
+    block-size: var(--bc-allday-row-height, 6.75rem);
+    overflow: hidden;
     /* Selectable surface (all-day day-mode drag) — same touch-action rationale
        as `.bc-month-grid` / `.bc-time-body`. */
     touch-action: pan-y;
@@ -335,6 +358,8 @@
       repeat(var(--bc-day-count), minmax(var(--bc-col-min), 1fr));
     /* head (auto) then body (natural, tall) — the container scrolls to reveal. */
     grid-template-rows: auto auto;
+    block-size: 100%;
+    min-block-size: 0;
     overflow: auto;
   }
 
@@ -541,12 +566,15 @@
     inline-size: calc(var(--bc-width) * 100%);
   }
 
-  /* Now-indicator: spans from the grid-side edge of the gutter to the far right. */
+  /* Now-indicator: spans from the grid-side edge of the gutter to the far right.
+     Uses slot vars instead of 100% so the position is the correct fraction of the
+     full scrollable column height, not the (viewport-dependent) .bc-time-body box
+     height. */
   .bc-now-indicator {
     position: absolute;
     inset-inline-start: var(--bc-gutter-width);
     inset-inline-end: 0;
-    inset-block-start: calc(var(--bc-now-top) * 100%);
+    inset-block-start: calc(var(--bc-now-top) * var(--bc-slot-count) * var(--bc-slot-height));
     block-size: var(--bc-now-width);
     z-index: 102;
     pointer-events: none;

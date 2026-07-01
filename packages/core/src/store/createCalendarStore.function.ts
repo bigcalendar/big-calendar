@@ -487,6 +487,7 @@ export function createCalendarStore<TEvent = unknown, TResource = unknown>(
     longPressThreshold,
     isDraggable,
     isResizable,
+    showAllEvents: config.showAllEvents === true,
 
     navigate({ direction, date: target }) {
       const next = navigateDate({

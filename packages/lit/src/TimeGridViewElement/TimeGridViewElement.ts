@@ -12,6 +12,7 @@ import {
   formatEventTime,
   dayCountStyle,
   selectionStyle,
+  slotCountStyle,
   slotGroupStyle,
 } from '@big-calendar/core/utils'
 import { calendarContext } from '../CalendarController/calendarContext'
@@ -472,9 +473,11 @@ export class TimeGridViewElement extends LitElement {
 
   private _getRootStyle(): Record<string, string> {
     const store = this._store
+    const slotCount = this._grid?.slotCount ?? 0
     return {
       ...(dayCountStyle(this._leafColumnCount()) as Record<string, string>),
       ...(slotGroupStyle(store ? store.timeslots : 2) as Record<string, string>),
+      ...(slotCount > 0 ? slotCountStyle(slotCount) as Record<string, string> : {}),
     }
   }
 
@@ -770,7 +773,7 @@ export class TimeGridViewElement extends LitElement {
                 >${heading.label}</div>
               `)}
             </div>
-            <div class="bc-allday-row">
+            <div class=${classMap({ 'bc-allday-row': true, 'bc-show-all-events': this._store?.showAllEvents ?? false })}>
               <div class="bc-allday-label">${allDayLabel}</div>
               <div class="bc-allday-slots" @pointerdown=${this._allDayHandler ?? null}>
                 ${grid.headings.map((heading, i) => html`
@@ -781,6 +784,8 @@ export class TimeGridViewElement extends LitElement {
                     tabindex="0"
                   ></div>
                 `)}
+              </div>
+              <div class="bc-allday-segments" data-bc-allday-segments="">
                 ${grid.allDay.segments.map((seg) => this._renderAllDaySegment(seg))}
               </div>
             </div>
@@ -844,7 +849,7 @@ export class TimeGridViewElement extends LitElement {
                 </div>
               `)}
 
-              <div class="bc-allday-row" @pointerdown=${this._allDayHandler ?? null}>
+              <div class=${classMap({ 'bc-allday-row': true, 'bc-show-all-events': this._store?.showAllEvents ?? false })} @pointerdown=${this._allDayHandler ?? null}>
                 <div class="bc-allday-label">${allDayLabel}</div>
                 ${when(isWeek, () => html`
                   ${grid.resources!.map((group, gi) => html`
@@ -939,7 +944,7 @@ export class TimeGridViewElement extends LitElement {
                   `)}
                 `)}
               </div>
-              <div class="bc-allday-row" @pointerdown=${this._allDayHandler ?? null}>
+              <div class=${classMap({ 'bc-allday-row': true, 'bc-show-all-events': this._store?.showAllEvents ?? false })} @pointerdown=${this._allDayHandler ?? null}>
                 <div class="bc-allday-label">${allDayLabel}</div>
                 ${grid.dayGroups!.flatMap((dayGroup, di) =>
                   dayGroup.cells.map((cell) => html`

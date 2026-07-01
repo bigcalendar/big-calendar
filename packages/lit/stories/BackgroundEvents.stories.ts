@@ -51,6 +51,7 @@ class DndBgElement extends LitElement {
     }
     return html`
       <bc-calendar
+        style="display:grid;grid-template-rows:auto 1fr;row-gap:0.5rem;block-size:100%;inline-size:100%"
         .localizer=${litLocalizer.current}
         .events=${this._events}
         .defaultDate=${FOCUS}
@@ -69,12 +70,14 @@ class DndBgElement extends LitElement {
           apply(a)
         }}
       >
-        <div class="bc-calendar">
-          <bc-default-toolbar></bc-default-toolbar>
-          <bc-month-view></bc-month-view>
-          <bc-time-grid-view></bc-time-grid-view>
-          <bc-agenda-view></bc-agenda-view>
-        </div>
+        <bc-default-toolbar></bc-default-toolbar>
+        <bc-calendar-dnd>
+          <div class="bc-calendar">
+            <bc-month-view></bc-month-view>
+            <bc-time-grid-view></bc-time-grid-view>
+            <bc-agenda-view></bc-agenda-view>
+          </div>
+        </bc-calendar-dnd>
       </bc-calendar>
     `
   }
@@ -93,14 +96,28 @@ const meta: Meta = {
     onSlotDoubleClick: fn(),
     onSlotSelect: fn(),
     onSlotSelecting: fn(),
-    onEventDrop: fn(),
-    onEventResize: fn(),
+    onEventClick: fn(),
+    onEventDoubleClick: fn(),
+    onEventRightClick: fn(),
+    onEventMiddleClick: fn(),
     onRangeChange: fn(),
   },
 }
 export default meta
 
 type BgArgs = { view: ViewKey; overlapping: boolean; dayLayoutAlgorithm: DayLayoutAlgorithmKey }
+
+type SelectableBgArgs = BgArgs & {
+  onSlotClick: (a: unknown) => void
+  onSlotDoubleClick: (a: unknown) => void
+  onSlotSelect: (a: unknown) => void
+  onSlotSelecting: (a: unknown) => void
+  onEventClick: (a: unknown) => void
+  onEventDoubleClick: (a: unknown) => void
+  onEventRightClick: (a: unknown) => void
+  onEventMiddleClick: (a: unknown) => void
+  onRangeChange: (a: unknown) => void
+}
 
 /**
  * Background events appear behind timed events as coloured bands. Pointer events
@@ -128,6 +145,7 @@ export const WithBackgroundEvents: StoryObj<BgArgs> = {
   render: (args) => html`
     <div style="block-size:100dvh;inline-size:100%">
       <bc-calendar
+        style="display:grid;grid-template-rows:auto 1fr;row-gap:0.5rem;block-size:100%;inline-size:100%"
         .localizer=${litLocalizer.current}
         .events=${demoEvents}
         .defaultDate=${FOCUS}
@@ -137,8 +155,8 @@ export const WithBackgroundEvents: StoryObj<BgArgs> = {
         .backgroundEvents=${args.overlapping ? overlappingBg : singleDayBg}
         .dayLayoutAlgorithm=${args.dayLayoutAlgorithm}
       >
+        <bc-default-toolbar></bc-default-toolbar>
         <div class="bc-calendar">
-          <bc-default-toolbar></bc-default-toolbar>
           <bc-month-view></bc-month-view>
           <bc-time-grid-view></bc-time-grid-view>
           <bc-agenda-view></bc-agenda-view>
@@ -156,8 +174,21 @@ export const WithBackgroundEvents: StoryObj<BgArgs> = {
  * The payload omits `backgroundEvents` entirely when the selection does not
  * intersect any background event.
  */
-export const SelectableWithBackgroundEvents: StoryObj<BgArgs> = {
-  args: { view: Views.WEEK, overlapping: false, dayLayoutAlgorithm: 'overlap' },
+export const SelectableWithBackgroundEvents: StoryObj<SelectableBgArgs> = {
+  args: {
+    view: Views.WEEK,
+    overlapping: false,
+    dayLayoutAlgorithm: 'overlap',
+    onSlotClick: fn(),
+    onSlotDoubleClick: fn(),
+    onSlotSelect: fn(),
+    onSlotSelecting: fn(),
+    onEventClick: fn(),
+    onEventDoubleClick: fn(),
+    onEventRightClick: fn(),
+    onEventMiddleClick: fn(),
+    onRangeChange: fn(),
+  },
   argTypes: {
     view: {
       control: 'select',
@@ -173,6 +204,7 @@ export const SelectableWithBackgroundEvents: StoryObj<BgArgs> = {
   render: (args) => html`
     <div style="block-size:100dvh;inline-size:100%">
       <bc-calendar
+        style="display:grid;grid-template-rows:auto 1fr;row-gap:0.5rem;block-size:100%;inline-size:100%"
         .localizer=${litLocalizer.current}
         .events=${demoEvents}
         .defaultDate=${FOCUS}
@@ -186,9 +218,14 @@ export const SelectableWithBackgroundEvents: StoryObj<BgArgs> = {
         .onSlotDoubleClick=${args.onSlotDoubleClick}
         .onSlotSelect=${args.onSlotSelect}
         .onSlotSelecting=${args.onSlotSelecting}
+        .onEventClick=${args.onEventClick}
+        .onEventDoubleClick=${args.onEventDoubleClick}
+        .onEventRightClick=${args.onEventRightClick}
+        .onEventMiddleClick=${args.onEventMiddleClick}
+        .onRangeChange=${args.onRangeChange}
       >
+        <bc-default-toolbar></bc-default-toolbar>
         <div class="bc-calendar">
-          <bc-default-toolbar></bc-default-toolbar>
           <bc-month-view></bc-month-view>
           <bc-time-grid-view></bc-time-grid-view>
           <bc-agenda-view></bc-agenda-view>
@@ -230,6 +267,7 @@ export const DragAndDropWithBackgroundEvents: StoryObj<DndBgArgs> = {
   render: (args) => html`
     <div style="block-size:100dvh;inline-size:100%">
       <bc-story-dnd-bg
+        style="display:block;block-size:100%;inline-size:100%"
         .view=${args.view}
         .overlapping=${args.overlapping}
         .dayLayoutAlgorithm=${args.dayLayoutAlgorithm}

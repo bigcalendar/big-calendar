@@ -22,6 +22,17 @@
     border-inline-start: var(--bc-border);
   }
 
+  /* Bottom border separating the all-day band from the scrollable time body. */
+  .bc-allday-row {
+    border-block-end: var(--bc-border);
+  }
+
+  /* When showAllEvents is set, remove the fixed height so the row expands to fit all events. */
+  .bc-allday-row.bc-show-all-events {
+    block-size: auto;
+    overflow: visible;
+  }
+
   /* Plain time-grid all-day row: column dividers on each per-day hit cell. */
   .bc-allday-slots > .bc-allday-slot {
     border-inline-start: var(--bc-border);

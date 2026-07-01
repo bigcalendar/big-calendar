@@ -63,7 +63,7 @@ import { injectCalendar } from '../CalendarProvider/injectCalendar'
                 }
               }
             </div>
-            <div class="bc-allday-row">
+            <div class="bc-allday-row" [class.bc-show-all-events]="state.showAllEvents">
               <div class="bc-allday-label">{{ state.allDayLabel }}</div>
               <div class="bc-allday-slots" (pointerdown)="state.onAllDayPointerDown($event)">
                 @for (heading of grid.headings; track heading.day; let i = $index) {
@@ -245,7 +245,7 @@ import { injectCalendar } from '../CalendarProvider/injectCalendar'
             }
 
             <!-- All-day row -->
-            <div class="bc-allday-row" (pointerdown)="state.onAllDayPointerDown($event)">
+            <div class="bc-allday-row" [class.bc-show-all-events]="state.showAllEvents" (pointerdown)="state.onAllDayPointerDown($event)">
               <div class="bc-allday-label">{{ state.allDayLabel }}</div>
               @if (isWeek) {
                 @for (group of grid.resources; track group.key; let gi = $index) {
@@ -447,7 +447,7 @@ import { injectCalendar } from '../CalendarProvider/injectCalendar'
                 }
               }
             </div>
-            <div class="bc-allday-row" (pointerdown)="state.onAllDayPointerDown($event)">
+            <div class="bc-allday-row" [class.bc-show-all-events]="state.showAllEvents" (pointerdown)="state.onAllDayPointerDown($event)">
               <div class="bc-allday-label">{{ state.allDayLabel }}</div>
               @for (dayGroup of grid.dayGroups; track dayGroup.key; let di = $index) {
                 @for (cell of dayGroup.cells; track cell.key) {

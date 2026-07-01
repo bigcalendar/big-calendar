@@ -275,6 +275,12 @@ export interface CalendarStore<TEvent = unknown, TResource = unknown> {
    * to decide which events get resize handles.
    */
   readonly isResizable: (event: TEvent) => boolean
+  /**
+   * Whether the all-day row should expand to show all events (`config.showAllEvents`).
+   * When `true`, adapters add `bc-show-all-events` to the `.bc-allday-row` element
+   * so the CSS override removes the fixed height constraint.
+   */
+  readonly showAllEvents: boolean
 
   // --- actions (named-parameter objects, per Appendix A) ---
   /** Move the focus date: PREV/NEXT step by view; TODAY resets to now; DATE jumps. */

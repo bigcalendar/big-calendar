@@ -42,7 +42,7 @@ function calendarEl(opts: {
   extra?: Record<string, unknown>
 }): HTMLElement & Record<string, unknown> {
   const el = document.createElement('bc-calendar') as HTMLElement & Record<string, unknown>
-  el.style.cssText = 'display:block;block-size:100dvh;inline-size:100%'
+  el.style.cssText = 'display:grid;grid-template-rows:auto 1fr;row-gap:0.5rem;block-size:100%;inline-size:100%'
   el.localizer = litLocalizer.current
   el.events = opts.events ?? demoEvents
   el.defaultDate = FOCUS
@@ -54,8 +54,8 @@ function calendarEl(opts: {
     el.localizer = litLocalizer.current
   })
   el.innerHTML = `
+    <bc-default-toolbar></bc-default-toolbar>
     <div class="bc-calendar">
-      <bc-default-toolbar></bc-default-toolbar>
       <bc-month-view></bc-month-view>
       <bc-time-grid-view></bc-time-grid-view>
       <bc-agenda-view></bc-agenda-view>

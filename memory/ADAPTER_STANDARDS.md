@@ -119,6 +119,10 @@ Human-readable story names (`storyName` in React, `name` in Vue/Angular) must be
 
 ### MDX docs
 
+**`<Meta title>` must match the Storybook sort order exactly.** The title path determines where the doc appears in the sidebar. A mismatch (e.g. `"DragAndDrop/Overview"` instead of `"Drag & Drop/Overview"`) orphans the page outside the intended group. Always verify each MDX title against:
+1. The framework's `preview.ts` `storySort.order` array.
+2. The story `title:` in the corresponding `.stories.*` file (both must share the same top-level group string).
+
 MDX prose content (concept explanations, tables, code samples) must be structurally equivalent across adapters. Permitted differences:
 
 - Framework-specific import paths (`import { Calendar } from '@big-calendar/react'` vs `from '@big-calendar/vue'`).
@@ -200,6 +204,8 @@ For every `on*` callback in a story (`onEventClick`, `onSlotClick`, `onEventDrop
 
 Handlers must be wired via Storybook's `fn()` (or framework equivalent) so Actions logs them. Do not use plain `() => {}` or `console.log`.
 
+**`fn()` placement rule — critical:** Every `on*` callback must appear as `fn()` in the **story's own `args` object**, not only in `meta.args`. Storybook does not reliably propagate meta-level `fn()` instances to typed stories (`StoryObj<SpecificArgsType>`), so relying on meta.args alone silently breaks the Actions panel. This applies to every story that declares selectable or event-callback args — including `SelectableWithBackgroundEvents`, `Selectable`, `EventCallbacks`, and any story with a custom args type that extends the base. The rule holds even when the callbacks are already listed in `meta.args`.
+
 ### D. DnD and resize
 
 For stories that include `EventDragAndDrop`:
@@ -210,6 +216,31 @@ For stories that include `EventDragAndDrop`:
 5. Confirm keyboard DnD (grab with Space, move with arrow keys, release with Space) works.
 6. Confirm drop-from-outside works in `DropFromOutside.stories.*` and fires `onDropFromOutside`.
 
+#### Lit-specific DnD wiring
+
+In Lit, **do not** put `CalendarDndController` on a story wrapper element that is an ancestor of `<bc-calendar>`. Lit context flows downward (provider → consumer), so a parent element cannot receive context from its child `<bc-calendar>`.
+
+Instead, use the `<bc-calendar-dnd>` custom element **inside** `<bc-calendar>`, wrapping the view elements:
+
+```html
+<bc-calendar .localizer=${loc} .events=${events} .onEventDrop=${onDrop}>
+  <bc-calendar-dnd>
+    <div class="bc-calendar">
+      <bc-default-toolbar></bc-default-toolbar>
+      <bc-month-view></bc-month-view>
+      <bc-time-grid-view></bc-time-grid-view>
+      <bc-agenda-view></bc-agenda-view>
+    </div>
+  </bc-calendar-dnd>
+</bc-calendar>
+```
+
+`<bc-calendar-dnd>` uses `ContextConsumer` internally to receive the calendar context and calls `CalendarDndController.setContext()` once the store is ready. No manual wiring is needed.
+
+**State persistence rule:** DnD and resize stories must actually commit the event change — the stateful wrapper (or component state) must update the event list after `onEventDrop` / `onEventResize` fires. A story that only calls `fn()` and discards the result will appear to work (the Action logs) but the event will snap back to its original position. The story is only correct when the dropped/resized event stays in its new position after release.
+
+For `DropFromOutside` stories: `<bc-calendar-dnd>` is required whenever the story also supports moving or resizing existing events (i.e. when `onEventDrop` or `onEventResize` is wired). The external drop callback (`onDropFromOutside`) alone does not need it, but in practice `DropFromOutside` stories wire all three callbacks and therefore always need `<bc-calendar-dnd>`.
+
 ---
 
 ## 8. Verification checklist (run before marking any adapter work done)
@@ -219,7 +250,7 @@ This extends the existing Angular phase-validation checklist to cover all adapte
 1. **Build** — `pnpm nx run {package}:typecheck` passes with zero errors.
 2. **Tests** — `pnpm nx run {package}:test` passes. Zero unexpected failures. If pre-existing failures exist, they are documented in ERRORS.md.
 3. **Storybook startup** — Start the framework's Storybook. Wait for "Storybook ready!" with zero `ERROR in` lines.
-4. **Visual parity** — Use Playwright to screenshot at least one story from each `.stories.*` file and compare with the React equivalent. `bc-*` class names and layout must match. No missing borders, wrong spacing, or structural differences.
+4. **Visual parity** — Use Playwright to screenshot each story in `.stories.*` files and compare with the React equivalent. `bc-*` class names and layout must match. No missing borders, wrong spacing, or structural differences.
 5. **Styles** — Inspect rendered elements. `bc-calendar`, `bc-event`, `bc-month-week`, `bc-day-column`, etc. must have the correct CSS applied — borders, backgrounds, grid layout. No bare text, no unstyled blocks.
 6. **Actions panel** — Click an event and select a slot. Both must log to the Actions panel. Verify at least one callback-bearing story in each story file works.
 7. **Controls panel** — Change at least one control in each story that declares `argTypes`. Confirm the output updates.

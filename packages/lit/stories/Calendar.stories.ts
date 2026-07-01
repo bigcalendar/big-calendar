@@ -64,6 +64,7 @@ export const Standard: StoryObj<{
   render: (args) => html`
     <div style="block-size:100dvh;inline-size:100%">
       <bc-calendar
+        style="display:grid;grid-template-rows:auto 1fr;row-gap:0.5rem;block-size:100%;inline-size:100%"
         .localizer=${litLocalizer.current}
         .events=${demoEvents}
         .defaultDate=${FOCUS}
@@ -74,8 +75,8 @@ export const Standard: StoryObj<{
         .dayLayoutAlgorithm=${args.dayLayoutAlgorithm}
         .onRangeChange=${args.onRangeChange}
       >
+        <bc-default-toolbar></bc-default-toolbar>
         <div class="bc-calendar">
-          <bc-default-toolbar></bc-default-toolbar>
           <bc-month-view></bc-month-view>
           <bc-time-grid-view></bc-time-grid-view>
           <bc-agenda-view></bc-agenda-view>
@@ -111,6 +112,7 @@ export const ScrollToTime: StoryObj<{ scrollToHour: number }> = {
     return html`
       <div style="block-size:100dvh;inline-size:100%">
         <bc-calendar
+          style="display:grid;grid-template-rows:auto 1fr;row-gap:0.5rem;block-size:100%;inline-size:100%"
           .localizer=${litLocalizer.current}
           .events=${demoEvents}
           .defaultDate=${FOCUS}
@@ -118,8 +120,8 @@ export const ScrollToTime: StoryObj<{ scrollToHour: number }> = {
           .defaultView=${'week'}
           .scrollToTime=${scrollToTime}
         >
+          <bc-default-toolbar></bc-default-toolbar>
           <div class="bc-calendar">
-            <bc-default-toolbar></bc-default-toolbar>
             <bc-month-view></bc-month-view>
             <bc-time-grid-view></bc-time-grid-view>
             <bc-agenda-view></bc-agenda-view>
@@ -164,6 +166,7 @@ export const TimeWindow: StoryObj<{ minHour: number; maxHour: number }> = {
   render: (args) => html`
     <div style="block-size:100dvh;inline-size:100%">
       <bc-calendar
+        style="display:grid;grid-template-rows:auto 1fr;row-gap:0.5rem;block-size:100%;inline-size:100%"
         .localizer=${litLocalizer.current}
         .events=${demoEvents}
         .defaultDate=${FOCUS}
@@ -172,8 +175,8 @@ export const TimeWindow: StoryObj<{ minHour: number; maxHour: number }> = {
         .min=${{ hour: args.minHour }}
         .max=${{ hour: args.maxHour }}
       >
+        <bc-default-toolbar></bc-default-toolbar>
         <div class="bc-calendar">
-          <bc-default-toolbar></bc-default-toolbar>
           <bc-month-view></bc-month-view>
           <bc-time-grid-view></bc-time-grid-view>
           <bc-agenda-view></bc-agenda-view>

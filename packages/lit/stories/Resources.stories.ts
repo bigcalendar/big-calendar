@@ -6,7 +6,6 @@ import type { ViewKey } from '@big-calendar/core'
 import type { Meta, StoryObj } from '@storybook/web-components-vite'
 import { fn } from 'storybook/test'
 import '@big-calendar/lit'
-import { CalendarDndController } from '@big-calendar/lit'
 import { demoEvents, type DemoEvent, FOCUS, litLocalizer, NOW } from './harness'
 
 type Resource = { id: string; title: string }
@@ -28,7 +27,6 @@ class ResourceDemoElement extends LitElement {
   @property({ attribute: false }) onRangeChange?: (a: unknown) => void
 
   private _events: DemoEvent[] = [...demoEvents]
-  private _dnd = new CalendarDndController(this)
 
   override render() {
     const l = this.layout
@@ -53,6 +51,7 @@ class ResourceDemoElement extends LitElement {
 
     return html`
       <bc-calendar
+        style="display:grid;grid-template-rows:auto 1fr;row-gap:0.5rem;block-size:100%;inline-size:100%"
         .localizer=${litLocalizer.current}
         .events=${this._events}
         .defaultDate=${FOCUS}
@@ -66,12 +65,14 @@ class ResourceDemoElement extends LitElement {
         .onEventDrop=${apply}
         .onEventResize=${apply}
       >
-        <div class="bc-calendar">
-          <bc-default-toolbar></bc-default-toolbar>
-          <bc-month-view></bc-month-view>
-          <bc-time-grid-view></bc-time-grid-view>
-          <bc-agenda-view></bc-agenda-view>
-        </div>
+        <bc-default-toolbar></bc-default-toolbar>
+        <bc-calendar-dnd>
+          <div class="bc-calendar">
+            <bc-month-view></bc-month-view>
+            <bc-time-grid-view></bc-time-grid-view>
+            <bc-agenda-view></bc-agenda-view>
+          </div>
+        </bc-calendar-dnd>
       </bc-calendar>
     `
   }
@@ -115,6 +116,7 @@ export const WithResources: StoryObj<ResourceArgs> = {
   render: (args) => html`
     <div style="block-size:100dvh;inline-size:100%">
       <bc-story-resource-demo
+        style="display:block;block-size:100%;inline-size:100%"
         .layout=${args.layout}
         .onRangeChange=${args.onRangeChange}
       ></bc-story-resource-demo>

@@ -6,7 +6,6 @@ import type { ViewKey } from '@big-calendar/core'
 import type { Meta, StoryObj } from '@storybook/web-components-vite'
 import { fn } from 'storybook/test'
 import '@big-calendar/lit'
-import { CalendarDndController } from '@big-calendar/lit'
 import { demoEvents, type DemoEvent, FOCUS, litLocalizer, NOW } from './harness'
 
 @customElement('bc-story-dnd-demo')
@@ -18,7 +17,6 @@ class DndDemoElement extends LitElement {
   @property({ attribute: false }) onRangeChange?: (a: unknown) => void
 
   private _events: DemoEvent[] = [...demoEvents]
-  private _dnd = new CalendarDndController(this)
 
   override render() {
     const apply = (a: { event: DemoEvent; start: string; end: string; allDay: boolean }) => {
@@ -34,6 +32,7 @@ class DndDemoElement extends LitElement {
 
     return html`
       <bc-calendar
+        style="display:grid;grid-template-rows:auto 1fr;row-gap:0.5rem;block-size:100%;inline-size:100%"
         .localizer=${litLocalizer.current}
         .events=${this._events}
         .defaultDate=${FOCUS}
@@ -44,12 +43,14 @@ class DndDemoElement extends LitElement {
         .onEventDrop=${apply}
         .onEventResize=${apply}
       >
-        <div class="bc-calendar">
-          <bc-default-toolbar></bc-default-toolbar>
-          <bc-month-view></bc-month-view>
-          <bc-time-grid-view></bc-time-grid-view>
-          <bc-agenda-view></bc-agenda-view>
-        </div>
+        <bc-default-toolbar></bc-default-toolbar>
+        <bc-calendar-dnd>
+          <div class="bc-calendar">
+            <bc-month-view></bc-month-view>
+            <bc-time-grid-view></bc-time-grid-view>
+            <bc-agenda-view></bc-agenda-view>
+          </div>
+        </bc-calendar-dnd>
       </bc-calendar>
     `
   }
@@ -81,10 +82,9 @@ export default meta
  *
  * Events update in place on every drop so you can reposition them repeatedly.
  *
- * **Implementation note:** `CalendarDndController` is the Lit equivalent of
- * the Angular `[calendarDnd]` directive. It attaches to the host element,
- * subscribes to the store's `view` signal, and calls `bindCalendarDnd` from
- * `@big-calendar/dnd` whenever the view changes.
+ * **Implementation note:** wrap your view elements in `<bc-calendar-dnd>` inside
+ * `<bc-calendar>`. The element consumes the calendar context automatically and
+ * activates the DnD binding — no manual store wiring needed.
  */
 export const EventDragAndDrop: StoryObj<DndArgs> = {
   args: { view: Views.WEEK, lockAllDayEvents: false },
@@ -104,6 +104,7 @@ export const EventDragAndDrop: StoryObj<DndArgs> = {
   render: (args) => html`
     <div style="block-size:100dvh;inline-size:100%">
       <bc-story-dnd-demo
+        style="display:block;block-size:100%;inline-size:100%"
         .view=${args.view}
         .lockAllDayEvents=${args.lockAllDayEvents}
         .onRangeChange=${args.onRangeChange}
