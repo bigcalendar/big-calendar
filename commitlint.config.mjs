@@ -20,6 +20,7 @@ export default {
         'vue',
         'angular',
         'lit',
+        'svelte',
         'storybook-core',
         'storybook-react',
         'e2e',
