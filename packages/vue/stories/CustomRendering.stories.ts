@@ -9,7 +9,6 @@
  *
  * All stories use the shared demo events from `harness.ts`.
  */
-import { Views } from '@big-calendar/core'
 import type { Component } from 'vue'
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { defineComponent, h } from 'vue'

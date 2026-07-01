@@ -140,6 +140,7 @@ export const WeekViewTyped: Story = {
 
     const el = document.createElement('div')
     el.style.cssText = 'block-size:100dvh;inline-size:100%'
+    el.addEventListener('disconnected-bc-story', cleanup, { once: true })
 
     const calEl = document.createElement('bc-calendar') as HTMLElement & Record<string, unknown>
     calEl.style.cssText = 'display:grid;grid-template-rows:auto 1fr;row-gap:0.5rem;block-size:100%;inline-size:100%'

@@ -126,7 +126,7 @@ interface TimeGrid<TEvent> {
 }
 
 function computeRootClass(grid: TimeGrid<unknown> | null): string {
-  if (grid === null) return 'bc-time-grid'
+  if (grid === null) return 'bc-time-grid' // codeql[js/useless-null-check] - grid is TimeGrid|null per the signature; this guard prevents accessing .dayGroups on null below
   if (grid.dayGroups !== null) return 'bc-time-grid bc-time-grid-resources bc-time-grid-resources-day-major'
   if (grid.resources !== null) {
     return grid.headings.length > 1

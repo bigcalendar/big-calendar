@@ -12,7 +12,7 @@
  *   pnpm exec playwright test --config playwright/playwright.config.js --update-snapshots
  */
 import { test, expect } from '@playwright/test'
-import { loadStory, settleAnimations } from '../helpers/storybook.js'
+import { settleAnimations } from '../helpers/storybook.js'
 
 const REACT_BASE = 'http://localhost:6006'
 const VUE_BASE = 'http://localhost:6008'

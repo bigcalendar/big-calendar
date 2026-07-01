@@ -63,6 +63,12 @@ export const withLocalizerDecorator: Decorator = (Story, context) => {
   // the hub's channel to each ref iframe via postMessage.
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
+      const { origin } = event
+      if (
+        origin !== window.location.origin &&
+        !origin.startsWith('http://localhost') &&
+        !origin.startsWith('https://localhost')
+      ) return
       if (!event.data || event.data.type !== 'bc-globals-sync') return
       const g = (event.data.globals ?? {}) as { localizer?: string; locale?: string; timeZone?: string }
       applyLocalizer(g.localizer ?? 'temporal', g.locale ?? '', g.timeZone ?? '', setLocalizer)

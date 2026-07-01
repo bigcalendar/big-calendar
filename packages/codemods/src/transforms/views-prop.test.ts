@@ -8,7 +8,7 @@ function run(source: string): string | null {
   const result = transform(
     { source, path: 'test.tsx' },
     { j, jscodeshift: j, stats: () => {}, report: () => {} },
-    {},
+    {}, // codeql[js/superfluous-trailing-arguments] - jscodeshift Transform type declares options: Options as required; {} satisfies the type even though this implementation ignores it
   )
   return (result as string | null | undefined) ?? null
 }

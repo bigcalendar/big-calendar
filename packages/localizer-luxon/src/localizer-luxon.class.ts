@@ -29,10 +29,13 @@ export class LuxonLocalizer extends Localizer<DateTime> {
     // RFC 9557: strip IANA bracket suffix, parse ISO with the extracted zone
     // (to interpret wall-clock times correctly), then convert to this.timeZone.
     if (value.includes('[')) {
-      const match = value.match(/\[([^\]]+)\]/)
-      const zone = match?.[1] ?? this.timeZone
-      const clean = value.replace(/\[[^\]]+\]/, '')
-      return DateTime.fromISO(clean, { zone }).setZone(this.timeZone)
+      const bracketStart = value.indexOf('[')
+      const bracketEnd = value.indexOf(']', bracketStart)
+      if (bracketEnd > bracketStart) {
+        const zone = value.slice(bracketStart + 1, bracketEnd)
+        const clean = value.slice(0, bracketStart)
+        return DateTime.fromISO(clean, { zone }).setZone(this.timeZone)
+      }
     }
     // Date-only (no T or space): treat as midnight in the localizer timezone.
     if (!/[T ]/.test(value)) {

@@ -1,4 +1,4 @@
-import { defineConfig, devices } from '@playwright/test'
+import { defineConfig } from '@playwright/test'
 
 const WORKERS = parseInt(process.env.PLAYWRIGHT_WORKERS ?? '1', 10)
 

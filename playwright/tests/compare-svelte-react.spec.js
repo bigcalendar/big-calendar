@@ -9,7 +9,7 @@
  *   pnpm exec playwright test --config playwright/playwright.config.js --project=compare compare-svelte-react
  */
 import { test, expect } from '@playwright/test'
-import { loadStory, settleAnimations } from '../helpers/storybook.js'
+import { settleAnimations } from '../helpers/storybook.js'
 
 const REACT_BASE = 'http://localhost:6006'
 const SVELTE_BASE = 'http://localhost:6011'

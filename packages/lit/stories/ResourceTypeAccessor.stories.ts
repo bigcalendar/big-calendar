@@ -11,7 +11,6 @@
  * no `:has()` indirection is needed — you can target the column background
  * straight from the attribute selector.
  */
-import { html } from 'lit'
 import { Views } from '@big-calendar/core'
 import type { Meta, StoryObj } from '@storybook/web-components-vite'
 import '@big-calendar/lit'
