@@ -1,0 +1,28 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Introduction" />
+
+# Big Calendar — Svelte
+
+Big Calendar is a framework-agnostic calendar engine with a thin Svelte 5 adapter. This Storybook documents the `@big-calendar/svelte` package.
+
+## Architecture
+
+`@big-calendar/svelte` is a thin Svelte 5 layer over the shared `@big-calendar/core` engine. It mirrors the React adapter's public API — views, composables, slots, and DnD — adapted to Svelte 5 idioms:
+
+- **`setContext` / `getContext`** instead of React context
+- **Svelte 5 rune-based composables** (`.svelte.ts` files) instead of hooks
+- **Svelte component classes** instead of React render props or Vue component objects
+- **Native `popover` attribute and `<dialog>`** for top-layer UI, with `useFloatingAnchor` handling positioning
+
+## Packages
+
+| Package | Purpose |
+|---|---|
+| `@big-calendar/core` | Shared engine — store, view models, layout, selection FSM |
+| `@big-calendar/svelte` | Svelte 5 components and composables |
+| `@big-calendar/dnd` | Drag-and-drop engine (optional peer dep) |
+| `@big-calendar/styles` | CSS custom-property design tokens |
+| `@big-calendar/localizer` | Base localizer interface |
+| `@big-calendar/localizer-luxon` | Luxon-backed localizer |
+| `@big-calendar/localizer-temporal` | `Temporal`-backed localizer |

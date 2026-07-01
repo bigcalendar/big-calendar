@@ -16,5 +16,6 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false
   },
-  "include": ["src/**/*.ts", "stories/**/*.ts", ".storybook/**/*.ts", "css.d.ts"]
+  "include": ["src/**/*.ts", "stories/**/*.ts", ".storybook/**/*.ts", "css.d.ts"],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts"]
 }

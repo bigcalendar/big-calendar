@@ -1,0 +1,137 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/useFloatingAnchor" />
+
+# `useFloatingAnchor`
+
+Keeps a top-layer floating element positioned against an anchor element while it is open, repositioning automatically on scroll and window resize.
+
+`<Popover>` and `<Tooltip>` both use this composable internally. It is available so you can wire the same positioning behaviour into a **custom top-layer surface** — for example, a custom event details panel that uses the native Popover API or a modal `<dialog>`.
+
+---
+
+## When to use this
+
+Use `useFloatingAnchor` when you:
+
+- Have an anchor element (a button, an event box, a date cell).
+- Have a floating element that uses the native `popover` attribute or `<dialog>` (so it renders in the browser's top layer).
+- Want the floating element to stay aligned to the anchor as the page scrolls or the window resizes.
+
+If you just need to compute a position once — without lifecycle management — use `positionFloating` directly (see **Utilities → Event Time**).
+
+---
+
+## Internal composable
+
+> `useFloatingAnchor` lives in the adapter's internal directory and is not part of the public `@big-calendar/svelte` export. Import from the internal path:
+> ```ts
+> import { useFloatingAnchor } from '@big-calendar/svelte/internal'
+> ```
+> Internal paths are not covered by semver guarantees, but this composable is the same engine used by `<Popover>` and `<Tooltip>` and is stable in practice.
+
+---
+
+## Signature
+
+```ts
+useFloatingAnchor(
+  getOpen:       () => boolean,
+  getAnchorEl:   () => HTMLElement | null,
+  getFloatingEl: () => HTMLElement | null,
+  placement?:    FloatingPlacement,
+  sameWidth?:    boolean,
+): void
+```
+
+The composable returns nothing. It manages positioning as a side effect via `$effect`.
+
+> **Svelte vs Vue.** Vue passes `Ref<boolean>` and `Ref<HTMLElement | null>` values. In Svelte 5, the composable follows the standard getter-function pattern: pass `() => open`, `() => anchorEl`, `() => floatingEl` instead. Svelte's `$effect` system drives reactivity — no explicit watchers needed.
+
+---
+
+## Parameters
+
+<table>
+  <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>getOpen</code></td>
+      <td><code>() =&gt; boolean</code></td>
+      <td>Getter returning whether the floating element is currently visible. The composable is a no-op while <code>false</code> — no listeners, no positioning.</td>
+    </tr>
+    <tr>
+      <td><code>getAnchorEl</code></td>
+      <td><code>() =&gt; HTMLElement | null</code></td>
+      <td>Getter returning the anchor element the floating element should align to. Use a <code>$state</code> variable with <code>bind:this</code>.</td>
+    </tr>
+    <tr>
+      <td><code>getFloatingEl</code></td>
+      <td><code>() =&gt; HTMLElement | null</code></td>
+      <td>Getter returning the floating element itself. Use a <code>$state</code> variable with <code>bind:this</code>.</td>
+    </tr>
+    <tr>
+      <td><code>placement</code></td>
+      <td><code>FloatingPlacement</code></td>
+      <td>Preferred placement (e.g. <code>'bottom-start'</code>). The engine may flip to the opposite side if the preferred side clips the viewport.</td>
+    </tr>
+    <tr>
+      <td><code>sameWidth</code></td>
+      <td><code>boolean</code></td>
+      <td>When <code>true</code>, sets the floating element's <code>inline-size</code> to match the anchor's rendered width on each positioning run.</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Usage example
+
+```svelte
+<!-- EventDetailsPanel.svelte -->
+<script lang="ts">
+  import { useFloatingAnchor } from '@big-calendar/svelte/internal'
+
+  let { event, title }: { event: { start: string; end: string }; title: string } = $props()
+
+  let open      = $state(false)
+  let anchorEl  = $state<HTMLElement | null>(null)
+  let panelEl   = $state<HTMLElement | null>(null)
+
+  useFloatingAnchor(
+    () => open,
+    () => anchorEl,
+    () => panelEl,
+    'bottom-start',
+  )
+</script>
+
+<button bind:this={anchorEl} onclick={() => (open = !open)}>
+  {title}
+</button>
+
+{#if open}
+  <div
+    bind:this={panelEl}
+    popover="auto"
+    style="position: fixed; margin: 0"
+  >
+    <h3>{title}</h3>
+    <p>{event.start} – {event.end}</p>
+    <button onclick={() => (open = false)}>Close</button>
+  </div>
+{/if}
+```
+
+### What happens on each positioning run
+
+1. `positionFloating` (from `@big-calendar/core/utils`) is called with the anchor and floating elements and the requested placement.
+2. The result `{ x, y }` is applied as `position: fixed; inset-inline-start: Xpx; inset-block-start: Ypx`.
+3. The browser's UA stylesheet for `[popover]` sets `inset: 0` on all four sides by default. The composable resets `inset-block-end` and `inset-inline-end` to `auto` on every run so they do not stretch the panel to the viewport edge.
+4. Scroll and resize listeners repeat the run while the open getter returns `true`, then remove themselves when it returns `false` or the component unmounts.
+
+---
+
+## Relationship to `<Popover>` and `<Tooltip>`
+
+`<Popover>` and `<Tooltip>` both call `useFloatingAnchor` internally and handle open/close state, trigger wiring, and ARIA attributes for you. Use them directly unless you need a surface that does not fit either of those patterns.

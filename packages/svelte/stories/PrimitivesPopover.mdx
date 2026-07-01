@@ -1,0 +1,128 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Primitives/Popover" />
+
+# Popover
+
+A top-layer floating panel built on the browser's native [Popover API](https://developer.mozilla.org/en-US/docs/Web/API/Popover_API). The element renders in the browser's top layer, above all other content, with no stacking-context or z-index issues.
+
+## Where it is used
+
+Big Calendar uses `<Popover>` for the month grid's **show-more** overlay (the panel that lists overflowed events when you click "+N more") and the time-grid's **all-day show-more** overlay. It is also available for use in your own custom slot components.
+
+## API
+
+```ts
+import { Popover } from '@big-calendar/svelte'
+```
+
+In Svelte, `<Popover>` uses a **required `trigger` snippet** to give you the anchor action and popover-target wiring, and an optional `children` snippet for the panel content:
+
+```svelte
+<Popover placement="bottom-start" sameWidth={false} className="my-popover">
+  {#snippet trigger({ bindAnchor, popoverTarget, ariaHaspopup, ariaExpanded, ariaControls })}
+    <button
+      use:bindAnchor
+      popovertarget={popoverTarget}
+      aria-haspopup={ariaHaspopup}
+      aria-expanded={ariaExpanded}
+      aria-controls={ariaControls}
+    >
+      Open
+    </button>
+  {/snippet}
+  <p>Popover content</p>
+</Popover>
+```
+
+> **Svelte note.** Vue's scoped slot with `:ref="setAnchor"` becomes a Svelte snippet receiving slot props. The anchor is applied via a Svelte action: `use:bindAnchor`. The action returns `{ destroy }` automatically handled by Svelte's action lifecycle.
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>placement</code></td>
+      <td><code>FloatingPlacement</code></td>
+      <td><code>'bottom-start'</code></td>
+      <td>Preferred placement. The popover flips automatically if there is not enough space.</td>
+    </tr>
+    <tr>
+      <td><code>sameWidth</code></td>
+      <td><code>boolean</code></td>
+      <td><code>false</code></td>
+      <td>Match the trigger's rendered inline size.</td>
+    </tr>
+    <tr>
+      <td><code>className</code></td>
+      <td><code>string</code></td>
+      <td>—</td>
+      <td>Applied to the popover panel element.</td>
+    </tr>
+    <tr>
+      <td><code>trigger</code></td>
+      <td><code>Snippet&lt;[TriggerSlotProps]&gt;</code></td>
+      <td>Required</td>
+      <td>
+        Receives <code>&#123; bindAnchor, popoverTarget, ariaHaspopup, ariaExpanded, ariaControls &#125;</code>.
+        Apply <code>use:bindAnchor</code> to your trigger element, and bind the remaining props
+        to the appropriate HTML attributes.
+      </td>
+    </tr>
+    <tr>
+      <td><code>children</code></td>
+      <td><code>Snippet</code></td>
+      <td>—</td>
+      <td>Content rendered inside the panel.</td>
+    </tr>
+  </tbody>
+</table>
+
+### Trigger slot props
+
+<table>
+  <thead><tr><th>Prop</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>bindAnchor</code></td>
+      <td><code>(node: HTMLElement) =&gt; &#123; destroy: () =&gt; void &#125;</code></td>
+      <td>Svelte action — apply with <code>use:bindAnchor</code>. Registers the element as the floating anchor.</td>
+    </tr>
+    <tr>
+      <td><code>popoverTarget</code></td>
+      <td><code>string</code></td>
+      <td>ID of the popover panel. Pass to the trigger button's <code>popovertarget</code> attribute.</td>
+    </tr>
+    <tr>
+      <td><code>ariaHaspopup</code></td>
+      <td><code>'dialog'</code></td>
+      <td>Accessibility attribute for the trigger button.</td>
+    </tr>
+    <tr>
+      <td><code>ariaExpanded</code></td>
+      <td><code>boolean</code></td>
+      <td>Whether the popover is currently open.</td>
+    </tr>
+    <tr>
+      <td><code>ariaControls</code></td>
+      <td><code>string</code></td>
+      <td>ID of the controlled element (same as <code>popoverTarget</code>).</td>
+    </tr>
+  </tbody>
+</table>
+
+## Positioning
+
+`<Popover>` uses `@floating-ui/core` (lazily loaded) with `offset`, `flip`, `shift`, and `size` middleware to keep the panel within the viewport. The available height is written as a CSS custom property (`--bc-float-avail-h`) on the panel element, so your CSS can constrain height with `min(Npx, var(--bc-float-avail-h))` without being overridden by inline styles.
+
+## Styling
+
+The base class is `bc-popover` (from `@big-calendar/styles`). The show-more variant adds `bc-show-more-popover`, which caps height at `min(300px, var(--bc-float-avail-h, 100vh))` with vertical scroll.
+
+Override appearance via CSS custom properties:
+
+```css
+.bc-popover {
+  --bc-radius: 8px;
+  --bc-shadow-popover: 0 4px 24px rgb(0 0 0 / 0.12);
+}
+```

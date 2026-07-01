@@ -8,6 +8,7 @@ import * as basicSetup from './recipes/basic-setup.js'
 import * as basicSetupVue from './recipes/basic-setup-vue.js'
 import * as basicSetupAngular from './recipes/basic-setup-angular.js'
 import * as basicSetupLit from './recipes/basic-setup-lit.js'
+import * as basicSetupSvelte from './recipes/basic-setup-svelte.js'
 import * as eventEditing from './recipes/event-editing.js'
 import * as createEvent from './recipes/create-event.js'
 import * as dataFetching from './recipes/data-fetching.js'
@@ -74,6 +75,12 @@ const RESOURCES: ResourceEntry[] = [
     name: 'Basic setup recipe (Lit)',
     description: 'A minimal working Big Calendar integration using Lit web components',
     content: basicSetupLit.CONTENT,
+  },
+  {
+    uri: basicSetupSvelte.URI,
+    name: 'Basic setup recipe (Svelte 5)',
+    description: 'A minimal working Big Calendar integration in Svelte 5',
+    content: basicSetupSvelte.CONTENT,
   },
   {
     uri: eventEditing.URI,

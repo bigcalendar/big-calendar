@@ -1,0 +1,172 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/Data Hooks" />
+
+# Data Composables
+
+Two composables expose the raw view model data as render-ready arrays so you can loop over them in **fully custom headless views**. The built-in view components call these internally; they are exported so you can use them when building your own layout from scratch with `useMonthView` or `useAgendaView`.
+
+Both composables must be called inside a component that lives inside a `CalendarProvider`. Both return a reactive container whose `.current` value is `null` when a different view is currently active, so your component can guard with `{#if}` and render nothing when inactive.
+
+```ts
+import { useMonthWeeks, useAgendaRows } from '@big-calendar/svelte'
+```
+
+---
+
+## `useMonthWeeks`
+
+Returns the month grid as a typed, render-ready structure. Use this when you want to build a custom month layout — for example, rendering the grid as a `<table>` or applying a completely different visual arrangement — without reimplementing the layout algorithm.
+
+```svelte
+<script>
+  import { useMonthWeeks, EventButton } from '@big-calendar/svelte'
+
+  const grid = useMonthWeeks()
+</script>
+
+{#if grid.current !== null}
+  <div>
+    <div class="weekday-row">
+      {#each grid.current.weekdays as wd (wd.day)}
+        <span>{wd.short}</span>
+      {/each}
+    </div>
+
+    {#each grid.current.weeks as week (week.key)}
+      <div class="week-row">
+        {#each week.days as day (day.day)}
+          <div data-today={day.isToday}>{day.label}</div>
+        {/each}
+
+        {#if week.days.some((d) => d.extra)}
+          <button>+{week.days.find((d) => d.extra)?.extra?.count} more</button>
+        {/if}
+
+        {#each week.segments as seg (seg.key)}
+          <EventButton event={seg.event} title={seg.title} resizeEdges={[]}>
+            {seg.title}
+          </EventButton>
+        {/each}
+      </div>
+    {/each}
+  </div>
+{/if}
+```
+
+> **Svelte note.** Access the grid data via `grid.current`, not `grid` directly. The `.current` property is reactive — when the calendar switches to a different view, `grid.current` becomes `null`.
+
+### `MonthGrid<TEvent>`
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>weekdays</code></td><td><code>MonthWeekday[]</code></td><td>One entry per column, derived from the first week of the grid. Use for the column headings row.</td></tr>
+    <tr><td><code>weeks</code></td><td><code>MonthWeekCell&lt;TEvent&gt;[]</code></td><td>One entry per week row, in calendar order.</td></tr>
+  </tbody>
+</table>
+
+### `MonthWeekday`
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>day</code></td><td><code>string</code></td><td>Day-start string of the representative day for the column.</td></tr>
+    <tr><td><code>long</code></td><td><code>string</code></td><td>Full weekday name (e.g. "Monday").</td></tr>
+    <tr><td><code>short</code></td><td><code>string</code></td><td>Abbreviated weekday name (e.g. "Mon").</td></tr>
+  </tbody>
+</table>
+
+### `MonthWeekCell<TEvent>`
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>key</code></td><td><code>string</code></td><td>Stable key for the week row.</td></tr>
+    <tr><td><code>days</code></td><td><code>MonthDayCell&lt;TEvent&gt;[]</code></td><td>The seven day cells for this week.</td></tr>
+    <tr><td><code>segments</code></td><td><code>MonthSegmentCell&lt;TEvent&gt;[]</code></td><td>Placed event segments for this week, ready for <code>segmentStyle()</code>.</td></tr>
+  </tbody>
+</table>
+
+### `MonthDayCell<TEvent>`
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>day</code></td><td><code>string</code></td><td>Day-start string (RFC 3339/9557).</td></tr>
+    <tr><td><code>label</code></td><td><code>string</code></td><td>Localized day-of-month number.</td></tr>
+    <tr><td><code>isToday</code></td><td><code>boolean</code></td><td>Whether this day is the current date.</td></tr>
+    <tr><td><code>isOffRange</code></td><td><code>boolean</code></td><td>Whether this day belongs to an adjacent month.</td></tr>
+    <tr><td><code>extra</code></td><td><code>{"{ count: number; events: ShowMoreEvent[] } | null"}</code></td><td>Overflow indicator for events that did not fit the row limit, or <code>null</code> when nothing spilled.</td></tr>
+  </tbody>
+</table>
+
+### `MonthSegmentCell<TEvent>`
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>key</code></td><td><code>string</code></td><td>Stable key.</td></tr>
+    <tr><td><code>event</code></td><td><code>TEvent</code></td><td>The original event object.</td></tr>
+    <tr><td><code>title</code></td><td><code>string</code></td><td>Resolved event title.</td></tr>
+    <tr><td><code>left</code></td><td><code>number</code></td><td>1-based start column in the week row.</td></tr>
+    <tr><td><code>span</code></td><td><code>number</code></td><td>Column span.</td></tr>
+    <tr><td><code>row</code></td><td><code>number</code></td><td>1-based stack level.</td></tr>
+    <tr><td><code>resizeStart</code></td><td><code>boolean</code></td><td>Whether this row is where the event's real start falls (leading drag-resize edge).</td></tr>
+    <tr><td><code>resizeEnd</code></td><td><code>boolean</code></td><td>Whether this row is where the event's real end falls (trailing drag-resize edge).</td></tr>
+  </tbody>
+</table>
+
+---
+
+## `useAgendaRows`
+
+Returns the agenda view model as a flat list of day groups, each containing its resolved events. Use this when you want to build a fully custom agenda layout.
+
+```svelte
+<script>
+  import { useAgendaRows, AgendaEventButton } from '@big-calendar/svelte'
+
+  const rows = useAgendaRows()
+</script>
+
+{#if rows.current !== null}
+  <div>
+    {#each rows.current as row (row.day)}
+      <section>
+        <h2>{row.label}</h2>
+        {#each row.events as item (item.key)}
+          <div>
+            <span>{item.allDay ? 'All day' : item.time}</span>
+            <AgendaEventButton event={item.event} title={item.title} />
+          </div>
+        {/each}
+      </section>
+    {/each}
+  </div>
+{/if}
+```
+
+### `AgendaRow<TEvent>`
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>day</code></td><td><code>string</code></td><td>Day-start string (RFC 3339/9557).</td></tr>
+    <tr><td><code>label</code></td><td><code>string</code></td><td>Localized date label for the day group heading.</td></tr>
+    <tr><td><code>events</code></td><td><code>AgendaRowEvent&lt;TEvent&gt;[]</code></td><td>Events touching this day, in time order.</td></tr>
+  </tbody>
+</table>
+
+### `AgendaRowEvent<TEvent>`
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>key</code></td><td><code>string</code></td><td>Stable key (event id, or index as fallback).</td></tr>
+    <tr><td><code>event</code></td><td><code>TEvent</code></td><td>The original event object.</td></tr>
+    <tr><td><code>title</code></td><td><code>string</code></td><td>Resolved event title.</td></tr>
+    <tr><td><code>time</code></td><td><code>string</code></td><td>Formatted "start – end" time, or the all-day label when <code>allDay</code> is <code>true</code>.</td></tr>
+    <tr><td><code>allDay</code></td><td><code>boolean</code></td><td>Whether the event spans the full day.</td></tr>
+  </tbody>
+</table>

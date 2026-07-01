@@ -85,3 +85,24 @@ and don't have this problem, but a function accessor that closes over changing s
 - `verbatimModuleSyntax`: Angular lifecycle interfaces (`OnInit`, `OnDestroy`, etc.) must use `import type`.
 
 **Note for next time:** `ng run angular:storybook` only. CSS in `angular.json styles[]`. Story-level `component` needs no `: StoryObj` annotation.
+
+## Svelte 5 adapter: svelte-check typecheck errors (Phase 13)
+
+**What didn't work:**
+1. `--tsconfig packages/svelte/tsconfig.json` from project.json with `cwd: packages/svelte` — double-path: resolved to `packages/svelte/packages/svelte/tsconfig.json`.
+2. svelte-check 4.x without `svelte.config.js` — "No Svelte configuration found"; 77 errors on all `.svelte` files.
+3. `export interface Props` inside `<script lang="ts">` — "Modifiers cannot appear here."
+4. `export type { Props }` inside `<script>` to fix "private name 'Props'" TS4055 — didn't eliminate the error.
+5. `style?: Record<string, string>` on Svelte HTML `style` attribute — TS error: only `string | null | undefined` accepted.
+6. `{@const}` inside `<div>` — "must be immediate child of control flow block."
+7. `(e: FocusEvent) => void` assigned to `(e: Event) => void` — contravariance error.
+
+**What worked:**
+1. `--tsconfig tsconfig.json` (filename only, since cwd is already `packages/svelte`).
+2. Create `svelte.config.js` with `vitePreprocess()` — reduced 77 errors to manageable set.
+3. For generic Svelte 5 components that need Props typed: use inline type in `$props()` destructuring (same as EventButton.svelte) — no named `Props` interface needed.
+4. Create `src/internal/toStyle.ts` (`Record<string, string>` → `string`); update all composable return types to `style: string`; update test assertions from `typeof style === 'object'` to `typeof style === 'string'`.
+5. Move all `{@const}` declarations before the enclosing `<div>`, making them direct children of the nearest `{#if}`, `{#each}`, or `{:else}` block.
+6. Type captureListeners handlers as `(e: any) => void` aliased as `AnyHandler`; cast to `EventListener` in addEventListener calls.
+
+**Note for next time:** In Svelte 5, named `Props` interfaces in generic `<script generics="...">` components trigger TS4055 — use inline types in `$props()` instead. `{@const}` is NOT valid inside `<div>` or other HTML elements — always hoist to the nearest control-flow parent before the element. svelte-check 4.x requires `svelte.config.js` to locate the Svelte plugin; without it, all `.svelte` files fail type-checking.

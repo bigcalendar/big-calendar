@@ -15,6 +15,7 @@
           "pnpm exec nx run vue:build-storybook",
           "pnpm exec nx run angular:build-storybook",
           "pnpm exec nx run lit:build-storybook",
+          "pnpm exec nx run svelte:build-storybook",
           "pnpm exec nx run core:build-storybook",
           "node scripts/compose-storybook-site.mjs"
         ],

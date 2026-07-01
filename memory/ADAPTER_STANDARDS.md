@@ -272,6 +272,27 @@ All 8 items must pass before the phase is marked done. Document any item that ca
 
 If the adapter's Storybook is not yet registered in `storybook-site/project.json`, add it before the phase is closed.
 
+### 9a. Sequential startup — `wait-for-storybooks.mjs`
+
+The hub uses `scripts/wait-for-storybooks.mjs` to start every slave Storybook **sequentially** before launching the hub itself. Each step polls `index.json` on the slave's port and only advances after the slave is ready.
+
+**Every new adapter must be added to this script** or the hub will display "Oh no! Something went wrong loading this Storybook" for that adapter — even though the slave would work fine standalone.
+
+When adding a new adapter step:
+
+1. Assign the next available port (React 6006, Vue 6007, Angular 6009, Lit 6010, Svelte 6011 — next is 6012+).
+2. Add a `spawnStorybook` + `waitForIndex` block before the hub launch step:
+   ```js
+   console.log('  [N/total] Starting {framework} slave on port {port}...')
+   const {framework}Proc = spawnStorybook('{framework}', {port})
+   await waitForIndex('http://localhost:{port}/index.json')
+   console.log('        {Framework} ready.\n')
+   ```
+3. Renumber **all** existing step labels (`[1/N]`, `[2/N]`, …) to reflect the new total.
+4. Add `{framework}Proc.kill()` to the `shutdown` handler.
+
+Failure symptom: `"Oh no! Something went wrong"` in the hub for the adapter, with no errors in the adapter's own Storybook terminal.
+
 ---
 
 ## 10. Adding a new framework adapter — bootstrap checklist
@@ -287,4 +308,5 @@ When beginning a net-new adapter (e.g. Lit, Svelte):
 - [ ] Mirror every story file from the canonical list (§4) before closing the phase.
 - [ ] Run the full verification checklist (§8) at phase end.
 - [ ] Add the adapter to `storybook-site` composition.
+- [ ] Add the adapter's slave Storybook to `scripts/wait-for-storybooks.mjs` (see §9a) — assign the next port, add the `spawnStorybook` + `waitForIndex` block, renumber all step labels, add `.kill()` to the shutdown handler.
 - [ ] Update `packages/aliases.ts` with the new alias, and update the MCP resources if API surface changed.

@@ -1,0 +1,149 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Concepts/Svelte Patterns" />
+
+# Svelte Patterns
+
+`@big-calendar/svelte` is a thin Svelte 5 layer over the shared `@big-calendar/core` engine. It maps the same public API as the React adapter, but in Svelte 5 idioms. This page covers the main differences a developer coming from the React version will notice.
+
+---
+
+## `setContext` / `getContext` instead of React context
+
+In React, `<CalendarProvider>` uses `React.createContext`. In Svelte, it uses `setContext()` and `getContext()`. The effect is the same — every composable and component inside the provider tree can read the shared calendar store without props.
+
+You will never call `useCalendarContext()` in your own components unless you are building a fully custom headless view. You interact with the calendar through props on `<CalendarProvider>` and through the composables described below.
+
+---
+
+## Svelte components instead of React render props
+
+The React adapter uses the `components` prop to swap out visual pieces. For example, to replace the default event block in the month grid you would pass `components={{ event: MyEvent }}`.
+
+The Svelte adapter uses the same `components` prop (it is part of `CalendarProviderProps`), but you pass imported Svelte component classes instead of React function components or Vue component objects:
+
+```svelte
+<!-- MyMonthEvent.svelte -->
+<script lang="ts">
+  let { event, title }: { event: { color?: string }, title: string } = $props()
+</script>
+<span style:color={event.color}>{title}</span>
+```
+
+```svelte
+<!-- App.svelte -->
+<script>
+  import { CalendarProvider, Calendar } from '@big-calendar/svelte'
+  import MyMonthEvent from './MyMonthEvent.svelte'
+</script>
+
+<CalendarProvider components={{ month: { event: MyMonthEvent } }} ...>
+  <Calendar />
+</CalendarProvider>
+```
+
+Each slot component receives props typed by the corresponding `*Props` interface exported from `@big-calendar/svelte`. For example, a custom month event receives `MonthEventProps`.
+
+---
+
+## Svelte 5 rune-based composables instead of hooks
+
+The headless composables (`useMonthView`, `useTimeGridView`, `useAgendaView`) are Svelte 5 rune-based functions defined in `.svelte.ts` files. They must be called at the top level of a component's `<script>`, just like React hooks.
+
+```svelte
+<script>
+  import { useMonthView } from '@big-calendar/svelte'
+
+  let rootEl = $state(null)
+  let gridEl = $state(null)
+
+  const { grid, components, getRootProps, getMonthGridProps, getDaySlotProps, getSegmentProps } =
+    useMonthView(() => rootEl, () => gridEl)
+</script>
+```
+
+They return reactive state. Access `.current` on reactive signal wrappers (like `grid.current`) to read the value inside the template. In Svelte 5, `$state` and signal wrappers are fine-grained reactive — the template re-renders only when the values that are actually accessed change.
+
+---
+
+## `bind:this` instead of ref callbacks
+
+Svelte uses `bind:this={el}` to get a reference to a DOM element. Most composables that need element access take a **getter function** `() => el` rather than the element directly — this is the Svelte 5 rune pattern for tracking reactive element references.
+
+```svelte
+<script>
+  import { useCalendarDnd } from '@big-calendar/svelte'
+
+  let containerEl = $state(null)
+  useCalendarDnd(() => containerEl)
+</script>
+
+<div bind:this={containerEl} style="display: contents">
+  <Calendar />
+</div>
+```
+
+---
+
+## Drag and drop: `useCalendarDnd`
+
+React DnD is enabled by wrapping `<Calendar>` in `<WithDragAndDrop>`. In Svelte, call the `useCalendarDnd` composable inside a component that wraps the calendar's root element, then bind the element with `bind:this`:
+
+```svelte
+<!-- DndContainer.svelte — drop this inside <CalendarProvider> -->
+<script>
+  import { Calendar, useCalendarDnd } from '@big-calendar/svelte'
+
+  let containerEl = $state(null)
+  useCalendarDnd(() => containerEl)
+</script>
+
+<div bind:this={containerEl} style="display: contents">
+  <Calendar />
+</div>
+```
+
+```svelte
+<!-- App.svelte -->
+<script>
+  import { CalendarProvider } from '@big-calendar/svelte'
+  import DndContainer from './DndContainer.svelte'
+
+  let events = $state(myEvents)
+
+  const onEventDrop = ({ event, start, end, allDay }) => {
+    events = events.map((e) =>
+      e.id === event.id ? { ...e, start, end, allDay } : e,
+    )
+  }
+</script>
+
+<CalendarProvider {events} {onEventDrop} ...>
+  <DndContainer />
+</CalendarProvider>
+```
+
+> **Note.** `useCalendarDnd` must be called inside a component that is a descendant of
+> `<CalendarProvider>`. It reads the store from `getContext()` internally.
+
+The `@big-calendar/dnd` package is an optional peer dependency. If it is not installed,
+`useCalendarDnd` is a no-op — drag-and-drop will simply not activate.
+
+---
+
+## Keyboard navigation and accessibility
+
+`@big-calendar/svelte` implements the same a11y pattern as the React adapter:
+
+- **Roving tabindex** — each slot grid has exactly one focusable cell at a time. Arrow keys move focus through cells without requiring the user to tab through every single one.
+- **Keyboard selection** — once a cell is focused, `Shift+Arrow` extends a slot selection; `Enter` or `Space` commits it; `Escape` cancels.
+- **Keyboard DnD** — `Space` picks up a focused event; arrow keys move or resize it; `Enter` drops it; `Escape` cancels.
+- **Screen-reader announcements** — a visually hidden `aria-live="polite"` region announces grab, move, and drop events.
+
+Enable selection by setting `selectable` on `<CalendarProvider>`:
+
+```svelte
+<CalendarProvider selectable={true} {onSlotSelect} ...>
+```
+
+No extra work is needed to enable keyboard navigation — it is always on.

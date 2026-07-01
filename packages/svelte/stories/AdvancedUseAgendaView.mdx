@@ -1,0 +1,135 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/useAgendaView" />
+
+# useAgendaView
+
+A composable that composes all the data and element props needed to render a custom agenda view. Call it inside a component that lives inside a `CalendarProvider`. See **Advanced → Headless API** for the general pattern.
+
+```ts
+import { useAgendaView } from '@big-calendar/svelte'
+```
+
+## Signature
+
+```ts
+useAgendaView<TEvent = unknown>(): UseAgendaViewReturn<TEvent>
+```
+
+`useAgendaView` takes no arguments. Unlike the month and time-grid composables, no element getter functions are required.
+
+## Return value
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>rows</code></td>
+      <td><code>&#123; readonly current: AgendaRow[] | null &#125;</code></td>
+      <td>The list of day groups to render. Access via <code>rows.current</code>. <code>null</code> when the active view is not the agenda — use as a gate with <code>&#123;#if rows.current !== null&#125;</code>.</td>
+    </tr>
+    <tr>
+      <td><code>components</code></td>
+      <td><code>object</code></td>
+      <td>Resolved slot components: <code>DateSlot</code>, <code>EventSlot</code>, <code>EmptySlot</code>.</td>
+    </tr>
+    <tr>
+      <td><code>messages</code></td>
+      <td><code>object</code></td>
+      <td>Localised strings: <code>date</code>, <code>time</code>, <code>event</code> (column headings) and <code>noEventsInRange</code>.</td>
+    </tr>
+    <tr>
+      <td><code>root</code></td>
+      <td><code>&#123; class: string &#125;</code></td>
+      <td>Static props for the outer <code>&lt;div&gt;</code>. Spread with <code>&#123;...root&#125;</code>.</td>
+    </tr>
+    <tr>
+      <td><code>header</code></td>
+      <td><code>&#123; class: string &#125;</code></td>
+      <td>Static props for the sticky heading row.</td>
+    </tr>
+    <tr>
+      <td><code>headingCell</code></td>
+      <td><code>&#123; class: string &#125;</code></td>
+      <td>Static props for each column heading cell within the header.</td>
+    </tr>
+    <tr>
+      <td><code>body</code></td>
+      <td><code>&#123; class: string &#125;</code></td>
+      <td>Static props for the scrollable list.</td>
+    </tr>
+    <tr>
+      <td><code>getRowProps(row)</code></td>
+      <td><code>(row: AgendaRow) =&gt; object</code></td>
+      <td>Returns <code>class</code> and a CSS <code>style</code> for each day-group <code>&lt;div&gt;</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+## Usage example
+
+```svelte
+<!-- MyAgendaView.svelte -->
+<script>
+  import { useAgendaView } from '@big-calendar/svelte'
+
+  const { rows, components, messages, root, header, headingCell, body, getRowProps } =
+    useAgendaView()
+
+  const { DateSlot, EventSlot, EmptySlot } = components
+</script>
+
+{#if rows.current !== null}
+  <div {...root}>
+    <div {...header}>
+      <span {...headingCell}>{messages.date}</span>
+      <span {...headingCell}>{messages.time}</span>
+      <span {...headingCell}>{messages.event}</span>
+    </div>
+
+    {#if rows.current.length === 0}
+      <svelte:component this={EmptySlot} message={messages.noEventsInRange} />
+    {:else}
+      <div {...body}>
+        {#each rows.current as row (row.day)}
+          <div {...getRowProps(row)}>
+            <svelte:component this={DateSlot} day={row.day} label={row.label} />
+            {#each row.events as item (item.key)}
+              <svelte:component
+                this={EventSlot}
+                event={item.event}
+                title={item.title}
+                time={item.time}
+                allDay={item.allDay}
+              />
+            {/each}
+          </div>
+        {/each}
+      </div>
+    {/if}
+  </div>
+{/if}
+```
+
+Place your component inside `CalendarProvider`:
+
+```svelte
+<CalendarProvider defaultView="agenda" {events}>
+  <Toolbar />
+  <div class="bc-calendar">
+    <MyAgendaView />
+  </div>
+</CalendarProvider>
+```
+
+> **Key Svelte differences from Vue:**
+> - `rows.current` not `rows` — always access the data through `.current`.
+> - `root`, `header`, `headingCell`, and `body` are **static objects** — spread them with `{...obj}` at any point.
+> - No element getter functions needed — `useAgendaView()` manages its own positioning via the calendar store.
+> - `<svelte:component this={...} />` instead of `<component :is="...">`.
+
+## When to use this vs. `<AgendaView>`
+
+Use `<AgendaView>` when the default rendering is sufficient. Use `useAgendaView` when you need to change the HTML structure — render events in a `<table>`, add custom wrapper elements, or change how the date and event columns are laid out.
+
+For changing individual cells or labels without restructuring, use `components.agenda` slot overrides on `CalendarProvider` — no composable required.

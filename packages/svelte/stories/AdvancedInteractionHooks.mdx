@@ -1,0 +1,161 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Advanced/Interaction Hooks" />
+
+# Interaction Composables
+
+Two low-level composables power the keyboard interactions inside every built-in view. They power the same accessibility behaviour in **fully custom headless views** built with `useMonthView`, `useTimeGridView`, or `useAgendaView`.
+
+You do not need either composable when using the default view components or overriding individual component slots — the built-in views call them internally.
+
+> **Svelte note.** In the Svelte adapter, `useEventRoving` and `useRovingSelection` are **internal composables** — they live in `src/internal/` and are not exported from `@big-calendar/svelte`'s public API. If you are building a fully custom headless view and need this behaviour, the recommended approach is to import from the internal path directly:
+> ```ts
+> import { useEventRoving }    from '@big-calendar/svelte/internal'
+> import { useRovingSelection } from '@big-calendar/svelte/internal'
+> ```
+> The APIs described below reflect the actual internal implementation. Treat them as stable for custom headless views, but be aware that internal paths are not covered by semver guarantees.
+
+---
+
+## `useEventRoving`
+
+Implements the roving-tabindex pattern for a view's event buttons. All event buttons in the view become **one** tab stop; the arrow keys move focus among them.
+
+### Why roving tabindex?
+
+A calendar can display dozens of event buttons at once. If every button were in the natural tab order, a keyboard user would have to press Tab many times to get past the calendar. The roving-tabindex pattern solves this by making the entire set of event buttons a single tab stop, with arrow navigation inside.
+
+### What it does
+
+- After every render it walks every `[data-bc-event]` element inside the container and makes exactly one tabbable (the focused one, or the first if nothing is focused yet).
+- Arrow keys (up / down / left / right) move focus to the adjacent button.
+- Focus in/out events keep the single tabbable slot in sync with actual browser focus.
+
+### Usage
+
+Call the composable once in your custom view component. Pass a **getter function** that returns the container element, and spread the returned event handlers onto that container using `{...}`  in Svelte.
+
+```svelte
+<script>
+  import { useEventRoving, EventButton } from '@big-calendar/svelte'
+
+  let containerEl = $state(null)
+  const { onKeydown, onFocusCapture } = useEventRoving(() => containerEl)
+</script>
+
+<div
+  bind:this={containerEl}
+  {onKeydown}
+  {onFocusCapture}
+>
+  <!-- EventButton elements rendered anywhere inside here -->
+</div>
+```
+
+> **Svelte difference.** Vue returns a `containerRef` callback and `onKeyDown` (capital D). In Svelte: use `bind:this` for element binding, pass a getter `() => containerEl` to the composable, and note the handler is `onKeydown` (lowercase `d`).
+
+### Return value — `EventRoving`
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>onKeydown</code></td>
+      <td><code>(e: KeyboardEvent) =&gt; void</code></td>
+      <td>Arrow key handler. Moves focus to the adjacent event button and owns the arrow keys so they do not scroll the page. Bind with <code>onKeydown={onKeydown}</code> or <code>{onKeydown}</code> shorthand.</td>
+    </tr>
+    <tr>
+      <td><code>onFocusCapture</code></td>
+      <td><code>(e: FocusEvent) =&gt; void</code></td>
+      <td>Focus sync. Keeps the single tabbable slot on the button that currently has real browser focus. Bind with <code>onfocuscapture={onFocusCapture}</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## `useRovingSelection`
+
+Implements roving-tabindex plus keyboard-driven slot selection for one slot surface — a month grid, the all-day row, or a time-grid day column. Cells in the surface become **one** tab stop; arrow keys move focus and, when combined with Shift, extend a selection.
+
+### What it does
+
+- Exactly one cell carries `tabIndex={0}` (the active cell), all others `-1`.
+- Plain arrow keys move focus to the neighbour cell (as defined by your `neighbor` callback).
+- **Shift+Arrow** starts or extends a slot selection.
+- **Enter / Space** commits the selection, or fires a click if nothing is selecting.
+- **Escape** cancels an in-progress selection.
+
+### Usage
+
+```svelte
+<script>
+  import { useRovingSelection } from '@big-calendar/svelte/internal'
+
+  let { days } = $props()
+  let containerEl = $state(null)
+
+  const { onKeydown, onFocusCapture, cellTabIndex } = useRovingSelection({
+    mode:         'day',
+    getContainer: () => containerEl,
+    getCount:     () => days.length,
+    neighbor: (index, direction) => {
+      if (direction === 'right') return index + 1 < days.length ? index + 1 : null
+      if (direction === 'left')  return index - 1 >= 0          ? index - 1 : null
+      return null
+    },
+  })
+</script>
+
+<div
+  bind:this={containerEl}
+  {onKeydown}
+  {onFocusCapture}
+>
+  {#each days as day, i (day)}
+    <div
+      data-slot-index={i}
+      data-date={day}
+      tabindex={cellTabIndex(i)}
+    >
+      {day}
+    </div>
+  {/each}
+</div>
+```
+
+Each cell **must** carry both `data-slot-index` (its linear index in the group) and `data-date` (its day-start string). The composable reads these from the DOM to stay view-agnostic.
+
+> **Svelte differences from Vue.** The options use getter functions instead of direct values: `getContainer: () => el` and `getCount: () => count`. This is the standard Svelte 5 rune-based pattern for reactive element references — the composable calls the getter each time it needs the current value.
+
+### Options
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>mode</code></td><td><code>SelectionMode</code></td><td>yes</td><td><code>'day'</code> for month/all-day surfaces; <code>'slot'</code> for time-grid columns.</td></tr>
+    <tr><td><code>getContainer</code></td><td><code>() =&gt; HTMLElement | null</code></td><td>yes</td><td>Getter that returns the container element. Use a <code>$state</code> variable and <code>bind:this</code>.</td></tr>
+    <tr><td><code>getCount</code></td><td><code>() =&gt; number</code></td><td>yes</td><td>Getter that returns the total number of cells.</td></tr>
+    <tr><td><code>getSlotCount</code></td><td><code>() =&gt; number | undefined</code></td><td>time mode only</td><td>Getter returning slot rows per day column (required when <code>mode === 'slot'</code>).</td></tr>
+    <tr><td><code>neighbor</code></td><td><code>(index: number, direction: Direction) =&gt; number | null</code></td><td>yes</td><td>Returns the index of the adjacent cell in the given direction, or <code>null</code> at an edge.</td></tr>
+  </tbody>
+</table>
+
+### Return value — `RovingSelection`
+
+<table>
+  <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>onKeydown</code></td><td><code>(e: KeyboardEvent) =&gt; void</code></td><td>Arrow, Shift+Arrow, Enter, Space, and Escape handler. Lowercase <code>d</code>.</td></tr>
+    <tr><td><code>onFocusCapture</code></td><td><code>(e: FocusEvent) =&gt; void</code></td><td>Focus sync handler.</td></tr>
+    <tr><td><code>cellTabIndex</code></td><td><code>(index: number) =&gt; 0 | -1</code></td><td>Returns the correct <code>tabIndex</code> for a cell at the given index. Bind with <code>tabindex={cellTabIndex(i)}</code>.</td></tr>
+  </tbody>
+</table>
+
+### `Direction`
+
+```ts
+type Direction = 'up' | 'down' | 'left' | 'right'
+```
+
+Passed to your `neighbor` callback. Map to whatever makes sense geometrically for your surface — a month row treats left/right as prev/next day and up/down as prev/next week.
