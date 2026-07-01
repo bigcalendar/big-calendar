@@ -69,16 +69,20 @@ const {
 
         <!-- Date cell backgrounds -->
         <div v-bind="backgroundsContainer">
-          <component
+          <div
             v-for="cell in week.days"
-            :is="DateCell"
             :key="cell.day"
-            :day="cell.day"
-            :label="cell.label"
-            :is-today="cell.isToday"
-            :is-off-range="cell.isOffRange"
-            :on-drill-down="() => drilldown(cell.day)"
-          />
+            :class="['bc-date-cell', cell.isToday && 'bc-today', cell.isOffRange && 'bc-off-range']"
+          >
+            <component
+              :is="DateCell"
+              :day="cell.day"
+              :label="cell.label"
+              :is-today="cell.isToday"
+              :is-off-range="cell.isOffRange"
+              :on-drill-down="() => drilldown(cell.day)"
+            />
+          </div>
         </div>
 
         <!-- Selection band (stub until 10-8) -->

@@ -77,24 +77,24 @@ import { injectCalendar } from '../CalendarProvider/injectCalendar'
               <!-- Date-cell backgrounds -->
               <div [class]="state.backgroundsContainer.class">
                 @for (cell of week.days; track cell.day) {
-                  @if (bcMonthDateCell) {
-                    <ng-template
-                      [ngTemplateOutlet]="bcMonthDateCell"
-                      [ngTemplateOutletContext]="{ $implicit: cell, onDrillDown: drilldownFn(cell.day) }"
-                    />
-                  } @else {
-                    <div
-                      class="bc-date-cell"
-                      [class.bc-today]="cell.isToday"
-                      [class.bc-off-range]="cell.isOffRange"
-                    >
+                  <div
+                    class="bc-date-cell"
+                    [class.bc-today]="cell.isToday"
+                    [class.bc-off-range]="cell.isOffRange"
+                  >
+                    @if (bcMonthDateCell) {
+                      <ng-template
+                        [ngTemplateOutlet]="bcMonthDateCell"
+                        [ngTemplateOutletContext]="{ $implicit: cell, onDrillDown: drilldownFn(cell.day) }"
+                      />
+                    } @else {
                       <button
                         type="button"
                         class="bc-date-number"
                         (click)="state.drilldown(cell.day)"
                       >{{ cell.label }}</button>
-                    </div>
-                  }
+                    }
+                  </div>
                 }
               </div>
 

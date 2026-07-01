@@ -82,20 +82,14 @@ export const MonthWeekday = {
       </bc-calendar-provider>
     </div>
     <ng-template #highlightedCell let-ctx let-onDrillDown="onDrillDown">
-      <div
-        class="bc-date-cell"
-        [class.bc-today]="ctx.isToday"
-        [class.bc-off-range]="ctx.isOffRange"
-      >
-        <button
-          type="button"
-          (click)="onDrillDown()"
-          [style.background]="ctx.isToday ? 'rebeccapurple' : 'none'"
-          [style.color]="ctx.isToday ? 'white' : ctx.isOffRange ? '#aaa' : 'inherit'"
-          style="border:none;border-radius:50%;width:2em;height:2em;cursor:pointer"
-          [style.fontWeight]="ctx.isToday ? 700 : 400"
-        >{{ ctx.label }}</button>
-      </div>
+      <button
+        type="button"
+        (click)="onDrillDown()"
+        [style.background]="ctx.isToday ? 'rebeccapurple' : 'none'"
+        [style.color]="ctx.isToday ? 'white' : ctx.isOffRange ? '#aaa' : 'inherit'"
+        style="border:none;border-radius:50%;width:2em;height:2em;cursor:pointer"
+        [style.fontWeight]="ctx.isToday ? 700 : 400"
+      >{{ ctx.label }}</button>
     </ng-template>
   `,
 })

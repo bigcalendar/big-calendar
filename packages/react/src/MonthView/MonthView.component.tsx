@@ -1,3 +1,4 @@
+import clsx from 'clsx'
 import EventButton from '../EventButton'
 import { useMonthView } from '../useMonthView'
 
@@ -56,14 +57,15 @@ function MonthView<TEvent = unknown>() {
               </div>
               <div {...backgroundsContainer}>
                 {week.days.map((cell) => (
-                  <DateCell
-                    key={cell.day}
-                    day={cell.day}
-                    label={cell.label}
-                    isToday={cell.isToday}
-                    isOffRange={cell.isOffRange}
-                    onDrillDown={() => drilldown(cell.day)}
-                  />
+                  <div key={cell.day} className={clsx('bc-date-cell', cell.isToday && 'bc-today', cell.isOffRange && 'bc-off-range')}>
+                    <DateCell
+                      day={cell.day}
+                      label={cell.label}
+                      isToday={cell.isToday}
+                      isOffRange={cell.isOffRange}
+                      onDrillDown={() => drilldown(cell.day)}
+                    />
+                  </div>
                 ))}
               </div>
               {selBand && <div {...selBand} />}

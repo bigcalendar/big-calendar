@@ -61,14 +61,16 @@ const gridProps = $derived(mv.getMonthGridProps())
 
           <div {...backgroundsContainer}>
             {#each week.days as cell (cell.day)}
-              <svelte:component
-                this={DateCell}
-                day={cell.day}
-                label={cell.label}
-                isToday={cell.isToday}
-                isOffRange={cell.isOffRange}
-                onDrillDown={() => drilldown(cell.day)}
-              />
+              <div class:bc-date-cell={true} class:bc-today={cell.isToday} class:bc-off-range={cell.isOffRange}>
+                <svelte:component
+                  this={DateCell}
+                  day={cell.day}
+                  label={cell.label}
+                  isToday={cell.isToday}
+                  isOffRange={cell.isOffRange}
+                  onDrillDown={() => drilldown(cell.day)}
+                />
+              </div>
             {/each}
           </div>
 
