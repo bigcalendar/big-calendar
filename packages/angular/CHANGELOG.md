@@ -1,0 +1,89 @@
+## 0.1.0 (2026-07-02)
+
+### 🚀 Features
+
+- **svelte:** phase 13 complete — @big-calendar/svelte with full feature parity ([71e6ded](https://github.com/bigcalendar/big-calendar/commit/71e6ded))
+- **lit:** fix all-day row segment placement and Storybook Actions wiring ([7fff7c4](https://github.com/bigcalendar/big-calendar/commit/7fff7c4))
+- **lit:** phase 12 complete — @big-calendar/lit with full feature parity ([f5cf969](https://github.com/bigcalendar/big-calendar/commit/f5cf969))
+- **angular:** phase 11 complete — @big-calendar/angular with full feature parity ([399a92d](https://github.com/bigcalendar/big-calendar/commit/399a92d))
+- **angular:** signals bridge — injectCalendarStore + toAngularSignal (task 11-2) ([6602669](https://github.com/bigcalendar/big-calendar/commit/6602669))
+- **angular:** scaffold @big-calendar/angular package (Phase 11 task 11-1) ([c42dc70](https://github.com/bigcalendar/big-calendar/commit/c42dc70))
+- **vue:** phase 10 complete — vue adapter with full feature parity ([72dfe6c](https://github.com/bigcalendar/big-calendar/commit/72dfe6c))
+- **vue:** add DnD support and storybook-site integration ([0ffa8c8](https://github.com/bigcalendar/big-calendar/commit/0ffa8c8))
+- **mcp:** add @big-calendar/mcp server — Phase 9 complete ([ba5be64](https://github.com/bigcalendar/big-calendar/commit/ba5be64))
+- **codemods:** complete Phase 8 — all transforms, CLI runner, migration guide ([9f92023](https://github.com/bigcalendar/big-calendar/commit/9f92023))
+- **codemods:** add merge-accessors transform (phase 8-2) ([d24b6b4](https://github.com/bigcalendar/big-calendar/commit/d24b6b4))
+- **codemods:** add rename-imports transform (phase 8-1) ([d5e7492](https://github.com/bigcalendar/big-calendar/commit/d5e7492))
+- **storybook:** composed hub site, full public API docs, custom rendering stories ([9a3a1e5](https://github.com/bigcalendar/big-calendar/commit/9a3a1e5))
+- backgroundEvents in selection/DnD payloads, getContainingBgEvents, story reorg ([7a24b4b](https://github.com/bigcalendar/big-calendar/commit/7a24b4b))
+- **storybook-react:** storybook stories + element-spread pattern for view hooks ([e00d96f](https://github.com/bigcalendar/big-calendar/commit/e00d96f))
+- **7a-7,7a-8:** multi-entry build + per-file coverage bars met ([73f9872](https://github.com/bigcalendar/big-calendar/commit/73f9872))
+- **7a-6:** extract useMonthView, useTimeGridView, useAgendaView; element-spread pattern ([f252cb9](https://github.com/bigcalendar/big-calendar/commit/f252cb9))
+- **7a-5+:** promote all internal hooks/components to public API; move utils to core/utils ([79b4963](https://github.com/bigcalendar/big-calendar/commit/79b4963))
+- **7a-3,7a-4:** storybook globals, live localizer switching, styles docs ([22e5cfc](https://github.com/bigcalendar/big-calendar/commit/22e5cfc))
+- **react:** add views prop; wire toolbar + Calendar to enabledViews ([5eea8f6](https://github.com/bigcalendar/big-calendar/commit/5eea8f6))
+- **core:** rename config.views → viewDefinitions; add enabledViews signal ([0307041](https://github.com/bigcalendar/big-calendar/commit/0307041))
+- **testing:** wire Luxon into dual-localizer parity harness ([20de37f](https://github.com/bigcalendar/big-calendar/commit/20de37f))
+- **localizer-luxon:** implement LuxonLocalizer with full contract coverage ([02ca87b](https://github.com/bigcalendar/big-calendar/commit/02ca87b))
+- **core:** gate keyboard grab on isDraggable / isResizable ([f7ddafe](https://github.com/bigcalendar/big-calendar/commit/f7ddafe))
+- **react,styles:** resource columns in day/week time-grid and scroll architecture ([3a4d118](https://github.com/bigcalendar/big-calendar/commit/3a4d118))
+- **dnd:** month drop-from-outside, multi-day resize, move preview + month keyboard grab ([8e2afce](https://github.com/bigcalendar/big-calendar/commit/8e2afce))
+- keyboard-accessible event drag and drop (5e) ([06cc9ba](https://github.com/bigcalendar/big-calendar/commit/06cc9ba))
+- drag/drop across the calendar boundary (5d) ([23b7932](https://github.com/bigcalendar/big-calendar/commit/23b7932))
+- live extent preview during event resize ([709ea13](https://github.com/bigcalendar/big-calendar/commit/709ea13))
+- time-grid event resize via edge handles (Phase 5 task 5c) ([48d1b93](https://github.com/bigcalendar/big-calendar/commit/48d1b93))
+- time-grid event move via slot-instant drop targets (Phase 5 task 5b) ([23fed11](https://github.com/bigcalendar/big-calendar/commit/23fed11))
+- event drag-to-move via @big-calendar/dnd (Phase 5 task 5a) ([d1e4890](https://github.com/bigcalendar/big-calendar/commit/d1e4890))
+- **styles:** coarse-pointer/touch hit targets (§7.7) ([1d5f9f4](https://github.com/bigcalendar/big-calendar/commit/1d5f9f4))
+- **react:** render custom views via components.views map ([e9f3768](https://github.com/bigcalendar/big-calendar/commit/e9f3768))
+- ⚠️  **core:** add custom view registry (Option B) ([008eeae](https://github.com/bigcalendar/big-calendar/commit/008eeae))
+- **react:** event double-click also selects ([29a8cf0](https://github.com/bigcalendar/big-calendar/commit/29a8cf0))
+- ⚠️  **core:** separate slot/event handlers and move event interaction into core ([d790ca4](https://github.com/bigcalendar/big-calendar/commit/d790ca4))
+- **react:** agenda event interaction + right/middle-click handlers ([eea8ec7](https://github.com/bigcalendar/big-calendar/commit/eea8ec7))
+- **react:** gate touch slot selection behind a configurable long-press ([2a0056a](https://github.com/bigcalendar/big-calendar/commit/2a0056a))
+- **styles:** reserve trailing event gutter so slots stay selectable beside full-width events ([82c5b21](https://github.com/bigcalendar/big-calendar/commit/82c5b21))
+- **react:** aria-describedby selection instructions + core message keys ([10722d9](https://github.com/bigcalendar/big-calendar/commit/10722d9))
+- **react:** visible slot focus ring + selection docs ([5979c48](https://github.com/bigcalendar/big-calendar/commit/5979c48))
+- **react:** events roving-tabindex group (step 5c-2) ([c475b09](https://github.com/bigcalendar/big-calendar/commit/c475b09))
+- **react:** slot-grid keyboard roving selection (step 5c-1) ([88df0d7](https://github.com/bigcalendar/big-calendar/commit/88df0d7))
+- **react:** all-day row day-mode selection (step 5b tail) ([9fa1af8](https://github.com/bigcalendar/big-calendar/commit/9fa1af8))
+- **react:** rebuild agenda as a grouped date | time | event table layout ([52b6797](https://github.com/bigcalendar/big-calendar/commit/52b6797))
+- **react:** add top-layer Popover/Tooltip/Dialog and wire show-more popovers (§7.5) ([4e6c206](https://github.com/bigcalendar/big-calendar/commit/4e6c206))
+- **react:** add <Calendar> default tree, light Storybook, Toolbar/reset CSS fix ([728ca69](https://github.com/bigcalendar/big-calendar/commit/728ca69))
+- **localizer:** canonical UTC-Z serialization with offset opt-in ([8c4fa4e](https://github.com/bigcalendar/big-calendar/commit/8c4fa4e))
+- **react:** add CalendarProvider + CalendarContext (required wrapper) ([2c36865](https://github.com/bigcalendar/big-calendar/commit/2c36865))
+- **react:** add React test infra and signals-to-React bridge ([f7929a4](https://github.com/bigcalendar/big-calendar/commit/f7929a4))
+- **styles:** author design tokens and scoped modern reset ([0f1a20f](https://github.com/bigcalendar/big-calendar/commit/0f1a20f))
+- **localizer-temporal:** add Temporal-backed localizer over the Temporal API ([48359bc](https://github.com/bigcalendar/big-calendar/commit/48359bc))
+- **localizer:** base Localizer contract + Intl ponyfills ([962dda6](https://github.com/bigcalendar/big-calendar/commit/962dda6))
+
+### 🩹 Fixes
+
+- **repo:** resolve CodeQL findings across packages ([7aa0cfe](https://github.com/bigcalendar/big-calendar/commit/7aa0cfe))
+- move bc-date-cell wrapper into MonthView across all adapters ([3b4c126](https://github.com/bigcalendar/big-calendar/commit/3b4c126))
+- **lit:** add missing bc-calendar div wrapper in all stories and docs ([26d9a67](https://github.com/bigcalendar/big-calendar/commit/26d9a67))
+- **styles:** add position:relative to bc-date-number; phase 7b polish ([5f1b1d0](https://github.com/bigcalendar/big-calendar/commit/5f1b1d0))
+- native drop-from-outside via delegated HTML5 listeners ([1678f6a](https://github.com/bigcalendar/big-calendar/commit/1678f6a))
+- **react:** call the latest onEventDrop, not the store-creation one ([9c2ea4c](https://github.com/bigcalendar/big-calendar/commit/9c2ea4c))
+- **react:** align time-grid headers and span gutter labels over their slot groups ([085841e](https://github.com/bigcalendar/big-calendar/commit/085841e))
+- **react:** set --bc-day-count on time-grid container so day columns render ([f460001](https://github.com/bigcalendar/big-calendar/commit/f460001))
+- **react:** render month "+N more" per day cell instead of at the week start ([d3d5623](https://github.com/bigcalendar/big-calendar/commit/d3d5623))
+- **core:** correct month-segment day diff direction; finish localizer retrofit ([5d51d78](https://github.com/bigcalendar/big-calendar/commit/5d51d78))
+- **localizer:** default firstDayOfWeek fallback to monday, not sunday ([ab5949c](https://github.com/bigcalendar/big-calendar/commit/ab5949c))
+
+### ⚠️  Breaking Changes
+
+- **core:** add custom view registry (Option B)  ([008eeae](https://github.com/bigcalendar/big-calendar/commit/008eeae))
+  CalendarViewModel now has a `custom` arm, so an exhaustive
+  switch over `viewModel.kind` must handle it. `ViewKey` is widened to admit
+  arbitrary strings.
+- **core:** separate slot/event handlers and move event interaction into core  ([d790ca4](https://github.com/bigcalendar/big-calendar/commit/d790ca4))
+  store.select -> store.selectEvent; onSelect -> onEventSelect;
+  onSelecting -> onSlotSelecting; onSelectSlot (single, with `action`) split into
+  onSlotClick / onSlotDoubleClick / onSlotSelect; the `action` field is removed from
+  SlotSelectionDates. Event-handler callbacks now receive the native DOM MouseEvent
+  rather than React's synthetic event.
+
+### ❤️ Thank You
+
+- Stephen Blades

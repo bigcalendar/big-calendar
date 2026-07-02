@@ -1,6 +1,6 @@
 {
   "name": "@big-calendar/core",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "description": "Big Calendar — @big-calendar/core",
   "license": "MIT",
@@ -24,7 +24,9 @@
   "types": "./dist/index.d.ts",
   "typesVersions": {
     "*": {
-      "utils": ["./dist/utils/index.d.ts"]
+      "utils": [
+        "./dist/utils/index.d.ts"
+      ]
     }
   },
   "files": [
