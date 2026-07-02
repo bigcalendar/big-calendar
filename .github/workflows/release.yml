@@ -46,7 +46,12 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Version + changelog + GitHub release (Nx Release)
-        run: pnpm exec nx release --yes
+        run: |
+          if git tag --list 'v*' | grep -q .; then
+            pnpm exec nx release --yes
+          else
+            pnpm exec nx release --first-release --yes
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
