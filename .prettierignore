@@ -6,3 +6,5 @@ storybook-static
 .nx
 pnpm-lock.yaml
 CHANGELOG.md
+# append-only decision log: padded tables would rewrite every row on each append
+docs/decisions.md
