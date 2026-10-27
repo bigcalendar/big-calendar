@@ -1,0 +1,668 @@
+# Big Calendar — Restart Plan (P1)
+
+> **Status:** **Approved 2026-10-27** · **Branch:** `planning` · **Drafted:** 2026-10-26
+> **Supersedes:** every plan, decision and standard from attempt 1 (`memory/`, `ADAPTER_STANDARDS.md`, RBC `Upgrade_plan_prompt.md`).
+> **Approval:** this is planning artifact **P1**. Nothing in §15 (slices) starts until P1–P5 are each approved.
+
+---
+
+## 0. How to read this document
+
+- **Locked** items are decided. Implementation follows them exactly.
+- **Open** items (§16) are *known undecided* questions, each assigned to a planning artifact. They are decided **before** any slice that depends on them begins — never during implementation.
+- Anything an implementer encounters that is neither Locked here nor listed in §16 is a **new decision**: work stops and the question goes to the maintainer (§3).
+
+---
+
+## 1. Why we are restarting
+
+Attempt 1 (June–July 2026, 220 commits, 5 framework adapters) is archived, and **nothing is salvaged**. The root cause was **poor up-front planning: decisions were made inline during the build.** That showed up in three ways:
+
+1. **The headless boundary was in the wrong place.** Keyboard roving, slot selection, keyboard DnD, long-press and click/double-click handling lived in the adapters. It was written five times, about 25k lines of adapter code against 4.5k in core. One accessibility correction (Phase 14) took 32 tasks.
+2. **Foundations were left open while adapters shipped.** The event model, resources, recurrence and ICS were still undecided after five UIs existed, so every later change had to be made five times.
+3. **Process overhead outweighed the product.** Per-adapter checklists and story parity, a Storybook composition hub, an MCP server and codemods were all built before the API was stable.
+
+This plan addresses each one: decisions come first (§3, §14), behavior lives in framework-free layers (§4), and the build proceeds in vertical slices with a maintainer gate after each (§15).
+
+---
+
+## 2. Vision
+
+Big Calendar is a toolkit for building calendaring and scheduling applications. It is the successor to react-big-calendar (RBC), with a deliberately breaking API.
+
+- **Headless first.** A framework-free engine computes everything: time math, layout, selection, keyboard and drag-and-drop behavior. A framework binding only connects that engine to the framework's reactivity.
+- **Optional prebuilt UI that can be replaced piece by piece.** A complete, accessible calendar works out of the box, and any part of it can be decorated or replaced.
+- **Two audiences, served equally.** RBC users migrating to Big Calendar get parity, a mapping table and codemods. Developers building new scheduling apps get composable primitives.
+- **Standards-aligned time.** ICS (RFC 5545) semantics, RFC 3339 and RFC 9557 strings, and Temporal for the math.
+- **Baseline 2025 web platform.** Any feature outside Baseline 2025 needs a verified polyfill or fallback.
+- **Accessible by specification.** Target WCAG 2.2 AA. The accessibility spec is written and screen-reader-tested before any framework code.
+- **Fast by budget.** Performance targets are numeric and enforced by CI benchmarks.
+- **Client-side only.** Everything runs in the browser. Big Calendar contains no server components, server rendering or server processes; the consuming app handles all server-side interaction (D-41).
+
+### 2.1 Developer experience (D-61 to D-64)
+
+Scheduling apps are complicated. The API has to let developers build complex applications for many use cases while staying intuitive and as simple as possible, and the docs have to let them build up an app in steps.
+
+- **Simple by default.** `events` is the only required input. Timezone, locale, views and formats all have sensible defaults.
+- **Explicit features (D-62).** Every `<Calendar>` takes an explicit `features` list. The first tutorial step uses the `standardFeatures` preset, so a developer always sees, and can trim, what they ship.
+- **Option shape (D-61).** Common props are flat (`events`, `date`, `view`, `timeZone`, `locale`, …). Feature options are grouped under their feature (`timeGrid: { step, min, max }`, `resources: { … }`) and appear in the types only when that feature is registered.
+- **Guardrails (D-63):**
+  - a size budget per entry point, checked in PR CI, with each feature's size shown in the docs;
+  - development-only warnings that explain the problem and the fix and link to the exact docs section, stripped from production builds;
+  - every package marked side-effect-free except the CSS and the `temporal` loader, verified by a tree-shaking test in CI;
+  - type errors that name the missing feature.
+- **Power without clutter.** Any layer can be replaced (slots, headless hooks, the kernel; §4.4), and nothing forces a developer down a layer to change one detail.
+- **Documentation (D-64).** The docs follow the Diátaxis structure, with four kinds of page kept separate. Reference pages are generated by TypeDoc into Storybook MDX (D-84):
+  - **tutorial:** one app built progressively, from showing events through week view, creating events, drag and drop, resources and recurrence;
+  - **how-to guides** for specific tasks;
+  - **reference** generated from the types;
+  - **explanation** for ideas like time semantics, the edit model and the layers.
+
+  **Writing standard** (`docs/standards/writing.md`), so pages work for a middle-school student and a senior developer without dumbing down or condescending:
+  - short sentences;
+  - each term defined on first use and collected in a glossary;
+  - stated prerequisites on every page;
+  - every example runnable in Storybook;
+  - tutorial steps that show what changed;
+  - no "simply", "just", "obviously" or "easy".
+
+  It is enforced through the docs-writer agent's checklist and maintainer review. There is no prose linter.
+
+---
+
+## 3. Execution rules (normative)
+
+1. **No inline decisions.** If a choice is not covered by a Locked item or a §16 Open item's resolution, stop and ask the maintainer. Record the answer in the decision log (Appendix A) before continuing.
+2. **Gates.** Each planning artifact (P1–P5) and each slice (S0–S11) ends with a maintainer review. Nothing in the next artifact or slice starts until the current one is approved.
+3. **Within a slice, the implementing agent works autonomously** (D-45):
+   - **Branching.** Each slice gets its own branch off `main` (for example `slice/s1-day-grid`). The agent commits and pushes often, then opens a pull request at the end of the slice. That PR is the review gate, and the maintainer merges it.
+   - **Ask first,** in addition to rule 1: before adding any dependency the plan or P2–P5 doesn't name; before weakening or deleting a test or threshold to make the build pass; and before force-pushing, rebasing pushed commits, deleting branches, or doing anything outside the repo.
+   - **Usage budget.** Work in task-sized steps. Near the usage limit, finish the current task, update `memory/PROGRESS.md`, commit, and stop until restarted.
+   - **Sub-agents** are allowed for small, isolated, well-specified tasks (for example writing a conformance corpus). The main agent reviews their results.
+   - **Checkpoints** go to repo memory: `memory/PROGRESS.md`, `memory/DECISIONS.md` and `memory/ERRORS.md`.
+4. **Conventional commits**, enforced by commitlint. Nx Release drives versioning, but **nothing is published to npm until 1.0**.
+5. **1.0 ships when the maintainer says so.** No plan, slice or agent proposes a 1.0 cutoff.
+6. **The binding budget is a hard rule** (§4.3). A behavior that seems to need framework code is a design problem. Raise it to the maintainer; do not work around the budget.
+7. **Specs before code.** A slice may only implement behavior that has been specified in P3, P5 or a slice spec approved at the slice's kickoff.
+8. **Docs ship with the code (D-65).** A task is done only when its code, tests and docs land together in the same commit:
+   - **TSDoc** on every exported symbol, enforced by lint: what it does, its parameters and return value, an example where useful, and a link to its docs page. Internal code gets TSDoc wherever its behavior or reasons aren't obvious, checked in review.
+   - **Docs-site pages** for the capability (how-to, reference and explanation as they apply).
+   - **The tutorial grows slice by slice.** Each slice adds its steps, and its PR shows them working.
+
+   Docs are a review tool. Reviewers read what something is meant to do next to the code that does it.
+
+---
+
+## 4. Architecture
+
+### 4.1 Layers
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Prebuilt UI          @big-calendar/react-ui (+ styles)       │  markup + composition only
+├──────────────────────────────────────────────────────────────┤
+│ Framework binding    @big-calendar/react                     │  glue only (≤ ~600 LOC)
+├──────────────────────────────────────────────────────────────┤
+│ Interaction machines (framework-free, DOM-aware)             │  keyboard, selection, DnD,
+│                      emit prop-getters / handler descriptors │  click/dblclick, long-press
+├──────────────────────────────────────────────────────────────┤
+│ Kernel (pure)        time engine · ingest · families ·       │  no DOM, no framework
+│                      store (signals facade) · layout         │
+└──────────────────────────────────────────────────────────────┘
+   Opt-in modules: recurrence · availability · ics · normalize · temporal helper
+```
+
+- **Kernel.** Pure TypeScript with no DOM. It owns canonical types, ingestion and validation, the time engine, view families and projections, layout (packing), the store, and the signals facade.
+- **Interaction machines.** Framework-free and DOM-aware. They return *prop-getters*: plain objects of attributes, ARIA and handler functions that a binding spreads onto elements. All keyboard, selection, drag-and-drop, focus and pointer behavior lives here, written **once**.
+- **Binding.** Bridges signals to the framework's reactivity and normalizes prop and event naming. It contains **no behavior**.
+- **Prebuilt UI.** Components that render markup and compose the binding's hooks. It contains **no behavior logic**, enforced by lint.
+
+### 4.2 Package map
+
+*Final (D-60). The maintainer owns the `@big-calendar` npm scope.*
+
+| Package | Layer | Notes |
+|---|---|---|
+| `@big-calendar/core` | Kernel | Types, time engine, families, store, signals facade |
+| `@big-calendar/interactions` | Machines | Separate package (D-32) |
+| `@big-calendar/react` | Binding | Peer dependency on `react@>=19`; ≤ ~600 LOC |
+| `@big-calendar/react-ui` | Prebuilt UI | Default components with `render`/`wrap` slots |
+| `@big-calendar/styles` | Styles | `react-ui`'s CSS Module sources compiled with stable `.bc-*` selectors, published per part with `tokens.css`, for headless users (D-69) |
+| `@big-calendar/temporal` | Loader | Resolves native Temporal, or awaits and globally installs the polyfill (§8) |
+| `@big-calendar/recurrence` | Module | Full RFC 5545 RRULE expansion |
+| `@big-calendar/availability` | Module | Working hours, capacity, conflicts |
+| `@big-calendar/ics` | Module | ICS import/export |
+| `@big-calendar/normalize` | Module | Converts non-canonical inputs into canonical form |
+| `@big-calendar/editing` | Module | Keyboard delete, copy/paste, undo/redo, headless dialog state (§6.1) |
+| `@big-calendar/codemods` | Migration | RBC → Big Calendar |
+| `@big-calendar/testing` | Testing | Fake clock, interaction helpers, role-based queries; Testing Library compatible (D-79) |
+| `@big-calendar/mcp` | Tooling | MCP server for AI assistants |
+
+**Dependency direction** (never inverted): modules and machines → core; binding → core + machines; react-ui → binding + styles. The kernel depends on nothing in the workspace. Nx module-boundary lint rules enforce this.
+
+### 4.3 The binding budget (hard rule)
+
+- `@big-calendar/react` is held to about **600 lines** of source (excluding types and tests), measured in CI.
+- The binding may: subscribe to signals, map them into React state, apply the machines' prop-getters, normalize event names, and provide context.
+- The binding may **not** contain keyboard handling, focus logic, hit-testing, timers or state machines.
+- Any future framework binding (Vue, Svelte, Angular, Lit and so on, all after 1.0) is held to the same budget.
+
+### 4.4 Headless API shape (D-52 to D-55)
+
+TanStack Table v9 makes *data* headless but leaves *behavior* to the app. We borrow its core and state model, and add a behavior layer (interaction machines and prop-getters) of the kind Zag.js and react-aria provide.
+
+- **Registered features (D-52).** `createCalendar({ features: calendarFeatures({ timeGrid, dayGrid, resources, recurrence, editing, … }), … })`. Families and modules are features. Only registered ones are bundled, their options and APIs exist in the types only when registered, and prerequisites are checked at compile time.
+- **State slices (D-53).** Each slice (`date`, `view`, `selection`, `selectedEventId`, `visibleResources`, `collapsedResources`, …) can be:
+  - internal, seeded by `defaultX`;
+  - controlled by `x` + `onXChange`;
+  - bound to an **external atom** created with core's `createAtom` (our facade type, D-07), which the calendar writes to directly.
+
+  Precedence is atom, then controlled value, then internal state. `drafts` and `pending` are always internal and read-only. Slices are exposed as read-only signals, and state changes only through instance actions (`navigate`, `setView`, `select`, …).
+- **Plain data (D-54).** View models are plain, immutable data, with positions as fractions and indices and never pixels. Actions live on the instance. Each lane's segments can be subscribed to separately, which is what "re-render only the affected lanes" requires.
+- **Options (D-55).** Bindings pass the latest options and callbacks to `calendar.setOptions()` on every render, and the kernel reacts only to real changes. Stale callbacks can't happen.
+- **Pipelines.** Read: event copy → ingest and validate → [recurrence expansion] → clip → lane assignment → segmentation → packing → family view model, as computed signals keyed by lane. Write: draft → change → [recurring scope and effects] → callback → pending → commit, rollback or supersede (§6.1).
+- **Prop-getters.** `connect<Family>(calendar)` returns getters (`getRootProps`, `getSlotProps`, `getSegmentProps`, `getResizeHandleProps`, `getLiveRegionProps`, …). They return framework-neutral descriptors, `{ attrs, on, ref }`, which each binding's `normalize` maps to its own framework.
+  - **Getter contract (D-72).**
+    - `attrs` always includes the part's stable `bc-*` class. Part identity lives in the headless layer, so headless and `react-ui` markup match and `@big-calendar/styles` works on both.
+    - **Registered features add to getter output.** For example, drag and drop adds `data-draggable` and handlers to `getSegmentProps`.
+    - **Merge rules:** classes are joined; handlers are chained (base first, then features in registration order); data attributes are combined; all `ref` callbacks are called; a conflicting non-mergeable attribute is a development-time error.
+    - **One shared, framework-neutral `mergeProps`** in `interactions` implements the merge and is used by features and every binding. The final contract is O-6, decided at P3 and recorded in P5.
+- **Four ways to use it:**
+  1. drop-in `<Calendar features={standardFeatures}>` (features always explicit, D-62);
+  2. compose react-ui parts with `wrap` and `render` slots;
+  3. headless hooks and prop-getters on your own markup;
+  4. the kernel alone, with no DOM, in the browser (for example inside a web worker, or driving a non-React renderer).
+
+---
+
+## 5. Engine model — "hybrid"
+
+### 5.1 Shared primitives (internal at 1.0, exported under `/unstable`)
+
+| Primitive | Responsibility |
+|---|---|
+| **Axis** | Maps time to position. It can be **discrete** (one cell per day) or **continuous** (minutes within a day, or a range spanning several days). It handles `min`/`max`, `step`/`timeslots`, and 23- or 25-hour DST days. |
+| **Lanes** | An ordered list of lane keys. Lanes can be days, resources, resources × days, or custom keys assigned by `laneOf(event)`. |
+| **Segmentation** | Clips events to the visible range and splits them at lane and row edges. |
+| **Packing** | **`stack`** grows rows up to a maximum, then shows "+N more". **`divide`** fits events side by side in a fixed lane width (overlap / no-overlap). A custom packing function is also supported. |
+| **Coordinates** | A lane index × axis index space that selection, keyboard navigation and DnD all operate in. There is no pixel hit-testing. |
+
+### 5.2 Families
+
+| Family | Axis | Lanes | Packing | Views at 1.0 |
+|---|---|---|---|---|
+| **Day grid** | discrete days | week rows | stack | month, plus custom configs (e.g. 2-week) |
+| **Time grid** | continuous within a day | days, or resources × days | divide (overlap / no-overlap / custom) | day, week, work week, N-day; resource-major and day-major |
+| **Timeline** | continuous across the range | resources, days, or resources × days | stack | hours scale only at 1.0; no zoom; virtualized rows |
+| **Agenda** | — (a list) | — | — | RBC parity (`length`) plus a custom range function; virtualized |
+
+- The time grid's **all-day row is an embedded day-grid instance**. It shares stacking, overflow, selection and keyboard behavior with the day grid, plus a defined focus hop between the all-day row and the time body (P3).
+- Each family has **its own accessibility semantics** (P3). For example, the month grid is read row by row and the time grid column by column.
+- **Extensibility at 1.0:** custom packing functions, custom family configurations, and custom lanes (`lanes` plus `laneOf(event) => key | key[]`). Resources are just the built-in lane case.
+- **Fully custom views at 1.0, at RBC parity (D-66).** A developer registers a view with `range`, `navigate` and `title`. Their component receives that range's events and expanded occurrences, resolved to the display zone, and draws them however it likes, using any headless hooks it wants.
+- Authoring a **new family on our layout primitives** is not in 1.0; those primitives stay unstable.
+- **Resource hierarchies** exist in the data model (`parentId`). The only built-in hierarchical display is the resource panel's collapsible tree (§11). Grid and timeline headers stay flat at 1.0.
+
+---
+
+## 6. Data model
+
+*The field-level spec is P5. This section locks its principles.*
+
+- **Canonical event shape plus `meta`. No accessors.** The library defines the event shape, and consumer-specific data goes in `meta?: TMeta`. The kernel never mutates consumer objects.
+- **Resources** have a canonical shape with `id`, `title`, optional `parentId` (hierarchy) and `meta`.
+- **An event may belong to several resources** and renders in every matching resource lane.
+- **The Unassigned lane is opt-in.** It holds events that match no configured resource, including events with no `resourceIds` at all, and serves as a drop target for assigning and unassigning. When the lane is disabled, those events aren't drawn in resource views, and the kernel exposes a read-only count of them so apps can show a badge (D-38).
+- **Background events** are a separate `backgroundEvents` collection with the same canonical fields, kept outside the edit pipeline (D-39):
+  - **Inert.** They aren't focusable or draggable, and slot selection passes through them. Their titles are added to the accessible description of the slots they cover.
+  - **Where they show:** blocks behind events in the time grid and timeline; in the day grid, an all-day background event tints its cells.
+  - **Resources:** in a resource view, a background event shows only in the lanes of its `resourceIds`. One with no `resourceIds` is **not displayed** there. In views without resources it's shown normally.
+- **The kernel accepts canonical strings only.** Other input forms go through `@big-calendar/normalize`.
+- **Invalid events never throw.** They are skipped and reported through `onDataIssue` and the dev console.
+- **Edit permissions cascade.** `draggable`, `resizable` (`true`, `false`, `'start'` or `'end'`) and `readOnly` can be set on the event, then its resource, then its event source, then the whole calendar (D-83). The most specific level that sets a value wins.
+
+### 6.0 Event fields (resolves O-7)
+
+| Field | Type | ICS | Notes |
+|---|---|---|---|
+| `id` | `string \| number` | `UID` | Required, unique; duplicates get a dev warning |
+| `title` | `string` | `SUMMARY` | Required |
+| `start` / `end` | date or instant string | `DTSTART` / `DTEND` | Exclusive end (T-3); a missing end follows T-9 |
+| `timeZone` / `endTimeZone` | IANA zone | `TZID` | §7 |
+| `resourceIds` | `ResourceId[]` | none | |
+| `sourceId` | `SourceId` | none | The event source the event belongs to (a named, colored group such as 'Work' or 'Holidays') (D-73) |
+| `tooltip` | plain text | none | Accessible tooltip text; defaults to a composed title and time (D-74, RBC `tooltipAccessor` parity) |
+| `rrule`, `exDates`, `rDates` | string or object; date or instant strings | `RRULE`, `EXDATE`, `RDATE` | Read by the recurrence module |
+| `recurringEventId`, `recurrenceId` | id; date or instant string | `RECURRENCE-ID` | Marks an **override**: a separate event that replaces one occurrence of a series |
+| `categories` | `string[]` | `CATEGORIES` | |
+| `status` | `'confirmed' \| 'tentative' \| 'cancelled'` | `STATUS` | |
+| `busy` | `boolean`, default `true` | `TRANSP` | Free events (`busy: false`) never count as conflicts |
+| `color` | string | `COLOR` (RFC 7986) | Overrides the resource's color |
+| `description`, `location`, `url` | plain text | `DESCRIPTION`, `LOCATION`, `URL` | |
+| `descriptionHtml` | `UntrustedHtml` (branded string) | `X-ALT-DESC` | Can't be used as a safe string without an explicit sanitize step; the prebuilt UI never renders it |
+| `draggable`, `resizable`, `readOnly` | permission cascade (D-24) | none | |
+| `meta` | `TMeta` | imported `X-` properties | The app's own data |
+
+- **`allDay` is not an input field.** The kernel derives it from the value types (T-1) and exposes it read-only on processed events. `normalize` converts RBC-style `allDay: true` records.
+- P5 writes the final TypeScript types from this table. Adding or removing a field is a plan change.
+
+### 6.1 Edit model (resolves O-16)
+
+- **The app is the source of truth.** Data always starts outside the calendar (a database, an ICS file).
+- **Input forms (D-57).** `events`, `backgroundEvents` and `resources` each accept either:
+  - **any iterable** (an array, a Set, `map.values()` and so on). The kernel keeps its own id-indexed copy, as described below, and re-syncs **only when the iterable's identity changes**. In development it warns when a re-sync reverts a recent commit.
+  - **an event collection** from core (`createEventCollection(rows)`): reactive, indexed by id, with `upsert`, `patch` and `remove`. The collection is the **single source of truth**. The kernel keeps no copy, confirmed changes are written straight into it, and a rejected change rolls back in the pending layer before anything is written (D-58). Changes tell the kernel exactly which lanes to update.
+- **Input order never matters for events (D-59).** Layout ties are broken by earlier start, then longer duration, then id. Resources keep the order the app gives them, because that is the lane order.
+- **When an iterable is passed, the kernel keeps a copy of the events, indexed by id.** Three things update it:
+  - the `events` prop, as a full re-sync matched by id, so unchanged events cost nothing; **the prop wins** over earlier commits;
+  - commits from confirmed changes;
+  - a granular API, `calendar.events.upsert(event)`, `.patch(id, fields)` and `.remove(id)`, for updates the calendar didn't start, such as server pushes.
+
+  The app never has to rebuild the whole array to change one event.
+- **Every edit becomes one typed `Change`:** `move`, `resize`, `create`, `delete` or `update`. It holds the before and after values in source form (T-11) and is built from typed drafts (§10).
+- **Pending layer.** A change shows on screen immediately, marked `data-state="pending"`.
+- **Per-kind callbacks only** (for example `onEventDrop`, `onEventResize`, `onEventCreate`, `onEventDelete`, `onEventUpdate`; final names are O-2). What the callback returns decides what happens:
+  - `false` vetoes the change, and the pending entry is removed with no flicker.
+  - A **Promise that resolves** commits the change to the copy. If it resolves with the saved event, the server's version is stored, and for a create the temporary id is swapped for the real one so selection and focus carry over.
+  - A **Promise that rejects** rolls the change back. A live region announces it, and `onChangeError` fires.
+  - **Nothing** (a synchronous handler) commits the change immediately.
+- **Concurrency: the newer change wins.** A new change to an event that already has one pending aborts the older one (its `AbortSignal` fires) and is sent at once. Its `before` is the last committed state.
+- **`onEventsChange` is optional.** It fires with the full copy after each commit, for apps that mirror state.
+- **Recurring edits** arrive as **one change** with a `scope` (`'occurrence'`, `'following'` or `'series'`) and computed `effects`: the concrete operations the recurrence module works out, such as patching the original series' `UNTIL` and creating a new series. They commit or roll back as one unit. **The app always decides the scope** through `resolveRecurringScope(change)`, which is required whenever recurrence is used. There is no built-in prompt.
+- **Editing module (opt-in).** It covers keyboard delete, copy/cut/paste, and undo/redo; undo sends the reverse change through the same callbacks. It also exposes a headless event-dialog state. **No prebuilt event dialog ships at 1.0.**
+- **Where it lands:** the change pipeline in S1, the editing module in S4, recurring scope and effects in S7.
+
+---
+
+## 7. Time semantics (locked — Q9 deep-dive)
+
+### 7.1 Values
+
+- Every temporal value is either an **instant** (`2026-10-26T12:55:00Z`, `…-04:00`) or a **date** (`2026-10-26`).
+- A zone can be given as an event field (`timeZone`, plus `endTimeZone` for cases like flights) **or** as an RFC 9557 suffix (`…-04:00[America/New_York]`). The field is the canonical form; the ingest step converts the suffix into it.
+- A start and end of different types (one a date, one an instant) is **rejected**.
+
+### 7.2 Rules
+
+| # | Rule |
+|---|---|
+| T-1 | **`allDay` is a fact about the data**: the event's values are dates. It never depends on who is viewing. |
+| T-2 | **Spanning multiple days is a display-time property**: the event crosses a date boundary in the *display* zone. |
+| T-3 | **Ends are exclusive** for both dates and instants. A one-day all-day event on Oct 26 has `end: 2026-10-27`. |
+| T-4 | A value **without a zone** is interpreted in the calendar's display zone (`timeZone` option, which defaults to the browser zone). |
+| T-5 | **A date with no zone is civil.** It shows on its own dates in every display zone (holidays, birthdays). |
+| T-6 | **A date with an explicit zone** means midnight to midnight in that zone. When that zone differs from the display zone, the event renders as its **true time span**, with a zone indicator. |
+| T-7 | **Multi-day timed events default to the time grid with their times shown.** An option moves them to the all-day row instead. |
+| T-8 | **Offset-only instants are exact.** Recurrence is expanded in the event's IANA zone, falling back to the display zone with a dev warning. |
+| T-9 | **A missing end** defaults to 1 day for dates and to a configurable duration for instants. **Zero duration is valid** and renders as a point marker. **An end before the start is rejected.** |
+| T-10 | **DST gaps and overlaps** use Temporal's `'compatible'` rule: a time in a gap moves later, and an ambiguous time takes the earlier occurrence. |
+| T-11 | **Callbacks preserve the source form.** A moved date stays a date; a moved instant keeps its zone and offset style. New selections are emitted in the display zone with an IANA zone attached. |
+| T-12 | **Cross-surface drops convert the event, and the consumer can veto.** A timed event dropped on the all-day row becomes a date **zoned to the display zone**, with `previousTimeZone` in the payload. An all-day event dropped into the time grid becomes an instant at the drop slot with the default duration. The payload includes `converted: true`. |
+| T-13 | **ICS export of a zoned all-day event** writes `DATE-TIME` with `TZID` plus `X-BC-ALLDAY:TRUE`, and the importer restores it as a zoned date. |
+| T-14 | **Time grids always show 24 wall-clock hours** (or the `min`/`max` window), regardless of DST, as Google Calendar and Outlook do. Events are placed by wall-clock time. On spring-forward days the skipped hour is an empty band. On fall-back days, events in both occurrences of the repeated hour share the same rows, and packing uses these wall-clock display positions, so they appear side by side. How screen readers distinguish the two occurrences is specified in P3. |
+
+### 7.3 Worked examples
+
+| Case | Data | Display zone | Renders as |
+|---|---|---|---|
+| Holiday | `start: 2026-12-25, end: 2026-12-26` | any | All-day row, Dec 25 |
+| Tokyo out-of-office | `start: 2026-10-26, end: 2026-10-27, timeZone: Asia/Tokyo` | America/New_York | Time span Oct 25 11:00 → Oct 26 11:00, with a zone indicator |
+| Same out-of-office | same | Asia/Tokyo | All-day row, Oct 26 |
+| Overnight shift | `22:00-04:00 → 06:00-04:00 (next day)` | America/New_York | A continuous time-grid block across two day columns (T-7) |
+| Zone-less meeting | `start: 2026-10-26T09:00` | America/Los_Angeles | 09:00 LA (T-4) |
+| Spring-forward gap | `2026-03-08T02:30`, zone-less | America/New_York | 03:30 (T-10) |
+| Fall-back repeated hour | `2026-11-01T01:30-04:00` and `2026-11-01T01:30-05:00` | America/New_York | Both on the 01:30 row, side by side (T-14) |
+| Drop on the all-day row | Tokyo timed event dropped on Oct 26 | America/New_York | `start: 2026-10-26, end: 2026-10-27, timeZone: America/New_York`, plus `previousTimeZone: Asia/Tokyo` (T-12) |
+
+---
+
+## 8. Date engine and performance
+
+- **Temporal is used internally.** The public API uses strings, formatting goes through `Intl`, and there is **no pluggable localizer**. Moment, dayjs, date-fns, globalize and Luxon support is dropped.
+- **Temporal defines correctness everywhere.**
+  - **Calendar arithmetic always uses Temporal:** day boundaries (`startOfDay()`, `hoursInDay`), adding calendar units across DST, zone conversion, wall-clock positions (`toPlainTime()`), recurrence and formatting.
+  - **Ordering instants** (sorting, overlap checks, packing comparisons) uses cached Temporal objects by default. `Instant.compare` is defined on epoch nanoseconds, so a numeric fast path gives identical results. It is allowed **only** for instant ordering, and **only** if P4's benchmarks show Temporal objects miss the budget.
+  - **Civil dates never become instants.** If a numeric form is needed, it is an epoch-day count derived from `PlainDate`.
+  - Temporal objects are created once per event at ingest and cached by object identity.
+- **Temporal loads automatically.** Every package that uses Temporal depends on `@big-calendar/temporal`, which uses top-level `await`:
+  - If a complete `globalThis.Temporal` already exists, native or installed by the app, it is used as-is and nothing is loaded.
+  - Otherwise the module awaits the polyfill, which bundlers split into its own chunk, and **installs it on `globalThis`**. The app and its other libraries therefore see it too, and the docs must say so.
+  - Because ES modules wait for their imports, nothing in Big Calendar runs before Temporal exists. The app does nothing, and kernel APIs stay **synchronous**.
+  - Browsers with native Temporal never download the polyfill. If the polyfill chunk fails to load, importing the calendar fails, as any failed lazy chunk would.
+- **Which polyfill** (`temporal-polyfill` or `@js-temporal/polyfill`) is decided by benchmark in **P4**.
+- **Performance budgets** are benchmarked in CI with Playwright and a throttled CPU:
+  - **5,000 events** loaded;
+  - first render of month or week view takes **under 50ms** of engine time with native Temporal (Chromium, Firefox), and **at most 100ms** on WebKit with the polyfill;
+  - a single event change re-renders **only the affected lanes**;
+  - **agenda and timeline are virtualized.**
+
+---
+
+## 9. Reactivity
+
+- **The internal facade mirrors the TC39 Signals proposal** (`State`, `Computed`, `Watcher`).
+- **It is backed by a production signals library** chosen by benchmark in **P4** (candidates: alien-signals, `@preact/signals-core`).
+- **The TC39 polyfill itself is not used.** Its README says "Do not use this in production", and the proposal is still Stage 1 as of October 2026. The facade switches to native Signals once the proposal reaches Stage 3.
+- **The public API exposes read-only signals** typed as *our* facade types, never the backing library's types, and changes state through actions. Bindings also get `subscribe(selector, cb)` and `getSnapshot()`.
+
+---
+
+## 10. Interaction and accessibility
+
+- **The standard is WCAG 2.2 AA.** The roles, keyboard model, focus management and screen-reader announcements for each family are specified in **P3** and validated on a **vanilla (no framework) prototype** with VoiceOver and NVDA (plus JAWS if available) **before any framework code**.
+- **Machines own all behavior:**
+  - roving focus;
+  - slot selection by pointer, touch long-press and Shift+Arrow;
+  - event activation (click, double-click, and a keyboard alternative for the secondary action);
+  - DnD by pointer, touch and keyboard, including dragging from outside the calendar;
+  - "+N more" overflow;
+  - focus hops between the all-day row and the time body.
+- **Mapping uses coordinates, not pixels.** Machines read `data-*` coordinates from real DOM cells; there is no pixel-rectangle hit-testing.
+- **Pointer handling uses Pointer Events.** `touch-action` settles scroll-versus-select conflicts. On coarse pointers, hit targets are at least 44px and no feature depends on hover alone.
+- **Top-layer UI** (popovers, overflow, tooltips) uses the Popover API and `<dialog>` with CSS anchor positioning. Where `CSS.supports('anchor-name: --a')` is false, `@floating-ui/dom` is lazy-loaded for positioning only (D-43).
+- **Drafts are typed.** Every temporary event is one of `creation`, `internal-drag`, `internal-resize` or `external-drag`. Each carries its surface (day grid, time grid or timeline), its proposed start and end, its target resource, and, for internal drags, the source resource. Machines produce drafts, and the exact payloads are specified in P5.
+- **Keyboard model (D-51).**
+  - **One Tab stop per grid.** Each grid uses a roving `tabIndex`, with arrow keys moving inside it, and events form their own group with one Tab stop.
+  - **Per-slot cells.** Every time-grid slot is a focusable cell, so arrow keys move slot by slot and Shift+Arrow extends a selection.
+  - **Context menus** open with Shift+F10 or the menu key. Enter and Space activate the focused event.
+- **Patterns adopted from MUI X Scheduler (D-50), as P3 requirements:**
+  - **Event names** are built from localized parts (title, time or "All day", date, resource, "Recurring") by an overridable composer.
+  - **Hidden from assistive tech (`aria-hidden`):** drag previews, multi-day continuation pieces, color dots, icons and the decorative time axis.
+  - **Grid metadata:** `aria-rowcount`/`colcount`/`rowindex`/`colindex`, and `aria-current="date"` on today. Week numbers are hidden but attached to each day with `aria-labelledby`.
+  - **Landmarks:** the calendar is a labelled `<section>`. The side panel is an `<aside>` controlled by a toggle with `aria-controls` and `aria-expanded`, and is `aria-hidden` while collapsed.
+  - **Announcements:** the toolbar's date label is a polite live region.
+  - **Menus:** the view switcher uses `menuitemradio` with `aria-checked`.
+  - **"+N more" popover:** a full-date header, the same event names as the grid, and focus returning to the button, or to the day cell if the button disappears.
+  - **Mini calendar:** a grid with roving `tabIndex`, `aria-selected`, `aria-current` and arrow keys.
+  - **Resource panel:** the tree pattern, with Space toggling visibility.
+  - **Read-only and delete:** read-only events show "Show details" and no Delete. Delete confirmation is a modal with `aria-describedby`, and focus returns to whatever opened it.
+  - **Touch:** on coarse pointers, tapping an event shows an action toolbar instead of a context menu.
+  - **Docs:** a public accessibility page stating WCAG 2.2 AA, the relevant laws (ADA, Section 508, EAA) and known limitations.
+
+---
+
+## 11. React: binding, prebuilt UI, styling
+
+- **React 19+.** `@big-calendar/react` is the budgeted binding; `@big-calendar/react-ui` is the prebuilt UI.
+- **The prebuilt UI has two kinds of slot:**
+  - **`render` slots** replace the element and receive prop-getters that must be spread onto it. A dev-mode check warns when roles or handlers are missing.
+  - **`wrap` slots** decorate an element the library owns, and cannot break behavior.
+- **Slot names are all new.** A published mapping table links each RBC `components` key to its replacement.
+- **Styling contract (D-68).** Developers may style with any method or library: a global stylesheet, CSS Modules, any CSS-in-JS library, a utility framework, or none of ours at all. Docs assume no particular tool.
+  - **Hooks:** a stable `bc-*` base class on every part (`bc-time-grid`, `bc-event`), and state as data attributes (`data-state="selected"`, edge flags).
+  - **Always lower priority than app CSS.** All our CSS lives in cascade layers (`bc.tokens`, `bc.structure`, `bc.theme`), with selectors in `:where()` for zero specificity. Any unlayered app style wins, whatever its specificity. The docs explain how to order layers for any library that also uses cascade layers.
+  - **Root tokens.** `--bc-*` custom properties on the calendar root cover colors, spacing, typography, slot height, gutter width and so on, overridable at any level.
+  - **Structural CSS we ship:** CSS Grid and subgrid view structures, event placement, and responsive behavior through container queries on the calendar root. Breakpoints are documented values, because custom properties can't be used inside `@container` conditions.
+  - **Geometry as inline variables.** The kernel's positions reach the DOM as inline custom properties on each element (for example `--bc-row-start`, `--bc-row-span`, `--bc-col`, `--bc-cols`). Our structural CSS reads them, and developers who replace it read the same variables. The values are the contract, not our selectors.
+  - **CSS is as modular as the features (D-69).**
+    - **Authored as CSS Modules** next to each `react-ui` component, and therefore included **automatically and only when that component renders**. Unused families and parts ship no CSS.
+    - **Class names.** Each element carries the hashed module class (used by our styles) **and** its stable `bc-*` class (for developers).
+    - **Always overridable,** because module CSS still sits in our cascade layers with zero specificity.
+    - **Bundler requirement.** Apps need a bundler that handles CSS imports, which every mainstream client bundler does; the docs say so. Packages declare `*.css` as side effects (D-63).
+  - **Feature-conditional styles (D-71).**
+    - **Feature-specific UI** (resize handles, drag previews, selection highlight, recurrence indicators, the Unassigned lane, …) consists of separate `react-ui` parts with their own CSS Modules. They're exported from per-feature entry points (for example `@big-calendar/react-ui/dnd`) and used only when that feature is registered, so an unregistered feature ships neither JS nor CSS.
+    - **Feature-dependent modifiers on shared parts are data attributes** (for example `data-draggable` and `data-resizable="end"`), emitted only by registered features (D-72). The feature's CSS Module selects on them, for example `.event[data-resizable]`.
+    - **`clsx`** (an approved dependency) composes each element's classes in `react-ui`: the hashed module class, the getter's `bc-*` class, and the developer's `className`.
+  - **Styling documentation (D-70)** is part of the public `react-ui` docs and grows slice by slice from S1 (rule 8):
+    - **Overview:** how CSS ships with components, the `bc-*` classes, data-attribute state, root tokens and geometry variables.
+    - **Overriding with cascade layers:** our layer order, why unlayered app CSS always wins, how to place app styles in a layer above ours, and how to order layers when another library also uses them. It's written generally, with no particular tool assumed.
+    - **Examples in several methods:** a global stylesheet, CSS Modules, and CSS-in-JS.
+    - **Reference generated from the part manifests (D-25):** every part's class, data attributes and CSS variables, plus every token with its default.
+    - **Headless styling** with `@big-calendar/styles`.
+  - **One source, two outputs.** The same module sources are compiled a second time with stable `.bc-*` selectors and published per part, plus `tokens.css`, as `@big-calendar/styles`. That's for headless users who write their own markup with `bc-*` classes, and it's entirely optional for them.
+- **Every part ships a typed manifest** of its `bc-*` class, `data-*` attributes and CSS variables. The manifests are the styling contract and generate the styling docs.
+- **Edge flags.** Events clipped by the visible range or the `min`/`max` window carry `data-starting-before-edge` and `data-ending-after-edge`.
+- **Extra prebuilt UI at 1.0:**
+  - a **mini calendar**, which is a day-grid configuration;
+  - a **resource panel** with the `parentId` hierarchy as a collapsible tree and show/hide controls;
+  - **compact touch views** (1, 3 and 7 days), which are time-grid configurations;
+- **Display settings are app-controlled props** (D-56): for example `hiddenDays` (which replaces `showWeekends`, D-75), `showWeekNumbers` and `hourCycle`. There's no preferences menu and no library-owned preferences state. Apps that want a user-facing settings menu build it and pass the values down.
+- **Docs live in Storybook**, as runnable stories plus MDX. MDX tables use HTML `<table>` per the repo rules.
+
+---
+
+## 12. Opt-in modules
+
+- **Recurrence:** full RFC 5545 RRULE, including RDATE, EXDATE and per-occurrence overrides. Expansion is windowed and lazy, and occurrence identity is stable.
+- **Availability and conflicts:** business hours, per-resource working hours and capacity, and conflict detection when creating or moving events.
+- **ICS:** import and export. HTML-bearing fields such as `X-ALT-DESC` are **kept raw and typed as untrusted, never sanitized by the parser**. The docs point consumers to DOMPurify or the Sanitizer API, and the prebuilt UI never renders HTML fields. Zoned all-day round-trips follow T-13.
+- **Normalize:** converts `Date` objects, epoch values, `YYYY-MM-DD HH:mm` strings and inclusive database end dates into canonical strings, and reports any problems it finds.
+
+---
+
+## 13. RBC migration and parity
+
+- **Only the prop getters are dropped** (`eventPropGetter`, `dayPropGetter`, `slotPropGetter`, `slotGroupPropGetter`). The codemod **converts each one to an equivalent `wrap` slot automatically**, and flags any it can't convert safely.
+- **All other RBC capabilities have a home**, including the wrapper overrides and the less common props (`popupOffset`, `onKeyPressEvent`, `getDrilldownView`, `doShowMoreDrillDown`, `elementProps`, `enableAutoScroll`, `rtl`). The full prop-by-prop matrix is a P5 deliverable. Prop naming policy is O-2, `rtl` semantics O-4, and accessor migration O-3.
+- **Localizers are removed.** The migration guide covers moving to `timeZone`, `locale` and `formats`.
+- **Codemods and the migration guide** ship in slice S10.
+
+---
+
+## 14. Planning phase (each artifact approved individually)
+
+| ID | Artifact | Exit criteria |
+|---|---|---|
+| **P0** | Agent context toolset (§17) | Built on `planning` right after P1 is approved: topic specs split from P1, standards, decision log, skills, agents, hooks, MCP config; the maintainer approves it before P2 |
+| **P1** | This plan and decision log | Maintainer approval; Open items (§16) each assigned an owner artifact |
+| **P2** | Baseline 2025 support matrix | Every platform feature used has a verified Baseline status (Temporal, anchor positioning, Popover, `:dir()`, subgrid, container queries, `@scope`, …); each non-Baseline feature has a named polyfill or fallback and a loading strategy; top-level `await` confirmed across target bundlers and test runners; exact browser floor listed |
+| **P3** | Accessibility spec plus vanilla prototype | Roles, keyboard map, focus model and announcements for each family; a vanilla HTML/JS prototype of month, time grid, all-day hops, selection, keyboard DnD and overflow, tested with VoiceOver and NVDA; spec also covers the mini calendar, resource panel and source list; forced colors, 400% zoom reflow and reduced motion are explicit checks; the interaction machine pattern chosen from the prototype (O-6); D-50 and D-51 specified in full; findings resolved |
+| **P4** | Benchmarks | Temporal polyfill and signals backing library chosen on measured data (size, speed, correctness across a time-semantics corpus); whether instant ordering needs a numeric fast path (§8); DnD engine chosen from prototypes of both candidates (O-5); benchmark harness design agreed |
+| **P5** | Types and public API spec | Canonical event and resource fields; store, actions and signals; prop-getter contract; callback payloads; the RBC prop-by-prop parity matrix and slot mapping table; `formats`/`messages` API; typed draft payloads; permission cascade; part manifest format |
+
+---
+
+## 15. Slice roadmap
+
+Every slice runs **end to end**: kernel → machines → React binding → React UI → styles → Storybook docs → unit, interaction, accessibility and performance tests. The maintainer approves each one.
+
+| Slice | Scope | Exit criteria (in addition to the standard gates) |
+|---|---|---|
+| **S0** | Foundations: archive attempt 1 (`archive/attempt-1` tag and branch), reset `main`, Nx + pnpm scaffold, strict TypeScript, ESNext source compiled to ES2025, ESM only, lint and boundary rules, binding-size check, React Compiler build for React packages, the CI workflows in D-48, Nx Release configured but not publishing, git hooks (lint-staged, commitlint), Storybook shell, benchmark harness | CI green on an empty workspace; boundary and size rules proven by failing fixtures |
+| **S1** | Day grid (month): ingest and validation, time engine, store, navigation, toolbar, "+N more", slot and event selection, keyboard; mini calendar; change pipeline (§6.1: event copy, pending layer, commit/rollback/supersede, granular API) | Month view and mini calendar meet the P3 spec; performance budget met for month; change pipeline covered by veto, resolve, reject and supersede tests |
+| **S2** | Time grid (day/week/work week/N-day), embedded all-day row, now indicator, `min`/`max`, scroll-to-time, multi-day timed events (T-7); compact touch views | P3 spec met, including the focus hop; week-view budget met |
+| **S3** | Agenda: RBC parity, custom range, virtualization | 5,000-event agenda within budget |
+| **S4** | DnD: move, resize, drag from outside, drag out (D-36), keyboard DnD, cross-surface conversion (T-12); editing module | Pointer, touch and keyboard paths across the day grid and time grid; undo/redo goes through the same callbacks |
+| **S5** | Resources: resource-major and day-major layouts, multiple resources per event, Unassigned lane, custom lanes; resource panel | Assign and unassign by DnD through the Unassigned lane; resource panel meets the P3 spec |
+| **S6** | Timeline: hours scale, lanes of resources, days, or both, virtualized rows | Horizontal day view and resource timeline within budget |
+| **S7** | Recurrence module; scoped recurring changes with computed effects | RRULE conformance corpus passes; occurrence DnD payloads specified and passing; scoped effects commit and roll back as one unit |
+| **S8** | Availability and conflicts module | Conflict detection on create, move and resize; working hours rendered |
+| **S9** | Normalize and ICS modules | Round-trip corpus (including T-13) passes; untrusted-HTML contract documented |
+| **S10** | Migration: codemods, migration guide, MCP server | RBC demo apps migrate; any remaining manual steps documented |
+| **S11** | Hardening: performance and accessibility audits, final review of the docs already written (rule 8) | The maintainer decides when 1.0 ships |
+
+**Standard gates for every slice:**
+- typecheck, lint and boundary rules;
+- coverage thresholds and test layers (D-42);
+- binding at or under budget;
+- axe with zero violations, plus a manual screen-reader check against P3;
+- performance benchmarks within budget;
+- docs written alongside the code (rule 8): TSDoc lint passes, docs-site pages and stories cover every new capability, and the slice's tutorial steps work;
+- MCP resources synced (from S10 onward);
+- memory checkpoints updated.
+
+---
+
+## 16. Open items register
+
+Each item is decided in its owning artifact, before any slice that depends on it.
+
+| ID | Question | Owner |
+|---|---|---|
+| O-1 | Final package names. **Resolved (D-60).** | **Resolved** |
+| O-2 | Public prop and callback naming. **Resolved (D-33):** there's no obligation to keep RBC names; P5 picks the clearest names, and the parity matrix plus codemods map old names to new. | **Resolved** |
+| O-3 | Migrating accessors. **Resolved (D-34).** | **Resolved** |
+| O-4 | `rtl` prop semantics. **Resolved (D-35).** | **Resolved** |
+| O-5 | DnD engine: our own Pointer Events code for internal move/resize, with native HTML drag-and-drop only at the calendar's boundary, vs. Pragmatic DnD. P4 prototypes both, including drag-out (D-36), touch long-press and snapping previews, and decides from measured results. | P4 |
+| O-6 | Interaction machine pattern and prop-getter contract. Candidates: (a) hand-written finite-state machines as pure transitions returning effects, a small runtime for DOM and timer effects, and framework-neutral `{ attrs, on }` prop-getter descriptors mapped by each binding; (b) XState statecharts. The P3 vanilla prototype tries both and decides; P5 records the final contract. | P3 (pattern) / P5 (contract) |
+| O-7 | Exact canonical event fields. **Resolved (§6.0, D-37).** | **Resolved** |
+| O-8 | Unassigned lane and events with no resource ids. **Resolved (D-38).** | **Resolved** |
+| O-9 | Background event semantics. **Resolved (D-39).** | **Resolved** |
+| O-10 | `formats` and `messages` API. **Resolved (D-40).** | **Resolved** |
+| O-11 | Server rendering and React Server Components. **Resolved (D-41).** | **Resolved** |
+| O-12 | Coverage thresholds and test layers. **Resolved (D-42).** | **Resolved** |
+| O-13 | Top-layer positioning fallback. **Resolved (D-43);** P2 confirms which browsers need it. | **Resolved** |
+| O-14 | Benchmark devices and throttling profile. **Resolved (D-44).** | **Resolved** |
+| O-15 | Agent execution model inside slices. **Resolved (§3 rule 3, D-45).** | **Resolved** |
+| O-16 | Who owns event edits: callbacks only (as in RBC), an opt-in editing module (create/update/delete, recurring scope, copy/paste, undo/redo), or a library-owned store? This decides whether an event dialog belongs in the prebuilt UI. | **Resolved** → §6.1 (D-28 to D-31) |
+| O-17 | Where preferences are saved. **Resolved (D-56):** there are no library preferences; display settings are app-controlled props. | **Resolved** |
+| O-18 | Re-sync safety. **Resolved (D-57):** iterables re-sync only on an identity change, with a dev warning when a re-sync reverts a commit; event collections avoid re-syncing entirely. | **Resolved** |
+
+---
+
+## 17. Agent context toolset (P0)
+
+The goal is the smallest context that is always loaded, with detail loaded only when an agent touches the relevant files, and rules enforced by tooling wherever possible. Contributors may use any agent, so **all normative content is tool-neutral**. Tool-specific files are thin wrappers that point at it.
+
+```
+AGENTS.md                      ~60 lines: what this is, hard rules, routing table, "read PROGRESS first"
+CLAUDE.md                      @AGENTS.md
+packages/*/AGENTS.md           package purpose, boundaries, local commands, governing specs
+packages/*/CLAUDE.md           @AGENTS.md (Claude Code loads nested CLAUDE.md on demand)
+docs/spec/*.md                 normative topic specs split from approved P1
+docs/standards/*.md            short prose for what tooling can't check (D-46)
+docs/decisions.md              the single decision log (seeded with D-01 onward)
+docs/checklists/*.md           spec review, a11y review, slice gates, screen-reader script
+.agents/skills/<name>/SKILL.md Agent Skills standard: slice-start, slice-finish, decide, resume,
+                               new-package, a11y-check, bench, spec-check
+.claude/skills -> ../.agents/skills   (unless Claude Code reads .agents/skills directly; S0 verifies)
+.claude/agents/*.md            spec-reviewer, a11y-reviewer, test-author, docs-writer (Sonnet)
+.claude/rules/*.md             path-scoped pointers into docs/standards
+.claude/settings.json          hooks → scripts/agent-hooks/*
+scripts/agent-hooks/*.mjs      format-on-edit, session-brief, guard-protected, typecheck-on-stop
+.mcp.json                      Playwright, Nx
+memory/PROGRESS.md, ERRORS.md  progress and failed approaches only
+```
+
+- **Hooks work at three levels.**
+  1. The logic lives once, in tool-neutral scripts that read a JSON event on standard input.
+  2. Each tool gets a thin config file mapping its own event names to those scripts: Claude Code at P0, other tools when a contributor needs them.
+  3. Git hooks and CI back up every check, so agents without hooks still hit the same gates:
+     - formatting runs on commit (lint-staged);
+     - typecheck runs in PR checks;
+     - a CI check fails if `docs/spec/` or `docs/decisions.md` changes without a new decision entry;
+     - `AGENTS.md` tells every agent to read the "Next step" section of `PROGRESS.md` first.
+- **Agents with no shared format.** Sub-agent definitions are Claude-specific, so their checklists live in `docs/checklists/`, where any agent or person can run them.
+- **Attempt-1 context files are removed from `planning` at P0.** That covers the root `CLAUDE.md`, `memory/` and `ADAPTER_STANDARDS.md`, so no agent reads them by mistake. They remain in `main`'s history and in the S0 archive.
+
+## 18. Gap review additions (2026-10-27)
+
+These came from comparing the plan with FullCalendar, MUI X Scheduler, Bryntum, DHTMLX, Mobiscroll, Schedule-X, Google Calendar and Outlook.
+
+**Added to 1.0**
+
+| # | Item | Slice |
+|---|---|---|
+| 1 | **Live constraints** (D-76): declarative rules (allowed resources, min/max duration, whether overlap is allowed, within availability) plus a synchronous `validate(draft)` predicate. Invalid drafts get `data-invalid` and are announced, and a drop is refused before any callback runs. | S1 (selection), S4 (drag) |
+| 2 | **Snap granularity** separate from slot size (for example 5-minute steps on a 30-minute grid) | S4 |
+| 3 | **Custom event ordering:** a deterministic comparator option, with D-59 as the final tie-break | S1 |
+| 4 | **Tooltips:** the `tooltip` field (§6.0) and an accessible, touch-safe tooltip pattern | S1 |
+| 5 | **Live clock:** "now" and "today" update over time, correctly at midnight and across DST; the clock is injectable for tests | S1 |
+| 6 | **`hiddenDays`**, which generalizes and replaces `showWeekends` (D-75) | S1 |
+| 7 | **Multiple event sources** (D-73): `sourceId` on events; a `sources` input (`{ id, title, color, readOnly? }`, any iterable or a collection per D-57); `visibleSources` as a state slice (D-53); color precedence event, then source, then resource; a source list in react-ui next to the resource panel | S5 |
+| 11 | **Swipe** between periods on touch | S2 |
+| 12 | **Calendar systems** (D-77): a `calendarSystem` option, defaulting to **Gregorian** unless set, drives months, weeks and labels while data stays ISO. Gregorian, Islamic (Umm al-Qura), Hebrew, Persian and Japanese are tested at 1.0. Week numbering follows the locale. Non-Gregorian recurrence (RFC 7529 RSCALE) comes after 1.0. | S1 |
+| 13 | **Readable text on any event color:** text color is computed to meet WCAG contrast | S1 |
+| 14 | **Forced colors, 400% zoom reflow (WCAG 1.4.10) and reduced motion** are explicit P3 checks, tested every slice | P3 + all |
+| 15 | **Strict CSP and Trusted Types compatible:** styles set through the CSSOM only, no `innerHTML`, verified by a test harness | S0 + all |
+| 16 | **Sizing modes:** fixed height, auto height, sticky headers inside page scroll | S1 |
+| 17 | **Loading and error states** in react-ui | S1 |
+| 21 | **Project policies:** MIT license (D-78), semantic versioning and deprecation policy, browser-support policy, `SECURITY.md`, contributing guide, code of conduct, support channels | S0 |
+| 23 | **`@big-calendar/testing`** (D-79): a fake clock, drag and keyboard helpers, and role-based queries. It works with Testing Library and is used by our own tests. | S0, grows every slice |
+| 25 | **AI-readable docs** (`llms.txt`), generated from the docs alongside the MCP server | S0 pipeline, grows every slice |
+| 28 | **Concurrent-edit guidance** (docs only): using version or ETag fields in `meta` so apps can detect conflicting saves | S1 docs |
+
+**Post-1.0 backlog (D-80):** year and multi-month views (#8); a dual-timezone time gutter (#9, maybe); configurable keyboard shortcuts (#10); print-friendly output (#18); view transitions (#19); continuous scrolling (#20); an RBC v1 transition and sunset plan (#22); starter templates and sandboxes (#24); devtools (#26); the next framework and a vanilla or web-component UI (#27); CSV and PDF export (#29); RSCALE recurrence (#12); timeline zoom and more scales; a data-source module.
+
+## Appendix A — Decision log (seeded 2026-10-26)
+
+| ID | Decision |
+|---|---|
+| D-01 | Restart from scratch. Salvage nothing. Archive attempt 1 on a branch in the same repo. |
+| D-02 | TanStack Time is not a basis for any decision. |
+| D-03 | The engine model is "hybrid": shared primitives plus families (§5). |
+| D-04 | 1.0 scope covers RBC views, resources, the timeline, recurrence, availability, ICS, normalize, codemods and MCP. The maintainer decides when it ships. |
+| D-05 | Layers are kernel, machines, binding (≤ ~600 LOC) and prebuilt UI (§4). |
+| D-06 | React only at 1.0, React 19+. Headless and prebuilt are separate packages. |
+| D-07 | A TC39-shaped signals facade backed by a production library; read-only signals are public (§9). |
+| D-08 | Canonical event shape plus `meta`; no accessors. |
+| D-09 | The time semantics in §7. |
+| D-10 | Temporal internally and defines correctness everywhere; a numeric fast path only for instant ordering, only if P4 requires it; civil dates never become instants; the polyfill loads automatically (D-32); no localizers (§8). Revised 2026-10-26, replacing the original "two tiers" invariant. |
+| D-22 | Time grids show 24 wall-clock hours on DST days, positioned like Google Calendar and Outlook (T-14). |
+| D-23 | Drafts are typed: `creation`, `internal-drag`, `internal-resize`, `external-drag`, each with its surface (§10). |
+| D-24 | Edit permissions cascade event → resource → calendar; `resizable` can be limited to `'start'` or `'end'` (§6). |
+| D-25 | Every part ships a typed manifest of its data attributes and CSS variables; clipped events carry edge flags (§11). |
+| D-26 | 1.0 prebuilt UI adds a mini calendar (S1), compact touch views (S2), and a resource panel with a collapsible tree (S5). This amends H9 for the panel only. (The preferences menu was removed by D-56.) |
+| D-27 | No data source or lazy-loading module in 1.0; `onRangeChange` remains the loading hook. The timeline stays hours-only. |
+| D-28 | Edit model: the app is the source of truth; the kernel keeps an id-indexed copy synced from `events` (the prop wins), commits resolved changes into it, and offers granular upsert/patch/remove (§6.1). |
+| D-29 | Pending layer with per-kind callbacks only: `false` vetoes, resolve commits (optionally with the saved event), reject rolls back with an announcement, a synchronous return commits. A newer change to the same event supersedes and aborts the older one. Optional `onEventsChange`. |
+| D-30 | Recurring edits are one change with `scope` and computed `effects`, committed or rolled back as a unit. `resolveRecurringScope` is required when recurrence is used; no built-in scope prompt. |
+| D-31 | Opt-in editing module (keyboard delete, copy/paste, undo/redo, headless dialog state) in S4; no prebuilt event dialog at 1.0. The change pipeline lands in S1. |
+| D-32 | `interactions` and `temporal` are separate packages. `@big-calendar/temporal` loads Temporal automatically with top-level `await`: it uses an existing complete global Temporal (native or app-installed), otherwise awaits the polyfill and installs it on `globalThis`. Replaces the consumer-called `ensureTemporal()`. |
+| D-33 | Public prop and callback names are chosen fresh in P5 for clarity, with no obligation to keep RBC names. The P5 parity matrix and the codemods map every RBC name to its replacement. |
+| D-34 | Accessor migration: the codemod reads RBC accessor props, generates a `toCalendarEvent(record)` mapper, wraps the data in a memoized conversion (never an inline `.map()`), and removes the accessor props. It can't generate write-back, so it inserts a marked TODO in each edit callback that links to the migration guide. `@big-calendar/normalize` provides the `mapEvents(records, mapping)` helper the generated code uses. |
+| D-35 | `rtl` becomes `dir` (`'ltr' \| 'rtl' \| 'auto'`), which sets `dir` on the calendar root; when omitted, direction is inherited from the document. The codemod rewrites `rtl={true}` to `dir="rtl"`. Machines read the actual direction from the DOM (`:dir(rtl)`), not the prop. In right-to-left layouts the Left and Right arrows swap meaning (P3 spec), and the timeline axis flows right to left. |
+| D-36 | Dragging events out of the calendar is in 1.0, using native HTML drag-and-drop and carrying the event data. Dropping it elsewhere fires an out-drag callback (name chosen in P5). This also covers dragging between two Big Calendar instances. Lands in S4. The engine for internal drags stays open (O-5, decided in P4). |
+| D-37 | Canonical event fields as listed in §6.0. `allDay` is derived and read-only. Overrides are separate events with `recurringEventId` and `recurrenceId` (ICS style). `busy` maps to TRANSP. Untrusted HTML goes in a branded `descriptionHtml` field. |
+| D-38 | In resource views, a foreground event with no `resourceIds` goes to the Unassigned lane. When that lane is disabled, it isn't drawn there, and a read-only hidden-event count is exposed. |
+| D-39 | Background events are a separate `backgroundEvents` collection with canonical fields, outside the edit pipeline. They're inert (not focusable or draggable; selection passes through) and announced through slot descriptions. They show in the time grid and timeline, and as a cell tint in the day grid. In resource views they show only in their own resources' lanes; with no `resourceIds` they're not displayed there. |
+| D-40 | Localization API: `locale` (BCP 47 string or `Intl.Locale`; defaults to the browser's locale); `formats` as named slots, each taking `Intl.DateTimeFormat` options **only** (no token strings and no formatter functions, per D-67; custom output goes through render slots), using `formatRange` and `Intl.DurationFormat`; `hourCycle` and `weekStartsOn` overrides; `messages` as a flat map of UI, accessible-name and announcement strings, each a string or a function using `Intl.PluralRules` (no ICU library). English only at 1.0; locale packs after. P5 lists the slot and message keys. |
+| D-41 | **Client-side only.** Every package runs in the browser: no server rendering, no server components, no server processes. The consuming app handles all server-side interaction. The docs show client-only usage, including turning off server rendering in frameworks like Next.js. Prebuilt UI components carry `'use client'` only so apps built on React Server Component frameworks can import them. The kernel stays free of DOM code for testability and for web workers. Node 22+ is used only for build and test tooling, not as a runtime target. |
+| D-42 | Test strategy:<br>• unit tests in Vitest, with **per-package** coverage (no per-file bars): 90% branches and 95% lines for kernel, interactions and modules; 80% branches for binding and UI;<br>• fast-check property tests for the time engine, segmentation and packing;<br>• conformance corpora: time semantics, RRULE, ICS round-trip, month overflow;<br>• Vitest browser mode (Playwright) instead of jsdom for interaction and binding tests;<br>• Playwright end-to-end and visual tests on Chromium, Firefox and WebKit, with touch emulation;<br>• axe with zero violations, plus a written screen-reader script (VoiceOver + Safari, NVDA + Firefox) run every slice;<br>• CI performance benchmarks. |
+| D-43 | Positioning fallback: when CSS anchor positioning is unsupported (feature-checked), `@floating-ui/dom` is lazy-loaded to position popovers and tooltips. The Popover API itself needs no fallback. P2 confirms which browsers take this path. |
+| D-44 | Benchmark profile:<br>• the 50ms budget is gated on Chromium with the CPU slowed 4× (median of 10 runs after a warm-up);<br>• the 100ms polyfill budget is gated on unthrottled WebKit, falling back to relative tracking if CI is too noisy;<br>• Firefox is tracked, not gated;<br>• a pull request fails if any benchmark's median slows by more than 10% against `main`;<br>• each slice gets one real-device check (a mid-range Android phone and an iPhone) before approval. |
+| D-45 | Agent execution:<br>• a branch per slice, with the agent opening a PR at the end of the slice as the review gate and the maintainer merging;<br>• ask first before adding a new dependency, weakening or deleting a test to pass, or any history-rewriting, remote or outside-repo git action;<br>• checkpoint and halt near the usage limit;<br>• sub-agents allowed for small, isolated tasks, reviewed by the main agent. |
+| D-46 | Coding standards: everything enforceable lives in ESLint, Prettier, TypeScript config and Nx boundary rules; short prose in `docs/standards/` covers the rest. Carried over from attempt 1 and adapted:<br>• file suffixes (`.component.tsx`, `.hook.ts`, `.function.ts`, `.type.ts`, `.constant.ts`);<br>• function declarations, and a single object parameter for multi-argument functions;<br>• folder-per-component with `index.ts` barrels;<br>• render-first components with one composed props hook;<br>• `displayName` on components.<br>Dropped: `forwardRef` (React 19 passes `ref` as a prop) and all manual `useMemo`/`useCallback`/`memo` rules. |
+| D-47 | The React Compiler compiles the published `@big-calendar/react` and `react-ui` (target React 19); the compiler's ESLint rules run in CI. |
+| D-48 | CI before 1.0: PR checks (affected lint, typecheck, unit tests, build, boundaries, binding size, coverage, commitlint); the Playwright browser suite on PR (end-to-end, visual and axe on three engines); benchmarks on PR; Storybook deployed to GitHub Pages on merge to `main`. Release is configured but off. No CodeQL, Renovate, AI PR review or nightly runs. |
+| D-49 | Agent context toolset as described in §17, built as P0 right after P1 approval. Sub-agents run on Sonnet. Dev MCP servers: Playwright and Nx. `docs/decisions.md` is the single decision log; `memory/` holds only PROGRESS and ERRORS. |
+| D-50 | Accessibility patterns adopted from MUI X Scheduler as P3 requirements (§10): composed event names; `aria-hidden` previews and decorations; grid metadata and `aria-current`; landmarks; a live region for the toolbar label; menu roles; "+N more" focus return; mini-calendar grid; resource tree; read-only and delete-confirmation behavior; a touch action toolbar; and a public accessibility page with known limitations. |
+| D-52 | TanStack v9-style registered features: families and modules are registered through `calendarFeatures({…})`, which determines both the bundle and the types, with prerequisites checked at compile time (§4.4). |
+| D-53 | Per-slice state: internal (`defaultX`), controlled (`x` + `onXChange`) or an external atom (`createAtom`, facade type). Precedence: atom, then controlled, then internal. `drafts` and `pending` are internal and read-only. |
+| D-54 | The kernel hands out plain, immutable view-model data, subscribable per lane; actions live on the instance. |
+| D-55 | Bindings call `calendar.setOptions()` with the latest options and callbacks on every render; the kernel reacts only to real changes. |
+| D-56 | Display settings such as `showWeekends`, `showWeekNumbers` and `hourCycle` are plain props controlled by the rendering app. There's no preferences menu and no library-owned preferences state or persistence. Removes the menu from D-26 and closes O-17. |
+| D-57 | `events`, `backgroundEvents` and `resources` accept any iterable or a core collection (`createEventCollection` and its resource equivalent). Iterables are copied and re-synced only on an identity change, with a dev warning when a re-sync reverts a commit. Collections are reactive, id-indexed and updated with `upsert`, `patch` and `remove`. |
+| D-58 | When the app passes a collection, it is the single source of truth: confirmed changes are written straight into it, rejected changes roll back before any write, and the kernel keeps no copy. |
+| D-60 | Package names are final as listed in §4.2, under the `@big-calendar` scope, which the maintainer owns: `core`, `interactions`, `react` (the headless binding), `react-ui` (prebuilt components), `styles`, `temporal`, `recurrence`, `availability`, `ics`, `normalize`, `editing`, `codemods`, `mcp`, and `testing` (added by D-79). The MCP server is developer tooling, not runtime. |
+| D-59 | Event input order never affects layout: ties break by earlier start, then longer duration, then id. Resource order is lane order and is preserved. |
+| D-61 | Option shape: common props flat (`events`, `date`, `view`, `timeZone`, `locale`, …); feature options grouped under their feature and typed only when it is registered. |
+| D-62 | Every `<Calendar>` takes an explicit `features` list; the docs start from the `standardFeatures` preset (month, week, day, agenda). |
+| D-63 | Developer-experience guardrails: per-entry-point size budgets in PR CI with sizes shown in the docs; teaching dev-only warnings that link to docs and are stripped in production; side-effect-free packages (except CSS and the `temporal` loader) verified by a CI tree-shaking test; typed per-feature options. Extends D-48. |
+| D-64 | Documentation follows Diátaxis (tutorial, how-to, reference, explanation), with one progressive tutorial app and a written standard in `docs/standards/writing.md`, enforced by the docs-writer checklist and maintainer review; no prose linter. |
+| D-65 | Docs ship with the code, in the same task and commit; they are never a final step. Lint-enforced TSDoc on every exported symbol; TSDoc on internal code wherever it isn't obvious, checked in review; docs-site pages per capability; the tutorial grows slice by slice. S11 reviews docs rather than writing them. |
+| D-66 | Fully custom views at 1.0 (RBC parity): register `range`, `navigate` and `title`; the component receives the range's events and expanded occurrences in the display zone and renders freely. New families built on the layout primitives remain post-1.0. |
+| D-67 | Format slots accept `Intl.DateTimeFormat` options only: no token strings and no formatter functions. Output beyond Intl uses render slots. Amends D-40. |
+| D-68 | Styling contract (§11): any styling method or library, with no tool assumed; `bc-*` base classes on parts and data attributes for state; all CSS in cascade layers with zero-specificity `:where()` selectors; root `--bc-*` tokens; shipped grid and subgrid structure, event placement and container-query responsiveness; kernel geometry as inline custom properties. (CSS packaging is amended by D-69.) |
+| D-69 | CSS is as modular as the features. `react-ui` authors its CSS as CSS Modules colocated with each component, included automatically and only when that component renders. Elements carry a hashed module class plus a stable `bc-*` class. The same sources are also compiled with `.bc-*` selectors and published per part, with `tokens.css`, as `@big-calendar/styles` for headless users. One source, no drift. Apps need a bundler that handles CSS imports; `*.css` is declared as a side effect. |
+| D-70 | The public `react-ui` docs include styling documentation, growing from S1: an overview; a layer-focused override guide (layer order, why unlayered app CSS wins, putting app layers above ours, interop with other layered libraries, no tool assumed); examples using a global stylesheet, CSS Modules and CSS-in-JS; per-part and token reference generated from the manifests; headless styling with `@big-calendar/styles`. |
+| D-71 | Feature-conditional styles: feature-specific `react-ui` parts and their CSS Modules live in per-feature entry points and ship only when the feature is registered; feature modifiers on shared parts are data attributes emitted by registered features (D-72), styled by the feature's CSS. `clsx` is approved for class composition in `react-ui`. |
+| D-72 | Getter contract: prop-getters emit the stable `bc-*` part class in `attrs`. Registered features contribute data attributes and handlers to getter output through one defined merge: classes joined, handlers chained (base first, then features in registration order), data attributes combined, refs all called, conflicting non-mergeable attributes a dev-time error. `interactions` exports the shared, framework-neutral `mergeProps` used by features and bindings; `clsx` stays in `react-ui`. |
+| D-73 | Multiple event sources: `sourceId` on events; a `sources` input (iterable or collection); a `visibleSources` state slice; color precedence event, then source, then resource; a react-ui source list. In S5. |
+| D-74 | `tooltip` field with an accessible, touch-safe tooltip pattern; defaults to a composed title and time (RBC parity). |
+| D-75 | `hiddenDays` replaces `showWeekends`. |
+| D-76 | Live constraints: declarative rules plus a synchronous `validate(draft)`; invalid drafts are marked `data-invalid`, announced, and refused before callbacks. |
+| D-77 | Calendar systems: a `calendarSystem` option (defaults to Gregorian), with five calendars tested at 1.0; week numbering by locale; RSCALE recurrence after 1.0. |
+| D-78 | All packages are MIT licensed. |
+| D-79 | `@big-calendar/testing`: fake clock, drag and keyboard helpers, role-based queries; Testing Library compatible; used by our own tests. |
+| D-80 | Gap-review triage as listed in §18: added 1.0 items with their slices, and the post-1.0 backlog. |
+| D-81 | Naming: event sources are `sources` / `sourceId` / `visibleSources` (a source is a named, colored group of events such as "Work" or "Holidays"); the date system option is `calendarSystem`; `<Calendar>` keeps its name. Renames the D-73 and D-77 terms. |
+| D-82 | `calendarSystem` defaults to Gregorian unless set; the docs show how to follow the locale's calendar in one line. Amends D-77. |
+| D-83 | Permission cascade order (most specific wins): event, then resource, then event source, then the whole calendar. Amends D-24. |
+| D-84 | API reference for the kernel, modules and hooks is generated by TypeDoc from TSDoc into MDX pages inside the Storybook docs site; component props use Storybook's own docs. |
+| D-51 | Keyboard model: one Tab stop per grid with a roving `tabIndex`, events as their own group; focusable per-slot cells in the time grid; context menus on Shift+F10 or the menu key, with Enter and Space activating. |
+
+## Appendix B — References reviewed
+
+- **MUI X Scheduler v9.16.0**, docs and source, reviewed 2026-10-26 for ideas only. `x-scheduler-premium` and `x-scheduler-internals-premium` are commercially licensed, so no code is copied from any MUI package. D-23 to D-25 came from this review. Its shared wall-clock axis and `minutesInDay` support §5 and T-14. Its accessibility page supplied most of D-50. Three of its choices are deliberately not followed (D-51): every cell a Tab stop, one timed cell per day, and Space for the context menu.
+| D-11 | Recurrence and ICS are opt-in modules with full RRULE support. ICS HTML is kept raw and marked untrusted. |
+| D-12 | Resources: multiple per event, Unassigned lane, hierarchy in the data model, per-resource availability. |
+| D-13 | Only the prop getters are dropped; the codemod converts them to `wrap` slots. |
+| D-14 | Slots are `render` or `wrap`, with all-new names and a mapping table. |
+| D-15 | Accessibility (WCAG 2.2 AA) is specified and prototyped before framework code. |
+| D-16 | Performance budgets (§8); agenda and timeline virtualized. |
+| D-17 | Vertical slices in the order of §15, each approved by the maintainer. |
+| D-18 | Keep coverage gates, the MCP server, memory checkpoints, conventional commits and Nx Release. Publish nothing to npm before 1.0. |
+| D-19 | Docs in Storybook. Styling is plain CSS with `@layer` and tokens; the styling contract is detailed in D-68. |
+| D-20 | Baseline 2025, with each non-Baseline feature verified and given a polyfill or fallback (P2). |
+| D-21 | Tooling: pnpm + Nx; strict TypeScript; ESM only. Source is written in **ESNext**; every package is **compiled to ES2025** (S0 confirms TypeScript and bundler support for the `es2025` target). Compiling rewrites syntax only: any runtime built-in newer than ES2025 needs a P2 support-matrix entry with a polyfill or fallback (per D-20), as Temporal has through its loader. |
