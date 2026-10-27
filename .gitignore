@@ -31,9 +31,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# local MCP config
-.mcp.json
-
 # editor / os
 .DS_Store
 .idea
@@ -47,3 +44,7 @@ pnpm-debug.log*
 .env.*.local
 
 .nx/migrate-runs
+
+# claude code local state
+.claude/settings.local.json
+.claude/*.lock
