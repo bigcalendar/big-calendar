@@ -2,14 +2,12 @@
 
 ## Next step
 
-**Waiting for the maintainer's final P0 approval** on the `planning` branch. The review answers are recorded as D-85, and the guard hook has been rewritten to match them. Don't start P2 until the maintainer approves P0.
-
-When P0 is approved: record the approval with the `decide` skill, then start **P2** (Baseline 2025 support matrix; exit criteria in `docs/spec/roadmap.md`). The order after P0 is P2 → P3 → P4 → P5 → S0, each approved individually.
+**Start P2: the Baseline 2025 support matrix.** P0 was approved on 2026-10-28 (D-86). The exit criteria are in `docs/spec/roadmap.md` (planning phase table, row P2). Build it on `planning`, then stop for the maintainer's P2 review. The order after P2 is P3 → P4 → P5 → S0, each approved individually.
 
 ## Where things stand (2026-10-28)
 
 - **P1 approved** 2026-10-27. `plan/P1-PLAN.md` is the frozen record.
-- **P0 built** 2026-10-27, in review:
+- **P0 approved** 2026-10-28 (D-85, D-86). Built 2026-10-27:
   - `docs/spec/` (17 topic specs, split verbatim from P1, cross-references rewritten as links; index in `docs/spec/README.md`), including `roadmap.md` (P1 §14–§16);
   - `docs/decisions.md`: the single decision log, D-01 to D-84 in numeric order;
   - `docs/standards/` (8 files, including `workflow.md` with P1 §3 verbatim and `writing.md`), `docs/checklists/` (6 checklists);
