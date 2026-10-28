@@ -25,11 +25,11 @@ Per package, never per file:
 
 ## Writing tests
 
-- Use `@big-calendar/testing` (fake clock, drag and keyboard helpers, role-based queries) in our own tests (D-79). If a helper is missing, add it there rather than writing a local one. _(P0 proposal)_
-- Query by role and accessible name. A test that needs a class or test id to find an element usually means the accessible name is missing. _(P0 proposal)_
-- Time tests name the display zone and use the fake clock. Never depend on the machine's zone or the real time. _(P0 proposal)_
-- Tests of the time semantics cite the T-rule they cover (for example `T-10`). _(P0 proposal)_
-- Each bug fix starts with a failing test. _(P0 proposal)_
+- Use `@big-calendar/testing` (fake clock, drag and keyboard helpers, role-based queries) in our own tests (D-79). If a helper is missing, add it there rather than writing a local one. (D-85)
+- Query by role and accessible name. A test that needs a class or test id to find an element usually means the accessible name is missing. (D-85)
+- Time tests name the display zone and use the fake clock. Never depend on the machine's zone or the real time. (D-85)
+- Tests of the time semantics cite the T-rule they cover (for example `T-10`). (D-85)
+- Each bug fix starts with a failing test. (D-85)
 
 ## Benchmarks (D-44)
 

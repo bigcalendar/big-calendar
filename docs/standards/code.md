@@ -27,7 +27,7 @@ Sources: D-21, D-46, D-63, [architecture](../spec/architecture.md). Lint enforce
 ## Structure (D-46)
 
 - Folder per component, with an `index.ts` barrel.
-- Barrels re-export; they hold no logic. _(P0 proposal)_
+- Barrels re-export; they hold no logic. (D-85)
 
 ## Development warnings (D-63)
 

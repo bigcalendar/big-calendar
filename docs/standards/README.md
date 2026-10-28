@@ -14,5 +14,3 @@ Everything a tool can check lives in tooling: ESLint, Prettier, the TypeScript c
 | [agent-toolset.md](agent-toolset.md) | changing `AGENTS.md`, skills, agents, hooks or rules                    |
 
 If a standard here conflicts with a spec in [`docs/spec/`](../spec/README.md), the spec wins. Report the conflict to the maintainer.
-
-Lines marked _(P0 proposal)_ are conventions proposed while building P0 that no decision covers yet. They are not binding until the maintainer approves P0; approval records them as a decision.
