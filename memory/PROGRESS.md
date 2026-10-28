@@ -2,13 +2,11 @@
 
 ## Next step
 
-**Waiting for the maintainer's final P2 approval.** Every P2 question is answered and recorded as D-87; the matrix is in `docs/spec/support-matrix.md`. Don't start P3 until the maintainer approves P2.
-
-When P2 is approved: record the approval with the `decide` skill, then start **P3** (accessibility spec plus vanilla prototype; exit criteria in `docs/spec/roadmap.md`). P3 needs the maintainer for the VoiceOver and NVDA runs.
+**Start P3: the accessibility spec plus a vanilla (no framework) prototype.** P2 was approved on 2026-10-28 (D-88). The exit criteria are in `docs/spec/roadmap.md` (planning phase table, row P3). Build it on `planning`, then stop for the maintainer's P3 review. P3 needs the maintainer for the VoiceOver and NVDA runs. The order after P3 is P4 → P5 → S0, each approved individually.
 
 ## Where things stand (2026-10-28)
 
-- **P2 answered** 2026-10-28 (D-87): `docs/spec/support-matrix.md`. Evidence in `prototypes/p2-top-level-await/`. D-87 amends D-32 (the `temporalReady` promise replaces top-level `await`).
+- **P2 approved** 2026-10-28 (D-87, D-88): `docs/spec/support-matrix.md`. Evidence in `prototypes/p2-top-level-await/`. D-87 amends D-32 (the `temporalReady` promise replaces top-level `await`).
 
 - **P1 approved** 2026-10-27. `plan/P1-PLAN.md` is the frozen record.
 - **P0 approved** 2026-10-28 (D-85, D-86). Built 2026-10-27:
