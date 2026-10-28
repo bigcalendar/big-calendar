@@ -35,7 +35,7 @@ _Final (D-60). The maintainer owns the `@big-calendar` npm scope._
 | `@big-calendar/react`        | Binding     | Peer dependency on `react@>=19`; ≤ ~600 LOC                                                                                             |
 | `@big-calendar/react-ui`     | Prebuilt UI | Default components with `render`/`wrap` slots                                                                                           |
 | `@big-calendar/styles`       | Styles      | `react-ui`'s CSS Module sources compiled with stable `.bc-*` selectors, published per part with `tokens.css`, for headless users (D-69) |
-| `@big-calendar/temporal`     | Loader      | Resolves native Temporal, or awaits and globally installs the polyfill ([date engine](date-engine.md))                                  |
+| `@big-calendar/temporal`     | Loader      | Resolves native Temporal, or loads and globally installs the polyfill; exports `temporalReady` (D-87, [date engine](date-engine.md))    |
 | `@big-calendar/recurrence`   | Module      | Full RFC 5545 RRULE expansion                                                                                                           |
 | `@big-calendar/availability` | Module      | Working hours, capacity, conflicts                                                                                                      |
 | `@big-calendar/ics`          | Module      | ICS import/export                                                                                                                       |

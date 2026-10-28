@@ -1,6 +1,6 @@
 # P2 prototype: top-level await across bundlers, runners and browsers
 
-Evidence for [the support matrix](../../plan/P2-SUPPORT-MATRIX.md), finding 1. This is throwaway planning code. It isn't part of the pnpm workspace and nothing imports it.
+Evidence for [the support matrix](../../docs/spec/support-matrix.md), finding 1. This is throwaway planning code. It isn't part of the pnpm workspace and nothing imports it.
 
 ## What it tests
 
@@ -39,3 +39,7 @@ Test runners: `cd runners && npm install`, then `npx vitest run vitest.test.js`,
 ## Results (2026-10-28)
 
 The raw results are in `results/`. "Timeout" rows tagged `seq: -1` are harness artifacts: Safari requested a page before the run began (history preloading), and the real report for that page passed.
+
+## Option B check
+
+`runners/optb/` is a sketch of the decided design (D-87): no top-level `await`, and a `temporalReady` promise. `runners/optb.test.cjs` loads it from Jest's CommonJS mode (`NODE_OPTIONS=--experimental-vm-modules npx jest optb.test.cjs`), and `node -e 'require("./optb/core.js")'` loads it with plain Node `require()`.

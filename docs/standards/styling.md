@@ -11,6 +11,13 @@ Sources: D-25, D-68 to D-72, [React and styling](../spec/react-and-styling.md). 
 - Layout uses CSS Grid and subgrid. Responsive behavior uses container queries on the calendar root, with documented breakpoint values.
 - No styles set through `innerHTML` or style strings; the CSSOM only (strict CSP).
 
+## Platform features (D-87)
+
+- Use only features on the [support matrix](../spec/support-matrix.md) floor, or ones it gives a fallback. Never use anything on its "don't use" list (`@scope`, `popover="hint"`, `<dialog closedby>`, name-only and style container queries, `contrast-color()`, CSS module scripts).
+- **Always set `position-anchor` explicitly** on every anchored element. Never rely on its initial value, which differs before Chrome 151, Firefox 151 and Safari 27.
+- Write `-webkit-user-select` next to every `user-select`.
+- `overscroll-behavior` is progressive enhancement only; nothing may depend on it.
+
 ## Where CSS lives
 
 - CSS Modules next to each `react-ui` component. A component's CSS ships only when the component renders.
