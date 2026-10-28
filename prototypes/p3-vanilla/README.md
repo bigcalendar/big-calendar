@@ -12,6 +12,13 @@ Start pages: `?view=month`, `?view=week`, `?view=week&date=2026-11-01` (fall-bac
 
 The "App callbacks" panel logs what an app would receive (`onSelectSlot`, `onSelectEvent`, `onEventDrop`, …). Messages prefixed "App:" in the live region stand in for what an app would do with them.
 
+## Automated checks
+
+With the server running: `cd tests && npm install && npx playwright install chromium firefox webkit`, then
+
+- `node axe.mjs`: axe (WCAG 2.2 A/AA and best practices) on Chromium, Firefox and WebKit, normal and forced colors, 1280px and 320px, over the month, week and both DST weeks, plus the popover, menu and move states;
+- `node keys-tour.mjs` and `node keys-move.mjs`: scripted keyboard paths, printing the focused element's name and the live-region text after each step.
+
 ## Layout
 
 | File                            | Layer in the product                                                 |

@@ -12,13 +12,13 @@
 4. [x] Time grid: per-slot cells, the all-day row (embedded day grid) and the focus hop, DST days (T-14).
 5. [x] Keyboard and single-pointer move (keyboard DnD and its WCAG 2.5.7 alternative), context menu, invalid drops (D-76).
 6. [ ] O-6: build the move machine twice (hand-written state machine vs XState) and compare.
-7. [ ] Automated checks: axe on all three engines, forced colors, 400% zoom, reduced motion.
+7. [x] Automated checks: axe on all three engines, forced colors, 400% zoom, reduced motion.
 8. [ ] Screen-reader script with expected announcements (`docs/checklists/screen-reader-script.md`).
 9. [ ] Maintainer runs VoiceOver + Safari; fix findings.
 10. [ ] Maintainer runs NVDA + Firefox **once Windows is available** (the maintainer has no Windows machine yet, 2026-10-28).
 11. [ ] Findings resolved; stop for the maintainer's P3 review.
 
-Tasks 2–5 are verified by scripted keyboard runs in Chromium (focus names and live-region text), not yet by a screen reader. The prototype runs with `node prototypes/p3-vanilla/serve.mjs`.
+Findings so far are in section 13 of the draft. Open follow-up from finding 3: the compact month's day list needs chip actions (menu, Move). Tasks 2–5 are verified by scripted keyboard runs in Chromium (focus names and live-region text), not yet by a screen reader. The prototype runs with `node prototypes/p3-vanilla/serve.mjs`.
 
 P3 scope answers (2026-10-28): desktop screen readers only (VoiceOver, NVDA); mobile screen readers are checked during the per-slice real-device checks from S1. These go into the P3 decision entry on approval.
 

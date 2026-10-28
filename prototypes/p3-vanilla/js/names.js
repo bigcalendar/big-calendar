@@ -15,11 +15,15 @@ export function eventTime(e) {
   return `${format.timeRange(e.startMin, e.endMin)}${zone}`
 }
 
+/**
+ * `visible` is the part's visible label. The name always starts with it
+ * (WCAG 2.5.3 Label in Name), so speech-input users can say what they see.
+ */
 export function eventName(
   e,
-  { withDate = true, pending = false, invalid = null } = {},
+  { withDate = true, pending = false, invalid = null, visible = e.title } = {},
 ) {
-  const parts = [e.title, eventTime(e)]
+  const parts = [visible, eventTime(e)]
   if (withDate && !(e.allDay && diffDays(e.start, e.end) > 1) && !e.endDate)
     parts.push(format.day(e.start))
   if (e.resources?.length) parts.push(e.resources.join(', '))
