@@ -28,6 +28,8 @@ export function readEvent() {
     oldText: input.old_string ?? null,
     newText: input.new_string ?? input.content ?? null,
     edits: input.edits ?? null,
+    replaceAll: Boolean(input.replace_all),
+    isWrite: input.content !== undefined,
     reentrant: Boolean(raw.reentrant ?? raw.stop_hook_active),
     cwd,
     raw,
