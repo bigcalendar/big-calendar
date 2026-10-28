@@ -90,7 +90,7 @@ export function transition(state, event, ctx) {
 }
 
 /** One keyboard step of the draft (spec 6.4, step 2). Returns null if the key does nothing. */
-function step(draft, k, ctx) {
+export function step(draft, k, ctx) {
   const { surface, date, slot } = draft
   const day = (n) => ({ ...draft, date: addDays(date, n) })
   if (surface === 'month') {

@@ -34,7 +34,12 @@ import {
   positionOfEvent,
   SLOTS_PER_DAY,
 } from './model.js'
-import * as fsm from './machines/move-fsm.js'
+// O-6: ?machine=xstate swaps in the XState version of the move machine.
+const fsm = await import(
+  new URLSearchParams(location.search).get('machine') === 'xstate'
+    ? './machines/move-xstate.js'
+    : './machines/move-fsm.js'
+)
 
 const params = new URLSearchParams(location.search)
 const state = {

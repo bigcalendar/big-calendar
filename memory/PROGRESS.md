@@ -11,7 +11,7 @@
 3. [x] Month grid: roles, roving focus, event group, Shift+Arrow selection, "+N more" popover.
 4. [x] Time grid: per-slot cells, the all-day row (embedded day grid) and the focus hop, DST days (T-14).
 5. [x] Keyboard and single-pointer move (keyboard DnD and its WCAG 2.5.7 alternative), context menu, invalid drops (D-76).
-6. [ ] O-6: build the move machine twice (hand-written state machine vs XState) and compare.
+6. [x] O-6: built twice; identical behavior; hand-written 0.9 KB vs XState +13.0 KB gzip. Recommendation (a) in `prototypes/p3-vanilla/o6/RESULTS.md`; **waiting for the maintainer's O-6 decision**.
 7. [x] Automated checks: axe on all three engines, forced colors, 400% zoom, reduced motion.
 8. [x] Screen-reader script with expected announcements (`docs/checklists/screen-reader-script.md`).
 9. [x] Maintainer ran VoiceOver + Safari (2026-10-28): all steps passed; Lighthouse accessibility 100. Answers to every Proposed item recorded as D-89 (one change: Shift+Left/Right is a continuous span), and the prototype updated to match.
