@@ -2,9 +2,15 @@
 
 ## Next step
 
-**Start P2: the Baseline 2025 support matrix.** P0 was approved on 2026-10-28 (D-86). The exit criteria are in `docs/spec/roadmap.md` (planning phase table, row P2). Build it on `planning`, then stop for the maintainer's P2 review. The order after P2 is P3 → P4 → P5 → S0, each approved individually.
+**Waiting for the maintainer's P2 review.** The draft is `plan/P2-SUPPORT-MATRIX.md`; its evidence is in `prototypes/p2-top-level-await/`. Don't start P3 until P2 is approved.
+
+The draft ends with seven answers needed. The big one is finding 1: top-level `await` (D-32's `temporal` loader) breaks in Safari 26.2–26.6 when lazy imports reach the calendar at the same time. Recommended: option B (an explicit `temporalReady` promise, hidden from React users).
+
+On approval: record the answers with the `decide` skill (each one that changes D-32, D-43 or a standard says so), move the draft to `docs/spec/support-matrix.md` in the same commit, add the approved rules to `docs/standards/styling.md` and `testing.md`, then start P3.
 
 ## Where things stand (2026-10-28)
+
+- **P2 drafted** 2026-10-28, in review: `plan/P2-SUPPORT-MATRIX.md`.
 
 - **P1 approved** 2026-10-27. `plan/P1-PLAN.md` is the frozen record.
 - **P0 approved** 2026-10-28 (D-85, D-86). Built 2026-10-27:

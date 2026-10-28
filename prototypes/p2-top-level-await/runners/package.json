@@ -1,0 +1,14 @@
+{
+  "name": "p2-test-runners",
+  "private": true,
+  "type": "module",
+  "jest": {
+    "testMatch": [
+      "**/jestcjs.test.cjs"
+    ]
+  },
+  "devDependencies": {
+    "jest": "30.5.2",
+    "vitest": "5.0.5"
+  }
+}
