@@ -346,9 +346,10 @@
       background: Canvas;
       color: CanvasText;
     }
+    /* A border, not a fill, so chips inside stay readable (finding 4, D-89). */
     :where([role='gridcell'][aria-selected='true']) {
-      background: Highlight;
-      color: HighlightText;
+      background: Canvas;
+      box-shadow: inset 0 0 0 4px Highlight;
     }
     :where([role='gridcell'][data-invalid]) {
       outline: 2px dashed CanvasText;
