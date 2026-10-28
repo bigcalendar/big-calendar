@@ -1,0 +1,32 @@
+{
+  "unbundled": {
+    "ok": true,
+    "polyfillFiles": ["polyfill.js"],
+    "polyfillInEntry": false
+  },
+  "vite": {
+    "ok": true,
+    "polyfillFiles": ["assets/polyfill-CubCCEGw.js"],
+    "polyfillInEntry": false
+  },
+  "rollup": {
+    "ok": true,
+    "polyfillFiles": ["polyfill-BAL11Uqc.js"],
+    "polyfillInEntry": false
+  },
+  "esbuild": {
+    "ok": true,
+    "polyfillFiles": ["polyfill-UTKMAJNE.js"],
+    "polyfillInEntry": false
+  },
+  "webpack": {
+    "ok": true,
+    "polyfillFiles": ["602.js"],
+    "polyfillInEntry": false
+  },
+  "rspack": {
+    "ok": true,
+    "polyfillFiles": ["167.js"],
+    "polyfillInEntry": false
+  }
+}

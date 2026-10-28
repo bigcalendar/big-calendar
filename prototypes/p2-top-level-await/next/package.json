@@ -1,0 +1,10 @@
+{
+  "name": "p2-next",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "next": "16.4.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  }
+}
