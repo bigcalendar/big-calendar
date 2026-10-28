@@ -3,6 +3,8 @@ import { h, applyProps } from './props.js'
 import { sync } from './sync.js'
 
 const MAX_VISIBLE = 3
+// Below this width a day shows one count button instead of chips (spec 8.1).
+export const COMPACT_WIDTH = 640
 
 export function renderMonth(views, api) {
   const { state, messages, format } = api
@@ -151,7 +153,9 @@ export function renderMonth(views, api) {
           state.move.draft.date === date
             ? api.byId(state.move.id)
             : null
-        const visible = all.slice(0, MAX_VISIBLE)
+        const compact =
+          views.clientWidth > 0 && views.clientWidth < COMPACT_WIDTH
+        const visible = compact ? [] : all.slice(0, MAX_VISIBLE)
         const hidden = all.length - visible.length
         const items = visible.map(({ event: ev, continuation }) => ({
           key: `${ev.id}${continuation ? ':c' : ''}`,
@@ -171,13 +175,31 @@ export function renderMonth(views, api) {
                   },
                 }),
           update: (el) => {
-            el.textContent = ev.allDay
-              ? ev.title
-              : `${format.time(ev.startMin).replace(':00', '')} ${ev.title}`
+            // The visible label is the title; the time prefix is decorative, so the
+            // accessible name (which starts with the title) contains the visible
+            // label (WCAG 2.5.3).
+            el.replaceChildren(
+              ...(ev.allDay
+                ? []
+                : [
+                    h(
+                      'span',
+                      {
+                        attrs: {
+                          class: 'bc-event-time',
+                          'aria-hidden': 'true',
+                        },
+                      },
+                      format.time(ev.startMin).replace(':00', '') + ' ',
+                    ),
+                  ]),
+              ev.title,
+            )
             if (continuation) return
             applyProps(el, {
               attrs: {
                 'aria-label': api.eventName(ev, {
+                  visible: el.textContent,
                   pending: state.pending.has(ev.id),
                 }),
                 'aria-description': ev.tooltip ?? null,
@@ -194,7 +216,8 @@ export function renderMonth(views, api) {
             })
           },
         }))
-        if (hidden > 0) {
+        const shownCount = all.filter((x) => !x.continuation).length
+        if (compact ? shownCount > 0 : hidden > 0) {
           items.push({
             key: 'more',
             create: () =>
@@ -206,10 +229,13 @@ export function renderMonth(views, api) {
                 },
               }),
             update: (el) => {
-              el.textContent = `+${hidden} more`
+              const count = all.filter((x) => !x.continuation).length
+              el.textContent = compact ? String(count) : `+${hidden} more`
               applyProps(el, {
                 attrs: {
-                  'aria-label': `${messages.more(hidden)}, ${format.day(date)}`,
+                  'aria-label': compact
+                    ? `${messages.events(count)}, ${format.day(date)}`
+                    : `${messages.more(hidden)}, ${format.day(date)}`,
                   'aria-haspopup': 'dialog',
                   'aria-expanded': String(state.popover?.date === date),
                 },

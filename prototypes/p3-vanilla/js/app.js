@@ -854,6 +854,14 @@ export function keyFor(grid, cell) {
 }
 api.keyFor = keyFor
 
+// Re-render when the month crosses the compact breakpoint (spec 8.1).
+let wasCompact = null
+new ResizeObserver(() => {
+  const compact = views.clientWidth < 640
+  if (wasCompact !== null && compact !== wasCompact) render()
+  wasCompact = compact
+}).observe(views)
+
 function render() {
   renderToolbar()
   if (state.view === 'month') renderMonth(views, api)

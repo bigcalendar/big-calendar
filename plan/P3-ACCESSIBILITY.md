@@ -11,7 +11,7 @@ Sources: [interaction and accessibility](../docs/spec/interaction-accessibility.
 1. **Behavior is specified here once and implemented once**, in the interaction machines. Every rule below is something a machine or a prop-getter does; the binding and prebuilt UI only render it.
 2. **Keyboard first, pointer equal.** Every pointer action has a keyboard path, and every drag has a single-pointer path without dragging (WCAG 2.5.7).
 3. **One Tab stop per composite** (D-51). Arrow keys move inside a composite. Tab moves between composites.
-4. **Names are built, not scraped.** Every event, slot and day gets its accessible name from the overridable name composer (D-50), using `messages` strings (D-40). Visual text and accessible names may differ: the visible chip says "9 Standup", the name says "Standup, 9:00 to 9:15 AM, Wednesday, October 28".
+4. **Names are built, not scraped, and start with what's visible.** Every event, slot and day gets its accessible name from the overridable name composer (D-50), using `messages` strings (D-40). The name may say more than the visible text, but it **always starts with the part's visible label** (WCAG 2.5.3 Label in Name), so speech-input users can say what they see. The visible chip "10 AM Dentist" is named "10 AM Dentist, 10:00 to 11:00 AM, Monday, October 26". (Prototype finding 1.)
 5. **Announce changes, not state.** The live region speaks when something changes that the user didn't directly cause through focus: the period changed, a selection grew, a drop happened, a change was rolled back. Focus movement speaks for itself.
 6. **No single-character shortcuts** at 1.0 (WCAG 2.1.4). Every key binding uses a modifier, a navigation key, Enter, Space, Escape, Delete, Shift+F10 or the menu key. Configurable shortcuts are post-1.0 (D-80 #10).
 
@@ -60,7 +60,7 @@ Every grid sets `aria-rowcount` and `aria-colcount` for its full size, and `aria
 
 The default composer joins, in this order, the parts that apply:
 
-1. title;
+1. the part's visible label (by default the title; for a month chip with a time prefix, "10 AM Dentist");
 2. time: "9:00 to 9:15 AM", or `messages.allDay` ("All day"); for an event that spans days, its start and end with dates;
 3. date: "Wednesday, October 28" (omitted inside a single-day popover whose header already says it);
 4. resources: "Room A" (and "and 2 more" past two);
@@ -260,7 +260,7 @@ Shown on hover **and** on keyboard focus, after a short delay; dismissible with 
 
 WCAG 1.4.10 exempts content that needs a two-dimensional layout, and a calendar grid qualifies, as data tables do. **Proposed:** we still reflow, through the container-query breakpoints:
 
-- month at narrow widths: day cells show an event count, not chips; activating a day opens its event list;
+- month at narrow widths (below a 40rem container): each day shows one count button ("3", named "3 events, Wednesday, October 28") instead of chips, and it opens the day's event list. The list's items must offer **every action a chip offers** (activation, the context menu, Move), because they are the only way to reach those events (prototype finding 3);
 - the time grid at narrow widths: the compact touch views (1 or 3 days, D-26);
 - the toolbar wraps, and the view switcher stays reachable.
 
@@ -283,6 +283,7 @@ Nothing requires horizontal scrolling of the page at 320 CSS px, except inside t
 | 2.4.3 Focus order                                        | Section 2.3                                                                                               |
 | 2.4.6 Headings and labels                                | Section 2.2                                                                                               |
 | 2.4.7 Focus visible, 2.4.11 Focus not obscured (minimum) | Section 8                                                                                                 |
+| 2.5.3 Label in name                                      | Section 1, principle 4; section 2.6                                                                       |
 | 2.5.7 Dragging movements                                 | Section 6.4                                                                                               |
 | 2.5.8 Target size (minimum)                              | Section 8                                                                                                 |
 | 3.2.1 On focus, 3.2.2 On input                           | Focus never navigates or commits; only Enter, Space, Page Up/Down and moving past the range edge navigate |
@@ -317,6 +318,16 @@ It exists to test this spec with real screen readers. It is not product code and
 - **Manual:** the screen-reader script (`docs/checklists/screen-reader-script.md`), rewritten with the expected announcement for each step, run with VoiceOver + Safari now and NVDA + Firefox when Windows is available.
 - Each finding is recorded with the step, what was announced, what was expected, and the change made to this spec.
 
-## 13. Questions for the maintainer
+## 13. Prototype findings
+
+Recorded as they're found. Each says what was seen, the spec change, and how it was verified.
+
+1. **Label in Name (WCAG 2.5.3, level A).** axe failed every month chip on all three engines: the visible "10 AM Dentist" wasn't part of the name "Dentist, 10:00 to 11:00 AM, …". Marking the time `aria-hidden` doesn't help, because sighted speech-input users still see it. **Change:** principle 4 and section 2.6; the composer receives the visible label and starts with it. Verified: zero axe violations.
+2. **Event-group order must come from layout order, not DOM order.** On the fall-back day, both 1:30 events start at the same wall-clock time, and DOM order put the EST event first; Down from the EDT event went nowhere. **Change:** none to the spec (section 3.3 already says layout order, D-59); the machine sorts by instant, then duration, then id. Verified by the scripted keyboard run.
+3. **Compact month hides chips, so their actions need another home.** At 320 CSS px, month chips shrank to "1…". The count button and day list (section 8.1) fix the visual problem, but the context menu and Move were then unreachable. **Change:** section 8.1 requires the day list to offer every chip action. The prototype doesn't implement it yet.
+4. **Forced colors:** selection, focus and chip borders stay visible, but chips inside a selected day lose contrast against the system Highlight color. **Change (Proposed):** in forced colors, selected days show selection with a thick system-color border instead of a Highlight fill.
+5. **Automated baseline:** with findings 1 and 2 fixed, axe reports zero violations on Chromium 156, Firefox 157 and WebKit 27.2, in normal and forced-colors modes, at 1280 and 320 CSS px, over the month, week and both DST weeks, including the open popover, menu and move states. Nothing scrolls the page horizontally at 320 CSS px.
+
+## 14. Questions for the maintainer
 
 Collected from the **Proposed** items above, with recommendations, at the end of P3. The list grows as the prototype runs.
