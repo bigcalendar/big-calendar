@@ -1,6 +1,6 @@
 # Accessibility spec (P3)
 
-> **Status: draft, in progress (2026-10-28).** Not normative until the maintainer approves P3. On approval it moves to `docs/spec/accessibility.md` with a decision entry. Items marked **Proposed** need the maintainer's yes or no. Items marked **Prototype check** are confirmed or changed by the vanilla prototype and the screen-reader runs.
+> **Status: draft, in progress (2026-10-28).** Not normative until the maintainer approves P3. On approval it moves to `docs/spec/accessibility.md` with a decision entry. Items once marked Proposed were answered by the maintainer on 2026-10-28 and are recorded as D-89. Items marked **Prototype check** are confirmed or changed by the vanilla prototype and the screen-reader runs.
 
 Sources: [interaction and accessibility](../docs/spec/interaction-accessibility.md) (D-50, D-51), [engine](../docs/spec/engine.md), [time semantics](../docs/spec/time-semantics.md) (T-14), [data model](../docs/spec/data-model.md) (D-39), [gap additions](../docs/spec/gap-additions.md) (#4, #13, #14, #16), [support matrix](../docs/spec/support-matrix.md). Exit criteria: [roadmap](../docs/spec/roadmap.md#planning-phase), row P3.
 
@@ -25,11 +25,11 @@ Sources: [interaction and accessibility](../docs/spec/interaction-accessibility.
 | Side panel (mini calendar, resource panel, source list) | `<aside>`; `aria-hidden="true"` and `inert` while collapsed | `messages.sidePanelLabel`                                                                     |
 | Panel toggle                                            | `<button aria-controls="<aside id>" aria-expanded>`         | `messages.toggleSidePanel`                                                                    |
 
-**Proposed:** `inert` as well as `aria-hidden` on the collapsed panel, so its controls can't be reached by Tab either. `inert` is Baseline (support matrix).
+**Decided (D-89):** `inert` as well as `aria-hidden` on the collapsed panel, so its controls can't be reached by Tab either. `inert` is Baseline (support matrix).
 
 ### 2.2 Toolbar
 
-- A `role="toolbar"` with `aria-label` (`messages.toolbarLabel`), arrow-key roving between its controls and **one Tab stop** (APG toolbar pattern). **Proposed**, so the toolbar doesn't cost five Tab presses on every pass.
+- A `role="toolbar"` with `aria-label` (`messages.toolbarLabel`), arrow-key roving between its controls and **one Tab stop** (APG toolbar pattern) (D-89), so the toolbar doesn't cost five Tab presses on every pass.
 - **Today**, **Previous** and **Next** are buttons. Previous and Next have names that include the unit: "Previous week", "Next month".
 - **The date label** (for example "October 2026" or "October 25 – 31, 2026") is a heading (`<h2>` by default; the level is a prop) and a **polite live region** (D-50). It is announced once per navigation, not on first render.
 - **The view switcher** is a menu button (`aria-haspopup="menu"`, `aria-expanded`) opening a `role="menu"` of `menuitemradio` items with `aria-checked` (D-50). The button's name includes the current view: "View: Week".
@@ -43,7 +43,7 @@ In every view, in this order:
 3. the **event group** (one stop) for the whole view;
 4. the side panel's composites, if open.
 
-The event group's **entry point follows the grid** (Proposed): pressing Tab from a focused day or slot lands on the first event on or after that day or slot. Shift+Tab from an event lands on that event's day or slot in the grid. So "Tab" means "the events here", and "Shift+Tab" means "back to where this event is".
+The event group's **entry point follows the grid** (D-89): pressing Tab from a focused day or slot lands on the first event on or after that day or slot. Shift+Tab from an event lands on that event's day or slot in the grid. So "Tab" means "the events here", and "Shift+Tab" means "back to where this event is".
 
 ### 2.4 Grid metadata (D-50)
 
@@ -52,7 +52,7 @@ Every grid sets `aria-rowcount` and `aria-colcount` for its full size, and `aria
 ### 2.5 The live region
 
 - One polite region per calendar, rendered from `getLiveRegionProps()`: `role="status"`, `aria-live="polite"`, `aria-atomic="true"`, visually hidden. The toolbar label is a second, separate polite region (D-50).
-- **Proposed:** a rejected change (rollback) is the only assertive message, sent through a second, `role="alert"` region, because the user's last action was undone.
+- **Decided (D-89):** a rejected change (rollback) is the only assertive message, sent through a second, `role="alert"` region, because the user's last action was undone.
 - Messages are **debounced** (Prototype check: 150ms), so rapid arrow presses during a keyboard move announce only where the move settled.
 - The region is cleared after each message (Prototype check), so repeating the same message is still announced.
 
@@ -92,7 +92,7 @@ section (region, named)
 ```
 
 - The month is read **row by row**: a week at a time (§5.2 of the engine spec).
-- Days outside the current month are focusable and named the same way, with `messages.outsideMonth` appended ("September 29, previous month"). **Proposed.**
+- Days outside the current month are focusable and named the same way, with `messages.outsideMonth` appended ("September 29, previous month") (D-89).
 - Hidden days (`hiddenDays`, D-75) are not cells at all; `aria-colcount` counts only shown days.
 
 ### 3.2 Keys in the grid
@@ -105,11 +105,11 @@ section (region, named)
 | Page Up / Page Down          | Same day, previous / next month; the view navigates and the label announces                                   |
 | Shift+Arrows, Shift+Home/End | Extend the selection from the anchor day (section 6.1)                                                        |
 | Enter                        | Activate the slot: confirms the current selection, or selects just this day if none (the app's slot callback) |
-| Space                        | Select just this day and make it the anchor, without confirming (Proposed). Enter confirms                    |
+| Space                        | Select just this day and make it the anchor, without confirming (D-89). Enter confirms                        |
 | Escape                       | Clear the selection                                                                                           |
 | Tab                          | To the event group, entering at this day's first event                                                        |
 
-Moving past the first or last visible day navigates to the previous or next period and keeps the day (Proposed), as Google Calendar and the APG date-picker do.
+Moving past the first or last visible day navigates to the previous or next period and keeps the day (D-89), as Google Calendar and the APG date-picker do.
 
 ### 3.3 Events and "+N more"
 
@@ -140,33 +140,33 @@ section
 
 - Read **column by column** (engine spec §5.2): Up and Down move through a day's slots, Left and Right change day at the same time.
 - Every slot is a focusable cell (D-51).
-- **Proposed:** the time body's day headers are shared with the all-day grid, and the time grid's cells carry the date in their own names instead of relying on header association, because the decorative axis can't be a row header.
+- **Decided (D-89):** the time body's day headers are shared with the all-day grid, and the time grid's cells carry the date in their own names instead of relying on header association, because the decorative axis can't be a row header.
 
 ### 4.2 Keys in the time body
 
-| Key                       | Action                                                                                                          |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Up / Down                 | Previous / next slot in the day                                                                                 |
-| Left / Right              | Same slot, previous / next day (swapped in RTL)                                                                 |
-| Home / End                | First / last slot of the day (the `min`/`max` window)                                                           |
-| Ctrl+Home / Ctrl+End      | First slot of the first day / last slot of the last day                                                         |
-| Page Up / Page Down       | Previous / next period (the view navigates)                                                                     |
-| Shift+Up/Down             | Extend the selection by a slot, within one day                                                                  |
-| Shift+Left/Right          | Extend the selection across days (Proposed: same time range on each day, like Google Calendar's multi-day drag) |
-| Enter, Space, Escape, Tab | As in the day grid                                                                                              |
+| Key                       | Action                                                                                                                                                                                                                                                   |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Up / Down                 | Previous / next slot in the day                                                                                                                                                                                                                          |
+| Left / Right              | Same slot, previous / next day (swapped in RTL)                                                                                                                                                                                                          |
+| Home / End                | First / last slot of the day (the `min`/`max` window)                                                                                                                                                                                                    |
+| Ctrl+Home / Ctrl+End      | First slot of the first day / last slot of the last day                                                                                                                                                                                                  |
+| Page Up / Page Down       | Previous / next period (the view navigates)                                                                                                                                                                                                              |
+| Shift+Up/Down             | Extend the selection by a slot, within one day                                                                                                                                                                                                           |
+| Shift+Left/Right          | Extend the selection across days as **one continuous time span** from the anchor to the new position, for example Wednesday 9:00 AM to Thursday 10:00 AM (D-89; a multi-day timed selection, T-7). Announced as "9:00 AM Wednesday to 10:00 AM Thursday" |
+| Enter, Space, Escape, Tab | As in the day grid                                                                                                                                                                                                                                       |
 
 Focusing a slot scrolls it into view, inside the scroll container, with `scroll-padding` so sticky headers never cover it (WCAG 2.4.11).
 
 ### 4.3 The focus hop (engine spec §5.2)
 
-- **Up from the first slot** of a day moves focus to that day's cell in the all-day grid. **Down from an all-day cell** moves to the first slot of the same day, scrolling the time body to the top of the `min` window. **Proposed.**
+- **Up from the first slot** of a day moves focus to that day's cell in the all-day grid. **Down from an all-day cell** moves to the first slot of the same day, scrolling the time body to the top of the `min` window. (D-89)
 - The hop changes Tab stops' remembered positions: the all-day grid and the time grid each remember their own last-focused cell.
 - The two grids are announced as different grids when focus hops between them (their names come from `messages.allDayGrid` and `messages.timeGrid`). **Prototype check:** both screen readers announce the grid change on a hop.
 
 ### 4.4 DST days (T-14)
 
-- **Spring forward:** the skipped hour is an empty band. Its slots are not focusable; Up/Down skip over them, and the next slot's name says what happened: "3:00 to 3:30 AM, Sunday, March 8, after the daylight-saving change". **Proposed.**
-- **Fall back:** the repeated hour shares rows. Each slot in it is named with both offsets: "1:30 to 2:00 AM, first or second occurrence (EDT or EST)". Events in that hour carry the zone abbreviation in their time part: "Shift handover, 1:30 AM EST". **Proposed.** This is how screen-reader users tell the two occurrences apart, as T-14 requires.
+- **Spring forward:** the skipped hour is an empty band. Its slots are not focusable; Up/Down skip over them, and the next slot's name says what happened: "3:00 to 3:30 AM, Sunday, March 8, after the daylight-saving change". (D-89)
+- **Fall back:** the repeated hour shares rows. Each slot in it is named with both offsets: "1:30 to 2:00 AM, first or second occurrence (EDT or EST)". Events in that hour carry the zone abbreviation in their time part: "Shift handover, 1:30 AM EST". (D-89) This is how screen-reader users tell the two occurrences apart, as T-14 requires.
 
 ### 4.5 Multi-day timed events (T-7)
 
@@ -176,8 +176,8 @@ The first piece is in the event group; later pieces are `aria-hidden`. Its name 
 
 These families are built in S3 and S6. Their full spec is written at those slices' kickoffs (rule 7); P3 fixes their structure now so the machines are designed for them.
 
-- **Agenda:** a `role="grid"` of rows (date, time, event) with roving focus by row; dates are row headers. Virtualized, so `aria-rowcount` and `aria-rowindex` give true positions. **Proposed.**
-- **Timeline:** a `role="grid"` with one row per lane (resource or day) and the lane name as the row header; it reads **row by row**. Columns are time slots. Rows are virtualized, with `aria-rowindex`. **Proposed.**
+- **Agenda:** a `role="grid"` of rows (date, time, event) with roving focus by row; dates are row headers. Virtualized, so `aria-rowcount` and `aria-rowindex` give true positions. (D-89)
+- **Timeline:** a `role="grid"` with one row per lane (resource or day) and the lane name as the row header; it reads **row by row**. Columns are time slots. Rows are virtualized, with `aria-rowindex`. (D-89)
 
 ## 6. Interactions
 
@@ -190,7 +190,7 @@ These families are built in S3 and S6. Their full spec is written at those slice
 ### 6.2 Activation
 
 - **Primary** (click, tap, Enter, Space): the app's select-event callback.
-- **Secondary** (double-click): **Proposed:** the context menu's first item, "Open", is the keyboard and single-pointer alternative. There's no extra key, because Shift+Enter isn't reliable across screen readers.
+- **Secondary** (double-click): **Decided (D-89):** the context menu's first item, "Open", is the keyboard and single-pointer alternative. There's no extra key, because Shift+Enter isn't reliable across screen readers.
 
 ### 6.3 Context menu
 
@@ -200,10 +200,10 @@ These families are built in S3 and S6. Their full spec is written at those slice
 
 ### 6.4 Keyboard move and resize (keyboard DnD) and the single-pointer alternative
 
-**Proposed design** (to be confirmed by the prototype and the O-6 comparison):
+**Decided design** (D-89; confirmed in the prototype and VoiceOver):
 
 1. Choose **Move** (or Resize start/end) from the context menu or the touch toolbar. The event enters move mode: `aria-grabbed` is not used (deprecated); the live region announces "Moving Standup. Use arrow keys, Enter to drop, Escape to cancel."
-2. **Arrows** move the draft by one slot (time grid) or one day (day grid). Left and Right change day; in the time grid Up and Down change time by the snap step (gap addition #2). **Page Up/Down** moves to the previous or next period. **Shift+Up/Down** in the time grid moves by an hour. **Proposed.**
+2. **Arrows** move the draft by one slot (time grid) or one day (day grid). Left and Right change day; in the time grid Up and Down change time by the snap step (gap addition #2). **Page Up/Down** moves to the previous or next period. **Shift+Up/Down** in the time grid moves by an hour. (D-89)
 3. Moving onto the all-day grid with the focus hop converts the draft as T-12 says, and the announcement says so: "…, will become an all-day event".
 4. Each settled position is announced: "Standup, Thursday, 10:00 to 10:15 AM". An invalid position adds the reason (D-76).
 5. **Enter** drops: the change goes through the pipeline and shows as pending; **Escape** cancels and restores the event.
@@ -213,7 +213,7 @@ These families are built in S3 and S6. Their full spec is written at those slice
 
 ### 6.5 Dragging from outside the calendar (D-36)
 
-External drags use native HTML drag-and-drop, which has no keyboard path in browsers. **Proposed:** the docs show apps how to offer a keyboard path themselves (an "Add to calendar" action that creates an `external-drag` draft through the instance and enters move mode at the focused slot). The machine exposes that entry point.
+External drags use native HTML drag-and-drop, which has no keyboard path in browsers. **Decided (D-89):** the docs show apps how to offer a keyboard path themselves (an "Add to calendar" action that creates an `external-drag` draft through the instance and enters move mode at the focused slot). The machine exposes that entry point.
 
 ### 6.6 Background events (D-39)
 
@@ -227,15 +227,15 @@ APG date-picker grid: `role="grid"`, roving `tabIndex`, `aria-selected` on the s
 
 ### 7.2 Resource panel (D-50)
 
-The APG tree pattern: `role="tree"`, `treeitem`s with `aria-level`, `aria-setsize`, `aria-posinset` and `aria-expanded` for parents. **Space toggles visibility** (D-50), shown as `aria-checked` on the treeitem (Proposed; APG allows checked tree items). Right expands or moves to the first child, Left collapses or moves to the parent, Home/End first/last visible item. Hidden resources keep their place, named "Room A, hidden".
+The APG tree pattern: `role="tree"`, `treeitem`s with `aria-level`, `aria-setsize`, `aria-posinset` and `aria-expanded` for parents. **Space toggles visibility** (D-50), shown as `aria-checked` on the treeitem (D-89; APG allows checked tree items). Right expands or moves to the first child, Left collapses or moves to the parent, Home/End first/last visible item. Hidden resources keep their place, named "Room A, hidden".
 
 ### 7.3 Source list (D-73)
 
-**Proposed:** a group of native checkboxes (`<fieldset>` with a `<legend>`), one per source, because there's no hierarchy. Each checkbox is a Tab stop; the list is short by nature. The source's color swatch is `aria-hidden`; its name is the label.
+**Decided (D-89):** a group of native checkboxes (`<fieldset>` with a `<legend>`), one per source, because there's no hierarchy. Each checkbox is a Tab stop; the list is short by nature. The source's color swatch is `aria-hidden`; its name is the label.
 
 ### 7.4 Delete confirmation and read-only (D-50)
 
-- Delete confirmation is a modal `<dialog>` opened with `showModal()`, `aria-describedby` its message, focus on the safe button (Cancel) first (Proposed), and focus returned to the opener when it closes.
+- Delete confirmation is a modal `<dialog>` opened with `showModal()`, `aria-describedby` its message, focus on the safe button (Cancel) first (D-89), and focus returned to the opener when it closes.
 - Read-only events show "Show details" and no Delete (D-50), and their names include "Read-only".
 
 ### 7.5 Tooltips (D-74, gap addition #4)
@@ -258,7 +258,7 @@ Shown on hover **and** on keyboard focus, after a short delay; dismissible with 
 
 ### 8.1 Reflow
 
-WCAG 1.4.10 exempts content that needs a two-dimensional layout, and a calendar grid qualifies, as data tables do. **Proposed:** we still reflow, through the container-query breakpoints:
+WCAG 1.4.10 exempts content that needs a two-dimensional layout, and a calendar grid qualifies, as data tables do. **Decided (D-89):** we still reflow, through the container-query breakpoints:
 
 - month at narrow widths (below a 40rem container): each day shows one count button ("3", named "3 events, Wednesday, October 28") instead of chips, and it opens the day's event list. The list's items must offer **every action a chip offers** (activation, the context menu, Move), because they are the only way to reach those events (prototype finding 3);
 - the time grid at narrow widths: the compact touch views (1 or 3 days, D-26);
@@ -324,10 +324,19 @@ Recorded as they're found. Each says what was seen, the spec change, and how it 
 
 1. **Label in Name (WCAG 2.5.3, level A).** axe failed every month chip on all three engines: the visible "10 AM Dentist" wasn't part of the name "Dentist, 10:00 to 11:00 AM, …". Marking the time `aria-hidden` doesn't help, because sighted speech-input users still see it. **Change:** principle 4 and section 2.6; the composer receives the visible label and starts with it. Verified: zero axe violations.
 2. **Event-group order must come from layout order, not DOM order.** On the fall-back day, both 1:30 events start at the same wall-clock time, and DOM order put the EST event first; Down from the EDT event went nowhere. **Change:** none to the spec (section 3.3 already says layout order, D-59); the machine sorts by instant, then duration, then id. Verified by the scripted keyboard run.
-3. **Compact month hides chips, so their actions need another home.** At 320 CSS px, month chips shrank to "1…". The count button and day list (section 8.1) fix the visual problem, but the context menu and Move were then unreachable. **Change:** section 8.1 requires the day list to offer every chip action. The prototype doesn't implement it yet.
-4. **Forced colors:** selection, focus and chip borders stay visible, but chips inside a selected day lose contrast against the system Highlight color. **Change (Proposed):** in forced colors, selected days show selection with a thick system-color border instead of a Highlight fill.
-5. **Automated baseline:** with findings 1 and 2 fixed, axe reports zero violations on Chromium 156, Firefox 157 and WebKit 27.2, in normal and forced-colors modes, at 1280 and 320 CSS px, over the month, week and both DST weeks, including the open popover, menu and move states. Nothing scrolls the page horizontally at 320 CSS px.
+3. **Compact month hides chips, so their actions need another home.** At 320 CSS px, month chips shrank to "1…". The count button and day list (section 8.1) fix the visual problem, but the context menu and Move were then unreachable. **Change:** section 8.1 requires the day list to offer every chip action. Verified in the prototype at 320 CSS px: Shift+F10 in the day list opens the event's menu, Move works, and focus follows the event to its new day's button.
+4. **Forced colors:** selection, focus and chip borders stay visible, but chips inside a selected day lose contrast against the system Highlight color. **Change (D-89osed):** in forced colors, selected days show selection with a thick system-color border instead of a Highlight fill.
+5. **VoiceOver + Safari (macOS 26.6.2, Safari 26.6.2), 2026-10-28:** the maintainer ran the full script (`prototypes/p3-vanilla/SCREEN-READER-SCRIPT.md`); every step behaved as expected. Lighthouse reported 100 for accessibility.
+6. **Automated baseline:** with findings 1 and 2 fixed, axe reports zero violations on Chromium 156, Firefox 157 and WebKit 27.2, in normal and forced-colors modes, at 1280 and 320 CSS px, over the month, week and both DST weeks, including the open popover, menu and move states. Nothing scrolls the page horizontally at 320 CSS px.
 
-## 14. Questions for the maintainer
+## 14. Answers (D-89)
 
-Collected from the **Proposed** items above, with recommendations, at the end of P3. The list grows as the prototype runs.
+Answered 2026-10-28, after the VoiceOver run:
+
+- Every item previously marked Proposed is approved as written, **except** Shift+Left/Right in the time grid, which extends as one continuous time span rather than the same times on each day (section 4.2).
+- Label in Name (finding 1): month chips keep their visible start time, and the name starts with it ("10 AM Dentist, 10:00 to 11:00 AM, …"); the short repeat is accepted.
+- Keyboard and single-pointer move (section 6.4): approved as tested, with no extra shortcut.
+- Rollback is the only assertive announcement (section 2.5); the secondary action is the context menu's "Open" (section 6.2).
+- Fall-back DST names use the zone abbreviations from `Intl` (section 4.4).
+- Forced-colors selection uses a thick system-color border instead of a Highlight fill (finding 4).
+- Screen readers in P3 are VoiceOver and NVDA only; mobile screen readers are covered by the per-slice real-device checks from S1.

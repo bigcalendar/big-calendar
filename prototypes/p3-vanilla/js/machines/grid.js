@@ -202,9 +202,17 @@ export function selectionCells(sel) {
   if (!sel) return () => false
   const [d0, d1] = [sel.anchor.date, sel.head.date].sort()
   if (sel.grid !== 'time') return ({ date }) => date >= d0 && date <= d1
-  const [s0, s1] = [sel.anchor.slot, sel.head.slot].sort((a, b) => a - b)
-  return ({ date, slot }) =>
-    date >= d0 && date <= d1 && slot >= s0 && slot <= s1
+  // Time grid: one continuous span from the earlier cell to the later one (D-89).
+  const [start, end] = orderCells(sel.anchor, sel.head)
+  const key = ({ date, slot }) => `${date}@${String(slot).padStart(3, '0')}`
+  return (cell) => key(cell) >= key(start) && key(cell) <= key(end)
+}
+
+/** The earlier and later of two time-grid cells. */
+export function orderCells(a, b) {
+  return a.date < b.date || (a.date === b.date && a.slot <= b.slot)
+    ? [a, b]
+    : [b, a]
 }
 
 export function selectionDays(sel) {

@@ -22,6 +22,7 @@ import {
   keyOf,
   selectionCells,
   selectionDays,
+  orderCells,
 } from './machines/grid.js'
 import { eventGroupKey, entryPoint, compareEvents } from './machines/events.js'
 import {
@@ -333,12 +334,11 @@ function describeSelection(sel) {
   const invalid = validate({ date: d0 }) ?? validate({ date: d1 })
   let text
   if (sel.grid === 'time') {
-    const [s0, s1] = [sel.anchor.slot, sel.head.slot].sort((a, b) => a - b)
-    const time = format.timeRange(s0 * SLOT_MINUTES, (s1 + 1) * SLOT_MINUTES)
+    const [a, b] = orderCells(sel.anchor, sel.head)
     text =
-      d0 === d1
-        ? `${time}, ${format.day(d0)}`
-        : `${time}, ${format.weekdayLong(d0)} to ${format.weekdayLong(d1)}`
+      a.date === b.date
+        ? `${format.timeRange(a.slot * SLOT_MINUTES, (b.slot + 1) * SLOT_MINUTES)}, ${format.day(a.date)}`
+        : `${format.time(a.slot * SLOT_MINUTES)} ${format.weekdayLong(a.date)} to ${format.time((b.slot + 1) * SLOT_MINUTES)} ${format.weekdayLong(b.date)}`
   } else {
     text =
       d0 === d1
@@ -468,11 +468,13 @@ function onEventKey(id, e) {
 function focusItem(id) {
   state.eventFocus = id
   render()
-  views
-    .querySelector(
-      `[data-item="${CSS.escape(id)}"]:not([aria-hidden="true"] *)`,
-    )
-    ?.focus()
+  const el = views.querySelector(
+    `[data-item="${CSS.escape(id)}"]:not([aria-hidden="true"] *)`,
+  )
+  if (el) return el.focus()
+  // Compact month: the event has no chip, so focus its day's count button (finding 3).
+  const ev = byId(id)
+  if (ev) views.querySelector(`[data-item="more:${ev.start}"]`)?.focus()
 }
 function focusEvent(id) {
   focusItem(id)
@@ -704,8 +706,18 @@ function openMore(date) {
           }),
         },
         on: {
+          // The day list offers every chip action (spec 8.1, finding 3).
           click: () => announceApp(`onSelectEvent: ${ev.title}`),
+          dblclick: () => api.secondary(ev.id),
+          contextmenu: (e) => {
+            e.preventDefault()
+            menuFromList(ev.id, date)
+          },
           keydown: (e) => {
+            if ((e.key === 'F10' && e.shiftKey) || e.key === 'ContextMenu') {
+              e.preventDefault()
+              return menuFromList(ev.id, date)
+            }
             const all = [...popover.querySelectorAll('button')]
             const j = all.indexOf(e.currentTarget)
             const n =
@@ -737,10 +749,22 @@ function openMore(date) {
   place(popover, button)
   buttons[0]?.focus()
 }
+/** Closes the day list and opens an event's menu anchored to the day's button. */
+function menuFromList(id, date) {
+  popover.__noReturn = true
+  popover.hidePopover()
+  const anchor = views.querySelector(`[data-item="more:${date}"]`)
+  openEventMenu(id, anchor)
+}
 applyProps(popover, {
   on: {
     toggle: (e) => {
       if (e.newState !== 'closed') return
+      if (popover.__noReturn) {
+        popover.__noReturn = false
+        state.popover = null
+        return
+      }
       const date = popover.__return
       state.popover = null
       // Focus returns to "+N more", or to the day cell if the button is gone (D-50).
