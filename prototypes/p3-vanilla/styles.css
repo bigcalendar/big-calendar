@@ -1,0 +1,389 @@
+/* P3 prototype styles. Same rules as the product (D-68): cascade layers,
+   zero-specificity :where() selectors, --bc-* tokens, geometry from inline
+   custom properties. */
+@layer bc.tokens, bc.structure, bc.theme;
+
+@layer bc.tokens {
+  :where(.bc-calendar) {
+    --bc-slot-height: 24px;
+    --bc-gutter: 4.5rem;
+    --bc-cell-min-height: 7rem;
+    --bc-header-height: 1.75rem;
+    --bc-bg: #fff;
+    --bc-fg: #1b1b1f;
+    --bc-muted: #5b5b66;
+    --bc-line: #c9c9d1;
+    --bc-today: #0b57d0;
+    --bc-event-bg: #d3e3fd;
+    --bc-event-fg: #041e49;
+    --bc-selection: #c2e7ff;
+    --bc-invalid: #b3261e;
+    --bc-focus: #0b57d0;
+    --bc-focus-width: 3px;
+    --bc-pending-opacity: 0.6;
+  }
+}
+
+@layer bc.structure {
+  :where(.bc-visually-hidden) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  :where(.bc-calendar) {
+    container-type: inline-size;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+  :where(.bc-header) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  :where(.bc-toolbar) {
+    display: flex;
+    gap: 0.25rem;
+  }
+  :where(.bc-label) {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+  :where(.bc-row) {
+    display: contents;
+  }
+
+  /* Month: the grid and the event layer are subgrids of one parent, so they share rows. */
+  :where(.bc-month) {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-rows: var(--bc-header-height) repeat(
+        var(--bc-rows),
+        minmax(var(--bc-cell-min-height), auto)
+      );
+  }
+  :where(.bc-month-grid, .bc-month-events) {
+    grid-area: 1 / 1 / -1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-template-rows: subgrid;
+  }
+  :where(.bc-month-events) {
+    pointer-events: none;
+  }
+  :where(.bc-day) {
+    grid-row: calc(var(--bc-row) + 1);
+    grid-column: var(--bc-col);
+    min-height: var(--bc-cell-min-height);
+    padding: 0.25rem;
+  }
+  :where(.bc-day-events) {
+    grid-row: calc(var(--bc-row) + 1);
+    grid-column: var(--bc-col);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 1.75rem 0.25rem 0.25rem;
+    min-width: 0;
+  }
+  :where(.bc-day-events > *) {
+    pointer-events: auto;
+  }
+  :where(.bc-event, .bc-more) {
+    min-height: 24px; /* WCAG 2.5.8 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: start;
+    font: inherit;
+    font-size: 0.8125rem;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 0 0.375rem;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Week */
+  :where(.bc-week) {
+    display: grid;
+    grid-template-columns: var(--bc-gutter) repeat(7, minmax(0, 1fr));
+    grid-template-rows: auto auto 1fr;
+  }
+  :where(.bc-allday-grid) {
+    grid-column: 2 / -1;
+    grid-row: 1 / 3;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-template-rows: auto calc(var(--bc-allday-rows) * 28px + 8px);
+  }
+  :where(.bc-allday-cell) {
+    grid-row: 2;
+    grid-column: var(--bc-col);
+  }
+  :where(.bc-allday-layer) {
+    grid-column: 2 / -1;
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-auto-rows: 26px;
+    row-gap: 2px;
+    padding-block: 4px;
+    pointer-events: none;
+  }
+  :where(.bc-allday) {
+    grid-column: var(--bc-col) / span var(--bc-span);
+    grid-row: var(--bc-row);
+    pointer-events: auto;
+    margin-inline: 2px;
+  }
+  :where(.bc-time-scroll) {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    display: grid;
+    grid-template-columns: subgrid;
+    height: min(36rem, 70vh);
+    overflow-y: auto;
+    position: relative;
+    scroll-padding-block: calc(var(--bc-slot-height) * 2);
+  }
+  :where(.bc-time-axis) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  :where(.bc-axis-label) {
+    height: var(--bc-slot-height);
+    font-size: 0.75rem;
+    text-align: end;
+    padding-inline-end: 0.5rem;
+    transform: translateY(-0.5em);
+  }
+  :where(.bc-time-grid) {
+    grid-column: 2 / -1;
+    grid-row: 1;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-auto-rows: var(--bc-slot-height);
+  }
+  :where(.bc-slot) {
+    grid-column: var(--bc-col);
+    grid-row: var(--bc-row-start);
+  }
+  :where(.bc-timed-layer) {
+    grid-column: 2 / -1;
+    grid-row: 1;
+    position: relative;
+    pointer-events: none;
+  }
+  :where(.bc-timed) {
+    position: absolute;
+    top: calc(var(--bc-row-start) * var(--bc-slot-height));
+    height: calc(var(--bc-row-span) * var(--bc-slot-height) - 2px);
+    left: calc((var(--bc-col) + var(--bc-lane) / var(--bc-lanes)) * 100% / 7);
+    width: calc(100% / 7 / var(--bc-lanes) - 4px);
+    margin-inline-start: 2px;
+    pointer-events: auto;
+    white-space: normal;
+    align-content: start;
+  }
+
+  /* Popovers and menus */
+  :where(.bc-popover, .bc-menu) {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    padding: 0.5rem;
+    min-width: 12rem;
+    border: 1px solid var(--bc-line);
+    border-radius: 8px;
+  }
+  :where(.bc-more-list) {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  :where(.bc-menuitem) {
+    padding: 0.375rem 0.75rem;
+    min-height: 24px;
+    cursor: default;
+  }
+
+  /* Narrow containers: reflow (spec 8.1). */
+  @container (max-width: 40rem) {
+    :where(.bc-day-events .bc-event) {
+      font-size: 0.75rem;
+    }
+    :where(.bc-calendar) {
+      --bc-gutter: 3rem;
+      --bc-cell-min-height: 5rem;
+    }
+  }
+}
+
+@layer bc.theme {
+  :where(.bc-calendar) {
+    color: var(--bc-fg);
+    background: var(--bc-bg);
+  }
+  :where(.bc-tool) {
+    min-height: 32px;
+    min-width: 32px;
+  }
+  :where(.bc-colheader) {
+    font-size: 0.8125rem;
+    color: var(--bc-muted);
+    text-align: center;
+    padding: 0.25rem;
+  }
+  :where(.bc-colheader[data-today]) {
+    color: var(--bc-today);
+    font-weight: 700;
+  }
+  :where(.bc-day, .bc-allday-cell, .bc-slot) {
+    border-inline-end: 1px solid var(--bc-line);
+    border-block-end: 1px solid var(--bc-line);
+  }
+  :where(.bc-slot:not([data-hour])) {
+    border-block-end-style: dotted;
+  }
+  :where(.bc-day[data-outside]) {
+    color: var(--bc-muted);
+    background: repeating-linear-gradient(
+      135deg,
+      transparent 0 6px,
+      #f2f2f5 6px 8px
+    );
+  }
+  :where(.bc-day[aria-current='date'] .bc-day-number) {
+    background: var(--bc-today);
+    color: #fff;
+    border-radius: 999px;
+    padding: 0 0.4em;
+    font-weight: 700;
+  }
+  :where([role='gridcell'][aria-selected='true']) {
+    background: var(--bc-selection);
+    box-shadow: inset 0 0 0 2px var(--bc-today);
+  }
+  :where([role='gridcell'][data-invalid]) {
+    background: #f9dedc;
+    box-shadow: inset 0 0 0 2px var(--bc-invalid);
+  }
+  :where(.bc-slot[data-background]) {
+    background: repeating-linear-gradient(
+      45deg,
+      #ececf1 0 4px,
+      transparent 4px 8px
+    );
+  }
+  :where(.bc-slot[data-dst='gap']) {
+    background: #e3e3e8;
+  }
+  :where(.bc-slot[data-dst='repeat']) {
+    border-inline-start: 3px double var(--bc-muted);
+  }
+  :where(.bc-event, .bc-more) {
+    background: var(--bc-event-bg);
+    color: var(--bc-event-fg);
+    border-color: color-mix(in srgb, var(--bc-event-fg) 25%, transparent);
+  }
+  :where(.bc-more) {
+    background: transparent;
+    font-weight: 600;
+  }
+  :where(.bc-event[data-all-day], .bc-allday) {
+    background: #0b57d0;
+    color: #fff;
+  }
+  :where(.bc-event[data-read-only]) {
+    border-style: dashed;
+  }
+  :where(.bc-event[data-state='pending']) {
+    opacity: var(--bc-pending-opacity);
+    border-style: dotted;
+  }
+  :where(.bc-event[data-state='moving']) {
+    outline: 2px dashed var(--bc-focus);
+  }
+  :where(.bc-draft) {
+    background: transparent;
+    border: 2px dashed var(--bc-focus);
+    color: var(--bc-fg);
+  }
+  :where(.bc-draft[data-invalid='true']) {
+    border-color: var(--bc-invalid);
+    text-decoration: line-through;
+  }
+  :where(.bc-continuation) {
+    opacity: 0.85;
+  }
+  :where(.bc-calendar :focus-visible) {
+    outline: var(--bc-focus-width) solid var(--bc-focus);
+    outline-offset: -1px;
+    z-index: 1;
+  }
+  :where(.bc-popover, .bc-menu) {
+    background: var(--bc-bg);
+    color: var(--bc-fg);
+    box-shadow: 0 4px 16px rgb(0 0 0 / 0.2);
+  }
+  :where(.bc-menuitem:focus) {
+    background: var(--bc-selection);
+  }
+  :where(.bc-menuitem[aria-checked='true'])::before {
+    content: '✓ ';
+  }
+
+  @media (forced-colors: active) {
+    :where(.bc-event, .bc-more, .bc-allday, .bc-draft) {
+      border: 1px solid CanvasText;
+      forced-color-adjust: none;
+      background: Canvas;
+      color: CanvasText;
+    }
+    :where([role='gridcell'][aria-selected='true']) {
+      background: Highlight;
+      color: HighlightText;
+    }
+    :where([role='gridcell'][data-invalid]) {
+      outline: 2px dashed CanvasText;
+    }
+    :where(.bc-calendar :focus-visible) {
+      outline-color: Highlight;
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    :where(.bc-time-scroll) {
+      scroll-behavior: smooth;
+    }
+  }
+}
+
+/* Page chrome (not part of the calendar). */
+body {
+  font-family: system-ui, sans-serif;
+  margin: 0 1rem 2rem;
+  color: #1b1b1f;
+  background: #fff;
+}
+main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 16rem;
+  gap: 1rem;
+}
+@media (max-width: 60rem) {
+  main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.app-log {
+  font:
+    0.8125rem ui-monospace,
+    monospace;
+  padding-inline-start: 1.25rem;
+}
