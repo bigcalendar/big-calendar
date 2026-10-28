@@ -13,8 +13,8 @@
 5. [x] Keyboard and single-pointer move (keyboard DnD and its WCAG 2.5.7 alternative), context menu, invalid drops (D-76).
 6. [ ] O-6: build the move machine twice (hand-written state machine vs XState) and compare.
 7. [x] Automated checks: axe on all three engines, forced colors, 400% zoom, reduced motion.
-8. [ ] Screen-reader script with expected announcements (`docs/checklists/screen-reader-script.md`).
-9. [ ] Maintainer runs VoiceOver + Safari; fix findings.
+8. [x] Screen-reader script with expected announcements (`docs/checklists/screen-reader-script.md`).
+9. [ ] Maintainer runs VoiceOver + Safari with `prototypes/p3-vanilla/SCREEN-READER-SCRIPT.md`; fix findings. (Script handed over 2026-10-28.)
 10. [ ] Maintainer runs NVDA + Firefox **once Windows is available** (the maintainer has no Windows machine yet, 2026-10-28).
 11. [ ] Findings resolved; stop for the maintainer's P3 review.
 
