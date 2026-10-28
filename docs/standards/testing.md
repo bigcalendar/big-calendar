@@ -31,6 +31,13 @@ Per package, never per file:
 - Tests of the time semantics cite the T-rule they cover (for example `T-10`). (D-85)
 - Each bug fix starts with a failing test. (D-85)
 
+## Dates, times and browsers (D-87)
+
+- **Compare formatted output by parts, never as full strings across engines.** Use `formatToParts()` structure or the underlying values (year, month, era). Engines format the same date differently ("Jum. I" vs "Jmd. I", "8 Reiwa" vs "Reiwa 8").
+- **The Playwright suite runs twice on every engine:** once as-is, and once with `globalThis.Temporal` removed by an init script, so the polyfill path is always tested. Playwright's WebKit has native Temporal, which shipped Safari doesn't.
+- **The per-slice real-device check includes Safari 26.x** (iOS or macOS) while Safari 26 is on the browser floor. Playwright's WebKit can't reproduce Safari 26 bugs.
+- **Each supported bundler and test runner gets a CI smoke test** that builds and runs a small sample app ([support matrix](../spec/support-matrix.md)).
+
 ## Benchmarks (D-44)
 
 - The 50ms budget is gated on Chromium with 4× CPU slowdown, median of 10 runs after a warm-up.
