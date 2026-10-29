@@ -1,6 +1,6 @@
 # Accessibility review
 
-Source: [interaction and accessibility](../spec/interaction-accessibility.md), D-50, D-51, [gap additions](../spec/gap-additions.md) #13 and #14. The detailed per-family requirements arrive with **P3**; until then, check against the spec as written. Once P3 is approved, it governs, and this list gains a link to it.
+Source: [interaction and accessibility](../spec/interaction-accessibility.md), D-50, D-51, [gap additions](../spec/gap-additions.md) #13 and #14. The per-family requirements are in [accessibility](../spec/accessibility.md) (P3, D-91), which governs wherever this list is less specific.
 
 ## Automated
 
@@ -9,9 +9,9 @@ Source: [interaction and accessibility](../spec/interaction-accessibility.md), D
 
 ## Structure and names
 
-- [ ] The calendar root is a labelled `<section>`; the side panel is an `<aside>` controlled by a toggle with `aria-controls` and `aria-expanded`, and `aria-hidden` while collapsed.
+- [ ] The calendar root is a labelled `<section>`; the side panel is an `<aside>` controlled by a toggle with `aria-controls` and `aria-expanded`, and `aria-hidden` and `inert` while collapsed.
 - [ ] Grids carry `aria-rowcount`/`colcount`/`rowindex`/`colindex`; today has `aria-current="date"`; week numbers are hidden and attached to days with `aria-labelledby`.
-- [ ] Event names come from the overridable composer (title, time or "All day", date, resource, "Recurring"), and are the same in the grid and the "+N more" popover.
+- [ ] Event names come from the overridable composer (title, time or "All day", date, resource, "Recurring"), start with the part's visible label (WCAG 2.5.3), and are the same in the grid and the "+N more" popover.
 - [ ] Drag previews, continuation pieces, color dots, icons and the decorative time axis are `aria-hidden`.
 - [ ] Background events are inert, and their titles are in the accessible description of the slots they cover.
 - [ ] Every user-facing string comes from `messages` (D-40), not a hard-coded literal.
@@ -28,7 +28,8 @@ Source: [interaction and accessibility](../spec/interaction-accessibility.md), D
 ## Announcements
 
 - [ ] The toolbar date label is a polite live region.
-- [ ] Rolled-back changes and invalid drafts are announced.
+- [ ] Rolled-back changes and invalid drafts are announced; rollback is the only assertive message.
+- [ ] Live-region messages are debounced and cleared before each message, so a keyboard move announces only where it settled.
 
 ## Pointer and touch
 

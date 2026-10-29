@@ -2,7 +2,7 @@
 
 > **Normative.** Split verbatim from the approved plan (`plan/P1-PLAN.md` §10, approved 2026-10-27). Changing anything here needs a new entry in the [decision log](../decisions.md).
 
-- **The standard is WCAG 2.2 AA.** The roles, keyboard model, focus management and screen-reader announcements for each family are specified in **P3** and validated on a **vanilla (no framework) prototype** with VoiceOver and NVDA (plus JAWS if available) **before any framework code**.
+- **The standard is WCAG 2.2 AA.** The roles, keyboard model, focus management and screen-reader announcements for each family are specified in **P3** ([accessibility](accessibility.md), D-91) and validated on a **vanilla (no framework) prototype** with VoiceOver and NVDA (plus JAWS if available) **before any framework code**.
 - **Machines own all behavior:**
   - roving focus;
   - slot selection by pointer, touch long-press and Shift+Arrow;

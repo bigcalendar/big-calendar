@@ -23,25 +23,25 @@ Full rules: [docs/standards/workflow.md](docs/standards/workflow.md).
 
 ## Routing
 
-| When you are…                               | Read                                                                                                                              |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| starting or resuming a session              | `memory/PROGRESS.md` → skill `resume`                                                                                             |
-| meeting a question nothing answers          | skill `decide`, [docs/decisions.md](docs/decisions.md)                                                                            |
-| looking for any spec                        | [docs/spec/README.md](docs/spec/README.md) (index)                                                                                |
-| planning or sequencing work                 | [docs/spec/roadmap.md](docs/spec/roadmap.md) (artifacts, slices, open items)                                                      |
-| working on layers, packages or dependencies | [architecture](docs/spec/architecture.md), [headless API](docs/spec/headless-api.md)                                              |
-| touching dates, times or zones              | [time semantics](docs/spec/time-semantics.md), [date engine](docs/spec/date-engine.md)                                            |
-| touching events, resources or edits         | [data model](docs/spec/data-model.md), [event fields](docs/spec/event-fields.md), [edit model](docs/spec/edit-model.md)           |
-| touching layout or views                    | [engine](docs/spec/engine.md), [reactivity](docs/spec/reactivity.md)                                                              |
-| touching keyboard, pointer, focus or ARIA   | [interaction and accessibility](docs/spec/interaction-accessibility.md), skill `a11y-check`                                       |
-| writing React or CSS                        | [React and styling](docs/spec/react-and-styling.md), [react.md](docs/standards/react.md), [styling.md](docs/standards/styling.md) |
-| working on a module or migration            | [modules](docs/spec/modules.md), [migration](docs/spec/migration.md), [gap additions](docs/spec/gap-additions.md)                 |
-| writing any code                            | [docs/standards/code.md](docs/standards/code.md), skill `spec-check`                                                              |
-| writing tests or benchmarks                 | [testing.md](docs/standards/testing.md), skill `bench`                                                                            |
-| writing docs, TSDoc or stories              | [documentation.md](docs/standards/documentation.md), [writing.md](docs/standards/writing.md)                                      |
-| starting or finishing a slice               | skills `slice-start`, `slice-finish`; [slice gates](docs/checklists/slice-gates.md)                                               |
-| adding a package                            | skill `new-package`                                                                                                               |
-| changing this agent setup                   | [agent-toolset.md](docs/standards/agent-toolset.md)                                                                               |
+| When you are…                               | Read                                                                                                                                     |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| starting or resuming a session              | `memory/PROGRESS.md` → skill `resume`                                                                                                    |
+| meeting a question nothing answers          | skill `decide`, [docs/decisions.md](docs/decisions.md)                                                                                   |
+| looking for any spec                        | [docs/spec/README.md](docs/spec/README.md) (index)                                                                                       |
+| planning or sequencing work                 | [docs/spec/roadmap.md](docs/spec/roadmap.md) (artifacts, slices, open items)                                                             |
+| working on layers, packages or dependencies | [architecture](docs/spec/architecture.md), [headless API](docs/spec/headless-api.md)                                                     |
+| touching dates, times or zones              | [time semantics](docs/spec/time-semantics.md), [date engine](docs/spec/date-engine.md)                                                   |
+| touching events, resources or edits         | [data model](docs/spec/data-model.md), [event fields](docs/spec/event-fields.md), [edit model](docs/spec/edit-model.md)                  |
+| touching layout or views                    | [engine](docs/spec/engine.md), [reactivity](docs/spec/reactivity.md)                                                                     |
+| touching keyboard, pointer, focus or ARIA   | [accessibility](docs/spec/accessibility.md), [interaction and accessibility](docs/spec/interaction-accessibility.md), skill `a11y-check` |
+| writing React or CSS                        | [React and styling](docs/spec/react-and-styling.md), [react.md](docs/standards/react.md), [styling.md](docs/standards/styling.md)        |
+| working on a module or migration            | [modules](docs/spec/modules.md), [migration](docs/spec/migration.md), [gap additions](docs/spec/gap-additions.md)                        |
+| writing any code                            | [docs/standards/code.md](docs/standards/code.md), skill `spec-check`                                                                     |
+| writing tests or benchmarks                 | [testing.md](docs/standards/testing.md), skill `bench`                                                                                   |
+| writing docs, TSDoc or stories              | [documentation.md](docs/standards/documentation.md), [writing.md](docs/standards/writing.md)                                             |
+| starting or finishing a slice               | skills `slice-start`, `slice-finish`; [slice gates](docs/checklists/slice-gates.md)                                                      |
+| adding a package                            | skill `new-package`                                                                                                                      |
+| changing this agent setup                   | [agent-toolset.md](docs/standards/agent-toolset.md)                                                                                      |
 
 Each package will have its own `AGENTS.md` (purpose, boundaries, commands, governing specs). Skills live in [`.agents/skills/`](.agents/skills); checklists any agent can run live in [`docs/checklists/`](docs/checklists/README.md).
 

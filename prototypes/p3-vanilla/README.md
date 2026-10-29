@@ -1,6 +1,6 @@
 # P3 vanilla prototype
 
-A plain HTML, CSS and JavaScript calendar used to test the P3 accessibility spec ([`plan/P3-ACCESSIBILITY.md`](../../plan/P3-ACCESSIBILITY.md)) with real screen readers. Throwaway planning code: no framework, no build step, no dependencies, and nothing from it is reused in the product.
+A plain HTML, CSS and JavaScript calendar used to test the P3 accessibility spec ([`docs/spec/accessibility.md`](../../docs/spec/accessibility.md)) with real screen readers. Throwaway planning code: no framework, no build step, no dependencies, and nothing from it is reused in the product.
 
 ## Run it
 

@@ -2,28 +2,15 @@
 
 ## Next step
 
-**P3 in progress** (accessibility spec plus vanilla prototype). Continue with the first unchecked task below. Exit criteria: `docs/spec/roadmap.md`, row P3.
+**P3 approved** 2026-10-29 (D-89, D-90, D-91): `docs/spec/accessibility.md`. **Next is P4 (benchmarks)**, but only when the maintainer says to start it (gates rule). Exit criteria: `docs/spec/roadmap.md`, row P4.
 
-### P3 tasks
+## Before S1 starts
 
-1. [x] Draft the accessibility spec: `plan/P3-ACCESSIBILITY.md` (moves to `docs/spec/accessibility.md` on approval, like P2).
-2. [x] Prototype scaffold: `prototypes/p3-vanilla/` with a tiny static server, fixture data, live-region and roving-focus helpers.
-3. [x] Month grid: roles, roving focus, event group, Shift+Arrow selection, "+N more" popover.
-4. [x] Time grid: per-slot cells, the all-day row (embedded day grid) and the focus hop, DST days (T-14).
-5. [x] Keyboard and single-pointer move (keyboard DnD and its WCAG 2.5.7 alternative), context menu, invalid drops (D-76).
-6. [x] O-6: built twice; identical behavior; hand-written 0.9 KB vs XState +13.0 KB gzip. Maintainer chose (a), hand-written (D-90, 2026-10-29). Details in `prototypes/p3-vanilla/o6/RESULTS.md`.
-7. [x] Automated checks: axe on all three engines, forced colors, 400% zoom, reduced motion.
-8. [x] Screen-reader script with expected announcements (`docs/checklists/screen-reader-script.md`).
-9. [x] Maintainer ran VoiceOver + Safari (2026-10-28): all steps passed; Lighthouse accessibility 100. Answers to every Proposed item recorded as D-89 (one change: Shift+Left/Right is a continuous span), and the prototype updated to match.
-10. [ ] Maintainer runs NVDA + Firefox **once Windows is available** (the maintainer has no Windows machine yet, 2026-10-28).
-11. [ ] Findings resolved; stop for the maintainer's P3 review.
+- **NVDA + Firefox run** of the P3 prototype (D-91): `node prototypes/p3-vanilla/serve.mjs`, then `prototypes/p3-vanilla/SCREEN-READER-SCRIPT.md`. The maintainer has no Windows machine yet (2026-10-28). It must confirm the two "NVDA check" items in `docs/spec/accessibility.md` (sections 2.6 and 4.3). Any finding is fixed through a new decision.
 
-Findings so far are in section 13 of the draft. Tasks 2–5 are verified by scripted keyboard runs in Chromium (focus names and live-region text), not yet by a screen reader. The prototype runs with `node prototypes/p3-vanilla/serve.mjs`.
+## Where things stand (2026-10-29)
 
-P3 scope answers (2026-10-28): desktop screen readers only (VoiceOver, NVDA); mobile screen readers are checked during the per-slice real-device checks from S1. These go into the P3 decision entry on approval.
-
-## Where things stand (2026-10-28)
-
+- **P3 approved** 2026-10-29 (D-89 answers, D-90 hand-written machines for O-6, D-91 approval): `docs/spec/accessibility.md`. Evidence in `prototypes/p3-vanilla/` (findings in spec section 13; O-6 comparison in `o6/RESULTS.md`). VoiceOver + Safari passed; NVDA deferred to before S1.
 - **P2 approved** 2026-10-28 (D-87, D-88): `docs/spec/support-matrix.md`. Evidence in `prototypes/p2-top-level-await/`. D-87 amends D-32 (the `temporalReady` promise replaces top-level `await`).
 
 - **P1 approved** 2026-10-27. `plan/P1-PLAN.md` is the frozen record.

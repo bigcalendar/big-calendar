@@ -1,10 +1,10 @@
-# Accessibility spec (P3)
+# Accessibility (P3)
 
-> **Status: draft, in progress (2026-10-28).** Not normative until the maintainer approves P3. On approval it moves to `docs/spec/accessibility.md` with a decision entry. Items once marked Proposed were answered by the maintainer on 2026-10-28 and are recorded as D-89. Items marked **Prototype check** are confirmed or changed by the vanilla prototype and the screen-reader runs.
+> **Normative.** P3, the accessibility spec, approved 2026-10-29 (**D-91**). Tested on the vanilla prototype in `prototypes/p3-vanilla/` with axe on three engines and a full VoiceOver + Safari run; the maintainer's answers are D-89, and the machine pattern is D-90. Two items still need the **NVDA + Firefox run**, which happens before S1 starts (D-91); they're marked **NVDA check**. Changing anything here needs a new entry in the [decision log](../decisions.md).
 
-Sources: [interaction and accessibility](../docs/spec/interaction-accessibility.md) (D-50, D-51), [engine](../docs/spec/engine.md), [time semantics](../docs/spec/time-semantics.md) (T-14), [data model](../docs/spec/data-model.md) (D-39), [gap additions](../docs/spec/gap-additions.md) (#4, #13, #14, #16), [support matrix](../docs/spec/support-matrix.md). Exit criteria: [roadmap](../docs/spec/roadmap.md#planning-phase), row P3.
+Sources: [interaction and accessibility](interaction-accessibility.md) (D-50, D-51), [engine](engine.md), [time semantics](time-semantics.md) (T-14), [data model](data-model.md) (D-39), [gap additions](gap-additions.md) (#4, #13, #14, #16), [support matrix](support-matrix.md). Exit criteria: [roadmap](roadmap.md#planning-phase), row P3.
 
-**Standard:** WCAG 2.2 level AA. **Screen readers tested in P3:** VoiceOver + Safari (macOS) and NVDA + Firefox (Windows). Mobile screen readers are covered by the per-slice real-device checks from S1.
+**Standard:** WCAG 2.2 level AA. **Screen readers:** VoiceOver + Safari (macOS), run in P3; NVDA + Firefox (Windows), run before S1 starts (D-91). Mobile screen readers are covered by the per-slice real-device checks from S1.
 
 ## 1. Principles
 
@@ -53,8 +53,8 @@ Every grid sets `aria-rowcount` and `aria-colcount` for its full size, and `aria
 
 - One polite region per calendar, rendered from `getLiveRegionProps()`: `role="status"`, `aria-live="polite"`, `aria-atomic="true"`, visually hidden. The toolbar label is a second, separate polite region (D-50).
 - **Decided (D-89):** a rejected change (rollback) is the only assertive message, sent through a second, `role="alert"` region, because the user's last action was undone.
-- Messages are **debounced** (Prototype check: 150ms), so rapid arrow presses during a keyboard move announce only where the move settled.
-- The region is cleared after each message (Prototype check), so repeating the same message is still announced.
+- Messages are **debounced** (150ms), so rapid arrow presses during a keyboard move announce only where the move settled.
+- The region is cleared before each message, so repeating the same message is still announced.
 
 ### 2.6 Event names (D-50)
 
@@ -67,7 +67,7 @@ The default composer joins, in this order, the parts that apply:
 5. flags: "Recurring", "Tentative", "Cancelled", "Read-only", "Pending" (a change is waiting for the app), "Invalid" (D-76);
 6. a zone note, when the event's zone differs from the display zone (T-6) or the time falls in a repeated DST hour (T-14, section 4.4).
 
-`tooltip` (D-74) becomes the event's `aria-description` when it differs from the composed name. **Prototype check:** VoiceOver and NVDA both read `aria-description`.
+`tooltip` (D-74) becomes the event's `aria-description` when it differs from the composed name. VoiceOver reads `aria-description` (P3 run). **NVDA check:** NVDA reads it too.
 
 Continuation pieces of a multi-day event (the parts on later rows or columns) are `aria-hidden`, and only the first visible piece is in the event group (D-50). Its name says it continues: "…, continues until Friday".
 
@@ -161,7 +161,7 @@ Focusing a slot scrolls it into view, inside the scroll container, with `scroll-
 
 - **Up from the first slot** of a day moves focus to that day's cell in the all-day grid. **Down from an all-day cell** moves to the first slot of the same day, scrolling the time body to the top of the `min` window. (D-89)
 - The hop changes Tab stops' remembered positions: the all-day grid and the time grid each remember their own last-focused cell.
-- The two grids are announced as different grids when focus hops between them (their names come from `messages.allDayGrid` and `messages.timeGrid`). **Prototype check:** both screen readers announce the grid change on a hop.
+- The two grids are announced as different grids when focus hops between them (their names come from `messages.allDayGrid` and `messages.timeGrid`). VoiceOver announces the grid change on a hop (P3 run). **NVDA check:** NVDA does too.
 
 ### 4.4 DST days (T-14)
 
@@ -244,17 +244,17 @@ Shown on hover **and** on keyboard focus, after a short delay; dismissible with 
 
 ## 8. Visual requirements
 
-| Requirement                                                                                                                  | WCAG                                | Spec                                                                                                             |
-| ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Focus is always visible: at least a 2px outline with 3:1 contrast against its surroundings, never removed                    | 2.4.7, 1.4.11                       | Styling tokens `--bc-focus-*`                                                                                    |
-| Focus is never hidden under sticky headers or the all-day row                                                                | 2.4.11                              | `scroll-padding` on the scroll container                                                                         |
-| State never uses color alone: selected, pending, invalid, today and outside-month each also change a border, pattern or text | 1.4.1                               | Part manifests list each state's non-color cue                                                                   |
-| Event text meets 4.5:1 on its event color, computed in JS (gap addition #13)                                                 | 1.4.3                               |                                                                                                                  |
-| Targets are at least 24×24 CSS px (event chips, "+N more", slot cells), and 44px on coarse pointers                          | 2.5.8                               | Chips shorter than 24px use the spacing exception: no other target within 24px of their center (Prototype check) |
-| **Forced colors:** system colors only; event colors become borders; selection and focus stay visible                         | 1.4.11 (gap #14)                    | `@media (forced-colors: active)` in each part's CSS                                                              |
-| **400% zoom / 320 CSS px reflow**                                                                                            | 1.4.10 (gap #14)                    | Section 8.1                                                                                                      |
-| **Reduced motion:** no animated scrolling, no popover or drag transitions                                                    | 2.3.3 (AAA, but checked by gap #14) | `prefers-reduced-motion`                                                                                         |
-| Text spacing overrides don't clip event titles (ellipsis is allowed; the full name stays in the accessible name and tooltip) | 1.4.12                              |                                                                                                                  |
+| Requirement                                                                                                                  | WCAG                                | Spec                                                                                                                          |
+| ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Focus is always visible: at least a 2px outline with 3:1 contrast against its surroundings, never removed                    | 2.4.7, 1.4.11                       | Styling tokens `--bc-focus-*`                                                                                                 |
+| Focus is never hidden under sticky headers or the all-day row                                                                | 2.4.11                              | `scroll-padding` on the scroll container                                                                                      |
+| State never uses color alone: selected, pending, invalid, today and outside-month each also change a border, pattern or text | 1.4.1                               | Part manifests list each state's non-color cue                                                                                |
+| Event text meets 4.5:1 on its event color, computed in JS (gap addition #13)                                                 | 1.4.3                               |                                                                                                                               |
+| Targets are at least 24×24 CSS px (event chips, "+N more", slot cells), and 44px on coarse pointers                          | 2.5.8                               | Chips shorter than 24px use the spacing exception: no other target within 24px of their center (checked by axe `target-size`) |
+| **Forced colors:** system colors only; event colors become borders; selection and focus stay visible                         | 1.4.11 (gap #14)                    | `@media (forced-colors: active)` in each part's CSS                                                                           |
+| **400% zoom / 320 CSS px reflow**                                                                                            | 1.4.10 (gap #14)                    | Section 8.1                                                                                                                   |
+| **Reduced motion:** no animated scrolling, no popover or drag transitions                                                    | 2.3.3 (AAA, but checked by gap #14) | `prefers-reduced-motion`                                                                                                      |
+| Text spacing overrides don't clip event titles (ellipsis is allowed; the full name stays in the accessible name and tooltip) | 1.4.12                              |                                                                                                                               |
 
 ### 8.1 Reflow
 
@@ -264,7 +264,7 @@ WCAG 1.4.10 exempts content that needs a two-dimensional layout, and a calendar 
 - the time grid at narrow widths: the compact touch views (1 or 3 days, D-26);
 - the toolbar wraps, and the view switcher stays reachable.
 
-Nothing requires horizontal scrolling of the page at 320 CSS px, except inside the time grid's own scroll container. **Prototype check.**
+Nothing requires horizontal scrolling of the page at 320 CSS px, except inside the time grid's own scroll container (finding 6).
 
 ## 9. WCAG 2.2 AA coverage
 
@@ -298,7 +298,7 @@ The prototype builds the **move machine** (section 6.4: idle → menu → moving
 - **(a)** a hand-written finite-state machine: pure `transition(state, event) → { state, effects }`, plus a small runtime that performs effects (focus, timers, announcements, DOM reads);
 - **(b)** the same machine in XState.
 
-Both emit the same framework-neutral prop-getter descriptors (`{ attrs, on, ref }`, D-72). They're compared on: lines of code, bundle size added, how easily the transitions are unit-tested without a DOM, how effects and timers are expressed, and how a registered feature adds states or transitions. The result picks the pattern; P5 records the final contract.
+Both emit the same framework-neutral prop-getter descriptors (`{ attrs, on, ref }`, D-72). They're compared on: lines of code, bundle size added, how easily the transitions are unit-tested without a DOM, how effects and timers are expressed, and how a registered feature adds states or transitions. The result picks the pattern (D-90); P5 records the final contract.
 
 **Result (2026-10-28):** both behave identically (same states and effects for a 15-event script, and the same focus and announcements in the browser). The hand-written machine is 81 lines and 0.9 KB gzip; the XState machine is 154 lines, and XState adds 13.0 KB gzip. In XState's pure mode the effects runtime is still needed, timers included. Neither has a built-in way for features to merge transitions. Details: `prototypes/p3-vanilla/o6/RESULTS.md`. **Decided (D-90): (a), hand-written machines** with a written transition and effects contract; P5 records the exact contract.
 
@@ -317,7 +317,7 @@ It exists to test this spec with real screen readers. It is not product code and
 ## 12. Test plan
 
 - **Automated** (Playwright, all three engines): axe with zero violations; keyboard paths scripted against this spec; forced colors (`emulateMedia({ forcedColors: 'active' })`); 320 CSS px viewport; reduced motion.
-- **Manual:** the screen-reader script (`docs/checklists/screen-reader-script.md`), rewritten with the expected announcement for each step, run with VoiceOver + Safari now and NVDA + Firefox when Windows is available.
+- **Manual:** the screen-reader script (`docs/checklists/screen-reader-script.md`), rewritten with the expected announcement for each step, run with VoiceOver + Safari in P3 and NVDA + Firefox before S1 starts (D-91). From S1 the same script runs once per slice (D-42).
 - Each finding is recorded with the step, what was announced, what was expected, and the change made to this spec.
 
 ## 13. Prototype findings
@@ -327,7 +327,7 @@ Recorded as they're found. Each says what was seen, the spec change, and how it 
 1. **Label in Name (WCAG 2.5.3, level A).** axe failed every month chip on all three engines: the visible "10 AM Dentist" wasn't part of the name "Dentist, 10:00 to 11:00 AM, …". Marking the time `aria-hidden` doesn't help, because sighted speech-input users still see it. **Change:** principle 4 and section 2.6; the composer receives the visible label and starts with it. Verified: zero axe violations.
 2. **Event-group order must come from layout order, not DOM order.** On the fall-back day, both 1:30 events start at the same wall-clock time, and DOM order put the EST event first; Down from the EDT event went nowhere. **Change:** none to the spec (section 3.3 already says layout order, D-59); the machine sorts by instant, then duration, then id. Verified by the scripted keyboard run.
 3. **Compact month hides chips, so their actions need another home.** At 320 CSS px, month chips shrank to "1…". The count button and day list (section 8.1) fix the visual problem, but the context menu and Move were then unreachable. **Change:** section 8.1 requires the day list to offer every chip action. Verified in the prototype at 320 CSS px: Shift+F10 in the day list opens the event's menu, Move works, and focus follows the event to its new day's button.
-4. **Forced colors:** selection, focus and chip borders stay visible, but chips inside a selected day lose contrast against the system Highlight color. **Change (D-89osed):** in forced colors, selected days show selection with a thick system-color border instead of a Highlight fill.
+4. **Forced colors:** selection, focus and chip borders stay visible, but chips inside a selected day lose contrast against the system Highlight color. **Change (D-89):** in forced colors, selected days show selection with a thick system-color border instead of a Highlight fill.
 5. **VoiceOver + Safari (macOS 26.6.2, Safari 26.6.2), 2026-10-28:** the maintainer ran the full script (`prototypes/p3-vanilla/SCREEN-READER-SCRIPT.md`); every step behaved as expected. Lighthouse reported 100 for accessibility.
 6. **Automated baseline:** with findings 1 and 2 fixed, axe reports zero violations on Chromium 156, Firefox 157 and WebKit 27.2, in normal and forced-colors modes, at 1280 and 320 CSS px, over the month, week and both DST weeks, including the open popover, menu and move states. Nothing scrolls the page horizontally at 320 CSS px.
 

@@ -30,6 +30,7 @@ These topic specs are the normative description of Big Calendar. They were split
 | [modules.md](modules.md)                                     | §12       | Recurrence, availability, ICS, normalize                                                                                         |
 | [migration.md](migration.md)                                 | §13       | RBC parity and codemods                                                                                                          |
 | [gap-additions.md](gap-additions.md)                         | §18       | Items added to 1.0 after the gap review; post-1.0 backlog                                                                        |
+| [accessibility.md](accessibility.md)                         | P3 (D-91) | Roles, keyboard map, focus model, names and announcements per family; visual requirements; WCAG 2.2 AA coverage                  |
 | [support-matrix.md](support-matrix.md)                       | P2 (D-87) | Browser floor, Baseline status of every platform feature, polyfills, fallbacks, "don't use" list, supported bundlers and runners |
 | [roadmap.md](roadmap.md)                                     | §14–§16   | Planning artifacts P0–P5, slices S0–S11, open items register                                                                     |
 
@@ -38,4 +39,4 @@ Outside `docs/spec/`:
 - [standards/workflow.md](../standards/workflow.md) (§3): execution rules.
 - [standards/agent-toolset.md](../standards/agent-toolset.md) (§17): how this agent context is organized.
 
-Later planning artifacts (P2 support matrix, P3 accessibility spec, P4 benchmarks, P5 types and API) add their own files here when approved.
+Later planning artifacts (P4 benchmarks, P5 types and API) add their own files here when approved.
