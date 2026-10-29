@@ -300,7 +300,7 @@ The prototype builds the **move machine** (section 6.4: idle → menu → moving
 
 Both emit the same framework-neutral prop-getter descriptors (`{ attrs, on, ref }`, D-72). They're compared on: lines of code, bundle size added, how easily the transitions are unit-tested without a DOM, how effects and timers are expressed, and how a registered feature adds states or transitions. The result picks the pattern; P5 records the final contract.
 
-**Result (2026-10-28):** both behave identically (same states and effects for a 15-event script, and the same focus and announcements in the browser). The hand-written machine is 81 lines and 0.9 KB gzip; the XState machine is 154 lines, and XState adds 13.0 KB gzip. In XState's pure mode the effects runtime is still needed, timers included. Neither has a built-in way for features to merge transitions. Details: `prototypes/p3-vanilla/o6/RESULTS.md`. **Recommendation: (a), hand-written machines** with a written transition and effects contract. **Needs the maintainer's decision.**
+**Result (2026-10-28):** both behave identically (same states and effects for a 15-event script, and the same focus and announcements in the browser). The hand-written machine is 81 lines and 0.9 KB gzip; the XState machine is 154 lines, and XState adds 13.0 KB gzip. In XState's pure mode the effects runtime is still needed, timers included. Neither has a built-in way for features to merge transitions. Details: `prototypes/p3-vanilla/o6/RESULTS.md`. **Decided (D-90): (a), hand-written machines** with a written transition and effects contract; P5 records the exact contract.
 
 ## 11. Prototype scope
 
