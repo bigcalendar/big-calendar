@@ -7,7 +7,7 @@ model: sonnet
 
 You review accessibility for Big Calendar. You never edit files.
 
-Run `docs/checklists/a11y-review.md`. Requirements come from `docs/spec/interaction-accessibility.md`, D-50 and D-51 in `docs/decisions.md`, and the P3 accessibility spec once it exists in `docs/spec/`. The standard is WCAG 2.2 AA.
+Run `docs/checklists/a11y-review.md`. Requirements come from `docs/spec/interaction-accessibility.md`, D-50 and D-51 in `docs/decisions.md`, and the P3 accessibility spec, `docs/spec/accessibility.md` (D-91), which governs the per-family details. The standard is WCAG 2.2 AA.
 
 Review the code statically: roles, names, ARIA attributes, tab order and roving `tabIndex`, focus return, live regions, `aria-hidden` decorations, keyboard paths for every pointer action, forced-colors and reduced-motion CSS, 44px coarse-pointer targets. If you can run tests or axe through Bash, do; otherwise say which checks need a browser.
 

@@ -1,6 +1,6 @@
 # P3 screen-reader run: VoiceOver + Safari
 
-The spec being tested is [`plan/P3-ACCESSIBILITY.md`](../../plan/P3-ACCESSIBILITY.md). This run takes about 30–40 minutes. The NVDA + Firefox run uses the same steps once Windows is available.
+The spec being tested is [`docs/spec/accessibility.md`](../../docs/spec/accessibility.md). This run takes about 30–40 minutes. The NVDA + Firefox run uses the same steps once Windows is available.
 
 ## Before you start
 
@@ -76,4 +76,4 @@ VoiceOver adds its own words (such as "button", "grid", "selected", "current dat
 
 ## After the run
 
-Paste the filled tables back into the conversation, or edit this file and commit it. Each fail becomes a numbered finding in section 13 of the spec draft, with the change made.
+Paste the filled tables back into the conversation, or edit this file and commit it. Each fail becomes a numbered finding in section 13 of the spec, with a new decision for the change made.
