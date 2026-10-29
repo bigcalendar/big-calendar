@@ -33,6 +33,6 @@ Append a row to the table in `docs/decisions.md`, with the next free ID:
 - Never edit or delete a past entry. Amend with a new one.
 - If the decision changes a spec, edit the spec in the same commit and cite the new D-number there.
 - If it resolves an open item, mark it resolved in `docs/spec/roadmap.md` with the D-number.
-- Commit as `docs(decisions): D-NN <short summary>`.
+- Commit as `docs(repo): record D-NN, <short summary>`. The subject must start lowercase, so don't open it with "D-NN"; `repo` is the scope until S0 replaces the commitlint scope list. If the decision ships with a larger change, describe that change instead and cite the D-number, as in `docs(repo): approve P3 and adopt the accessibility spec (D-91)`.
 
 Then continue the work.
