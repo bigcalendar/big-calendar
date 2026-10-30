@@ -1,0 +1,74 @@
+{
+ "chromium/alien": {
+  "create": 1.7,
+  "update": 9.95,
+  "recomputesPerEdit": 1,
+  "notifiesPerEdit": 1,
+  "bulk": 1.35,
+  "fanoutCreate": 2.95,
+  "fanoutUpdate": 2.85
+ },
+ "chromium/preact": {
+  "create": 1.5,
+  "update": 10.55,
+  "recomputesPerEdit": 1,
+  "notifiesPerEdit": 1,
+  "bulk": 1.3,
+  "fanoutCreate": 4.4,
+  "fanoutUpdate": 2.8
+ },
+ "webkit/alien": {
+  "create": 1,
+  "update": 3.5,
+  "recomputesPerEdit": 1,
+  "notifiesPerEdit": 1,
+  "bulk": 0.5,
+  "fanoutCreate": 1,
+  "fanoutUpdate": 1
+ },
+ "webkit/preact": {
+  "create": 0,
+  "update": 4,
+  "recomputesPerEdit": 1,
+  "notifiesPerEdit": 1,
+  "bulk": 0,
+  "fanoutCreate": 1,
+  "fanoutUpdate": 1
+ },
+ "firefox/alien": {
+  "create": 0,
+  "update": 5,
+  "recomputesPerEdit": 1,
+  "notifiesPerEdit": 1,
+  "bulk": 1,
+  "fanoutCreate": 2,
+  "fanoutUpdate": 1
+ },
+ "firefox/preact": {
+  "create": 1,
+  "update": 7,
+  "recomputesPerEdit": 1,
+  "notifiesPerEdit": 1,
+  "bulk": 1,
+  "fanoutCreate": 3,
+  "fanoutUpdate": 2
+ },
+ "node/alien": {
+  "create": 0.83,
+  "update": 2.86,
+  "recomputesPerEdit": 1,
+  "notifiesPerEdit": 1,
+  "bulk": 0.49,
+  "fanoutCreate": 1.14,
+  "fanoutUpdate": 0.76
+ },
+ "node/preact": {
+  "create": 0.41,
+  "update": 2.54,
+  "recomputesPerEdit": 1,
+  "notifiesPerEdit": 1,
+  "bulk": 0.3,
+  "fanoutCreate": 1.44,
+  "fanoutUpdate": 0.88
+ }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "p4-bench",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@atlaskit/pragmatic-drag-and-drop": "4.0.0",
+    "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "3.2.1",
+    "@js-temporal/polyfill": "0.5.1",
+    "@preact/signals-core": "1.14.5",
+    "alien-signals": "3.2.1",
+    "esbuild": "0.28.2",
+    "playwright": "1.64.1",
+    "temporal-polyfill": "1.0.6"
+  }
+}
