@@ -1,16 +1,30 @@
 // A store-shaped graph: one State per event, a lane Computed per day (42 for a month) reading its
 // events, a view Computed over the lanes, and a Watcher on the view (the binding's subscription).
-export function runSignals(F, { events = 5000, lanes = 42, updates = 1000 } = {}) {
+export function runSignals(
+  F,
+  { events = 5000, lanes = 42, updates = 1000 } = {},
+) {
   const { State, Computed, Watcher, batch } = F
   const t = () => performance.now()
   const r = {}
 
   let t0 = t()
-  const states = Array.from({ length: events }, (_, i) => new State({ id: i, lane: i % lanes, start: i }))
+  const states = Array.from(
+    { length: events },
+    (_, i) => new State({ id: i, lane: i % lanes, start: i }),
+  )
   const laneOf = Array.from({ length: lanes }, () => [])
   states.forEach((s, i) => laneOf[i % lanes].push(s))
   const recomputes = new Array(lanes).fill(0)
-  const laneC = laneOf.map((ss, l) => new Computed(() => { recomputes[l]++; let sum = 0; for (const s of ss) sum += s.get().start; return sum }))
+  const laneC = laneOf.map(
+    (ss, l) =>
+      new Computed(() => {
+        recomputes[l]++
+        let sum = 0
+        for (const s of ss) sum += s.get().start
+        return sum
+      }),
+  )
   const view = new Computed(() => laneC.map((c) => c.get()))
   let notified = 0
   const w = new Watcher(() => notified++)
@@ -33,7 +47,9 @@ export function runSignals(F, { events = 5000, lanes = 42, updates = 1000 } = {}
 
   // Bulk replace: every event changes in one batch.
   t0 = t()
-  batch(() => { for (const s of states) s.set({ ...s.get(), start: s.get().start + 1 }) })
+  batch(() => {
+    for (const s of states) s.set({ ...s.get(), start: s.get().start + 1 })
+  })
   view.get()
   r.bulk = t() - t0
 

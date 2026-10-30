@@ -1,1298 +1,1298 @@
 {
- "chromium/native/temporal/year/week": {
-  "cold": {
-   "ingest": 101.10000038146973,
-   "view": 11.399999618530273,
-   "total": 112.5
-  },
-  "median": {
-   "ingest": 95.10000014305115,
-   "view": 9,
-   "total": 103.7000002861023
+  "chromium/native/temporal/year/week": {
+    "cold": {
+      "ingest": 101.10000038146973,
+      "view": 11.399999618530273,
+      "total": 112.5
+    },
+    "median": {
+      "ingest": 95.10000014305115,
+      "view": 9,
+      "total": 103.7000002861023
+    }
+  },
+  "chromium/native/temporal/year/month": {
+    "cold": {
+      "ingest": 100,
+      "view": 24.300000190734863,
+      "total": 124.30000019073486
+    },
+    "median": {
+      "ingest": 100.75000023841858,
+      "view": 22.25,
+      "total": 123.00000023841858
+    }
+  },
+  "chromium/native/temporal/dense/week": {
+    "cold": {
+      "ingest": 105.19999980926514,
+      "view": 30.59999990463257,
+      "total": 135.7999997138977
+    },
+    "median": {
+      "ingest": 97.95000004768372,
+      "view": 30,
+      "total": 136.10000014305115
+    }
+  },
+  "chromium/native/temporal/dense/month": {
+    "cold": {
+      "ingest": 105.09999990463257,
+      "view": 120.40000009536743,
+      "total": 225.5
+    },
+    "median": {
+      "ingest": 129.25,
+      "view": 149.65000009536743,
+      "total": 279.35000014305115
+    }
+  },
+  "chromium/native/bigint/year/week": {
+    "cold": {
+      "ingest": 26.699999809265137,
+      "view": 3.5,
+      "total": 30.199999809265137
+    },
+    "median": {
+      "ingest": 23.200000286102295,
+      "view": 1.1499998569488525,
+      "total": 24.300000190734863
+    }
+  },
+  "chromium/native/bigint/year/month": {
+    "cold": {
+      "ingest": 26.09999990463257,
+      "view": 4.5,
+      "total": 30.59999990463257
+    },
+    "median": {
+      "ingest": 23.299999952316284,
+      "view": 1.1999998092651367,
+      "total": 24.649999856948853
+    }
+  },
+  "chromium/native/bigint/dense/week": {
+    "cold": {
+      "ingest": 27.299999713897705,
+      "view": 10.300000190734863,
+      "total": 37.59999990463257
+    },
+    "median": {
+      "ingest": 23.50000023841858,
+      "view": 6.1499998569488525,
+      "total": 29.950000047683716
+    }
+  },
+  "chromium/native/bigint/dense/month": {
+    "cold": {
+      "ingest": 26.700000286102295,
+      "view": 17.40000009536743,
+      "total": 44.10000038146973
+    },
+    "median": {
+      "ingest": 24.100000143051147,
+      "view": 10.400000095367432,
+      "total": 33.64999985694885
+    }
+  },
+  "chromium/native/number/year/week": {
+    "cold": {
+      "ingest": 25.800000190734863,
+      "view": 4.599999904632568,
+      "total": 30.40000009536743
+    },
+    "median": {
+      "ingest": 22.199999809265137,
+      "view": 1.0499999523162842,
+      "total": 23.09999990463257
+    }
+  },
+  "chromium/native/number/year/month": {
+    "cold": {
+      "ingest": 26.59999990463257,
+      "view": 4.900000095367432,
+      "total": 31.5
+    },
+    "median": {
+      "ingest": 22.09999990463257,
+      "view": 0.9500000476837158,
+      "total": 23.199999809265137
+    }
+  },
+  "chromium/native/number/dense/week": {
+    "cold": {
+      "ingest": 26.199999809265137,
+      "view": 10.900000095367432,
+      "total": 37.09999990463257
+    },
+    "median": {
+      "ingest": 22.149999856948853,
+      "view": 5.700000047683716,
+      "total": 28.350000143051147
+    }
+  },
+  "chromium/native/number/dense/month": {
+    "cold": {
+      "ingest": 26.59999990463257,
+      "view": 15.699999809265137,
+      "total": 42.299999713897705
+    },
+    "median": {
+      "ingest": 22.300000190734863,
+      "view": 9.75,
+      "total": 31.84999990463257
+    }
+  },
+  "chromium/tp/temporal/year/week": {
+    "cold": {
+      "ingest": 159.30000019073486,
+      "view": 9.399999618530273,
+      "total": 168.69999980926514
+    },
+    "median": {
+      "ingest": 92.64999985694885,
+      "view": 3.549999952316284,
+      "total": 95.75
+    }
+  },
+  "chromium/tp/temporal/year/month": {
+    "cold": {
+      "ingest": 157.59999990463257,
+      "view": 9.600000381469727,
+      "total": 167.2000002861023
+    },
+    "median": {
+      "ingest": 94.59999990463257,
+      "view": 4.1000001430511475,
+      "total": 99
+    }
+  },
+  "chromium/tp/temporal/dense/week": {
+    "cold": {
+      "ingest": 158.59999990463257,
+      "view": 29.199999809265137,
+      "total": 187.7999997138977
+    },
+    "median": {
+      "ingest": 91.20000004768372,
+      "view": 19.59999990463257,
+      "total": 110.54999995231628
+    }
+  },
+  "chromium/tp/temporal/dense/month": {
+    "cold": {
+      "ingest": 157.90000009536743,
+      "view": 26.299999713897705,
+      "total": 184.19999980926514
+    },
+    "median": {
+      "ingest": 90.65000009536743,
+      "view": 18.59999990463257,
+      "total": 108.04999995231628
+    }
+  },
+  "chromium/tp/bigint/year/week": {
+    "cold": {
+      "ingest": 154.69999980926514,
+      "view": 9.400000095367432,
+      "total": 164.09999990463257
+    },
+    "median": {
+      "ingest": 82.85000014305115,
+      "view": 3.200000047683716,
+      "total": 86.05000019073486
+    }
+  },
+  "chromium/tp/bigint/year/month": {
+    "cold": {
+      "ingest": 151.19999980926514,
+      "view": 7.800000190734863,
+      "total": 159
+    },
+    "median": {
+      "ingest": 84.94999980926514,
+      "view": 2.9499998092651367,
+      "total": 88.49999976158142
+    }
+  },
+  "chromium/tp/bigint/dense/week": {
+    "cold": {
+      "ingest": 158.69999980926514,
+      "view": 27.40000009536743,
+      "total": 186.09999990463257
+    },
+    "median": {
+      "ingest": 84.95000004768372,
+      "view": 17.549999952316284,
+      "total": 101.84999990463257
+    }
+  },
+  "chromium/tp/bigint/dense/month": {
+    "cold": {
+      "ingest": 151.40000009536743,
+      "view": 22.300000190734863,
+      "total": 173.7000002861023
+    },
+    "median": {
+      "ingest": 84.20000004768372,
+      "view": 11.799999713897705,
+      "total": 94.25
+    }
+  },
+  "chromium/tp/number/year/week": {
+    "cold": {
+      "ingest": 155.59999990463257,
+      "view": 8.200000286102295,
+      "total": 163.80000019073486
+    },
+    "median": {
+      "ingest": 83.40000009536743,
+      "view": 3.1499998569488525,
+      "total": 86.45000004768372
+    }
+  },
+  "chromium/tp/number/year/month": {
+    "cold": {
+      "ingest": 154.5,
+      "view": 7.5,
+      "total": 162
+    },
+    "median": {
+      "ingest": 85.19999980926514,
+      "view": 2.6500000953674316,
+      "total": 87.65000009536743
+    }
+  },
+  "chromium/tp/number/dense/week": {
+    "cold": {
+      "ingest": 156.09999990463257,
+      "view": 26.90000009536743,
+      "total": 183
+    },
+    "median": {
+      "ingest": 83.55000019073486,
+      "view": 18.299999952316284,
+      "total": 101.10000014305115
+    }
+  },
+  "chromium/tp/number/dense/month": {
+    "cold": {
+      "ingest": 157.80000019073486,
+      "view": 18.90000009536743,
+      "total": 176.7000002861023
+    },
+    "median": {
+      "ingest": 84.90000009536743,
+      "view": 10.900000095367432,
+      "total": 94.5
+    }
+  },
+  "chromium/js/temporal/year/week": {
+    "cold": {
+      "ingest": 394.59999990463257,
+      "view": 30.5,
+      "total": 425.09999990463257
+    },
+    "median": {
+      "ingest": 396.10000014305115,
+      "view": 19.90000009536743,
+      "total": 431.15000009536743
+    }
+  },
+  "chromium/js/temporal/year/month": {
+    "cold": {
+      "ingest": 404,
+      "view": 75.2000002861023,
+      "total": 479.2000002861023
+    },
+    "median": {
+      "ingest": 434.9500000476837,
+      "view": 40.450000047683716,
+      "total": 474.9500000476837
+    }
+  },
+  "chromium/js/temporal/dense/week": {
+    "cold": {
+      "ingest": 415.5,
+      "view": 128.59999990463257,
+      "total": 544.0999999046326
+    },
+    "median": {
+      "ingest": 396.65000009536743,
+      "view": 116.14999985694885,
+      "total": 511.34999990463257
+    }
+  },
+  "chromium/js/temporal/dense/month": {
+    "cold": {
+      "ingest": 405.19999980926514,
+      "view": 247.30000019073486,
+      "total": 652.5
+    },
+    "median": {
+      "ingest": 393.60000014305115,
+      "view": 257.7999997138977,
+      "total": 660.25
+    }
+  },
+  "chromium/js/bigint/year/week": {
+    "cold": {
+      "ingest": 351.19999980926514,
+      "view": 16.800000190734863,
+      "total": 368
+    },
+    "median": {
+      "ingest": 300.19999980926514,
+      "view": 9.250000238418579,
+      "total": 310.35000014305115
+    }
+  },
+  "chromium/js/bigint/year/month": {
+    "cold": {
+      "ingest": 348.40000009536743,
+      "view": 24.90000009536743,
+      "total": 373.30000019073486
+    },
+    "median": {
+      "ingest": 298.5,
+      "view": 14.200000047683716,
+      "total": 313.60000014305115
+    }
+  },
+  "chromium/js/bigint/dense/week": {
+    "cold": {
+      "ingest": 348.5,
+      "view": 61.5,
+      "total": 410
+    },
+    "median": {
+      "ingest": 297.5499999523163,
+      "view": 47.549999952316284,
+      "total": 345.59999990463257
+    }
+  },
+  "chromium/js/bigint/dense/month": {
+    "cold": {
+      "ingest": 350,
+      "view": 37.10000038146973,
+      "total": 387.1000003814697
+    },
+    "median": {
+      "ingest": 293.15000009536743,
+      "view": 23.199999809265137,
+      "total": 314.84999990463257
+    }
+  },
+  "chromium/js/number/year/week": {
+    "cold": {
+      "ingest": 323.09999990463257,
+      "view": 18.600000381469727,
+      "total": 341.7000002861023
+    },
+    "median": {
+      "ingest": 266.2999999523163,
+      "view": 8.649999856948853,
+      "total": 275.64999985694885
+    }
+  },
+  "chromium/js/number/year/month": {
+    "cold": {
+      "ingest": 319.80000019073486,
+      "view": 26.299999713897705,
+      "total": 346.09999990463257
+    },
+    "median": {
+      "ingest": 267.34999990463257,
+      "view": 14.049999952316284,
+      "total": 281.2000000476837
+    }
+  },
+  "chromium/js/number/dense/week": {
+    "cold": {
+      "ingest": 317.2999997138977,
+      "view": 64.30000019073486,
+      "total": 381.59999990463257
+    },
+    "median": {
+      "ingest": 269.09999990463257,
+      "view": 47.950000286102295,
+      "total": 318.9999997615814
+    }
+  },
+  "chromium/js/number/dense/month": {
+    "cold": {
+      "ingest": 326.80000019073486,
+      "view": 37.299999713897705,
+      "total": 364.09999990463257
+    },
+    "median": {
+      "ingest": 264.85000014305115,
+      "view": 22.149999856948853,
+      "total": 287.75
+    }
+  },
+  "webkit/native/temporal/year/week": {
+    "cold": {
+      "ingest": 5,
+      "view": 1,
+      "total": 6
+    },
+    "median": {
+      "ingest": 3,
+      "view": 0.5,
+      "total": 4
+    }
+  },
+  "webkit/native/temporal/year/month": {
+    "cold": {
+      "ingest": 5,
+      "view": 2,
+      "total": 7
+    },
+    "median": {
+      "ingest": 3,
+      "view": 0,
+      "total": 4
+    }
+  },
+  "webkit/native/temporal/dense/week": {
+    "cold": {
+      "ingest": 5,
+      "view": 2,
+      "total": 7
+    },
+    "median": {
+      "ingest": 3,
+      "view": 1,
+      "total": 4
+    }
+  },
+  "webkit/native/temporal/dense/month": {
+    "cold": {
+      "ingest": 5,
+      "view": 5,
+      "total": 10
+    },
+    "median": {
+      "ingest": 3,
+      "view": 2,
+      "total": 5.5
+    }
+  },
+  "webkit/native/bigint/year/week": {
+    "cold": {
+      "ingest": 4,
+      "view": 1,
+      "total": 5
+    },
+    "median": {
+      "ingest": 2,
+      "view": 1,
+      "total": 3
+    }
+  },
+  "webkit/native/bigint/year/month": {
+    "cold": {
+      "ingest": 4,
+      "view": 2,
+      "total": 6
+    },
+    "median": {
+      "ingest": 3,
+      "view": 0.5,
+      "total": 3
+    }
+  },
+  "webkit/native/bigint/dense/week": {
+    "cold": {
+      "ingest": 5,
+      "view": 3,
+      "total": 8
+    },
+    "median": {
+      "ingest": 3,
+      "view": 1,
+      "total": 4
+    }
+  },
+  "webkit/native/bigint/dense/month": {
+    "cold": {
+      "ingest": 5,
+      "view": 4,
+      "total": 9
+    },
+    "median": {
+      "ingest": 3,
+      "view": 2,
+      "total": 5
+    }
+  },
+  "webkit/native/number/year/week": {
+    "cold": {
+      "ingest": 5,
+      "view": 0,
+      "total": 5
+    },
+    "median": {
+      "ingest": 2,
+      "view": 0,
+      "total": 2.5
+    }
+  },
+  "webkit/native/number/year/month": {
+    "cold": {
+      "ingest": 4,
+      "view": 1,
+      "total": 5
+    },
+    "median": {
+      "ingest": 2.5,
+      "view": 0,
+      "total": 3
+    }
+  },
+  "webkit/native/number/dense/week": {
+    "cold": {
+      "ingest": 4,
+      "view": 2,
+      "total": 6
+    },
+    "median": {
+      "ingest": 2,
+      "view": 1,
+      "total": 3
+    }
+  },
+  "webkit/native/number/dense/month": {
+    "cold": {
+      "ingest": 4,
+      "view": 3,
+      "total": 7
+    },
+    "median": {
+      "ingest": 2,
+      "view": 1,
+      "total": 4
+    }
+  },
+  "webkit/tp/temporal/year/week": {
+    "cold": {
+      "ingest": 37,
+      "view": 2,
+      "total": 39
+    },
+    "median": {
+      "ingest": 19,
+      "view": 1,
+      "total": 20.5
+    }
+  },
+  "webkit/tp/temporal/year/month": {
+    "cold": {
+      "ingest": 35,
+      "view": 3,
+      "total": 38
+    },
+    "median": {
+      "ingest": 19.5,
+      "view": 1,
+      "total": 21
+    }
+  },
+  "webkit/tp/temporal/dense/week": {
+    "cold": {
+      "ingest": 36,
+      "view": 10,
+      "total": 46
+    },
+    "median": {
+      "ingest": 19.5,
+      "view": 5,
+      "total": 24
+    }
+  },
+  "webkit/tp/temporal/dense/month": {
+    "cold": {
+      "ingest": 36,
+      "view": 7,
+      "total": 43
+    },
+    "median": {
+      "ingest": 20,
+      "view": 3.5,
+      "total": 23
+    }
+  },
+  "webkit/tp/bigint/year/week": {
+    "cold": {
+      "ingest": 34,
+      "view": 3,
+      "total": 37
+    },
+    "median": {
+      "ingest": 18,
+      "view": 1,
+      "total": 18.5
+    }
+  },
+  "webkit/tp/bigint/year/month": {
+    "cold": {
+      "ingest": 34,
+      "view": 3,
+      "total": 37
+    },
+    "median": {
+      "ingest": 18,
+      "view": 1,
+      "total": 19
+    }
+  },
+  "webkit/tp/bigint/dense/week": {
+    "cold": {
+      "ingest": 34,
+      "view": 10,
+      "total": 44
+    },
+    "median": {
+      "ingest": 18.5,
+      "view": 5,
+      "total": 23
+    }
+  },
+  "webkit/tp/bigint/dense/month": {
+    "cold": {
+      "ingest": 35,
+      "view": 5,
+      "total": 40
+    },
+    "median": {
+      "ingest": 17,
+      "view": 2,
+      "total": 19.5
+    }
+  },
+  "webkit/tp/number/year/week": {
+    "cold": {
+      "ingest": 34,
+      "view": 2,
+      "total": 36
+    },
+    "median": {
+      "ingest": 18,
+      "view": 1,
+      "total": 18
+    }
+  },
+  "webkit/tp/number/year/month": {
+    "cold": {
+      "ingest": 33,
+      "view": 3,
+      "total": 36
+    },
+    "median": {
+      "ingest": 18,
+      "view": 1,
+      "total": 18
+    }
+  },
+  "webkit/tp/number/dense/week": {
+    "cold": {
+      "ingest": 34,
+      "view": 10,
+      "total": 44
+    },
+    "median": {
+      "ingest": 18,
+      "view": 4,
+      "total": 22
+    }
+  },
+  "webkit/tp/number/dense/month": {
+    "cold": {
+      "ingest": 34,
+      "view": 4,
+      "total": 38
+    },
+    "median": {
+      "ingest": 18,
+      "view": 1.5,
+      "total": 19.5
+    }
+  },
+  "webkit/js/temporal/year/week": {
+    "cold": {
+      "ingest": 85,
+      "view": 8,
+      "total": 93
+    },
+    "median": {
+      "ingest": 72,
+      "view": 5,
+      "total": 86
+    }
+  },
+  "webkit/js/temporal/year/month": {
+    "cold": {
+      "ingest": 84,
+      "view": 13,
+      "total": 97
+    },
+    "median": {
+      "ingest": 82,
+      "view": 9,
+      "total": 91.5
+    }
+  },
+  "webkit/js/temporal/dense/week": {
+    "cold": {
+      "ingest": 87,
+      "view": 21,
+      "total": 108
+    },
+    "median": {
+      "ingest": 73.5,
+      "view": 17,
+      "total": 114
+    }
+  },
+  "webkit/js/temporal/dense/month": {
+    "cold": {
+      "ingest": 89,
+      "view": 41,
+      "total": 130
+    },
+    "median": {
+      "ingest": 72.5,
+      "view": 52.5,
+      "total": 133.5
+    }
+  },
+  "webkit/js/bigint/year/week": {
+    "cold": {
+      "ingest": 90,
+      "view": 5,
+      "total": 95
+    },
+    "median": {
+      "ingest": 75,
+      "view": 2,
+      "total": 77.5
+    }
+  },
+  "webkit/js/bigint/year/month": {
+    "cold": {
+      "ingest": 92,
+      "view": 7,
+      "total": 99
+    },
+    "median": {
+      "ingest": 73.5,
+      "view": 4,
+      "total": 77
+    }
+  },
+  "webkit/js/bigint/dense/week": {
+    "cold": {
+      "ingest": 90,
+      "view": 14,
+      "total": 104
+    },
+    "median": {
+      "ingest": 74,
+      "view": 11,
+      "total": 87
+    }
+  },
+  "webkit/js/bigint/dense/month": {
+    "cold": {
+      "ingest": 92,
+      "view": 10,
+      "total": 102
+    },
+    "median": {
+      "ingest": 76.5,
+      "view": 5.5,
+      "total": 82
+    }
+  },
+  "webkit/js/number/year/week": {
+    "cold": {
+      "ingest": 82,
+      "view": 5,
+      "total": 87
+    },
+    "median": {
+      "ingest": 64.5,
+      "view": 2,
+      "total": 67
+    }
+  },
+  "webkit/js/number/year/month": {
+    "cold": {
+      "ingest": 82,
+      "view": 7,
+      "total": 89
+    },
+    "median": {
+      "ingest": 64.5,
+      "view": 4,
+      "total": 68.5
+    }
+  },
+  "webkit/js/number/dense/week": {
+    "cold": {
+      "ingest": 82,
+      "view": 15,
+      "total": 97
+    },
+    "median": {
+      "ingest": 65,
+      "view": 11,
+      "total": 77
+    }
+  },
+  "webkit/js/number/dense/month": {
+    "cold": {
+      "ingest": 83,
+      "view": 9,
+      "total": 92
+    },
+    "median": {
+      "ingest": 64.5,
+      "view": 5,
+      "total": 69.5
+    }
+  },
+  "firefox/native/temporal/year/week": {
+    "cold": {
+      "ingest": 8,
+      "view": 1,
+      "total": 9
+    },
+    "median": {
+      "ingest": 6,
+      "view": 0.5,
+      "total": 6.5
+    }
+  },
+  "firefox/native/temporal/year/month": {
+    "cold": {
+      "ingest": 8,
+      "view": 2,
+      "total": 10
+    },
+    "median": {
+      "ingest": 6,
+      "view": 1,
+      "total": 6
+    }
+  },
+  "firefox/native/temporal/dense/week": {
+    "cold": {
+      "ingest": 8,
+      "view": 3,
+      "total": 11
+    },
+    "median": {
+      "ingest": 6,
+      "view": 1,
+      "total": 7
+    }
+  },
+  "firefox/native/temporal/dense/month": {
+    "cold": {
+      "ingest": 7,
+      "view": 5,
+      "total": 12
+    },
+    "median": {
+      "ingest": 6,
+      "view": 3,
+      "total": 8.5
+    }
+  },
+  "firefox/native/bigint/year/week": {
+    "cold": {
+      "ingest": 7,
+      "view": 1,
+      "total": 8
+    },
+    "median": {
+      "ingest": 5.5,
+      "view": 0,
+      "total": 6
+    }
+  },
+  "firefox/native/bigint/year/month": {
+    "cold": {
+      "ingest": 7,
+      "view": 1,
+      "total": 8
+    },
+    "median": {
+      "ingest": 6,
+      "view": 0,
+      "total": 6
+    }
+  },
+  "firefox/native/bigint/dense/week": {
+    "cold": {
+      "ingest": 8,
+      "view": 3,
+      "total": 11
+    },
+    "median": {
+      "ingest": 5.5,
+      "view": 1,
+      "total": 7
+    }
+  },
+  "firefox/native/bigint/dense/month": {
+    "cold": {
+      "ingest": 7,
+      "view": 3,
+      "total": 10
+    },
+    "median": {
+      "ingest": 5,
+      "view": 2,
+      "total": 7.5
+    }
+  },
+  "firefox/native/number/year/week": {
+    "cold": {
+      "ingest": 6,
+      "view": 1,
+      "total": 7
+    },
+    "median": {
+      "ingest": 5,
+      "view": 0.5,
+      "total": 5
+    }
+  },
+  "firefox/native/number/year/month": {
+    "cold": {
+      "ingest": 6,
+      "view": 1,
+      "total": 7
+    },
+    "median": {
+      "ingest": 5,
+      "view": 0,
+      "total": 5
+    }
+  },
+  "firefox/native/number/dense/week": {
+    "cold": {
+      "ingest": 5,
+      "view": 4,
+      "total": 9
+    },
+    "median": {
+      "ingest": 5,
+      "view": 1,
+      "total": 6
+    }
+  },
+  "firefox/native/number/dense/month": {
+    "cold": {
+      "ingest": 7,
+      "view": 3,
+      "total": 10
+    },
+    "median": {
+      "ingest": 5,
+      "view": 1.5,
+      "total": 7
+    }
+  },
+  "firefox/tp/temporal/year/week": {
+    "cold": {
+      "ingest": 48,
+      "view": 2,
+      "total": 50
+    },
+    "median": {
+      "ingest": 27,
+      "view": 1,
+      "total": 29
+    }
+  },
+  "firefox/tp/temporal/year/month": {
+    "cold": {
+      "ingest": 47,
+      "view": 3,
+      "total": 50
+    },
+    "median": {
+      "ingest": 26.5,
+      "view": 1,
+      "total": 28
+    }
+  },
+  "firefox/tp/temporal/dense/week": {
+    "cold": {
+      "ingest": 46,
+      "view": 7,
+      "total": 53
+    },
+    "median": {
+      "ingest": 27.5,
+      "view": 5,
+      "total": 33.5
+    }
+  },
+  "firefox/tp/temporal/dense/month": {
+    "cold": {
+      "ingest": 47,
+      "view": 7,
+      "total": 54
+    },
+    "median": {
+      "ingest": 27.5,
+      "view": 4,
+      "total": 32
+    }
+  },
+  "firefox/tp/bigint/year/week": {
+    "cold": {
+      "ingest": 45,
+      "view": 2,
+      "total": 47
+    },
+    "median": {
+      "ingest": 24,
+      "view": 1,
+      "total": 25.5
+    }
+  },
+  "firefox/tp/bigint/year/month": {
+    "cold": {
+      "ingest": 45,
+      "view": 2,
+      "total": 47
+    },
+    "median": {
+      "ingest": 23.5,
+      "view": 1,
+      "total": 25
+    }
+  },
+  "firefox/tp/bigint/dense/week": {
+    "cold": {
+      "ingest": 44,
+      "view": 8,
+      "total": 52
+    },
+    "median": {
+      "ingest": 25,
+      "view": 4,
+      "total": 29
+    }
+  },
+  "firefox/tp/bigint/dense/month": {
+    "cold": {
+      "ingest": 45,
+      "view": 4,
+      "total": 49
+    },
+    "median": {
+      "ingest": 24.5,
+      "view": 2,
+      "total": 27
+    }
+  },
+  "firefox/tp/number/year/week": {
+    "cold": {
+      "ingest": 46,
+      "view": 3,
+      "total": 49
+    },
+    "median": {
+      "ingest": 24.5,
+      "view": 1,
+      "total": 25
+    }
+  },
+  "firefox/tp/number/year/month": {
+    "cold": {
+      "ingest": 45,
+      "view": 2,
+      "total": 47
+    },
+    "median": {
+      "ingest": 23.5,
+      "view": 1,
+      "total": 24.5
+    }
+  },
+  "firefox/tp/number/dense/week": {
+    "cold": {
+      "ingest": 45,
+      "view": 7,
+      "total": 52
+    },
+    "median": {
+      "ingest": 24.5,
+      "view": 4,
+      "total": 29
+    }
+  },
+  "firefox/tp/number/dense/month": {
+    "cold": {
+      "ingest": 45,
+      "view": 4,
+      "total": 49
+    },
+    "median": {
+      "ingest": 24,
+      "view": 2,
+      "total": 26
+    }
+  },
+  "firefox/js/temporal/year/week": {
+    "cold": {
+      "ingest": 124,
+      "view": 7,
+      "total": 131
+    },
+    "median": {
+      "ingest": 132,
+      "view": 6,
+      "total": 137
+    }
+  },
+  "firefox/js/temporal/year/month": {
+    "cold": {
+      "ingest": 126,
+      "view": 25,
+      "total": 151
+    },
+    "median": {
+      "ingest": 125.5,
+      "view": 12.5,
+      "total": 140
+    }
+  },
+  "firefox/js/temporal/dense/week": {
+    "cold": {
+      "ingest": 124,
+      "view": 34,
+      "total": 158
+    },
+    "median": {
+      "ingest": 116.5,
+      "view": 38,
+      "total": 151.5
+    }
+  },
+  "firefox/js/temporal/dense/month": {
+    "cold": {
+      "ingest": 129,
+      "view": 76,
+      "total": 205
+    },
+    "median": {
+      "ingest": 117,
+      "view": 87,
+      "total": 203
+    }
+  },
+  "firefox/js/bigint/year/week": {
+    "cold": {
+      "ingest": 110,
+      "view": 4,
+      "total": 114
+    },
+    "median": {
+      "ingest": 88,
+      "view": 3,
+      "total": 90.5
+    }
+  },
+  "firefox/js/bigint/year/month": {
+    "cold": {
+      "ingest": 111,
+      "view": 6,
+      "total": 117
+    },
+    "median": {
+      "ingest": 88,
+      "view": 4.5,
+      "total": 92.5
+    }
+  },
+  "firefox/js/bigint/dense/week": {
+    "cold": {
+      "ingest": 111,
+      "view": 17,
+      "total": 128
+    },
+    "median": {
+      "ingest": 90,
+      "view": 13,
+      "total": 102.5
+    }
+  },
+  "firefox/js/bigint/dense/month": {
+    "cold": {
+      "ingest": 110,
+      "view": 9,
+      "total": 119
+    },
+    "median": {
+      "ingest": 87.5,
+      "view": 6,
+      "total": 93.5
+    }
+  },
+  "firefox/js/number/year/week": {
+    "cold": {
+      "ingest": 100,
+      "view": 6,
+      "total": 106
+    },
+    "median": {
+      "ingest": 80.5,
+      "view": 3,
+      "total": 83.5
+    }
+  },
+  "firefox/js/number/year/month": {
+    "cold": {
+      "ingest": 104,
+      "view": 7,
+      "total": 111
+    },
+    "median": {
+      "ingest": 82,
+      "view": 4,
+      "total": 86
+    }
+  },
+  "firefox/js/number/dense/week": {
+    "cold": {
+      "ingest": 104,
+      "view": 18,
+      "total": 122
+    },
+    "median": {
+      "ingest": 82,
+      "view": 13.5,
+      "total": 95
+    }
+  },
+  "firefox/js/number/dense/month": {
+    "cold": {
+      "ingest": 102,
+      "view": 9,
+      "total": 111
+    },
+    "median": {
+      "ingest": 82,
+      "view": 5,
+      "total": 87
+    }
   }
- },
- "chromium/native/temporal/year/month": {
-  "cold": {
-   "ingest": 100,
-   "view": 24.300000190734863,
-   "total": 124.30000019073486
-  },
-  "median": {
-   "ingest": 100.75000023841858,
-   "view": 22.25,
-   "total": 123.00000023841858
-  }
- },
- "chromium/native/temporal/dense/week": {
-  "cold": {
-   "ingest": 105.19999980926514,
-   "view": 30.59999990463257,
-   "total": 135.7999997138977
-  },
-  "median": {
-   "ingest": 97.95000004768372,
-   "view": 30,
-   "total": 136.10000014305115
-  }
- },
- "chromium/native/temporal/dense/month": {
-  "cold": {
-   "ingest": 105.09999990463257,
-   "view": 120.40000009536743,
-   "total": 225.5
-  },
-  "median": {
-   "ingest": 129.25,
-   "view": 149.65000009536743,
-   "total": 279.35000014305115
-  }
- },
- "chromium/native/bigint/year/week": {
-  "cold": {
-   "ingest": 26.699999809265137,
-   "view": 3.5,
-   "total": 30.199999809265137
-  },
-  "median": {
-   "ingest": 23.200000286102295,
-   "view": 1.1499998569488525,
-   "total": 24.300000190734863
-  }
- },
- "chromium/native/bigint/year/month": {
-  "cold": {
-   "ingest": 26.09999990463257,
-   "view": 4.5,
-   "total": 30.59999990463257
-  },
-  "median": {
-   "ingest": 23.299999952316284,
-   "view": 1.1999998092651367,
-   "total": 24.649999856948853
-  }
- },
- "chromium/native/bigint/dense/week": {
-  "cold": {
-   "ingest": 27.299999713897705,
-   "view": 10.300000190734863,
-   "total": 37.59999990463257
-  },
-  "median": {
-   "ingest": 23.50000023841858,
-   "view": 6.1499998569488525,
-   "total": 29.950000047683716
-  }
- },
- "chromium/native/bigint/dense/month": {
-  "cold": {
-   "ingest": 26.700000286102295,
-   "view": 17.40000009536743,
-   "total": 44.10000038146973
-  },
-  "median": {
-   "ingest": 24.100000143051147,
-   "view": 10.400000095367432,
-   "total": 33.64999985694885
-  }
- },
- "chromium/native/number/year/week": {
-  "cold": {
-   "ingest": 25.800000190734863,
-   "view": 4.599999904632568,
-   "total": 30.40000009536743
-  },
-  "median": {
-   "ingest": 22.199999809265137,
-   "view": 1.0499999523162842,
-   "total": 23.09999990463257
-  }
- },
- "chromium/native/number/year/month": {
-  "cold": {
-   "ingest": 26.59999990463257,
-   "view": 4.900000095367432,
-   "total": 31.5
-  },
-  "median": {
-   "ingest": 22.09999990463257,
-   "view": 0.9500000476837158,
-   "total": 23.199999809265137
-  }
- },
- "chromium/native/number/dense/week": {
-  "cold": {
-   "ingest": 26.199999809265137,
-   "view": 10.900000095367432,
-   "total": 37.09999990463257
-  },
-  "median": {
-   "ingest": 22.149999856948853,
-   "view": 5.700000047683716,
-   "total": 28.350000143051147
-  }
- },
- "chromium/native/number/dense/month": {
-  "cold": {
-   "ingest": 26.59999990463257,
-   "view": 15.699999809265137,
-   "total": 42.299999713897705
-  },
-  "median": {
-   "ingest": 22.300000190734863,
-   "view": 9.75,
-   "total": 31.84999990463257
-  }
- },
- "chromium/tp/temporal/year/week": {
-  "cold": {
-   "ingest": 159.30000019073486,
-   "view": 9.399999618530273,
-   "total": 168.69999980926514
-  },
-  "median": {
-   "ingest": 92.64999985694885,
-   "view": 3.549999952316284,
-   "total": 95.75
-  }
- },
- "chromium/tp/temporal/year/month": {
-  "cold": {
-   "ingest": 157.59999990463257,
-   "view": 9.600000381469727,
-   "total": 167.2000002861023
-  },
-  "median": {
-   "ingest": 94.59999990463257,
-   "view": 4.1000001430511475,
-   "total": 99
-  }
- },
- "chromium/tp/temporal/dense/week": {
-  "cold": {
-   "ingest": 158.59999990463257,
-   "view": 29.199999809265137,
-   "total": 187.7999997138977
-  },
-  "median": {
-   "ingest": 91.20000004768372,
-   "view": 19.59999990463257,
-   "total": 110.54999995231628
-  }
- },
- "chromium/tp/temporal/dense/month": {
-  "cold": {
-   "ingest": 157.90000009536743,
-   "view": 26.299999713897705,
-   "total": 184.19999980926514
-  },
-  "median": {
-   "ingest": 90.65000009536743,
-   "view": 18.59999990463257,
-   "total": 108.04999995231628
-  }
- },
- "chromium/tp/bigint/year/week": {
-  "cold": {
-   "ingest": 154.69999980926514,
-   "view": 9.400000095367432,
-   "total": 164.09999990463257
-  },
-  "median": {
-   "ingest": 82.85000014305115,
-   "view": 3.200000047683716,
-   "total": 86.05000019073486
-  }
- },
- "chromium/tp/bigint/year/month": {
-  "cold": {
-   "ingest": 151.19999980926514,
-   "view": 7.800000190734863,
-   "total": 159
-  },
-  "median": {
-   "ingest": 84.94999980926514,
-   "view": 2.9499998092651367,
-   "total": 88.49999976158142
-  }
- },
- "chromium/tp/bigint/dense/week": {
-  "cold": {
-   "ingest": 158.69999980926514,
-   "view": 27.40000009536743,
-   "total": 186.09999990463257
-  },
-  "median": {
-   "ingest": 84.95000004768372,
-   "view": 17.549999952316284,
-   "total": 101.84999990463257
-  }
- },
- "chromium/tp/bigint/dense/month": {
-  "cold": {
-   "ingest": 151.40000009536743,
-   "view": 22.300000190734863,
-   "total": 173.7000002861023
-  },
-  "median": {
-   "ingest": 84.20000004768372,
-   "view": 11.799999713897705,
-   "total": 94.25
-  }
- },
- "chromium/tp/number/year/week": {
-  "cold": {
-   "ingest": 155.59999990463257,
-   "view": 8.200000286102295,
-   "total": 163.80000019073486
-  },
-  "median": {
-   "ingest": 83.40000009536743,
-   "view": 3.1499998569488525,
-   "total": 86.45000004768372
-  }
- },
- "chromium/tp/number/year/month": {
-  "cold": {
-   "ingest": 154.5,
-   "view": 7.5,
-   "total": 162
-  },
-  "median": {
-   "ingest": 85.19999980926514,
-   "view": 2.6500000953674316,
-   "total": 87.65000009536743
-  }
- },
- "chromium/tp/number/dense/week": {
-  "cold": {
-   "ingest": 156.09999990463257,
-   "view": 26.90000009536743,
-   "total": 183
-  },
-  "median": {
-   "ingest": 83.55000019073486,
-   "view": 18.299999952316284,
-   "total": 101.10000014305115
-  }
- },
- "chromium/tp/number/dense/month": {
-  "cold": {
-   "ingest": 157.80000019073486,
-   "view": 18.90000009536743,
-   "total": 176.7000002861023
-  },
-  "median": {
-   "ingest": 84.90000009536743,
-   "view": 10.900000095367432,
-   "total": 94.5
-  }
- },
- "chromium/js/temporal/year/week": {
-  "cold": {
-   "ingest": 394.59999990463257,
-   "view": 30.5,
-   "total": 425.09999990463257
-  },
-  "median": {
-   "ingest": 396.10000014305115,
-   "view": 19.90000009536743,
-   "total": 431.15000009536743
-  }
- },
- "chromium/js/temporal/year/month": {
-  "cold": {
-   "ingest": 404,
-   "view": 75.2000002861023,
-   "total": 479.2000002861023
-  },
-  "median": {
-   "ingest": 434.9500000476837,
-   "view": 40.450000047683716,
-   "total": 474.9500000476837
-  }
- },
- "chromium/js/temporal/dense/week": {
-  "cold": {
-   "ingest": 415.5,
-   "view": 128.59999990463257,
-   "total": 544.0999999046326
-  },
-  "median": {
-   "ingest": 396.65000009536743,
-   "view": 116.14999985694885,
-   "total": 511.34999990463257
-  }
- },
- "chromium/js/temporal/dense/month": {
-  "cold": {
-   "ingest": 405.19999980926514,
-   "view": 247.30000019073486,
-   "total": 652.5
-  },
-  "median": {
-   "ingest": 393.60000014305115,
-   "view": 257.7999997138977,
-   "total": 660.25
-  }
- },
- "chromium/js/bigint/year/week": {
-  "cold": {
-   "ingest": 351.19999980926514,
-   "view": 16.800000190734863,
-   "total": 368
-  },
-  "median": {
-   "ingest": 300.19999980926514,
-   "view": 9.250000238418579,
-   "total": 310.35000014305115
-  }
- },
- "chromium/js/bigint/year/month": {
-  "cold": {
-   "ingest": 348.40000009536743,
-   "view": 24.90000009536743,
-   "total": 373.30000019073486
-  },
-  "median": {
-   "ingest": 298.5,
-   "view": 14.200000047683716,
-   "total": 313.60000014305115
-  }
- },
- "chromium/js/bigint/dense/week": {
-  "cold": {
-   "ingest": 348.5,
-   "view": 61.5,
-   "total": 410
-  },
-  "median": {
-   "ingest": 297.5499999523163,
-   "view": 47.549999952316284,
-   "total": 345.59999990463257
-  }
- },
- "chromium/js/bigint/dense/month": {
-  "cold": {
-   "ingest": 350,
-   "view": 37.10000038146973,
-   "total": 387.1000003814697
-  },
-  "median": {
-   "ingest": 293.15000009536743,
-   "view": 23.199999809265137,
-   "total": 314.84999990463257
-  }
- },
- "chromium/js/number/year/week": {
-  "cold": {
-   "ingest": 323.09999990463257,
-   "view": 18.600000381469727,
-   "total": 341.7000002861023
-  },
-  "median": {
-   "ingest": 266.2999999523163,
-   "view": 8.649999856948853,
-   "total": 275.64999985694885
-  }
- },
- "chromium/js/number/year/month": {
-  "cold": {
-   "ingest": 319.80000019073486,
-   "view": 26.299999713897705,
-   "total": 346.09999990463257
-  },
-  "median": {
-   "ingest": 267.34999990463257,
-   "view": 14.049999952316284,
-   "total": 281.2000000476837
-  }
- },
- "chromium/js/number/dense/week": {
-  "cold": {
-   "ingest": 317.2999997138977,
-   "view": 64.30000019073486,
-   "total": 381.59999990463257
-  },
-  "median": {
-   "ingest": 269.09999990463257,
-   "view": 47.950000286102295,
-   "total": 318.9999997615814
-  }
- },
- "chromium/js/number/dense/month": {
-  "cold": {
-   "ingest": 326.80000019073486,
-   "view": 37.299999713897705,
-   "total": 364.09999990463257
-  },
-  "median": {
-   "ingest": 264.85000014305115,
-   "view": 22.149999856948853,
-   "total": 287.75
-  }
- },
- "webkit/native/temporal/year/week": {
-  "cold": {
-   "ingest": 5,
-   "view": 1,
-   "total": 6
-  },
-  "median": {
-   "ingest": 3,
-   "view": 0.5,
-   "total": 4
-  }
- },
- "webkit/native/temporal/year/month": {
-  "cold": {
-   "ingest": 5,
-   "view": 2,
-   "total": 7
-  },
-  "median": {
-   "ingest": 3,
-   "view": 0,
-   "total": 4
-  }
- },
- "webkit/native/temporal/dense/week": {
-  "cold": {
-   "ingest": 5,
-   "view": 2,
-   "total": 7
-  },
-  "median": {
-   "ingest": 3,
-   "view": 1,
-   "total": 4
-  }
- },
- "webkit/native/temporal/dense/month": {
-  "cold": {
-   "ingest": 5,
-   "view": 5,
-   "total": 10
-  },
-  "median": {
-   "ingest": 3,
-   "view": 2,
-   "total": 5.5
-  }
- },
- "webkit/native/bigint/year/week": {
-  "cold": {
-   "ingest": 4,
-   "view": 1,
-   "total": 5
-  },
-  "median": {
-   "ingest": 2,
-   "view": 1,
-   "total": 3
-  }
- },
- "webkit/native/bigint/year/month": {
-  "cold": {
-   "ingest": 4,
-   "view": 2,
-   "total": 6
-  },
-  "median": {
-   "ingest": 3,
-   "view": 0.5,
-   "total": 3
-  }
- },
- "webkit/native/bigint/dense/week": {
-  "cold": {
-   "ingest": 5,
-   "view": 3,
-   "total": 8
-  },
-  "median": {
-   "ingest": 3,
-   "view": 1,
-   "total": 4
-  }
- },
- "webkit/native/bigint/dense/month": {
-  "cold": {
-   "ingest": 5,
-   "view": 4,
-   "total": 9
-  },
-  "median": {
-   "ingest": 3,
-   "view": 2,
-   "total": 5
-  }
- },
- "webkit/native/number/year/week": {
-  "cold": {
-   "ingest": 5,
-   "view": 0,
-   "total": 5
-  },
-  "median": {
-   "ingest": 2,
-   "view": 0,
-   "total": 2.5
-  }
- },
- "webkit/native/number/year/month": {
-  "cold": {
-   "ingest": 4,
-   "view": 1,
-   "total": 5
-  },
-  "median": {
-   "ingest": 2.5,
-   "view": 0,
-   "total": 3
-  }
- },
- "webkit/native/number/dense/week": {
-  "cold": {
-   "ingest": 4,
-   "view": 2,
-   "total": 6
-  },
-  "median": {
-   "ingest": 2,
-   "view": 1,
-   "total": 3
-  }
- },
- "webkit/native/number/dense/month": {
-  "cold": {
-   "ingest": 4,
-   "view": 3,
-   "total": 7
-  },
-  "median": {
-   "ingest": 2,
-   "view": 1,
-   "total": 4
-  }
- },
- "webkit/tp/temporal/year/week": {
-  "cold": {
-   "ingest": 37,
-   "view": 2,
-   "total": 39
-  },
-  "median": {
-   "ingest": 19,
-   "view": 1,
-   "total": 20.5
-  }
- },
- "webkit/tp/temporal/year/month": {
-  "cold": {
-   "ingest": 35,
-   "view": 3,
-   "total": 38
-  },
-  "median": {
-   "ingest": 19.5,
-   "view": 1,
-   "total": 21
-  }
- },
- "webkit/tp/temporal/dense/week": {
-  "cold": {
-   "ingest": 36,
-   "view": 10,
-   "total": 46
-  },
-  "median": {
-   "ingest": 19.5,
-   "view": 5,
-   "total": 24
-  }
- },
- "webkit/tp/temporal/dense/month": {
-  "cold": {
-   "ingest": 36,
-   "view": 7,
-   "total": 43
-  },
-  "median": {
-   "ingest": 20,
-   "view": 3.5,
-   "total": 23
-  }
- },
- "webkit/tp/bigint/year/week": {
-  "cold": {
-   "ingest": 34,
-   "view": 3,
-   "total": 37
-  },
-  "median": {
-   "ingest": 18,
-   "view": 1,
-   "total": 18.5
-  }
- },
- "webkit/tp/bigint/year/month": {
-  "cold": {
-   "ingest": 34,
-   "view": 3,
-   "total": 37
-  },
-  "median": {
-   "ingest": 18,
-   "view": 1,
-   "total": 19
-  }
- },
- "webkit/tp/bigint/dense/week": {
-  "cold": {
-   "ingest": 34,
-   "view": 10,
-   "total": 44
-  },
-  "median": {
-   "ingest": 18.5,
-   "view": 5,
-   "total": 23
-  }
- },
- "webkit/tp/bigint/dense/month": {
-  "cold": {
-   "ingest": 35,
-   "view": 5,
-   "total": 40
-  },
-  "median": {
-   "ingest": 17,
-   "view": 2,
-   "total": 19.5
-  }
- },
- "webkit/tp/number/year/week": {
-  "cold": {
-   "ingest": 34,
-   "view": 2,
-   "total": 36
-  },
-  "median": {
-   "ingest": 18,
-   "view": 1,
-   "total": 18
-  }
- },
- "webkit/tp/number/year/month": {
-  "cold": {
-   "ingest": 33,
-   "view": 3,
-   "total": 36
-  },
-  "median": {
-   "ingest": 18,
-   "view": 1,
-   "total": 18
-  }
- },
- "webkit/tp/number/dense/week": {
-  "cold": {
-   "ingest": 34,
-   "view": 10,
-   "total": 44
-  },
-  "median": {
-   "ingest": 18,
-   "view": 4,
-   "total": 22
-  }
- },
- "webkit/tp/number/dense/month": {
-  "cold": {
-   "ingest": 34,
-   "view": 4,
-   "total": 38
-  },
-  "median": {
-   "ingest": 18,
-   "view": 1.5,
-   "total": 19.5
-  }
- },
- "webkit/js/temporal/year/week": {
-  "cold": {
-   "ingest": 85,
-   "view": 8,
-   "total": 93
-  },
-  "median": {
-   "ingest": 72,
-   "view": 5,
-   "total": 86
-  }
- },
- "webkit/js/temporal/year/month": {
-  "cold": {
-   "ingest": 84,
-   "view": 13,
-   "total": 97
-  },
-  "median": {
-   "ingest": 82,
-   "view": 9,
-   "total": 91.5
-  }
- },
- "webkit/js/temporal/dense/week": {
-  "cold": {
-   "ingest": 87,
-   "view": 21,
-   "total": 108
-  },
-  "median": {
-   "ingest": 73.5,
-   "view": 17,
-   "total": 114
-  }
- },
- "webkit/js/temporal/dense/month": {
-  "cold": {
-   "ingest": 89,
-   "view": 41,
-   "total": 130
-  },
-  "median": {
-   "ingest": 72.5,
-   "view": 52.5,
-   "total": 133.5
-  }
- },
- "webkit/js/bigint/year/week": {
-  "cold": {
-   "ingest": 90,
-   "view": 5,
-   "total": 95
-  },
-  "median": {
-   "ingest": 75,
-   "view": 2,
-   "total": 77.5
-  }
- },
- "webkit/js/bigint/year/month": {
-  "cold": {
-   "ingest": 92,
-   "view": 7,
-   "total": 99
-  },
-  "median": {
-   "ingest": 73.5,
-   "view": 4,
-   "total": 77
-  }
- },
- "webkit/js/bigint/dense/week": {
-  "cold": {
-   "ingest": 90,
-   "view": 14,
-   "total": 104
-  },
-  "median": {
-   "ingest": 74,
-   "view": 11,
-   "total": 87
-  }
- },
- "webkit/js/bigint/dense/month": {
-  "cold": {
-   "ingest": 92,
-   "view": 10,
-   "total": 102
-  },
-  "median": {
-   "ingest": 76.5,
-   "view": 5.5,
-   "total": 82
-  }
- },
- "webkit/js/number/year/week": {
-  "cold": {
-   "ingest": 82,
-   "view": 5,
-   "total": 87
-  },
-  "median": {
-   "ingest": 64.5,
-   "view": 2,
-   "total": 67
-  }
- },
- "webkit/js/number/year/month": {
-  "cold": {
-   "ingest": 82,
-   "view": 7,
-   "total": 89
-  },
-  "median": {
-   "ingest": 64.5,
-   "view": 4,
-   "total": 68.5
-  }
- },
- "webkit/js/number/dense/week": {
-  "cold": {
-   "ingest": 82,
-   "view": 15,
-   "total": 97
-  },
-  "median": {
-   "ingest": 65,
-   "view": 11,
-   "total": 77
-  }
- },
- "webkit/js/number/dense/month": {
-  "cold": {
-   "ingest": 83,
-   "view": 9,
-   "total": 92
-  },
-  "median": {
-   "ingest": 64.5,
-   "view": 5,
-   "total": 69.5
-  }
- },
- "firefox/native/temporal/year/week": {
-  "cold": {
-   "ingest": 8,
-   "view": 1,
-   "total": 9
-  },
-  "median": {
-   "ingest": 6,
-   "view": 0.5,
-   "total": 6.5
-  }
- },
- "firefox/native/temporal/year/month": {
-  "cold": {
-   "ingest": 8,
-   "view": 2,
-   "total": 10
-  },
-  "median": {
-   "ingest": 6,
-   "view": 1,
-   "total": 6
-  }
- },
- "firefox/native/temporal/dense/week": {
-  "cold": {
-   "ingest": 8,
-   "view": 3,
-   "total": 11
-  },
-  "median": {
-   "ingest": 6,
-   "view": 1,
-   "total": 7
-  }
- },
- "firefox/native/temporal/dense/month": {
-  "cold": {
-   "ingest": 7,
-   "view": 5,
-   "total": 12
-  },
-  "median": {
-   "ingest": 6,
-   "view": 3,
-   "total": 8.5
-  }
- },
- "firefox/native/bigint/year/week": {
-  "cold": {
-   "ingest": 7,
-   "view": 1,
-   "total": 8
-  },
-  "median": {
-   "ingest": 5.5,
-   "view": 0,
-   "total": 6
-  }
- },
- "firefox/native/bigint/year/month": {
-  "cold": {
-   "ingest": 7,
-   "view": 1,
-   "total": 8
-  },
-  "median": {
-   "ingest": 6,
-   "view": 0,
-   "total": 6
-  }
- },
- "firefox/native/bigint/dense/week": {
-  "cold": {
-   "ingest": 8,
-   "view": 3,
-   "total": 11
-  },
-  "median": {
-   "ingest": 5.5,
-   "view": 1,
-   "total": 7
-  }
- },
- "firefox/native/bigint/dense/month": {
-  "cold": {
-   "ingest": 7,
-   "view": 3,
-   "total": 10
-  },
-  "median": {
-   "ingest": 5,
-   "view": 2,
-   "total": 7.5
-  }
- },
- "firefox/native/number/year/week": {
-  "cold": {
-   "ingest": 6,
-   "view": 1,
-   "total": 7
-  },
-  "median": {
-   "ingest": 5,
-   "view": 0.5,
-   "total": 5
-  }
- },
- "firefox/native/number/year/month": {
-  "cold": {
-   "ingest": 6,
-   "view": 1,
-   "total": 7
-  },
-  "median": {
-   "ingest": 5,
-   "view": 0,
-   "total": 5
-  }
- },
- "firefox/native/number/dense/week": {
-  "cold": {
-   "ingest": 5,
-   "view": 4,
-   "total": 9
-  },
-  "median": {
-   "ingest": 5,
-   "view": 1,
-   "total": 6
-  }
- },
- "firefox/native/number/dense/month": {
-  "cold": {
-   "ingest": 7,
-   "view": 3,
-   "total": 10
-  },
-  "median": {
-   "ingest": 5,
-   "view": 1.5,
-   "total": 7
-  }
- },
- "firefox/tp/temporal/year/week": {
-  "cold": {
-   "ingest": 48,
-   "view": 2,
-   "total": 50
-  },
-  "median": {
-   "ingest": 27,
-   "view": 1,
-   "total": 29
-  }
- },
- "firefox/tp/temporal/year/month": {
-  "cold": {
-   "ingest": 47,
-   "view": 3,
-   "total": 50
-  },
-  "median": {
-   "ingest": 26.5,
-   "view": 1,
-   "total": 28
-  }
- },
- "firefox/tp/temporal/dense/week": {
-  "cold": {
-   "ingest": 46,
-   "view": 7,
-   "total": 53
-  },
-  "median": {
-   "ingest": 27.5,
-   "view": 5,
-   "total": 33.5
-  }
- },
- "firefox/tp/temporal/dense/month": {
-  "cold": {
-   "ingest": 47,
-   "view": 7,
-   "total": 54
-  },
-  "median": {
-   "ingest": 27.5,
-   "view": 4,
-   "total": 32
-  }
- },
- "firefox/tp/bigint/year/week": {
-  "cold": {
-   "ingest": 45,
-   "view": 2,
-   "total": 47
-  },
-  "median": {
-   "ingest": 24,
-   "view": 1,
-   "total": 25.5
-  }
- },
- "firefox/tp/bigint/year/month": {
-  "cold": {
-   "ingest": 45,
-   "view": 2,
-   "total": 47
-  },
-  "median": {
-   "ingest": 23.5,
-   "view": 1,
-   "total": 25
-  }
- },
- "firefox/tp/bigint/dense/week": {
-  "cold": {
-   "ingest": 44,
-   "view": 8,
-   "total": 52
-  },
-  "median": {
-   "ingest": 25,
-   "view": 4,
-   "total": 29
-  }
- },
- "firefox/tp/bigint/dense/month": {
-  "cold": {
-   "ingest": 45,
-   "view": 4,
-   "total": 49
-  },
-  "median": {
-   "ingest": 24.5,
-   "view": 2,
-   "total": 27
-  }
- },
- "firefox/tp/number/year/week": {
-  "cold": {
-   "ingest": 46,
-   "view": 3,
-   "total": 49
-  },
-  "median": {
-   "ingest": 24.5,
-   "view": 1,
-   "total": 25
-  }
- },
- "firefox/tp/number/year/month": {
-  "cold": {
-   "ingest": 45,
-   "view": 2,
-   "total": 47
-  },
-  "median": {
-   "ingest": 23.5,
-   "view": 1,
-   "total": 24.5
-  }
- },
- "firefox/tp/number/dense/week": {
-  "cold": {
-   "ingest": 45,
-   "view": 7,
-   "total": 52
-  },
-  "median": {
-   "ingest": 24.5,
-   "view": 4,
-   "total": 29
-  }
- },
- "firefox/tp/number/dense/month": {
-  "cold": {
-   "ingest": 45,
-   "view": 4,
-   "total": 49
-  },
-  "median": {
-   "ingest": 24,
-   "view": 2,
-   "total": 26
-  }
- },
- "firefox/js/temporal/year/week": {
-  "cold": {
-   "ingest": 124,
-   "view": 7,
-   "total": 131
-  },
-  "median": {
-   "ingest": 132,
-   "view": 6,
-   "total": 137
-  }
- },
- "firefox/js/temporal/year/month": {
-  "cold": {
-   "ingest": 126,
-   "view": 25,
-   "total": 151
-  },
-  "median": {
-   "ingest": 125.5,
-   "view": 12.5,
-   "total": 140
-  }
- },
- "firefox/js/temporal/dense/week": {
-  "cold": {
-   "ingest": 124,
-   "view": 34,
-   "total": 158
-  },
-  "median": {
-   "ingest": 116.5,
-   "view": 38,
-   "total": 151.5
-  }
- },
- "firefox/js/temporal/dense/month": {
-  "cold": {
-   "ingest": 129,
-   "view": 76,
-   "total": 205
-  },
-  "median": {
-   "ingest": 117,
-   "view": 87,
-   "total": 203
-  }
- },
- "firefox/js/bigint/year/week": {
-  "cold": {
-   "ingest": 110,
-   "view": 4,
-   "total": 114
-  },
-  "median": {
-   "ingest": 88,
-   "view": 3,
-   "total": 90.5
-  }
- },
- "firefox/js/bigint/year/month": {
-  "cold": {
-   "ingest": 111,
-   "view": 6,
-   "total": 117
-  },
-  "median": {
-   "ingest": 88,
-   "view": 4.5,
-   "total": 92.5
-  }
- },
- "firefox/js/bigint/dense/week": {
-  "cold": {
-   "ingest": 111,
-   "view": 17,
-   "total": 128
-  },
-  "median": {
-   "ingest": 90,
-   "view": 13,
-   "total": 102.5
-  }
- },
- "firefox/js/bigint/dense/month": {
-  "cold": {
-   "ingest": 110,
-   "view": 9,
-   "total": 119
-  },
-  "median": {
-   "ingest": 87.5,
-   "view": 6,
-   "total": 93.5
-  }
- },
- "firefox/js/number/year/week": {
-  "cold": {
-   "ingest": 100,
-   "view": 6,
-   "total": 106
-  },
-  "median": {
-   "ingest": 80.5,
-   "view": 3,
-   "total": 83.5
-  }
- },
- "firefox/js/number/year/month": {
-  "cold": {
-   "ingest": 104,
-   "view": 7,
-   "total": 111
-  },
-  "median": {
-   "ingest": 82,
-   "view": 4,
-   "total": 86
-  }
- },
- "firefox/js/number/dense/week": {
-  "cold": {
-   "ingest": 104,
-   "view": 18,
-   "total": 122
-  },
-  "median": {
-   "ingest": 82,
-   "view": 13.5,
-   "total": 95
-  }
- },
- "firefox/js/number/dense/month": {
-  "cold": {
-   "ingest": 102,
-   "view": 9,
-   "total": 111
-  },
-  "median": {
-   "ingest": 82,
-   "view": 5,
-   "total": 87
-  }
- }
 }

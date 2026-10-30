@@ -1,60 +1,129 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>P4 Safari run</title>
-<style>
-  :root { color-scheme: light dark; font: 16px/1.5 system-ui, sans-serif; }
-  body { margin: 16px; max-width: 48rem; }
-  pre { font: 12px ui-monospace, monospace; white-space: pre-wrap; }
-  .done { color: #16a34a; font-weight: bold; }
-</style>
-</head>
-<body>
-<h1>P4: real-browser run</h1>
-<p>This page measures both Temporal polyfills in this browser and checks their results against native Temporal from Chromium. It takes about a minute. Keep the tab in front and don't touch anything until it says <strong>Done</strong>.</p>
-<p id="status">Starting…</p>
-<pre id="out"></pre>
-<script type="module">
-  const status = document.getElementById('status'), out = document.getElementById('out')
-  const say = (t) => { out.textContent += `${t}\n` }
-  const median = (a) => { const s = [...a].sort((x, y) => x - y); return (s[4] + s[5]) / 2 }
-  const report = { userAgent: navigator.userAgent, nativeTemporal: typeof globalThis.Temporal !== 'undefined', engine: {}, correctness: {} }
-  const tick = () => new Promise((r) => setTimeout(r, 0))
-  try {
-    const ref = await (await fetch('./temporal/reference.json')).json()
-    for (const impl of ['tp', 'js']) {
-      status.textContent = `Correctness: ${impl}…`; await tick()
-      const m = await import(`./temporal/dist/${impl}.js`)
-      const r = m.runCorpus(m.T)
-      const bad = Object.keys(ref).filter((id) => !id.startsWith('fmt:') && r[id] !== ref[id])
-      const cat = {}
-      for (const id of bad) { const k = id.split(':').slice(0, 2).join(':'); cat[k] = (cat[k] ?? 0) + 1 }
-      report.correctness[impl] = { cases: Object.keys(ref).length, mismatches: bad.length, byCategory: cat, sample: bad.slice(0, 20).map((id) => ({ id, ref: ref[id], got: r[id] })), worked: m.workedExamples(m.T).filter((w) => !w.ok) }
-      say(`${impl}: ${bad.length} mismatches vs Chromium native (formatting excluded)`)
-    }
-    for (const impl of ['tp', 'js']) {
-      const m = await import(`./engine/dist/${impl}.js`)
-      for (const order of ['temporal', 'bigint', 'number']) for (const [scenario, spread] of [['year', 365], ['dense', 42]]) for (const view of ['week', 'month']) {
-        status.textContent = `Timing ${impl} / ${order} / ${scenario} / ${view}…`; await tick()
-        const raw = m.makeEvents(5000, 1, spread)
-        const cold = m.runOnce(m.T, order, raw, view).total
-        m.runOnce(m.T, order, raw, view)
-        const runs = []
-        for (let i = 0; i < 10; i++) { runs.push(m.runOnce(m.T, order, raw, view)); await tick() }
-        const k = `${impl}/${order}/${scenario}/${view}`
-        report.engine[k] = { cold, median: { ingest: median(runs.map((x) => x.ingest)), view: median(runs.map((x) => x.view)), total: median(runs.map((x) => x.total)) } }
-        say(`${k}: ${report.engine[k].median.total.toFixed(1)} ms`)
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>P4 Safari run</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font:
+          16px/1.5 system-ui,
+          sans-serif;
       }
-    }
-    const name = /Version\/([\d.]+)/.exec(navigator.userAgent)?.[1] ?? 'unknown'
-    await fetch(`/report/safari-${name}`, { method: 'POST', body: JSON.stringify(report) })
-    status.innerHTML = '<span class="done">Done.</span> Results were sent back to the terminal. You can close this tab.'
-  } catch (e) {
-    status.textContent = `Failed: ${e.message}`
-    say(e.stack)
-  }
-</script>
-</body>
+      body {
+        margin: 16px;
+        max-width: 48rem;
+      }
+      pre {
+        font:
+          12px ui-monospace,
+          monospace;
+        white-space: pre-wrap;
+      }
+      .done {
+        color: #16a34a;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>P4: real-browser run</h1>
+    <p>
+      This page measures both Temporal polyfills in this browser and checks
+      their results against native Temporal from Chromium. It takes about a
+      minute. Keep the tab in front and don't touch anything until it says
+      <strong>Done</strong>.
+    </p>
+    <p id="status">Starting…</p>
+    <pre id="out"></pre>
+    <script type="module">
+      const status = document.getElementById('status'),
+        out = document.getElementById('out')
+      const say = (t) => {
+        out.textContent += `${t}\n`
+      }
+      const median = (a) => {
+        const s = [...a].sort((x, y) => x - y)
+        return (s[4] + s[5]) / 2
+      }
+      const report = {
+        userAgent: navigator.userAgent,
+        nativeTemporal: typeof globalThis.Temporal !== 'undefined',
+        engine: {},
+        correctness: {},
+      }
+      const tick = () => new Promise((r) => setTimeout(r, 0))
+      try {
+        const ref = await (await fetch('./temporal/reference.json')).json()
+        for (const impl of ['tp', 'js']) {
+          status.textContent = `Correctness: ${impl}…`
+          await tick()
+          const m = await import(`./temporal/dist/${impl}.js`)
+          const r = m.runCorpus(m.T)
+          const bad = Object.keys(ref).filter(
+            (id) => !id.startsWith('fmt:') && r[id] !== ref[id],
+          )
+          const cat = {}
+          for (const id of bad) {
+            const k = id.split(':').slice(0, 2).join(':')
+            cat[k] = (cat[k] ?? 0) + 1
+          }
+          report.correctness[impl] = {
+            cases: Object.keys(ref).length,
+            mismatches: bad.length,
+            byCategory: cat,
+            sample: bad
+              .slice(0, 20)
+              .map((id) => ({ id, ref: ref[id], got: r[id] })),
+            worked: m.workedExamples(m.T).filter((w) => !w.ok),
+          }
+          say(
+            `${impl}: ${bad.length} mismatches vs Chromium native (formatting excluded)`,
+          )
+        }
+        for (const impl of ['tp', 'js']) {
+          const m = await import(`./engine/dist/${impl}.js`)
+          for (const order of ['temporal', 'bigint', 'number'])
+            for (const [scenario, spread] of [
+              ['year', 365],
+              ['dense', 42],
+            ])
+              for (const view of ['week', 'month']) {
+                status.textContent = `Timing ${impl} / ${order} / ${scenario} / ${view}…`
+                await tick()
+                const raw = m.makeEvents(5000, 1, spread)
+                const cold = m.runOnce(m.T, order, raw, view).total
+                m.runOnce(m.T, order, raw, view)
+                const runs = []
+                for (let i = 0; i < 10; i++) {
+                  runs.push(m.runOnce(m.T, order, raw, view))
+                  await tick()
+                }
+                const k = `${impl}/${order}/${scenario}/${view}`
+                report.engine[k] = {
+                  cold,
+                  median: {
+                    ingest: median(runs.map((x) => x.ingest)),
+                    view: median(runs.map((x) => x.view)),
+                    total: median(runs.map((x) => x.total)),
+                  },
+                }
+                say(`${k}: ${report.engine[k].median.total.toFixed(1)} ms`)
+              }
+        }
+        const name =
+          /Version\/([\d.]+)/.exec(navigator.userAgent)?.[1] ?? 'unknown'
+        await fetch(`/report/safari-${name}`, {
+          method: 'POST',
+          body: JSON.stringify(report),
+        })
+        status.innerHTML =
+          '<span class="done">Done.</span> Results were sent back to the terminal. You can close this tab.'
+      } catch (e) {
+        status.textContent = `Failed: ${e.message}`
+        say(e.stack)
+      }
+    </script>
+  </body>
 </html>

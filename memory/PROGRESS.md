@@ -12,9 +12,9 @@ The maintainer authorized (2026-10-29) adding whatever dependencies P4's checks 
 2. [x] Temporal polyfill: sizes; correctness corpus against native Temporal in Chromium and Firefox; engine workload timings (Chromium 4×, WebKit and real Safari 26.6.2 with the polyfill).
 3. [x] Numeric fast path: instant ordering with cached Temporal objects vs epoch numbers, inside the workload, against the budgets.
 4. [x] Signals: facade (`State`, `Computed`, `Watcher`) over both libraries; sizes; creation, update and "only affected lanes" measurements.
-5. [ ] DnD (O-5): three engines built and checked with a mouse on all three engines. **Waiting for the maintainer's iPhone and iPad touch runs** (`prototypes/p4-bench/dnd/TOUCH-CHECKS.md`, server `node prototypes/p4-bench/serve.mjs --lan`), plus `safari.html` on both devices. Real Safari 26.6.2 on the Mac is done (`reports/`).
+5. [x] DnD (O-5): three engines checked with a mouse on all three engines and by touch on the maintainer's iPhone (2026-10-30); iPhone `safari.html` timings recorded.
 6. [x] Harness design for S0 (proposed, draft section 6).
-7. [ ] Remove unused dependencies; stop for the maintainer's P4 review.
+7. [ ] All answers recorded as D-92. **Stopped for the maintainer's P4 review.** On approval: move results into the specs and testing standard with an approval decision, mark O-5 resolved, update the support matrix (Safari 27.0.1 has no native Temporal), then remove `node_modules` from `prototypes/p3-vanilla/o6/` and `prototypes/p4-bench/` (keep `package.json`). Upstream issue drafts await the maintainer: `prototypes/p4-bench/temporal/UPSTREAM-ISSUES.md`.
 
 ## Before S1 starts
 

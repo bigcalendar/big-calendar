@@ -19,7 +19,13 @@ for (const [ename, engine] of Object.entries(engines)) {
       if (!m.T) return { error: 'no Temporal' }
       return { results: m.runCorpus(m.T), worked: m.workedExamples(m.T) }
     }, `${url}/temporal/dist/${impl}.js`)
-    console.log(ename, impl, `${Date.now() - t0}ms`, Object.keys(all[ename][impl].results ?? {}).length, 'cases')
+    console.log(
+      ename,
+      impl,
+      `${Date.now() - t0}ms`,
+      Object.keys(all[ename][impl].results ?? {}).length,
+      'cases',
+    )
   }
   await browser.close()
 }
@@ -30,22 +36,48 @@ const summary = { nativeDisagreements: {}, mismatches: {}, worked: {} }
 const ref = (e) => all[e].native.results
 const ids = Object.keys(ref('chromium'))
 for (const e of ['firefox', 'webkit']) {
-  summary.nativeDisagreements[e] = ids.filter((id) => ref(e)[id] !== ref('chromium')[id]).map((id) => ({ id, chromium: ref('chromium')[id], [e]: ref(e)[id] }))
+  summary.nativeDisagreements[e] = ids
+    .filter((id) => ref(e)[id] !== ref('chromium')[id])
+    .map((id) => ({ id, chromium: ref('chromium')[id], [e]: ref(e)[id] }))
 }
-const contested = new Set(Object.values(summary.nativeDisagreements).flat().map((x) => x.id))
+const contested = new Set(
+  Object.values(summary.nativeDisagreements)
+    .flat()
+    .map((x) => x.id),
+)
 for (const e of Object.keys(engines)) {
   for (const impl of ['tp', 'js']) {
     const r = all[e][impl].results
-    const bad = ids.filter((id) => r[id] !== ref(e)[id]).map((id) => ({ id, native: ref(e)[id], [impl]: r[id], contested: contested.has(id) }))
+    const bad = ids
+      .filter((id) => r[id] !== ref(e)[id])
+      .map((id) => ({
+        id,
+        native: ref(e)[id],
+        [impl]: r[id],
+        contested: contested.has(id),
+      }))
     summary.mismatches[`${e}/${impl}`] = bad
     summary.worked[`${e}/${impl}`] = all[e][impl].worked.filter((w) => !w.ok)
   }
   summary.worked[`${e}/native`] = all[e].native.worked.filter((w) => !w.ok)
 }
-await writeFile(new URL('./correctness.json', import.meta.url), JSON.stringify(summary, null, 1))
+await writeFile(
+  new URL('./correctness.json', import.meta.url),
+  JSON.stringify(summary, null, 1),
+)
 // The Chromium native results are the reference for engines with no native Temporal (real Safari).
-await writeFile(new URL('./reference.json', import.meta.url), JSON.stringify(all.chromium.native.results))
+await writeFile(
+  new URL('./reference.json', import.meta.url),
+  JSON.stringify(all.chromium.native.results),
+)
 console.log('cases:', ids.length)
-for (const [k, v] of Object.entries(summary.nativeDisagreements)) console.log(`native chromium vs ${k}:`, v.length)
-for (const [k, v] of Object.entries(summary.mismatches)) console.log(`${k} vs native:`, v.length, `(${v.filter((x) => !x.contested).length} where natives agree)`)
-for (const [k, v] of Object.entries(summary.worked)) if (v.length) console.log(`worked examples failing ${k}:`, v)
+for (const [k, v] of Object.entries(summary.nativeDisagreements))
+  console.log(`native chromium vs ${k}:`, v.length)
+for (const [k, v] of Object.entries(summary.mismatches))
+  console.log(
+    `${k} vs native:`,
+    v.length,
+    `(${v.filter((x) => !x.contested).length} where natives agree)`,
+  )
+for (const [k, v] of Object.entries(summary.worked))
+  if (v.length) console.log(`worked examples failing ${k}:`, v)

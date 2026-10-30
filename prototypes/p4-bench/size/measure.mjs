@@ -14,8 +14,25 @@ const entries = {
 const kb = (n) => (n / 1024).toFixed(1)
 const rows = []
 for (const [name, contents] of Object.entries(entries)) {
-  const r = await build({ stdin: { contents, resolveDir: process.cwd() }, bundle: true, minify: true, format: 'esm', write: false, target: 'es2022', define: { 'process.env.NODE_ENV': '"production"' } })
+  const r = await build({
+    stdin: { contents, resolveDir: process.cwd() },
+    bundle: true,
+    minify: true,
+    format: 'esm',
+    write: false,
+    target: 'es2022',
+    define: { 'process.env.NODE_ENV': '"production"' },
+  })
   const code = r.outputFiles[0].contents
-  rows.push({ name, min: kb(code.length), gzip: kb(gzipSync(code, { level: 9 }).length), brotli: kb(brotliCompressSync(code, { params: { [constants.BROTLI_PARAM_QUALITY]: 11 } }).length) })
+  rows.push({
+    name,
+    min: kb(code.length),
+    gzip: kb(gzipSync(code, { level: 9 }).length),
+    brotli: kb(
+      brotliCompressSync(code, {
+        params: { [constants.BROTLI_PARAM_QUALITY]: 11 },
+      }).length,
+    ),
+  })
 }
 console.table(rows)

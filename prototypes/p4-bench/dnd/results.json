@@ -1,71 +1,71 @@
 {
- "chromium/pointer": {
-  "move": true,
-  "resize": true,
-  "dragOut": false,
-  "escape": true,
-  "autoscroll": 392,
-  "scriptMsPer60Moves": 15.9,
-  "layoutMs": 15
- },
- "chromium/native": {
-  "move": true,
-  "resize": true,
-  "dragOut": true,
-  "escape": true,
-  "autoscroll": 408,
-  "scriptMsPer60Moves": 3.1,
-  "layoutMs": 14.5
- },
- "chromium/pragmatic": {
-  "move": true,
-  "resize": true,
-  "dragOut": true,
-  "escape": true,
-  "autoscroll": 408,
-  "scriptMsPer60Moves": 7.8,
-  "layoutMs": 13.1
- },
- "firefox/pointer": {
-  "move": true,
-  "resize": true,
-  "dragOut": false,
-  "escape": true,
-  "autoscroll": 392
- },
- "firefox/native": {
-  "move": true,
-  "resize": true,
-  "dragOut": true,
-  "escape": true,
-  "autoscroll": 400
- },
- "firefox/pragmatic": {
-  "move": true,
-  "resize": true,
-  "dragOut": true,
-  "escape": true,
-  "autoscroll": 408
- },
- "webkit/pointer": {
-  "move": true,
-  "resize": true,
-  "dragOut": false,
-  "escape": true,
-  "autoscroll": 408
- },
- "webkit/native": {
-  "move": true,
-  "resize": true,
-  "dragOut": true,
-  "escape": true,
-  "autoscroll": 400
- },
- "webkit/pragmatic": {
-  "move": true,
-  "resize": true,
-  "dragOut": true,
-  "escape": true,
-  "autoscroll": 408
- }
+  "chromium/pointer": {
+    "move": true,
+    "resize": true,
+    "dragOut": false,
+    "escape": true,
+    "autoscroll": 392,
+    "scriptMsPer60Moves": 15.9,
+    "layoutMs": 15
+  },
+  "chromium/native": {
+    "move": true,
+    "resize": true,
+    "dragOut": true,
+    "escape": true,
+    "autoscroll": 408,
+    "scriptMsPer60Moves": 3.1,
+    "layoutMs": 14.5
+  },
+  "chromium/pragmatic": {
+    "move": true,
+    "resize": true,
+    "dragOut": true,
+    "escape": true,
+    "autoscroll": 408,
+    "scriptMsPer60Moves": 7.8,
+    "layoutMs": 13.1
+  },
+  "firefox/pointer": {
+    "move": true,
+    "resize": true,
+    "dragOut": false,
+    "escape": true,
+    "autoscroll": 392
+  },
+  "firefox/native": {
+    "move": true,
+    "resize": true,
+    "dragOut": true,
+    "escape": true,
+    "autoscroll": 400
+  },
+  "firefox/pragmatic": {
+    "move": true,
+    "resize": true,
+    "dragOut": true,
+    "escape": true,
+    "autoscroll": 408
+  },
+  "webkit/pointer": {
+    "move": true,
+    "resize": true,
+    "dragOut": false,
+    "escape": true,
+    "autoscroll": 408
+  },
+  "webkit/native": {
+    "move": true,
+    "resize": true,
+    "dragOut": true,
+    "escape": true,
+    "autoscroll": 400
+  },
+  "webkit/pragmatic": {
+    "move": true,
+    "resize": true,
+    "dragOut": true,
+    "escape": true,
+    "autoscroll": 408
+  }
 }

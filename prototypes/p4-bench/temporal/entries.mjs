@@ -7,7 +7,14 @@ const impls = {
 }
 for (const [name, src] of Object.entries(impls)) {
   await build({
-    stdin: { contents: `${src}\nexport * from './corpus.js'`, resolveDir: import.meta.dirname },
-    bundle: true, minify: false, format: 'esm', outfile: `${import.meta.dirname}/dist/${name}.js`, target: 'es2022',
+    stdin: {
+      contents: `${src}\nexport * from './corpus.js'`,
+      resolveDir: import.meta.dirname,
+    },
+    bundle: true,
+    minify: false,
+    format: 'esm',
+    outfile: `${import.meta.dirname}/dist/${name}.js`,
+    target: 'es2022',
   })
 }
