@@ -2,7 +2,19 @@
 
 ## Next step
 
-**P3 approved** 2026-10-29 (D-89, D-90, D-91): `docs/spec/accessibility.md`. **Next is P4 (benchmarks)**, but only when the maintainer says to start it (gates rule). Exit criteria: `docs/spec/roadmap.md`, row P4.
+**P4 in progress** (benchmarks), started 2026-10-29. Continue with the first unchecked task below. Exit criteria: `docs/spec/roadmap.md`, row P4. Draft: `plan/P4-BENCHMARKS.md` (moves to the decision log, specs and testing standard on approval). Evidence: `prototypes/p4-bench/`.
+
+The maintainer authorized (2026-10-29) adding whatever dependencies P4's checks need, in the prototype only, and removing what the evidence doesn't use once results are in.
+
+### P4 tasks
+
+1. [x] Draft and prototype scaffold (`prototypes/p4-bench/`, candidates installed with npm, outside the workspace).
+2. [x] Temporal polyfill: sizes; correctness corpus against native Temporal in Chromium and Firefox; engine workload timings (Chromium 4×, WebKit and real Safari 26.6.2 with the polyfill).
+3. [x] Numeric fast path: instant ordering with cached Temporal objects vs epoch numbers, inside the workload, against the budgets.
+4. [x] Signals: facade (`State`, `Computed`, `Watcher`) over both libraries; sizes; creation, update and "only affected lanes" measurements.
+5. [ ] DnD (O-5): three engines built and checked with a mouse on all three engines. **Waiting for the maintainer's iPhone and iPad touch runs** (`prototypes/p4-bench/dnd/TOUCH-CHECKS.md`, server `node prototypes/p4-bench/serve.mjs --lan`), plus `safari.html` on both devices. Real Safari 26.6.2 on the Mac is done (`reports/`).
+6. [x] Harness design for S0 (proposed, draft section 6).
+7. [ ] Remove unused dependencies; stop for the maintainer's P4 review.
 
 ## Before S1 starts
 
