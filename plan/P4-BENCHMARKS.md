@@ -1,6 +1,6 @@
 # Benchmarks (P4)
 
-> **Status: draft, in progress (2026-10-30).** Not normative until the maintainer approves P4. On approval, the choices go into the decision log and the specs they amend ([date engine](../docs/spec/date-engine.md), [reactivity](../docs/spec/reactivity.md), [interaction and accessibility](../docs/spec/interaction-accessibility.md)), and the harness design moves to `docs/standards/testing.md`.
+> **Status: draft, answers recorded (D-92), waiting for the maintainer's P4 review (2026-10-30).** Not normative until the maintainer approves P4. On approval, the choices go into the decision log and the specs they amend ([date engine](../docs/spec/date-engine.md), [reactivity](../docs/spec/reactivity.md), [interaction and accessibility](../docs/spec/interaction-accessibility.md)), and the harness design moves to `docs/standards/testing.md`.
 
 Exit criteria: [roadmap](../docs/spec/roadmap.md#planning-phase), row P4. Budgets: [date engine](../docs/spec/date-engine.md). Profile: D-44.
 
@@ -60,14 +60,19 @@ What the mismatches are:
 
 Polyfill path (Temporal deleted), ordering with `Instant.compare`:
 
-| Engine                       | `temporal-polyfill`   | `@js-temporal/polyfill` | Budget        |
-| ---------------------------- | --------------------- | ----------------------- | ------------- |
-| WebKit 27.2 (gated)          | **21 / 21 / 24 / 23** | 86 / 92 / 114 / 134     | ≤ 100ms       |
-| Real Safari 26.6.2           | **20 / 20 / 23 / 22** | 86 / 82 / 97 / 144      | (same budget) |
-| Firefox 157 (tracked)        | 29 / 28 / 34 / 32     | 137 / 140 / 152 / 203   | —             |
-| Chromium 156, 4× (not gated) | 96 / 99 / 111 / 108   | 431 / 475 / 511 / 660   | —             |
+| Engine                            | `temporal-polyfill`       | `@js-temporal/polyfill` | Budget        |
+| --------------------------------- | ------------------------- | ----------------------- | ------------- |
+| WebKit 27.2 (gated)               | **21 / 21 / 24 / 23**     | 86 / 92 / 114 / 134     | ≤ 100ms       |
+| Real Safari 26.6.2 (Mac)          | **20 / 20 / 23 / 22**     | 86 / 82 / 97 / 144      | (same budget) |
+| iPhone, Safari 27.0.1 (not gated) | **122 / 127 / 147 / 168** | 672 / 740 / 830 / 1116  | —             |
+| Firefox 157 (tracked)             | 29 / 28 / 34 / 32         | 137 / 140 / 152 / 203   | —             |
+| Chromium 156, 4× (not gated)      | 96 / 99 / 111 / 108       | 431 / 475 / 511 / 660   | —             |
 
 Chromium with the polyfill matters because the floor (Chrome 141) predates native Temporal (Chrome 144).
+
+**Finding 8:** shipping Safari has **no native Temporal even at 27.0.1** (the maintainer's iPhone), although Playwright's WebKit 27.2 does. Every Safari user runs the polyfill.
+
+**Finding 9:** on the iPhone, `temporal-polyfill` takes 109–168ms for 5,000 events (122–168ms with `Instant.compare`, 109–131ms with the fast path), over the 100ms figure, which D-44 gates on CI's WebKit rather than on phones. About 105ms of it is ingest: parsing 5,000 strings. `@js-temporal/polyfill` takes 632–1,116ms there. Correctness on the iPhone matches the Mac exactly.
 
 **Recommendation: `temporal-polyfill`, the `full` build.** Half the size, four to five times faster, inside the budget with large margin, and current with the spec. Its two defects have workarounds that cost nothing (section 8, question 1).
 
@@ -147,7 +152,25 @@ Three engines on the same week prototype (`dnd/`), sharing the grid, the coordin
 
 ### Touch (real devices)
 
-_Waiting for the maintainer's iPhone and iPad runs (`dnd/TOUCH-CHECKS.md`)._
+The maintainer ran `dnd/TOUCH-CHECKS.md` on an iPhone (part number MPUA3LL/A, Safari 27.0.1) on 2026-10-30. The iPad and an Android phone were not run.
+
+| Check                                  | Pointer Events         | Native DnD | Pragmatic                                           |
+| -------------------------------------- | ---------------------- | ---------- | --------------------------------------------------- |
+| Swipe on an event scrolls, no drag     | ✓                      | ✓          | ✓                                                   |
+| Long-press starts a drag, no callout   | ✓                      | ✓          | ✓, but **the week jumps upward as the drag starts** |
+| Move with a snapped preview, then drop | ✓                      | ✓          | ✓                                                   |
+| Autoscroll near the edge               | ✓                      | ✓          | ✓                                                   |
+| Resize                                 | ✓ (handle hard to hit) | ✓ (same)   | ✓ (same)                                            |
+| Drag out to the drop box               | ✗ (by design)          | ✓          | ✓                                                   |
+| Release outside cancels                | ✓, no visual feedback  | ✓          | ✓                                                   |
+
+The first run showed the snapped preview stuck in the leftmost column in every engine; that was a prototype bug (inline styles applied in the wrong order), fixed and re-checked on the phone and in `dnd/draft-check.mjs`. The maintainer found Native and Pragmatic about equal to use, and didn't notice the platform's own drag preview next to ours.
+
+**Finding 6:** Pragmatic's auto-scroll scrolls the container as soon as an iOS drag starts. Our own autoscroll, on the same native events, doesn't.
+
+**Finding 7 (for S4, not the engine):** the 8px resize handle had to be zoomed to use. The spec already requires 44px targets on coarse pointers; touch resize needs a visible handle of that size, for example shown once the event is selected.
+
+**Recommendation: native HTML drag and drop with our own code for moves and drag-out, and Pointer Events for resize** (and for slot selection, which isn't a drag of an existing element). It's the only approach that passed every check on every engine and on the iPhone, at 0.9 KB, and drag-out (D-36) is the same gesture as a move. Pragmatic adds 9.9 KB, mis-scrolls on iOS, and its frame-batched `onDrag` is a trap; its real value is handling browser quirks we'll have to cover ourselves, which the S4 interaction tests must exercise on all three engines and real devices. Pointer Events for moves would need a separate drag-out gesture. Native DnD on Android Chrome is untested here; the S4 real-device check (D-44) must include it.
 
 ## 6. Benchmark harness design (proposed, for S0)
 
@@ -174,7 +197,20 @@ What this prototype did, made permanent:
 3. V8's native `Instant.compare` is about 9× slower than the polyfill's; Chromium needs the numeric fast path (section 3).
 4. Pointer-driven drags can't become native drags at the boundary (section 5).
 5. Pragmatic's `onDrag` is frame-batched (section 5).
+6. Pragmatic's auto-scroll jumps when an iOS drag starts (section 5).
+7. Touch resize needs a visible 44px handle (section 5, for S4).
+8. Shipping Safari, even 27.0.1, has no native Temporal (section 2).
+9. The polyfill path on an iPhone is over 100ms for 5,000 events, mostly ingest (section 2).
 
-## 8. Questions for the maintainer
+## 8. Answers (D-92)
 
-_To be asked once the touch results are in._
+Answered 2026-10-30; every recommendation was accepted:
+
+1. **Polyfill:** `temporal-polyfill`, the `full` build.
+2. **Its defects:** avoid `ZonedDateTime#withPlainTime` (lint rule in S0), run the corpus on both paths, document the pre-2022 DST suspensions as a known limitation, and report both upstream (drafts in `prototypes/p4-bench/temporal/UPSTREAM-ISSUES.md`, for the maintainer to post).
+3. **Fast path:** cached `epochNanoseconds` BigInts, instant ordering only.
+4. **Signals:** `@preact/signals-core`.
+5. **DnD (O-5):** our own code on native HTML drag and drop for moves and drag-out; Pointer Events for resize and slot selection.
+6. **Phones:** tracked at the device check, not gated; S1 measures lazy ingest.
+7. **Harness:** section 6, as proposed.
+8. **Cleanup:** on approval, remove the prototypes' installed packages and keep their `package.json` files.

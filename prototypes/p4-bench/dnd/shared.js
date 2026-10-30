@@ -66,9 +66,10 @@ export function place(el, { day, start, len }) {
   el.style.setProperty('--len', len)
   if (el.classList.contains('draft')) {
     const col = grid().children[day]
+    // Clear the stylesheet's inline insets first; setting them after `left` would undo it.
+    el.style.insetInline = 'auto'
     el.style.left = `${col.offsetLeft + 2}px`
     el.style.width = `${col.offsetWidth - 4}px`
-    el.style.insetInline = 'auto'
   }
 }
 

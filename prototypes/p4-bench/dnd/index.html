@@ -1,50 +1,149 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>P4 DnD comparison</title>
-<style>
-  :root { --slot: 24px; color-scheme: light dark; font: 14px/1.4 system-ui, sans-serif; }
-  body { margin: 16px; }
-  nav a { margin-inline-end: 1em; }
-  nav a[aria-current] { font-weight: bold; }
-  .layout { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
-  .cal { border: 1px solid #888; width: min(100%, 640px); }
-  .heads { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid #888; text-align: center; }
-  .scroller { height: 360px; overflow-y: auto; position: relative; overscroll-behavior: contain; }
-  .grid { display: grid; grid-template-columns: repeat(7, 1fr); position: relative; }
-  .col { position: relative; border-inline-start: 1px solid #ccc8; }
-  .slot { height: var(--slot); box-sizing: border-box; border-top: 1px dotted #ccc6; }
-  .slot[data-slot$="0"]:nth-child(even) { border-top-style: solid; }
-  .ev, .draft { position: absolute; inset-inline: 2px; top: calc(var(--start) * var(--slot)); height: calc(var(--len) * var(--slot) - 2px);
-    background: #2563eb; color: white; border-radius: 4px; padding: 2px 4px; box-sizing: border-box; font-size: 12px; overflow: hidden;
-    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: pan-y; cursor: grab; }
-  .ev[data-dragging] { opacity: .35; }
-  .draft { background: #2563eb99; outline: 2px dashed #2563eb; pointer-events: none; z-index: 2; }
-  .draft[hidden] { display: none; }
-  .handle { position: absolute; inset-inline: 0; bottom: 0; height: 8px; cursor: ns-resize; touch-action: none; }
-  .out { width: 200px; min-height: 120px; border: 2px dashed #888; padding: 8px; }
-  .out[data-over] { background: #16a34a33; border-color: #16a34a; }
-  #log { font: 12px ui-monospace, monospace; white-space: pre-wrap; max-height: 200px; overflow: auto; }
-</style>
-</head>
-<body>
-<nav>Engine: <a href="?engine=pointer">Pointer Events (own)</a><a href="?engine=native">Native DnD (own)</a><a href="?engine=pragmatic">Pragmatic DnD</a></nav>
-<p id="hint"></p>
-<div class="layout">
-  <section class="cal" aria-label="Week">
-    <div class="heads"></div>
-    <div class="scroller"><div class="grid"></div></div>
-  </section>
-  <div class="out" id="out">Drop here: outside the calendar (another app or calendar)</div>
-</div>
-<pre id="log"></pre>
-<script type="module">
-  const engine = new URLSearchParams(location.search).get('engine') ?? 'pointer'
-  document.querySelector(`nav a[href="?engine=${engine}"]`)?.setAttribute('aria-current', 'page')
-  const { setup } = await import(`./dist/${engine}.js`)
-  setup()
-</script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>P4 DnD comparison</title>
+    <style>
+      :root {
+        --slot: 24px;
+        color-scheme: light dark;
+        font:
+          14px/1.4 system-ui,
+          sans-serif;
+      }
+      body {
+        margin: 16px;
+      }
+      nav a {
+        margin-inline-end: 1em;
+      }
+      nav a[aria-current] {
+        font-weight: bold;
+      }
+      .layout {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        align-items: flex-start;
+      }
+      .cal {
+        border: 1px solid #888;
+        width: min(100%, 640px);
+      }
+      .heads {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        border-bottom: 1px solid #888;
+        text-align: center;
+      }
+      .scroller {
+        height: 360px;
+        overflow-y: auto;
+        position: relative;
+        overscroll-behavior: contain;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        position: relative;
+      }
+      .col {
+        position: relative;
+        border-inline-start: 1px solid #ccc8;
+      }
+      .slot {
+        height: var(--slot);
+        box-sizing: border-box;
+        border-top: 1px dotted #ccc6;
+      }
+      .slot[data-slot$='0']:nth-child(even) {
+        border-top-style: solid;
+      }
+      .ev,
+      .draft {
+        position: absolute;
+        inset-inline: 2px;
+        top: calc(var(--start) * var(--slot));
+        height: calc(var(--len) * var(--slot) - 2px);
+        background: #2563eb;
+        color: white;
+        border-radius: 4px;
+        padding: 2px 4px;
+        box-sizing: border-box;
+        font-size: 12px;
+        overflow: hidden;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+        touch-action: pan-y;
+        cursor: grab;
+      }
+      .ev[data-dragging] {
+        opacity: 0.35;
+      }
+      .draft {
+        background: #2563eb99;
+        outline: 2px dashed #2563eb;
+        pointer-events: none;
+        z-index: 2;
+      }
+      .draft[hidden] {
+        display: none;
+      }
+      .handle {
+        position: absolute;
+        inset-inline: 0;
+        bottom: 0;
+        height: 8px;
+        cursor: ns-resize;
+        touch-action: none;
+      }
+      .out {
+        width: 200px;
+        min-height: 120px;
+        border: 2px dashed #888;
+        padding: 8px;
+      }
+      .out[data-over] {
+        background: #16a34a33;
+        border-color: #16a34a;
+      }
+      #log {
+        font:
+          12px ui-monospace,
+          monospace;
+        white-space: pre-wrap;
+        max-height: 200px;
+        overflow: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      Engine: <a href="?engine=pointer">Pointer Events (own)</a
+      ><a href="?engine=native">Native DnD (own)</a
+      ><a href="?engine=pragmatic">Pragmatic DnD</a>
+    </nav>
+    <p id="hint"></p>
+    <div class="layout">
+      <section class="cal" aria-label="Week">
+        <div class="heads"></div>
+        <div class="scroller"><div class="grid"></div></div>
+      </section>
+      <div class="out" id="out">
+        Drop here: outside the calendar (another app or calendar)
+      </div>
+    </div>
+    <pre id="log"></pre>
+    <script type="module">
+      const engine =
+        new URLSearchParams(location.search).get('engine') ?? 'pointer'
+      document
+        .querySelector(`nav a[href="?engine=${engine}"]`)
+        ?.setAttribute('aria-current', 'page')
+      const { setup } = await import(`./dist/${engine}.js`)
+      setup()
+    </script>
+  </body>
 </html>
