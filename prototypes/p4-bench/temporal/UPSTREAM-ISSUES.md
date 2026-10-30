@@ -1,6 +1,6 @@
 # Draft issues for fullcalendar/temporal-polyfill
 
-For the maintainer to review and post at https://github.com/fullcalendar/temporal-polyfill/issues. Found by the P4 correctness corpus (`corpus.js`); reproduced in `repro.mjs`.
+Status (2026-10-30): issue 1 is filed as https://github.com/fullcalendar/temporal-polyfill/issues/123. Issue 2 wasn't filed: https://github.com/fullcalendar/temporal-polyfill/issues/121 (opened 2026-10-25) already reports it, in more zones. Found by the P4 correctness corpus (`corpus.js`); reproduced in `repro.mjs`.
 
 ---
 
