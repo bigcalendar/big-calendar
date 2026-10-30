@@ -50,4 +50,10 @@ new Intl.DateTimeFormat('en', {
 // '5/20/2019, GMT+00:00' (the host data is correct; Node 24.15, ICU 78.2, tz 2026a)
 ```
 
-Missed transitions, compared with native Temporal: Casablanca 2012-07-20/08-20, 2018-05-13/06-17, 2019-05-05/06-09, 2020-04-19/05-31, 2021-04-11/05-16; Cairo 2010-08-10/09-10, 2014-05-16/06-26. Casablanca from 2022 on is correct. Our guess is that the transition search samples too coarsely to find a pair of transitions a few weeks apart within one year.
+Missed transitions, compared with native Temporal: Casablanca 2012-07-20/08-20, 2018-05-13/06-17, 2019-05-05/06-09, 2020-04-19/05-31, 2021-04-11/05-16; Cairo 2010-08-10/09-10, 2014-05-16/06-26. (Later finding, D-93: Casablanca is also wrong from 2029, see the comment draft below.) Our guess is that the transition search samples too coarsely to find a pair of transitions a few weeks apart within one year.
+
+---
+
+## Comment draft for #121 (for the maintainer to post)
+
+Confirming with tz 2026a (Node 24.15): beyond the 2029 and 2030 Ramadan periods, `temporal-polyfill` 1.0.6 also gives the wrong `Africa/Casablanca` offset on 43 days in 2031, 17 in 2032, 35 in 2039 and 42 in 2040 (offset at 12:00 UTC each day, compared with `Intl.DateTimeFormat` `longOffset`; 2022–2028 and 2033–2038 match).

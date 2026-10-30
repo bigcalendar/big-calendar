@@ -2,26 +2,17 @@
 
 ## Next step
 
-**P4 in progress** (benchmarks), started 2026-10-29. Continue with the first unchecked task below. Exit criteria: `docs/spec/roadmap.md`, row P4. Draft: `plan/P4-BENCHMARKS.md` (moves to the decision log, specs and testing standard on approval). Evidence: `prototypes/p4-bench/`.
+**P4 approved 2026-10-30 (D-92 answers, D-93 approval). P5 has not started:** wait for the maintainer to say so, then begin P5 from its row in `docs/spec/roadmap.md`.
 
-The maintainer authorized (2026-10-29) adding whatever dependencies P4's checks need, in the prototype only, and removing what the evidence doesn't use once results are in.
-
-### P4 tasks
-
-1. [x] Draft and prototype scaffold (`prototypes/p4-bench/`, candidates installed with npm, outside the workspace).
-2. [x] Temporal polyfill: sizes; correctness corpus against native Temporal in Chromium and Firefox; engine workload timings (Chromium 4×, WebKit and real Safari 26.6.2 with the polyfill).
-3. [x] Numeric fast path: instant ordering with cached Temporal objects vs epoch numbers, inside the workload, against the budgets.
-4. [x] Signals: facade (`State`, `Computed`, `Watcher`) over both libraries; sizes; creation, update and "only affected lanes" measurements.
-5. [x] DnD (O-5): three engines checked with a mouse on all three engines and by touch on the maintainer's iPhone (2026-10-30); iPhone `safari.html` timings recorded.
-6. [x] Harness design for S0 (proposed, draft section 6).
-7. [ ] All answers recorded as D-92. **Stopped for the maintainer's P4 review.** On approval: move results into the specs and testing standard with an approval decision, mark O-5 resolved, update the support matrix (Safari 27.0.1 has no native Temporal), then remove `node_modules` from `prototypes/p3-vanilla/o6/` and `prototypes/p4-bench/` (keep `package.json`). Upstream issue drafts await the maintainer: `prototypes/p4-bench/temporal/UPSTREAM-ISSUES.md`.
+Open for the maintainer (not blocking): post the comment draft for temporal-polyfill#121 at the end of `prototypes/p4-bench/temporal/UPSTREAM-ISSUES.md` (the future Casablanca dates, D-93).
 
 ## Before S1 starts
 
 - **NVDA + Firefox run** of the P3 prototype (D-91): `node prototypes/p3-vanilla/serve.mjs`, then `prototypes/p3-vanilla/SCREEN-READER-SCRIPT.md`. The maintainer has no Windows machine yet (2026-10-28). It must confirm the two "NVDA check" items in `docs/spec/accessibility.md` (sections 2.6 and 4.3). Any finding is fixed through a new decision.
 
-## Where things stand (2026-10-29)
+## Where things stand (2026-10-30)
 
+- **P4 approved** 2026-10-30 (D-92 answers, D-93 approval): results in `docs/spec/date-engine.md` (`temporal-polyfill`, epoch-BigInt instant ordering, phone tracking), `reactivity.md` (`@preact/signals-core`), `interaction-accessibility.md` (own DnD code on native DnD; O-5 resolved), `support-matrix.md` and `docs/standards/testing.md` (harness). Record: `plan/P4-BENCHMARKS.md`; evidence in `prototypes/p4-bench/` (run `npm install` there first; same for `prototypes/p3-vanilla/o6/`). Upstream: temporal-polyfill#123 filed, #121 already open.
 - **P3 approved** 2026-10-29 (D-89 answers, D-90 hand-written machines for O-6, D-91 approval): `docs/spec/accessibility.md`. Evidence in `prototypes/p3-vanilla/` (findings in spec section 13; O-6 comparison in `o6/RESULTS.md`). VoiceOver + Safari passed; NVDA deferred to before S1.
 - **P2 approved** 2026-10-28 (D-87, D-88): `docs/spec/support-matrix.md`. Evidence in `prototypes/p2-top-level-await/`. D-87 amends D-32 (the `temporalReady` promise replaces top-level `await`).
 

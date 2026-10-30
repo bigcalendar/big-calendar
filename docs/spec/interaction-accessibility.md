@@ -1,6 +1,6 @@
 # Interaction and accessibility
 
-> **Normative.** Split verbatim from the approved plan (`plan/P1-PLAN.md` §10, approved 2026-10-27). Changing anything here needs a new entry in the [decision log](../decisions.md).
+> **Normative.** Split verbatim from the approved plan (`plan/P1-PLAN.md` §10, approved 2026-10-27); the DnD engine is chosen by D-92 (P4, O-5). Changing anything here needs a new entry in the [decision log](../decisions.md).
 
 - **The standard is WCAG 2.2 AA.** The roles, keyboard model, focus management and screen-reader announcements for each family are specified in **P3** ([accessibility](accessibility.md), D-91) and validated on a **vanilla (no framework) prototype** with VoiceOver and NVDA (plus JAWS if available) **before any framework code**.
 - **Machines own all behavior:**
@@ -12,6 +12,12 @@
   - focus hops between the all-day row and the time body.
 - **Mapping uses coordinates, not pixels.** Machines read `data-*` coordinates from real DOM cells; there is no pixel-rectangle hit-testing.
 - **Pointer handling uses Pointer Events.** `touch-action` settles scroll-versus-select conflicts. On coarse pointers, hit targets are at least 44px and no feature depends on hover alone.
+- **The DnD engine is our own code (D-92, O-5), with no DnD library:**
+  - **Moving an event and dragging it out of the calendar** (D-36) use native HTML drag and drop, as one gesture. A pointer-driven drag can't become a native drag when it reaches the calendar's edge, so drag-out needs native DnD from the start.
+  - **Resizing and slot selection** use Pointer Events.
+  - The drop works out its own target cell from the cells' `data-*` coordinates; it never relies on the last drag-over callback.
+  - On touch, resizing needs a visible handle of at least 44px, for example shown once the event is selected (S4).
+  - The S4 interaction tests cover all three engines and the real-device check, including native DnD on Android Chrome, which P4 didn't test.
 - **Top-layer UI** (popovers, overflow, tooltips) uses the Popover API and `<dialog>` with CSS anchor positioning. Where `CSS.supports('anchor-name: --a')` is false, `@floating-ui/dom` is lazy-loaded for positioning only (D-43).
 - **Drafts are typed.** Every temporary event is one of `creation`, `internal-drag`, `internal-resize` or `external-drag`. Each carries its surface (day grid, time grid or timeline), its proposed start and end, its target resource, and, for internal drags, the source resource. Machines produce drafts, and the exact payloads are specified in P5.
 - **Keyboard model (D-51).**

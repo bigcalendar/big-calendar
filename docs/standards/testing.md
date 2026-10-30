@@ -1,6 +1,6 @@
 # Testing
 
-Sources: D-42, D-44, D-79, [date engine](../spec/date-engine.md).
+Sources: D-42, D-44, D-79, D-92, D-93, [date engine](../spec/date-engine.md).
 
 ## Layers (D-42)
 
@@ -38,10 +38,24 @@ Per package, never per file:
 - **The per-slice real-device check includes Safari 26.x** (iOS or macOS) while Safari 26 is on the browser floor. Playwright's WebKit can't reproduce Safari 26 bugs.
 - **Each supported bundler and test runner gets a CI smoke test** that builds and runs a small sample app ([support matrix](../spec/support-matrix.md)).
 
-## Benchmarks (D-44)
+## Time-semantics corpus (D-92, D-93)
 
-- The 50ms budget is gated on Chromium with 4× CPU slowdown, median of 10 runs after a warm-up.
-- The 100ms polyfill budget is gated on unthrottled WebKit.
-- Firefox is tracked, not gated.
-- A PR fails if any median slows by more than 10% against `main`.
-- One real-device check per slice (mid-range Android, iPhone) before approval.
+- The conformance suite includes the P4 correctness corpus (`prototypes/p4-bench/temporal/corpus.js`, 17,777 cases), with native Temporal as the reference, on both the native and the polyfill path.
+- It adds Morocco's future Ramadan periods (2029–2032, 2039–2040), so the fix for temporal-polyfill#121 shows up. Until then, those cases are expected failures on the polyfill path, listed with the issue link.
+
+## Benchmarks (D-44, D-92)
+
+The harness, built in S0 from the P4 prototype (`prototypes/p4-bench/`):
+
+- **Runner:** Playwright with a plain in-page runner, no benchmark library. Each configuration gets a fresh page, one recorded cold run, one warm-up, then the median of 10 runs.
+- **Profiles:**
+  - Chromium with 4× CPU slowdown (CDP `Emulation.setCPUThrottlingRate`) and native Temporal: **gated at 50ms**;
+  - unthrottled WebKit **with `Temporal` deleted by an init script** (Playwright's WebKit has native Temporal, so without it the polyfill budget measures nothing): **gated at 100ms**;
+  - Firefox, and Chromium with the polyfill (the floor predates native Temporal): tracked, not gated.
+- **Scenarios:** 5,000 events spread over a year and packed inside the visible range, for every view family as it lands (month and week in S1, agenda and timeline with virtualization later), plus single-event edits.
+- **What's timed:** kernel engine time (ingest plus view model) against the budgets. From S1, rendering is measured separately through CDP `Performance.getMetrics` (script and layout time).
+- **Structural checks are tests, not timings.** "A single event change re-renders only the affected lanes" is asserted by counting lane recomputes.
+- **Regression:** the PR build and `main` run back to back in the same CI job on the same machine. A median more than 10% slower fails the PR. If CI proves too noisy, D-44's fallback (relative tracking) applies.
+- **Output:** JSON results as a CI artifact, and a PR comment table (benchmark, budget, `main`, branch, change), as the `bench` skill describes.
+- **Real devices:** one check per slice (mid-range Android, iPhone) before approval, using a results page like `prototypes/p4-bench/safari.html` that posts its numbers back to the harness. Phone timings are tracked, not gated.
+- **Sizes (D-63):** esbuild production bundles per entry point, minified and gzipped, measured as in `prototypes/p4-bench/size/measure.mjs`.

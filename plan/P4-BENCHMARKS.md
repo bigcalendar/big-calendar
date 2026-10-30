@@ -1,6 +1,6 @@
 # Benchmarks (P4)
 
-> **Status: draft, answers recorded (D-92), waiting for the maintainer's P4 review (2026-10-30).** Not normative until the maintainer approves P4. On approval, the choices go into the decision log and the specs they amend ([date engine](../docs/spec/date-engine.md), [reactivity](../docs/spec/reactivity.md), [interaction and accessibility](../docs/spec/interaction-accessibility.md)), and the harness design moves to `docs/standards/testing.md`.
+> **Status: approved 2026-10-30 (D-92 answers, D-93 approval).** This is the measurement record; it isn't normative. D-93 corrects finding 2: the zone-data gap also reaches future dates (Morocco from 2029). The choices went into the decision log and the specs they amend ([date engine](../docs/spec/date-engine.md), [reactivity](../docs/spec/reactivity.md), [interaction and accessibility](../docs/spec/interaction-accessibility.md)), and the harness design moves to `docs/standards/testing.md`.
 
 Exit criteria: [roadmap](../docs/spec/roadmap.md#planning-phase), row P4. Budgets: [date engine](../docs/spec/date-engine.md). Profile: D-44.
 
@@ -53,7 +53,7 @@ Native Temporal in Chromium is the reference; Firefox and WebKit natives were al
 What the mismatches are:
 
 - **`temporal-polyfill`, finding 1 (a T-10 bug):** `ZonedDateTime#withPlainTime()` with a time in a repeated (fall-back) hour keeps the receiver's offset instead of taking the earlier occurrence, as the spec's `'compatible'` rule requires. 23 cases (Berlin, Sydney, Adelaide, Auckland, Casablanca). `PlainDateTime#toZonedDateTime()` with explicit disambiguation is correct in every case.
-- **`temporal-polyfill`, finding 2 (historical zone data):** it misses short DST suspensions: Morocco's Ramadan changes 2012–2021 and Egypt's in 2010 and 2014, so instants in those weeks are an hour off. 2022 and later are correct. 13 cases.
+- **`temporal-polyfill`, finding 2 (historical zone data):** it misses short DST suspensions: Morocco's Ramadan changes 2012–2021 and Egypt's in 2010 and 2014, so instants in those weeks are an hour off. 2022 and later are correct up to the corpus's last year; a later check found future Ramadan periods wrong too, from 2029 (D-93). 13 cases.
 - **`@js-temporal/polyfill`:** all 640 are calendar `era` and `eraYear` values from an older spec (`"gregory"` instead of `"ce"`; `null` eras for Islamic, Hebrew and Persian). Its last release was 2025-03-31.
 
 ### Speed (median ms, engine time for 5,000 events: year week / year month / dense week / dense month)
@@ -193,7 +193,7 @@ What this prototype did, made permanent:
 ## 7. Findings
 
 1. `temporal-polyfill`'s `withPlainTime()` breaks T-10 in a repeated hour (section 2).
-2. `temporal-polyfill` misses some historical DST suspensions before 2022 (section 2).
+2. `temporal-polyfill` misses short DST suspensions: before 2022 and, as D-93 found, again from 2029 (section 2).
 3. V8's native `Instant.compare` is about 9× slower than the polyfill's; Chromium needs the numeric fast path (section 3).
 4. Pointer-driven drags can't become native drags at the boundary (section 5).
 5. Pragmatic's `onDrag` is frame-batched (section 5).
