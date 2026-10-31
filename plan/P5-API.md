@@ -1,6 +1,6 @@
 # Types and public API (P5)
 
-> **Status: draft. Part 1 answered (2026-10-31). Parts 1 and 2 answered (2026-10-31). Part 3 is written and waiting for the maintainer's answers (questions 15–17).** Not normative until the maintainer approves P5. On approval, the types and contracts move into the specs they complete, with a decision.
+> **Status: draft. Part 1 answered (2026-10-31). Parts 1–3 answered (2026-10-31); part 4 in progress.** Not normative until the maintainer approves P5. On approval, the types and contracts move into the specs they complete, with a decision.
 
 Exit criteria: [roadmap](../docs/spec/roadmap.md#planning-phase), row P5.
 
@@ -267,3 +267,13 @@ That is the whole binding: no keyboard, focus, timers or machines, well inside t
 Part 1 said the opaque type blocks `dangerouslySetInnerHTML`. **It doesn't, in a React app.** React types `__html` as `string | TrustedHTML`, and `@types/react` declares `interface TrustedHTML {}` globally. Every non-null type satisfies an empty interface, so no type of ours can be rejected there. `part3-ok.tsx` shows it compiling.
 
 The opaque type still blocks every `string` sink: `innerHTML`, `insertAdjacentHTML`, any function taking a string. So it's still stronger than a branded string, which blocks nothing. The remaining gap is documented, and our own `react-ui` code is held to "never renders HTML fields" by its lint rule. **Question 17.**
+
+### Answers, part 3 (2026-10-31)
+
+Every recommendation was accepted:
+
+15. **`use(temporalReady)` with Suspense**; the promise is marked fulfilled up front when Temporal is native, and `<Calendar>` brings its own Suspense and error boundary.
+16. **One slot per part**, keyed by part name, each `render` or `wrap`.
+17. **`UntrustedHtml` stays opaque**; the docs name the React `dangerouslySetInnerHTML` gap.
+
+The other items marked _Proposed_ in part 3 stand unless the maintainer changes them at the P5 review.
