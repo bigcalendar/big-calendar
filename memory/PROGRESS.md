@@ -9,7 +9,7 @@ Kickoff answers (2026-10-30, maintainer): the types are real `.ts` files type-ch
 ### P5 tasks
 
 1. [x] Kickoff answers; prototype scaffold.
-2. [ ] **Part 1:** canonical data types (events, background events, resources, sources, processed events), `createCalendar` options, registered features (D-52), state slices and atoms (D-53), store, actions and signals, permission cascade, `temporalReady` on the kernel side. Stop for the maintainer's part-1 answers.
+2. [x] **Part 1:** canonical data types (events, background events, resources, sources, processed events), `createCalendar` options, registered features (D-52), state slices and atoms (D-53), store, actions and signals, permission cascade, `temporalReady` on the kernel side. Answered 2026-10-31: every recommendation accepted (draft, "Answers, part 1"); recorded in the decision log with the other parts at task 6.
 3. [ ] **Part 2:** machine contract (D-90), prop-getter descriptors and `mergeProps` (D-72), effects, typed drafts, `Change`, callback names and payloads (D-33), live constraints. Stop for answers.
 4. [ ] **Part 3:** React binding (hooks, `normalize`, waiting for `temporalReady`), `react-ui` slots, part manifest format, `formats` slots and `messages` keys (D-40). Stop for answers.
 5. [ ] **Part 4:** RBC 1.20.0 prop-by-prop parity matrix and the `components` → slot mapping table. Stop for answers.

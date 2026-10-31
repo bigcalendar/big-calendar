@@ -1,6 +1,6 @@
 # Types and public API (P5)
 
-> **Status: draft. Part 1 is written and waiting for the maintainer's answers (questions 1–8).** Not normative until the maintainer approves P5. On approval, the types and contracts move into the specs they complete, with a decision.
+> **Status: draft. Part 1 answered (2026-10-31); part 2 in progress.** Not normative until the maintainer approves P5. On approval, the types and contracts move into the specs they complete, with a decision.
 
 Exit criteria: [roadmap](../docs/spec/roadmap.md#planning-phase), row P5.
 
@@ -113,3 +113,18 @@ Flat (D-61): `events` (the only required input), `backgroundEvents`, `timeZone`,
 
 - **Callback types need fixed keys.** TypeScript can't contextually type `onSelectionChange` when the key itself comes from the feature set being inferred. The slice props are therefore keyed by every installed feature's slices, and only the values depend on what's registered. Unregistered slices name their feature instead.
 - **`NoInfer` on view names.** Without it, `defaultView: 'year'` makes TypeScript infer a view map from the name and accept it.
+
+### Answers, part 1 (2026-10-31)
+
+Every recommendation was accepted:
+
+1. **`UntrustedHtml`** is an opaque type: `untrustedHtml(raw)` in, `readUntrustedHtml(value)` out.
+2. **Resource data stays flat** (`resources`), with feature options in `resourceOptions`; the same pattern for sources.
+3. **Features** as drafted: the four families, `slotSelection`, `dnd`, `resources`, `sources`; `standardFeatures` is `dayGrid`, `timeGrid`, `agenda`.
+4. **Views** are a named record built with per-family helpers, defaulting to RBC's set for the registered families.
+5. **Atoms** are bound through one `atoms` option.
+6. **Weekdays** are ISO numbers, 1 (Monday) to 7 (Sunday).
+7. **Family view models** are specified in each family's slice kickoff spec; P5 fixes only the shared rules.
+8. **Visibility slices** default to `'all'`.
+
+The other items marked _Proposed_ in part 1 weren't asked separately. They stand unless the maintainer changes them at the P5 review.
