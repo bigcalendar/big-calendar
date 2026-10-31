@@ -1,6 +1,6 @@
 # Types and public API (P5)
 
-> **Status: draft. Part 1 answered (2026-10-31). Part 2 is written and waiting for the maintainer's answers (questions 9–14).** Not normative until the maintainer approves P5. On approval, the types and contracts move into the specs they complete, with a decision.
+> **Status: draft. Part 1 answered (2026-10-31). Part 2 answered (2026-10-31); part 3 in progress.** Not normative until the maintainer approves P5. On approval, the types and contracts move into the specs they complete, with a decision.
 
 Exit criteria: [roadmap](../docs/spec/roadmap.md#planning-phase), row P5.
 
@@ -151,7 +151,7 @@ Files: [`src/core/edit.ts`](../prototypes/p5-types/src/core/edit.ts), [`src/inte
 
 D-90's list had `render` and no `scroll`. **`render` becomes `draft`**: machine state is published through signals, so "render" has nothing to do; what the kernel needs is the draft. **`scroll` is added** for autoscroll (P4), keeping the focused cell visible, and scroll-to-time. **Question 10.**
 
-- **Who can write machines.** Only our own features need the contract at 1.0. It's exported from `@big-calendar/interactions/unstable`, like the layout primitives (engine), so it can still change after 1.0. **Question 9.**
+- **Who can write machines** (answer 9): the contract is **public and stable from 1.0**, exported from `@big-calendar/interactions`, so third parties can write features with interaction behavior. A machine only acts inside a feature, so this also makes the feature-definition types public: `FeatureSpec`, `FeatureRegistry`, `FlatPropRegistry`, `extendMachine` and getter contributions. That follows from the answer; the maintainer confirms it at the P5 review. The layout primitives stay unstable (engine).
 
 ### 2.2 Prop-getter descriptors and `mergeProps` (D-72)
 
@@ -209,3 +209,14 @@ A `Draft` is a union on `kind`: `creation`, `internal-drag`, `internal-resize`, 
 
 - **Keys taken from the inferred feature set break callback typing for the whole options object**, not only for those keys. Feature options, slices, flat props and required props are now all keyed by the installed packages' registries, with only the values depending on what's registered. Required props are built from one conditional piece per key.
 - **Error types must be inlined.** Through a named alias, the error shows `NotRegistered<"onEventMove">` instead of the message naming the feature.
+
+### Answers, part 2 (2026-10-31)
+
+9. **The machine contract is public and stable from 1.0** (not the recommended `/unstable` export). The feature-definition types become public with it (section 2.1); confirmed at the P5 review.
+10. **Effects:** `render` becomes `draft`, and `scroll` is added. Amends D-90's list.
+11. **Descriptors are `{ attrs, style, on, ref }`**, with `style` limited to `--bc-*` properties. Amends D-72's shape.
+12. **`onEventMove`**, and the rest of the callback list as drafted.
+13. **The app creates events** with `createEvent`, through `onEventCreate`; `selection` holds only finished selections.
+14. **Callbacks unlocked by a feature are flat props**; feature groups hold settings only.
+
+The other items marked _Proposed_ in part 2 stand unless the maintainer changes them at the P5 review.
