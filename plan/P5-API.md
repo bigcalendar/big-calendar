@@ -1,6 +1,6 @@
 # Types and public API (P5)
 
-> **Status: draft. Part 1 answered (2026-10-31). Part 2 answered (2026-10-31); part 3 in progress.** Not normative until the maintainer approves P5. On approval, the types and contracts move into the specs they complete, with a decision.
+> **Status: draft. Part 1 answered (2026-10-31). Parts 1 and 2 answered (2026-10-31). Part 3 is written and waiting for the maintainer's answers (questions 15–17).** Not normative until the maintainer approves P5. On approval, the types and contracts move into the specs they complete, with a decision.
 
 Exit criteria: [roadmap](../docs/spec/roadmap.md#planning-phase), row P5.
 
@@ -28,7 +28,7 @@ Files: [`src/core/`](../prototypes/p5-types/src/core/), [`src/temporal/`](../pro
 - **Ids** (`EventId`, `ResourceId`, `SourceId`) are `string | number`, as the field table gives for `id`. _Proposed for resources and sources._
 - **Date and date-time values are plain `string` aliases** (`DateString`, `DateTimeString`). Branded or template-literal types would force a cast on every value read from JSON. Ingest validates them and reports bad values through `onDataIssue`. _Proposed._
 - **Weekdays** are ISO numbers, 1 (Monday) to 7 (Sunday), as Temporal and CLDR use them. RBC and `Date` use 0 (Sunday) to 6; the codemod converts. **Question 6.**
-- **`UntrustedHtml`** isn't a string type at all, so it can't reach `innerHTML` or `dangerouslySetInnerHTML` (`fail/` proves both). `untrustedHtml(raw)` creates one; `readUntrustedHtml(value)` is the explicit step that returns the raw string for the app to sanitize. **Question 1.**
+- **`UntrustedHtml`** isn't a string type at all, so it can't reach `innerHTML` or any other `string` sink. _(Corrected in part 3: in a React app it **can** reach `dangerouslySetInnerHTML`; see section 3.6.)_ `untrustedHtml(raw)` creates one; `readUntrustedHtml(value)` is the explicit step that returns the raw string for the app to sanitize. **Question 1.**
 
 ### 1.2 Data shapes ([`data.ts`](../prototypes/p5-types/src/core/data.ts))
 
@@ -220,3 +220,50 @@ A `Draft` is a union on `kind`: `creation`, `internal-drag`, `internal-resize`, 
 14. **Callbacks unlocked by a feature are flat props**; feature groups hold settings only.
 
 The other items marked _Proposed_ in part 2 stand unless the maintainer changes them at the P5 review.
+
+## Part 3: React, slots, manifests, formats and messages
+
+Files: [`src/react/`](../prototypes/p5-types/src/react/index.ts), [`src/react-ui/`](../prototypes/p5-types/src/react-ui/index.ts), [`src/interactions/parts.ts`](../prototypes/p5-types/src/interactions/parts.ts), [`src/core/locale.ts`](../prototypes/p5-types/src/core/locale.ts). Usage: [`part3-ok.tsx`](../prototypes/p5-types/src/usage/part3-ok.tsx) compiles; [`part3-fail.tsx`](../prototypes/p5-types/fail/part3-fail.tsx) adds 6 cases that must fail, and do.
+
+### 3.1 Waiting for `temporalReady` in React (D-87)
+
+- **`useCalendar` calls React 19's `use(temporalReady)`** before creating the calendar. React reads a promise's `status` field, and `@big-calendar/temporal` sets it to `'fulfilled'` up front when Temporal is native, so **only the polyfill path suspends**; native browsers render at once.
+- **`<Calendar>` brings its own `<Suspense>`**, showing the `loading` part, **and its own error boundary**, showing the `error` part if the polyfill chunk fails to load (gap #17). React users do nothing, as D-87 requires.
+- **Headless hook users** put a `<Suspense>` boundary above the component that calls `useCalendar`; the docs say so. **Question 15.**
+
+### 3.2 The binding (`@big-calendar/react`)
+
+- `useCalendar(options)`: creates the calendar once, calls `setOptions` on every render (D-55) and destroys it on unmount. Same generics and inference as `createCalendar`.
+- `useCalendarState(calendar, selector)`: one derived value, re-rendering only when it changes (`useSyncExternalStore`).
+- `useSignalValue(signal)`: any facade signal, such as one lane's segments.
+- `useCalendarGetters(calendar)`: the shared getters, already normalized. Family hooks (`useDayGrid`, …) come with their slices.
+- `normalize(descriptor)`: `class` → `className`, `tabindex` → `tabIndex`, `keydown` → `onKeyDown` (handlers get `event.nativeEvent`), `style` variables set as custom properties.
+- `CalendarProvider` for context.
+
+That is the whole binding: no keyboard, focus, timers or machines, well inside the ~600-line budget.
+
+### 3.3 `react-ui`: `<Calendar>` and slots
+
+- **`<Calendar>`** takes every `createCalendar` option, plus `slots`, `className`, `style` and `sizing` (`'container'`, the default, fills a fixed-height parent; `'content'` grows to fit; `'page'` grows with sticky headers in the page's scroll; gap #16). _Proposed: `sizing` and its values._
+- **Custom views need a component.** `viewComponents` is **required** exactly when `views` has a custom view, with one entry per custom view name, each receiving the range and its events (D-66). `fail/` proves a missing one is an error.
+- **Slots are keyed by part name**, one slot per part, each either `{ render }` or `{ wrap }`, never both (D-14):
+  - `render({ props, children, …data })` replaces the element; `props` must be spread onto it (a dev check warns when the role or handlers are missing);
+  - `wrap({ children, …data })` decorates the element the library owns.
+  - The data each slot receives (`event` and `segment`, `date`, `title`, …) is typed per part. Families widen it in their slice specs. **Question 16.**
+
+### 3.4 Parts and manifests (D-25, D-72)
+
+- **One part = one getter, one `bc-*` class, one manifest, one slot.** The part catalog lists every part and the feature that adds it: calendar chrome (`root`, `toolbar`, `navButton`, `viewSwitcher`, `liveRegion`, `loading`, `error`), events (`event`, `backgroundEvent`, `moreButton`, `overflowPopover`, `eventMenu`, `eventActions`, `tooltip`, `draft`, `resizeHandle`), then the day grid, time grid, timeline, agenda, resources and sources, and the mini calendar. The class is derived from the name, so `dayCell` is `bc-day-cell`. _Proposed: the names; part 4 maps RBC's `components` onto them._
+- **A manifest** is `<part>.manifest.ts`, next to the getter, written as a plain object checked with `satisfies PartManifest<'dayCell'>`. It holds the class, the feature, the default element and role, each `data-*` attribute (values: a list, `boolean`, `number` or `token-list`, plus the feature that emits it), each `--bc-*` variable (`inline` geometry or a `token` with its default, plus a CSS syntax), and the CSS Module file. The styling reference is generated from these (D-70). TypeScript checks that the class matches the part name. _Proposed._
+
+### 3.5 Formats and messages (D-40, D-67)
+
+- **`formats`** is a partial map of 18 named slots, each `Intl.DateTimeFormatOptions` only. They cover every RBC format (part 4 maps them), plus `timelineHeader`, `popoverTitle`, `accessibleDate` and `accessibleTime`. Ranges use `formatRange` with the same options. A token string is a type error.
+- **`messages`** is a partial flat map of about 70 keys, grouped in the file: landmarks, toolbar, event names and states, DST, selection and constraints, moving and resizing, menus and dialogs, panels, loading. Each is a string, or a function whose arguments are typed per key (`moreEvents(count)`, `repeatedHour(first, second)`). Feature packages add keys by declaration merging. English defaults ship at 1.0.
+- **View labels.** Each view helper takes an optional `label`; the default views use the `monthView`, `weekView`, `dayView`, `agendaView` and `timelineView` messages. _Proposed._
+
+### 3.6 Finding: `UntrustedHtml` can reach `dangerouslySetInnerHTML` in React
+
+Part 1 said the opaque type blocks `dangerouslySetInnerHTML`. **It doesn't, in a React app.** React types `__html` as `string | TrustedHTML`, and `@types/react` declares `interface TrustedHTML {}` globally. Every non-null type satisfies an empty interface, so no type of ours can be rejected there. `part3-ok.tsx` shows it compiling.
+
+The opaque type still blocks every `string` sink: `innerHTML`, `insertAdjacentHTML`, any function taking a string. So it's still stronger than a branded string, which blocks nothing. The remaining gap is documented, and our own `react-ui` code is held to "never renders HTML fields" by its lint rule. **Question 17.**

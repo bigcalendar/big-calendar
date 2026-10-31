@@ -20,7 +20,7 @@ for (const line of out.split('\n')) {
 }
 let failed = 0
 let checked = 0
-for (const file of readdirSync('fail').filter((f) => f.endsWith('.ts'))) {
+for (const file of readdirSync('fail').filter((f) => /\.tsx?$/.test(f))) {
   const lines = readFileSync(`fail/${file}`, 'utf8').split('\n')
   lines.forEach((text, i) => {
     const m = text.match(/\/\/ expect: (.+)$/)

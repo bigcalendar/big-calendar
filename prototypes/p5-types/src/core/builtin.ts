@@ -243,25 +243,32 @@ export interface ViewContext {
 
 export interface ViewDefinition<Family extends string = string> {
   readonly family: Family
+  /** The view switcher's label. Default views use `messages` (`monthView`, …); others need one. */
+  readonly label: string | undefined
 }
 
 /** The month view and other day-grid shapes, such as two weeks. */
 export declare function dayGridView(config?: {
+  label?: string
   weeks?: 'month' | number
 }): ViewDefinition<'dayGrid'>
 /** Day, week, work week and N-day views. `hiddenDays` here adds to the calendar's. */
 export declare function timeGridView(config: {
+  label?: string
   days: number | 'week'
   hiddenDays?: readonly Weekday[]
 }): ViewDefinition<'timeGrid'>
 export declare function timelineView(config: {
+  label?: string
   days: number | 'week' | 'month'
 }): ViewDefinition<'timeline'>
 export declare function agendaView(config?: {
+  label?: string
   length?: number
 }): ViewDefinition<'agenda'>
 /** A fully custom view (D-66). The component that draws it is given in the binding (part 3). */
 export declare function customView(config: {
+  label?: string
   range(date: DateString, context: ViewContext): DateRange
   /** Where "previous" and "next" go from `date`. */
   navigate(

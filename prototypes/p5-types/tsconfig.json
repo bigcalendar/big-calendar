@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
     "target": "es2025",
-    "lib": ["es2025", "dom"],
+    "lib": [
+      "es2025",
+      "dom"
+    ],
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "strict": true,
@@ -11,7 +14,10 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
     "allowImportingTsExtensions": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "jsx": "react-jsx"
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }
