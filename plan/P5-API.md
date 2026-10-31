@@ -371,7 +371,7 @@ One slot per part (answer 16). RBC's per-view keys (`month.event`, `week.event`,
 | `month.header`                                                    | `weekdayHeader: { render }`                                                |
 | `month.dateHeader`                                                | `dateLabel: { render }`                                                    |
 
-Four parts were added to the part 3 catalog for this: `eventContent`, `timeSlotGroup`, `timeGutterHeader`, and the agenda's `agendaDateCell` and `agendaTimeCell`.
+Five parts were added to the part 3 catalog for this: `eventContent`, `timeSlotGroup`, `timeGutterHeader`, and the agenda's `agendaDateCell` and `agendaTimeCell`.
 
 ### 4.4 `formats` keys
 
