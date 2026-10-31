@@ -26,9 +26,14 @@ for (const file of readdirSync('fail').filter((f) => f.endsWith('.ts'))) {
     const m = text.match(/\/\/ expect: (.+)$/)
     if (!m) return
     checked++
-    // The case runs from the next line to the next blank line.
+    // The case runs from the next line to the next blank line or the next expectation.
     let last = i + 1
-    while (last + 1 < lines.length && lines[last + 1].trim() !== '') last++
+    while (
+      last + 1 < lines.length &&
+      lines[last + 1].trim() !== '' &&
+      !lines[last + 1].includes('// expect:')
+    )
+      last++
     let got = ''
     for (let n = i + 2; n <= last + 1; n++) {
       const k = `fail/${file}:${n}`

@@ -4,22 +4,30 @@ import type {
   CalendarEvent,
   BackgroundEvent,
   DateRange,
-  EventSource,
   ProcessedEvent,
-  Resource,
 } from './data.ts'
 import type { DataInput } from './collections.ts'
+import type {
+  Change,
+  ChangeHandler,
+  Constraints,
+  CreateChange,
+  DeleteChange,
+  Draft,
+  PendingChange,
+  UpdateChange,
+} from './edit.ts'
 import type {
   CalendarFeatures,
   FeatureApi,
   FeatureMap,
   FeatureOptions,
   FeatureState,
-  Has,
+  FlatProps,
+  RequiredFlatProps,
   KnownSlices,
   SliceValue,
   StateKeys,
-  UnregisteredOptions,
 } from './features.ts'
 import type { Atom, ReadonlySignal } from './signals.ts'
 import type {
@@ -154,16 +162,19 @@ export interface CoreOptions<TEventMeta> {
   onDataIssue?: (issue: DataIssue) => void
   /** The loading hook (D-27). */
   onRangeChange?: (range: VisibleRange) => void
+  /** Live constraints for selection and dragging (D-76). */
+  constraints?: Constraints<TEventMeta>
+  /** Edit callbacks (D-29). Move and resize come with `dnd`. */
+  onEventCreate?: ChangeHandler<CreateChange<TEventMeta>, TEventMeta>
+  onEventUpdate?: ChangeHandler<UpdateChange<TEventMeta>, TEventMeta>
+  onEventDelete?: ChangeHandler<DeleteChange<TEventMeta>, TEventMeta>
+  /** After a rejected promise rolled a change back and the rollback was announced. */
+  onChangeError?: (error: unknown, change: Change<TEventMeta>) => void
+  /** The full copy after each commit, for apps that mirror state. Not called when a collection is passed. */
+  onEventsChange?: (events: readonly CalendarEvent<TEventMeta>[]) => void
+  /** The event's secondary action: double-click, or "Open" in its menu (D-51, P3 section 6.2). */
+  onEventOpen?: (event: ProcessedEvent<TEventMeta>) => void
 }
-
-type ResourceInputs<F extends FeatureMap, TResourceMeta> =
-  Has<F, 'resources'> extends true
-    ? { resources?: DataInput<Resource<TResourceMeta>, ResourceId> }
-    : {}
-type SourceInputs<F extends FeatureMap> =
-  Has<F, 'sources'> extends true
-    ? { sources?: DataInput<EventSource, SourceId> }
-    : {}
 
 export type CalendarOptions<
   F extends FeatureMap,
@@ -175,10 +186,9 @@ export type CalendarOptions<
   /** Default: `DefaultViews` for the registered families. */
   views?: V & ViewMap<F>
 } & StateProps<F, V> &
-  ResourceInputs<F, TResourceMeta> &
-  SourceInputs<F> &
-  FeatureOptions<F> &
-  UnregisteredOptions<F>
+  FlatProps<F, TEventMeta, TResourceMeta> &
+  RequiredFlatProps<F, TEventMeta, TResourceMeta> &
+  FeatureOptions<F>
 
 /** The granular API (edit model). With a collection it writes into the collection (D-58). */
 export interface EventsApi<TEventMeta> {
@@ -190,11 +200,6 @@ export interface EventsApi<TEventMeta> {
   ): void
   remove(id: EventId): void
 }
-
-/** Specified in part 2. */
-export interface Draft {}
-/** Specified in part 2. */
-export interface PendingChange {}
 
 export type CalendarInstance<
   F extends FeatureMap,
@@ -208,8 +213,8 @@ export type CalendarInstance<
       CalendarState<F, V>[K]
     >
   } & {
-    readonly drafts: ReadonlySignal<readonly Draft[]>
-    readonly pending: ReadonlySignal<readonly PendingChange[]>
+    readonly drafts: ReadonlySignal<readonly Draft<TEventMeta>[]>
+    readonly pending: ReadonlySignal<readonly PendingChange<TEventMeta>[]>
   }
   readonly range: ReadonlySignal<VisibleRange>
   /** The toolbar's date label, already formatted. */
@@ -221,6 +226,18 @@ export type CalendarInstance<
   goToDate(date: DateString): void
   setView(view: NoInfer<keyof V & string>): void
   selectEvent(id: EventId | null): void
+  /**
+   * App-started edits that go through the pipeline: pending state, the callback, commit or rollback.
+   * `events.upsert` and friends write directly instead, with no callback (edit model).
+   */
+  createEvent(
+    event: Omit<CalendarEvent<TEventMeta>, 'id'> & { id?: EventId },
+  ): void
+  updateEvent(
+    id: EventId,
+    fields: Partial<Omit<CalendarEvent<TEventMeta>, 'id'>>,
+  ): void
+  deleteEvent(id: EventId): void
   /** For bindings (reactivity). */
   subscribe<T>(
     selector: (state: CalendarState<F, V>) => T,

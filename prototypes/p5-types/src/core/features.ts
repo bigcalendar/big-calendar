@@ -17,6 +17,10 @@ export interface FeatureSpec {
   state: object
   /** Members it adds to the calendar instance. */
   api: object
+  /** Flat props it unlocks: keys of `FlatPropRegistry` (data inputs, callbacks). `never` for none. */
+  flat: string
+  /** Which of those become required once it's registered, such as `resolveRecurringScope` (D-30). */
+  required: string
   requires: readonly Requirement[]
 }
 
@@ -84,23 +88,26 @@ export declare function calendarFeatures<const F extends FeatureMap>(
   features: F & CheckFeatures<F>,
 ): CalendarFeatures<F>
 
-/** Options of features that are installed but not registered: assigning anything is an error naming the feature. */
-export type UnregisteredOptions<F extends FeatureMap> = {
-  [
-    N in Exclude<keyof FeatureRegistry, Names<F>> as SpecOf<
-      FeatureRegistry[N]
-    >['optionsKey']
-  ]?: {
-    readonly [
-      M in `Register the ${N & string} feature to use these options`
-    ]: never
-  }
-}
-
+/**
+ * Feature options, grouped under each feature's options key (D-61). Keys come from every installed
+ * feature, never from `F`; a registered feature's key takes its options, an unregistered one's takes
+ * a type naming the feature (D-63). Keys taken from `F` break contextual typing for every callback
+ * in the options object, not only these.
+ */
 export type FeatureOptions<F extends FeatureMap> = {
   [
-    S in Specs<F> as [S['options']] extends [never] ? never : S['optionsKey']
-  ]?: S['options']
+    N in keyof FeatureRegistry as [
+      SpecOf<FeatureRegistry[N]>['options'],
+    ] extends [never]
+      ? never
+      : SpecOf<FeatureRegistry[N]>['optionsKey']
+  ]?: N extends Names<F>
+    ? SpecOf<FeatureRegistry[N]>['options']
+    : {
+        readonly [
+          M in `Register the ${N & string} feature to use these options`
+        ]: never
+      }
 }
 
 export type StateKeys<F extends FeatureMap> =
@@ -137,3 +144,53 @@ export type SliceValue<F extends FeatureMap, K extends keyof KnownSlices> =
           M in `Register the ${KnownSlices[K] & string} feature to use ${K & string}`
         ]: never
       }
+
+/**
+ * The types of flat props that features unlock, with the calendar's meta types. Packages add their
+ * entries by declaration merging, next to their `FeatureRegistry` entry.
+ */
+export interface FlatPropRegistry<TEventMeta, TResourceMeta> {}
+
+/** Every flat prop any installed feature unlocks, and the feature that unlocks it. */
+export type KnownFlat = {
+  [N in keyof FeatureRegistry as SpecOf<FeatureRegistry[N]>['flat']]: N
+}
+type FlatKeys<F extends FeatureMap> = Specs<F>['flat']
+type RequiredKeys<F extends FeatureMap> = Specs<F>['required']
+type FlatType<K, EM, RM> = K extends keyof FlatPropRegistry<EM, RM>
+  ? FlatPropRegistry<EM, RM>[K]
+  : never
+
+/**
+ * Flat props from features. Keys are fixed (every installed feature's), values depend on `F`, for
+ * the same contextual-typing reason as the slices. Required ones are added by `RequiredFlatProps`.
+ */
+export type FlatProps<F extends FeatureMap, EM, RM> = {
+  [K in keyof KnownFlat]?: K extends FlatKeys<F>
+    ? FlatType<K, EM, RM>
+    : // Inlined, not an alias, so the error shows the message rather than the alias name.
+      {
+        readonly [
+          M in `Register the ${KnownFlat[K] & string} feature to use ${K & string}`
+        ]: never
+      }
+}
+/** Every flat prop any installed feature makes required, and that feature. Fixed keys. */
+type KnownRequired = {
+  [N in keyof FeatureRegistry as SpecOf<FeatureRegistry[N]>['required']]: N
+}
+/**
+ * Required flat props. Each is its own conditional piece with a fixed key: a mapped type keyed by
+ * `RequiredKeys<F>` breaks contextual typing for every callback in the options object.
+ */
+export type RequiredFlatProps<
+  F extends FeatureMap,
+  EM,
+  RM,
+> = UnionToIntersection<
+  {
+    [K in keyof KnownRequired]: K extends RequiredKeys<F>
+      ? { [P in K]-?: FlatType<K, EM, RM> }
+      : unknown
+  }[keyof KnownRequired]
+>
