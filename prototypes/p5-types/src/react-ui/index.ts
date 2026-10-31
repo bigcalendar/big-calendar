@@ -29,8 +29,14 @@ export type Slot<Data> =
     }
 
 /** What each slot receives besides `props` or `children`. Parts not listed get `{}`; families widen these in their slice specs. */
+/** Every slot also gets the view it's in, so one slot can differ per view (RBC's per-view `components`). */
+interface InView {
+  view: string
+  family: 'dayGrid' | 'timeGrid' | 'timeline' | 'agenda' | 'custom'
+}
 export interface SlotData<TEventMeta> {
   event: { event: ProcessedEvent<TEventMeta>; segment: SegmentRef }
+  eventContent: { event: ProcessedEvent<TEventMeta>; segment: SegmentRef }
   backgroundEvent: { event: ProcessedEvent<TEventMeta> }
   dayCell: { date: DateString }
   dayColumn: { date: DateString }
@@ -40,7 +46,8 @@ export interface SlotData<TEventMeta> {
 }
 export type Slots<TEventMeta = unknown> = {
   readonly [P in PartName]?: Slot<
-    P extends keyof SlotData<TEventMeta> ? SlotData<TEventMeta>[P] : {}
+    InView &
+      (P extends keyof SlotData<TEventMeta> ? SlotData<TEventMeta>[P] : {})
   >
 }
 

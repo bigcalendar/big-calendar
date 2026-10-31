@@ -177,6 +177,17 @@ export interface CoreOptions<TEventMeta> {
   onChangeError?: (error: unknown, change: Change<TEventMeta>) => void
   /** The full copy after each commit, for apps that mirror state. Not called when a collection is passed. */
   onEventsChange?: (events: readonly CalendarEvent<TEventMeta>[]) => void
+  /**
+   * Where a day header or date label leads (RBC `drilldownView` and `getDrilldownView`): a view name,
+   * a function of the date and the current view, or `null` for no drill-down. Default: `day` when present.
+   */
+  drilldownView?:
+    string | null | ((date: DateString, fromView: string) => string | null)
+  /** Keys pressed on a focused event that its machine doesn't use (RBC `onKeyPressEvent`). */
+  onEventKeyDown?: (
+    event: ProcessedEvent<TEventMeta>,
+    keyboardEvent: KeyboardEvent,
+  ) => void
   /** The event's secondary action: double-click, or "Open" in its menu (D-51, P3 section 6.2). */
   onEventOpen?: (event: ProcessedEvent<TEventMeta>) => void
 }

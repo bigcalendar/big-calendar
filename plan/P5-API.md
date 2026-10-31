@@ -1,6 +1,6 @@
 # Types and public API (P5)
 
-> **Status: draft. Part 1 answered (2026-10-31). Parts 1–3 answered (2026-10-31); part 4 in progress.** Not normative until the maintainer approves P5. On approval, the types and contracts move into the specs they complete, with a decision.
+> **Status: draft. Part 1 answered (2026-10-31). Parts 1–3 answered (2026-10-31). Part 4 is written and waiting for the maintainer's answers (questions 18–20).** Not normative until the maintainer approves P5. On approval, the types and contracts move into the specs they complete, with a decision.
 
 Exit criteria: [roadmap](../docs/spec/roadmap.md#planning-phase), row P5.
 
@@ -277,3 +277,141 @@ Every recommendation was accepted:
 17. **`UntrustedHtml` stays opaque**; the docs name the React `dangerouslySetInnerHTML` gap.
 
 The other items marked _Proposed_ in part 3 stand unless the maintainer changes them at the P5 review.
+
+## Part 4: the RBC 1.20.0 parity matrix
+
+Source: react-big-calendar 1.20.0 as installed in the prototype: `Calendar.propTypes` (61 props), the drag-and-drop addon's propTypes (10, two shared with `Calendar`), the `components` keys, `formats` keys and default `messages`. Props RBC reads without listing them (`defaultDate`, `defaultView`, `className`, `style`) are included.
+
+**Codemod column:** _auto_ means rewritten with no review needed; _convert_ means rewritten, with values converted (for example `Date` to string) where they're literals, and a TODO where they aren't; _flag_ means left in place with a TODO comment linking to the migration guide; _remove_ means deleted, with a note.
+
+### 4.1 `Calendar` props
+
+| RBC prop                                                                                                                    | Big Calendar                                                                                                                                                                             | Codemod                                       |
+| --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `localizer`                                                                                                                 | Removed: `timeZone`, `locale`, `formats` (date engine)                                                                                                                                   | remove                                        |
+| `culture`                                                                                                                   | `locale`                                                                                                                                                                                 | auto                                          |
+| `events`, `backgroundEvents`                                                                                                | Same names; canonical shape (event fields)                                                                                                                                               | auto; accessors below                         |
+| `titleAccessor`, `tooltipAccessor`, `allDayAccessor`, `startAccessor`, `endAccessor`, `eventIdAccessor`, `resourceAccessor` | Removed: a generated `toCalendarEvent` mapper with `mapEvents` from `normalize` (D-34); `allDay` is derived (T-1)                                                                        | convert (D-34)                                |
+| `resources`                                                                                                                 | `resources` (feature `resources`)                                                                                                                                                        | auto; registers the feature                   |
+| `resourceIdAccessor`, `resourceTitleAccessor`                                                                               | Removed: a generated mapper with `mapResources` from `normalize`, as D-34 does for events                                                                                                | convert                                       |
+| `date`, `defaultDate`                                                                                                       | `date`, `defaultDate`: `YYYY-MM-DD` strings                                                                                                                                              | convert                                       |
+| `view`, `defaultView`                                                                                                       | Same names, typed by the `views` keys; RBC's `work_week` becomes `workWeek`                                                                                                              | auto                                          |
+| `views` (array or object)                                                                                                   | A named record (answer 4): `month: dayGridView()`, `week: timeGridView({ days: 'week' })`, `workWeek: timeGridView({ days: 'week', hiddenDays: [6, 7] })`, `day`, `agenda: agendaView()` | convert                                       |
+| A custom view component in `views`                                                                                          | `customView({ range, navigate, title })` plus its component in `viewComponents` (D-66)                                                                                                   | convert when the statics are plain; else flag |
+| `getNow`                                                                                                                    | `clock.now` (epoch ms)                                                                                                                                                                   | convert                                       |
+| `onNavigate`                                                                                                                | `onDateChange` (the new date only)                                                                                                                                                       | auto; flag if it reads `view` or `action`     |
+| `onView`                                                                                                                    | `onViewChange`                                                                                                                                                                           | auto                                          |
+| `onRangeChange`                                                                                                             | `onRangeChange` with one `VisibleRange` (dates, instants, zone)                                                                                                                          | flag                                          |
+| `onSelectEvent`                                                                                                             | `onSelectedEventIdChange` (an id, not the event and DOM event)                                                                                                                           | flag                                          |
+| `selected`                                                                                                                  | `selectedEventId`                                                                                                                                                                        | convert (event → its id)                      |
+| `onDoubleClickEvent`                                                                                                        | `onEventOpen` (double-click or the menu's "Open")                                                                                                                                        | auto                                          |
+| `onKeyPressEvent`                                                                                                           | `onEventKeyDown(event, keyboardEvent)`, for keys the machine doesn't use                                                                                                                 | auto                                          |
+| `selectable`                                                                                                                | Register `slotSelection`. `'ignoreEvents'` is how ours already behaves: a press on an event acts on the event                                                                            | convert                                       |
+| `onSelectSlot`                                                                                                              | `onSelectionChange` with the finished selection; create with `createEvent` (answer 13). `action`, `bounds` and `slots` are gone                                                          | flag                                          |
+| `onSelecting`                                                                                                               | `constraints.validate(draft)`: return a message instead of `false`                                                                                                                       | flag                                          |
+| `longPressThreshold`                                                                                                        | `slotSelection.longPressDelay`                                                                                                                                                           | auto                                          |
+| `onShowMore`                                                                                                                | `onShowMore({ date, events })` (`dayGrid`)                                                                                                                                               | auto                                          |
+| `popup`                                                                                                                     | `dayGrid.overflow`: `true` → `'popover'`; `false` → `'drilldown'`                                                                                                                        | convert                                       |
+| `doShowMoreDrillDown`                                                                                                       | `dayGrid.overflow: 'none'` when `false` with `popup={false}`                                                                                                                             | convert                                       |
+| `showAllEvents`                                                                                                             | `dayGrid.maxRows: 'all'`                                                                                                                                                                 | convert                                       |
+| `popupOffset`                                                                                                               | Removed: the popover is placed by anchor positioning; its viewport margin is the `--bc-popover-margin` token                                                                             | flag                                          |
+| `drilldownView`, `getDrilldownView`                                                                                         | `drilldownView`: a view name, `null`, or a function of the date and current view                                                                                                         | auto                                          |
+| `onDrillDown`                                                                                                               | Removed: a drill-down is a date and view change, reported by `onDateChange` and `onViewChange`                                                                                           | flag                                          |
+| `length`                                                                                                                    | `agenda.length` (or `agendaView({ length })`)                                                                                                                                            | auto                                          |
+| `toolbar` (`false`)                                                                                                         | `slots.toolbar: { render: () => null }`; the live date announcement has its own part and stays                                                                                           | convert                                       |
+| `step`                                                                                                                      | `timeGrid.step` as a duration (`30` → `'PT30M'`)                                                                                                                                         | convert                                       |
+| `timeslots`                                                                                                                 | `timeGrid.timeslots`                                                                                                                                                                     | auto                                          |
+| `min`, `max`, `scrollToTime`                                                                                                | `timeGrid.min`, `.max`, `.scrollToTime` as `HH:MM`                                                                                                                                       | convert                                       |
+| `showMultiDayTimes`                                                                                                         | `timeGrid.multiDayTimedEvents`: `true` → `'grid'` (our default, T-7); absent or `false` → `'allDayRow'`, written explicitly to keep RBC's behavior                                       | convert                                       |
+| `allDayMaxRows`                                                                                                             | `timeGrid.allDayMaxRows`                                                                                                                                                                 | auto                                          |
+| `dayLayoutAlgorithm`                                                                                                        | `timeGrid.packing`: `'overlap'` or `'no-overlap'`; a custom function needs the S2 packing signature                                                                                      | auto; flag functions                          |
+| `resourceGroupingLayout`                                                                                                    | `resourceOptions.layout`: `true` → `'dayMajor'`, `false` → `'resourceMajor'`                                                                                                             | convert                                       |
+| `rtl`                                                                                                                       | `dir` (D-35)                                                                                                                                                                             | convert                                       |
+| `enableAutoScroll`                                                                                                          | `dnd.autoScroll`                                                                                                                                                                         | auto                                          |
+| `elementProps`                                                                                                              | `className` and `style` on `<Calendar>`, or a `root` wrap slot for anything else                                                                                                         | convert                                       |
+| `className`, `style`                                                                                                        | Same                                                                                                                                                                                     | auto                                          |
+| `eventPropGetter`, `dayPropGetter`, `slotPropGetter`, `slotGroupPropGetter`                                                 | Removed (D-13): `wrap` slots on `event`, `dayCell`, `timeSlot` and `timeSlotGroup`                                                                                                       | convert (D-13); flag what it can't            |
+| `formats`                                                                                                                   | `formats` slots (4.3); string and function formats aren't allowed (D-67)                                                                                                                 | convert keys; flag values                     |
+| `components`                                                                                                                | `slots` (4.2)                                                                                                                                                                            | convert                                       |
+| `messages`                                                                                                                  | `messages` keys (4.4)                                                                                                                                                                    | convert                                       |
+
+### 4.2 Drag-and-drop addon (`withDragAndDrop`)
+
+| RBC prop                                   | Big Calendar                                                                                                   | Codemod                                           |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `withDragAndDrop(Calendar)`                | Register the `dnd` feature                                                                                     | convert                                           |
+| `onEventDrop`                              | `onEventMove` (answer 12)                                                                                      | auto; flag if it reads `isAllDay` or `resourceId` |
+| `onEventResize`                            | `onEventResize`                                                                                                | auto; same flag                                   |
+| `onDragStart`, `onDragOver`                | Removed: the draft is readable as `calendar.state.drafts`; refusing a target is `constraints.validate`         | flag                                              |
+| `onDropFromOutside`, `dragFromOutsideItem` | `dnd.acceptExternal(dataTransfer)` returning an item; the drop arrives as a `create` change in `onEventCreate` | flag                                              |
+| `draggableAccessor`, `resizableAccessor`   | The `draggable` and `resizable` event fields, through the generated mapper (D-34)                              | convert                                           |
+| `resizable`                                | `dnd.resizable`                                                                                                | auto                                              |
+| `selectable`                               | As in 4.1                                                                                                      | convert                                           |
+
+### 4.3 `components` → slots
+
+One slot per part (answer 16). RBC's per-view keys (`month.event`, `week.event`, …) become one slot that branches on the `view` every slot receives; the codemod writes the `switch`.
+
+| RBC `components` key                                              | Slot                                                                       |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `event`, `day.event`, `week.event`, `month.event`, `agenda.event` | `eventContent: { render }` (the label inside the event, so behavior stays) |
+| `eventWrapper`                                                    | `event: { wrap }`                                                          |
+| `eventContainerWrapper`, `dayColumnWrapper`                       | `dayColumn: { wrap }`                                                      |
+| `dateCellWrapper`                                                 | `dayCell: { wrap }`                                                        |
+| `timeSlotWrapper`                                                 | `timeSlot: { wrap }`                                                       |
+| `timeGutterHeader`                                                | `timeGutterHeader: { render }`                                             |
+| `timeGutterWrapper`                                               | `timeGutter: { wrap }`                                                     |
+| `timeIndicatorWrapper`                                            | `nowIndicator: { wrap }`                                                   |
+| `resourceHeader`                                                  | `resourceHeader: { render }`                                               |
+| `showMore`                                                        | `moreButton: { render }`                                                   |
+| `toolbar`                                                         | `toolbar: { render }`                                                      |
+| `agenda.date`                                                     | `agendaDateCell: { render }`                                               |
+| `agenda.time`                                                     | `agendaTimeCell: { render }`                                               |
+| `day.header`, `week.header`                                       | `dayHeader: { render }`                                                    |
+| `month.header`                                                    | `weekdayHeader: { render }`                                                |
+| `month.dateHeader`                                                | `dateLabel: { render }`                                                    |
+
+Four parts were added to the part 3 catalog for this: `eventContent`, `timeSlotGroup`, `timeGutterHeader`, and the agenda's `agendaDateCell` and `agendaTimeCell`.
+
+### 4.4 `formats` keys
+
+| RBC                                                                            | Big Calendar                                               |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| `dateFormat`                                                                   | `dateCell`                                                 |
+| `weekdayFormat`                                                                | `weekdayHeader`                                            |
+| `dayFormat`                                                                    | `dayHeader`                                                |
+| `timeGutterFormat`                                                             | `timeGutter`                                               |
+| `monthHeaderFormat`                                                            | `monthTitle`                                               |
+| `dayRangeHeaderFormat`                                                         | `rangeTitle`                                               |
+| `dayHeaderFormat`                                                              | `dayTitle`                                                 |
+| `agendaHeaderFormat`                                                           | `agendaTitle`                                              |
+| `agendaDateFormat`                                                             | `agendaDate`                                               |
+| `agendaTimeFormat`, `agendaTimeRangeFormat`                                    | `agendaTime` (ranges use `formatRange`)                    |
+| `eventTimeRangeFormat`, `eventTimeRangeStartFormat`, `eventTimeRangeEndFormat` | `eventTime` (the continuation pieces use the same options) |
+| `selectRangeFormat`                                                            | `selectionRange`                                           |
+
+### 4.5 `messages` keys
+
+| RBC                                           | Big Calendar                                                                      |
+| --------------------------------------------- | --------------------------------------------------------------------------------- |
+| `date`, `time`, `event`                       | `agendaDateHeader`, `agendaTimeHeader`, `agendaEventHeader`                       |
+| `allDay`                                      | `allDay`                                                                          |
+| `week`, `work_week`, `day`, `month`, `agenda` | `weekView`, a `label` on the work-week view, `dayView`, `monthView`, `agendaView` |
+| `previous`, `next`, `today`                   | `previous(unit)`, `next(unit)`, `today`                                           |
+| `noEventsInRange`                             | `noEventsInRange`                                                                 |
+| `showMore(total)`                             | `moreEvents(count)`                                                               |
+| `yesterday`, `tomorrow`                       | Dropped: RBC 1.20's views don't display them                                      |
+
+### 4.6 New homes this part needed
+
+Mapping every prop showed seven RBC capabilities without a home in parts 1–3. Each now has one in the types (`part3-ok.tsx`, case 5, uses them):
+
+- `dayGrid.maxRows: 'all'` (`showAllEvents`) and `dayGrid.overflow: 'none'` (`doShowMoreDrillDown={false}`);
+- `timeGrid.allDayMaxRows`;
+- `onShowMore`, unlocked by `dayGrid`;
+- `drilldownView`, merging RBC's value and function forms;
+- `onEventKeyDown` for keys the machines don't use;
+- the agenda header messages;
+- the five parts listed in 4.3.
+
+**Questions 18 to 20.**
