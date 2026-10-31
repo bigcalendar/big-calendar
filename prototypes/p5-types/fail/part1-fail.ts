@@ -60,10 +60,9 @@ createCalendar({ features: standardFeatures, events: [] }).hiddenEventCount
 const html: string = untrustedHtml('<b>x</b>')
 void html
 
-// expect: TrustedHTML
-void ({ __html: untrustedHtml('<b>x</b>') } satisfies {
-  __html: string | TrustedHTML
-})
+// Not a case: with @types/react loaded, React's `__html` accepts `string | TrustedHTML`, and
+// @types/react declares `interface TrustedHTML {}`, which every non-null type satisfies. No type can
+// block `__html`; `src/usage/part3-ok.tsx` shows it compiling (P5 draft, finding in part 3).
 
 // expect: Property 'start' is missing
 createCalendar({

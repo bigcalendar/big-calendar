@@ -7,6 +7,7 @@ import type {
   ProcessedEvent,
 } from './data.ts'
 import type { DataInput } from './collections.ts'
+import type { Formats, Messages } from './locale.ts'
 import type {
   Change,
   ChangeHandler,
@@ -162,6 +163,10 @@ export interface CoreOptions<TEventMeta> {
   onDataIssue?: (issue: DataIssue) => void
   /** The loading hook (D-27). */
   onRangeChange?: (range: VisibleRange) => void
+  /** Overrides for named format slots (D-40, D-67). */
+  formats?: Partial<Formats>
+  /** Overrides for UI, accessible-name and announcement strings (D-40). */
+  messages?: Partial<Messages>
   /** Live constraints for selection and dragging (D-76). */
   constraints?: Constraints<TEventMeta>
   /** Edit callbacks (D-29). Move and resize come with `dnd`. */
