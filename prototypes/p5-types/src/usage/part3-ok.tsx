@@ -121,3 +121,26 @@ declare const risky: CalendarEvent<Shift>
 export const gap = risky.descriptionHtml && (
   <div dangerouslySetInnerHTML={{ __html: risky.descriptionHtml }} />
 )
+
+// 5. RBC's per-view event components become one slot that branches on `view` (part 4).
+export const perView = (
+  <Calendar
+    features={standardFeatures}
+    events={shifts}
+    slots={{
+      eventContent: {
+        render: ({ props, event, view }) => (
+          <span {...props}>
+            {view === 'month'
+              ? event.event.title
+              : `${event.event.title} (${event.event.meta?.nurse})`}
+          </span>
+        ),
+      },
+    }}
+    dayGrid={{ maxRows: 'all', overflow: 'none' }}
+    onShowMore={({ date, events }) => void [date, events.length]}
+    drilldownView={(_date, fromView) => (fromView === 'month' ? 'day' : null)}
+    onEventKeyDown={(event, key) => void (key.key === 'p' && event.event.id)}
+  />
+)

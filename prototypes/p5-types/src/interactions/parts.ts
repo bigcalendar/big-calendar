@@ -14,6 +14,8 @@ export interface PartCatalog {
   error: 'core'
   // Events, in any family
   event: 'core'
+  /** The label inside an event (RBC `components.event`); replacing it keeps the event's behavior. */
+  eventContent: 'core'
   backgroundEvent: 'core'
   moreButton: 'core'
   overflowPopover: 'core'
@@ -33,9 +35,11 @@ export interface PartCatalog {
   timeGrid: 'timeGrid'
   dayHeader: 'timeGrid'
   allDayRow: 'timeGrid'
+  timeGutterHeader: 'timeGrid'
   timeGutter: 'timeGrid'
   timeLabel: 'timeGrid'
   dayColumn: 'timeGrid'
+  timeSlotGroup: 'timeGrid'
   timeSlot: 'timeGrid'
   nowIndicator: 'timeGrid'
   // Timeline
@@ -48,6 +52,8 @@ export interface PartCatalog {
   agenda: 'agenda'
   agendaDay: 'agenda'
   agendaRow: 'agenda'
+  agendaDateCell: 'agenda'
+  agendaTimeCell: 'agenda'
   // Resources and sources
   resourceHeader: 'resources'
   unassignedLane: 'resources'

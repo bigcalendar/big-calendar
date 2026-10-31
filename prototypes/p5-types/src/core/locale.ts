@@ -81,6 +81,10 @@ export interface Messages {
   weekNumber: Message<[week: number]>
   now: Message
   noEventsInRange: Message
+  /** Agenda column headers (RBC `date`, `time`, `event`). */
+  agendaDateHeader: Message
+  agendaTimeHeader: Message
+  agendaEventHeader: Message
   // DST (P3 section 4.4)
   afterDstChange: Message
   skippedSlot: Message

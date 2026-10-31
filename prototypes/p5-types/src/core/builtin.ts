@@ -1,7 +1,13 @@
 // The features core ships: the four families, slot selection, drag and drop, resources and sources.
 import type { Feature, FeatureMap, Has } from './features.ts'
 import type { DataInput } from './collections.ts'
-import type { DateRange, EventSource, Resizable, Resource } from './data.ts'
+import type {
+  DateRange,
+  EventSource,
+  ProcessedEvent,
+  Resizable,
+  Resource,
+} from './data.ts'
 import type {
   ChangeHandler,
   DragOutResult,
@@ -26,10 +32,13 @@ export type TimeGridPacking = 'overlap' | 'no-overlap'
 // Families ------------------------------------------------------------------------------------
 
 export interface DayGridOptions {
-  /** Event rows per week before "+N more". `'auto'` fits the row height. Default `'auto'`. */
-  maxRows?: number | 'auto'
-  /** "+N more" opens a popover (default) or moves to that day's view (RBC `popup={false}`). */
-  overflow?: 'popover' | 'drilldown'
+  /** Event rows per week before "+N more". `'auto'` fits the row height (default); `'all'` shows every event and lets rows scroll (RBC `showAllEvents`). */
+  maxRows?: number | 'auto' | 'all'
+  /**
+   * What "+N more" does: open a popover (default; RBC `popup`), move to that day's drill-down view
+   * (RBC `popup={false}`), or nothing beyond `onShowMore` (RBC `doShowMoreDrillDown={false}`).
+   */
+  overflow?: 'popover' | 'drilldown' | 'none'
 }
 export type DayGridFeature = Feature<{
   name: 'dayGrid'
@@ -37,7 +46,7 @@ export type DayGridFeature = Feature<{
   options: DayGridOptions
   state: {}
   api: {}
-  flat: never
+  flat: 'onShowMore'
   required: never
   requires: []
 }>
@@ -56,6 +65,8 @@ export interface TimeGridOptions {
   /** T-7: multi-day timed events stay in the grid (default) or move to the all-day row. */
   multiDayTimedEvents?: 'grid' | 'allDayRow'
   packing?: TimeGridPacking
+  /** Rows in the all-day row before "+N more". Default `'auto'` (RBC `allDayMaxRows`). */
+  allDayMaxRows?: number | 'auto' | 'all'
 }
 export type TimeGridFeature = Feature<{
   name: 'timeGrid'
@@ -229,6 +240,11 @@ declare module './features.ts' {
     onEventMove: ChangeHandler<MoveChange<TEventMeta>, TEventMeta>
     onEventResize: ChangeHandler<ResizeChange<TEventMeta>, TEventMeta>
     onEventDragOut: (result: DragOutResult<TEventMeta>) => void
+    /** "+N more" was activated, before the popover or drill-down (RBC `onShowMore`). */
+    onShowMore: (details: {
+      date: DateString
+      events: readonly ProcessedEvent<TEventMeta>[]
+    }) => void
   }
 }
 
