@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "tsc -p ."
+    "check": "tsc -p . && node check-fail.mjs"
   },
   "devDependencies": {
     "@types/react": "19.3.0",
