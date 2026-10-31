@@ -1,4 +1,5 @@
 // The machine contract (D-90): pure transitions in a table, a closed list of effects, one runtime.
+// Public and stable from 1.0 (P5 answer 9).
 import type { Draft } from '../core/index.ts'
 
 export interface MachineState {
