@@ -1,0 +1,14 @@
+{
+  "name": "p5-types",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc -p ."
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-big-calendar": "1.16.3",
+    "react-big-calendar": "1.20.0",
+    "typescript": "7.0.2"
+  }
+}

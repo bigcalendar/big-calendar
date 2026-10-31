@@ -2,9 +2,20 @@
 
 ## Next step
 
-**P4 approved 2026-10-30 (D-92 answers, D-93 approval). P5 has not started:** wait for the maintainer to say so, then begin P5 from its row in `docs/spec/roadmap.md`.
+**P5 in progress** (types and public API spec), started 2026-10-30. Continue with the first unchecked task below. Exit criteria: `docs/spec/roadmap.md`, row P5. Draft: `plan/P5-API.md`. Types: `prototypes/p5-types/` (npm, outside the workspace; `npm run check` runs `tsc`).
 
-Open for the maintainer (not blocking): post the comment draft for temporal-polyfill#121 at the end of `prototypes/p4-bench/temporal/UPSTREAM-ISSUES.md` (the future Casablanca dates, D-93).
+Kickoff answers (2026-10-30, maintainer): the types are real `.ts` files type-checked in the prototype, with must-compile and must-fail usage files; the review is in four parts, each part's questions answered before the next starts, then one P5 approval; the RBC parity matrix covers react-big-calendar 1.20.0, read from its installed source. Dependencies authorized for the prototype only: `typescript`, `@types/react`, `react-big-calendar`, `@types/react-big-calendar`.
+
+### P5 tasks
+
+1. [x] Kickoff answers; prototype scaffold.
+2. [ ] **Part 1:** canonical data types (events, background events, resources, sources, processed events), `createCalendar` options, registered features (D-52), state slices and atoms (D-53), store, actions and signals, permission cascade, `temporalReady` on the kernel side. Stop for the maintainer's part-1 answers.
+3. [ ] **Part 2:** machine contract (D-90), prop-getter descriptors and `mergeProps` (D-72), effects, typed drafts, `Change`, callback names and payloads (D-33), live constraints. Stop for answers.
+4. [ ] **Part 3:** React binding (hooks, `normalize`, waiting for `temporalReady`), `react-ui` slots, part manifest format, `formats` slots and `messages` keys (D-40). Stop for answers.
+5. [ ] **Part 4:** RBC 1.20.0 prop-by-prop parity matrix and the `components` → slot mapping table. Stop for answers.
+6. [ ] All answers recorded as a decision; stop for P5 approval.
+
+Open for the maintainer (not blocking): post the comment draft for temporal-polyfill#121 at the end of `prototypes/p4-bench/temporal/UPSTREAM-ISSUES.md` (D-93).
 
 ## Before S1 starts
 
