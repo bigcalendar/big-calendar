@@ -1,6 +1,14 @@
 // The features core ships: the four families, slot selection, drag and drop, resources and sources.
 import type { Feature, FeatureMap, Has } from './features.ts'
-import type { DateRange, Resizable } from './data.ts'
+import type { DataInput } from './collections.ts'
+import type { DateRange, EventSource, Resizable, Resource } from './data.ts'
+import type {
+  ChangeHandler,
+  DragOutResult,
+  ExternalItem,
+  MoveChange,
+  ResizeChange,
+} from './edit.ts'
 import type {
   DateString,
   DurationString,
@@ -29,6 +37,8 @@ export type DayGridFeature = Feature<{
   options: DayGridOptions
   state: {}
   api: {}
+  flat: never
+  required: never
   requires: []
 }>
 export declare const dayGrid: DayGridFeature
@@ -53,6 +63,8 @@ export type TimeGridFeature = Feature<{
   options: TimeGridOptions
   state: {}
   api: {}
+  flat: never
+  required: never
   requires: []
 }>
 export declare const timeGrid: TimeGridFeature
@@ -70,6 +82,8 @@ export type TimelineFeature = Feature<{
   options: TimelineOptions
   state: {}
   api: {}
+  flat: never
+  required: never
   requires: []
 }>
 export declare const timeline: TimelineFeature
@@ -84,6 +98,8 @@ export type AgendaFeature = Feature<{
   options: AgendaOptions
   state: {}
   api: {}
+  flat: never
+  required: never
   requires: []
 }>
 export declare const agenda: AgendaFeature
@@ -109,6 +125,8 @@ export type SlotSelectionFeature = Feature<{
   options: SlotSelectionOptions
   state: { selection: SlotSelection | null }
   api: { clearSelection(): void }
+  flat: never
+  required: never
   requires: [
     {
       anyOf: GridFamily
@@ -127,6 +145,13 @@ export interface DndOptions {
   snap?: DurationString
   /** Scroll near the edges while dragging. Default `true` (RBC `enableAutoScroll`). */
   autoScroll?: boolean
+  /**
+   * Turns a native drag from outside into an item, or `false` to refuse it. Events dragged out of
+   * another Big Calendar are recognized without it (`EVENT_MIME_TYPE`). Omitted: only those are accepted.
+   */
+  acceptExternal?: (data: DataTransfer) => ExternalItem | false
+  /** Allow dragging events out of the calendar (D-36). Default `true`. */
+  dragOut?: boolean
 }
 export type DndFeature = Feature<{
   name: 'dnd'
@@ -134,6 +159,8 @@ export type DndFeature = Feature<{
   options: DndOptions
   state: {}
   api: {}
+  flat: 'onEventMove' | 'onEventResize' | 'onEventDragOut'
+  required: never
   requires: [
     {
       anyOf: GridFamily
@@ -162,6 +189,8 @@ export type ResourcesFeature = Feature<{
     /** Events matching no lane while the Unassigned lane is off (D-38). */
     readonly hiddenEventCount: { get(): number }
   }
+  flat: 'resources'
+  required: never
   requires: [
     {
       anyOf: 'timeGrid' | 'timeline'
@@ -177,6 +206,8 @@ export type SourcesFeature = Feature<{
   options: never
   state: { visibleSources: readonly SourceId[] | 'all' }
   api: {}
+  flat: 'sources'
+  required: never
   requires: []
 }>
 export declare const sources: SourcesFeature
@@ -191,6 +222,13 @@ declare module './features.ts' {
     dnd: DndFeature
     resources: ResourcesFeature
     sources: SourcesFeature
+  }
+  interface FlatPropRegistry<TEventMeta, TResourceMeta> {
+    resources: DataInput<Resource<TResourceMeta>, ResourceId>
+    sources: DataInput<EventSource, SourceId>
+    onEventMove: ChangeHandler<MoveChange<TEventMeta>, TEventMeta>
+    onEventResize: ChangeHandler<ResizeChange<TEventMeta>, TEventMeta>
+    onEventDragOut: (result: DragOutResult<TEventMeta>) => void
   }
 }
 

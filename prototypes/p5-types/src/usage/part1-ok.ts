@@ -85,6 +85,7 @@ const full = createCalendar({
   dnd: { snap: 'PT5M', resizable: 'end' },
   resourceOptions: { layout: 'dayMajor', unassignedLane: true },
   recurrence: { expansionMargin: 'P7D' },
+  resolveRecurringScope: () => 'occurrence',
 })
 full.setView('sprint')
 full.clearSelection()

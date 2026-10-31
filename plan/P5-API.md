@@ -1,6 +1,6 @@
 # Types and public API (P5)
 
-> **Status: draft. Part 1 answered (2026-10-31); part 2 in progress.** Not normative until the maintainer approves P5. On approval, the types and contracts move into the specs they complete, with a decision.
+> **Status: draft. Part 1 answered (2026-10-31). Part 2 is written and waiting for the maintainer's answers (questions 9–14).** Not normative until the maintainer approves P5. On approval, the types and contracts move into the specs they complete, with a decision.
 
 Exit criteria: [roadmap](../docs/spec/roadmap.md#planning-phase), row P5.
 
@@ -128,3 +128,84 @@ Every recommendation was accepted:
 8. **Visibility slices** default to `'all'`.
 
 The other items marked _Proposed_ in part 1 weren't asked separately. They stand unless the maintainer changes them at the P5 review.
+
+## Part 2: machines, prop-getters, drafts, changes and callbacks
+
+Files: [`src/core/edit.ts`](../prototypes/p5-types/src/core/edit.ts), [`src/interactions/machine.ts`](../prototypes/p5-types/src/interactions/machine.ts), [`src/interactions/props.ts`](../prototypes/p5-types/src/interactions/props.ts). Usage: [`part2-ok.ts`](../prototypes/p5-types/src/usage/part2-ok.ts) (callbacks, drafts, constraints) and [`part2-machine.ts`](../prototypes/p5-types/src/usage/part2-machine.ts) (the P3 move machine in the contract's table form, plus a feature adding touch long-press) compile; [`part2-fail.ts`](../prototypes/p5-types/fail/part2-fail.ts) and [`part2-machine-fail.ts`](../prototypes/p5-types/fail/part2-machine-fail.ts) add 8 cases that must fail, and do.
+
+### 2.1 The machine contract (D-90)
+
+- **A machine is a transition table**, keyed by state `mode`, then event `type`. Each handler is pure: `(state, event, ctx) → { state, effects }`, and TypeScript narrows `state` and `event` to that entry. A missing entry means the event is ignored in that state. `transition(machine, state, event, ctx)` looks the handler up.
+- **Features extend a machine** with `extendMachine(base, table)`: they may add modes and event types. Handling a (mode, event) pair that the base or an earlier feature already handles is a dev-time error, the same rule as a non-mergeable attribute (D-72). _Proposed._
+- **Effects** are a closed list, performed in order by one runtime that owns timers and listeners:
+
+| Effect                       | Does                                                                                                    |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `announce`                   | Polite, except rollbacks, which are assertive (D-89). The runtime debounces and clears the region.      |
+| `draft`                      | Sets or clears this machine's draft in the kernel's `drafts`                                            |
+| `commit`                     | Turns a draft into a `Change` and sends it down the edit pipeline                                       |
+| `focus`                      | A cell (coordinates), an event (key), a named part, or `restore`                                        |
+| `scroll`                     | Into view, one autoscroll step, or to a time                                                            |
+| `timerStart` / `timerCancel` | When a timer fires, its event goes back to the same machine; the same id replaces                       |
+| `read`                       | An asynchronous DOM read (the cell under a point, the text direction); the reply comes back as an event |
+
+D-90's list had `render` and no `scroll`. **`render` becomes `draft`**: machine state is published through signals, so "render" has nothing to do; what the kernel needs is the draft. **`scroll` is added** for autoscroll (P4), keeping the focused cell visible, and scroll-to-time. **Question 10.**
+
+- **Who can write machines.** Only our own features need the contract at 1.0. It's exported from `@big-calendar/interactions/unstable`, like the layout primitives (engine), so it can still change after 1.0. **Question 9.**
+
+### 2.2 Prop-getter descriptors and `mergeProps` (D-72)
+
+- A **descriptor** is `{ attrs, style, on, ref }`:
+  - `attrs` uses HTML attribute names (`class`, `tabindex`, `aria-*`, `data-*`); `false` and `undefined` mean absent;
+  - `style` holds only `--bc-*` custom properties: the kernel's geometry (styling contract), set through the CSSOM (gap #15). D-72 named `{ attrs, on, ref }`; a separate `style` field keeps attribute and style types apart. **Question 11.**
+  - `on` uses DOM event names, and handlers receive the native event;
+  - `ref` is called with the element, and with `null` on removal.
+- **`mergeProps(...descriptors)`** follows D-72, and fills in what D-72 leaves open _(proposed)_:
+  - `class` and the id-list ARIA attributes (`aria-describedby`, `aria-labelledby`, `aria-controls`, `aria-owns`) are joined, without duplicates;
+  - the same `data-*` name from two sources becomes a space-separated token list (`data-state="selected pending"`), so CSS selects with `~=`;
+  - any other attribute, or a style variable, set to two different values is a dev-time error.
+- **Getters** take one object argument (D-46) and are named `get<Part>Props`. `connectCalendar(calendar)` returns the shared ones (`getRootProps`, `getLiveRegionProps`, `getEventProps`, `getResizeHandleProps`, `getDraftProps`) and `destroy()`. Each family's `connect<Family>` adds its own, specified with its view model in its slice (answer 7).
+
+### 2.3 Drafts (D-23)
+
+A `Draft` is a union on `kind`: `creation`, `internal-drag`, `internal-resize`, `external-drag`. Every draft carries its `surface` (`dayGrid`, `timeGrid` or `timeline`; the all-day row is an embedded day grid), `start`, `end` and `timeZone` in the display zone (T-11), `allDay`, the target `resourceId`, and its `violations` (empty when valid). Internal drags add the `event`, the `sourceResourceId` and `converted` (T-12); resizes add the `edge`; external drags add the `item`.
+
+**Dragging in and out** (D-36, D-92):
+
+- An event dragged out is written to the drag data as JSON under `application/x-big-calendar-event+json`, plus its title as `text/plain`. When the drag ends, `onEventDragOut({ event, dropEffect })` reports what the drop target did, and the app decides whether to remove the event. _Proposed: the MIME type and payload._
+- Another Big Calendar recognizes that type, so the event arrives as `{ kind: 'fromCalendar', event }`. Anything else needs `dnd.acceptExternal(dataTransfer)`, which returns `{ kind: 'item', title, duration, meta }` or `false`. Omitted, only calendar events are accepted. _Proposed._
+
+### 2.4 Changes and the edit pipeline
+
+- A `Change` is a union on `kind` (edit model): `move`, `resize`, `create`, `update`, `delete`. `before` and `after` are full events in source form (T-11). Every change has a `changeId`, the `AbortSignal` that fires when a newer change supersedes it (D-29), and `recurring` (`scope` and `effects`) when it touches a series (D-30).
+- `move` adds `via` (`pointer`, `touch`, `keyboard`, `editing`), `converted` and `previousTimeZone` (T-12). `resize` adds `edge` and `via`. `create` adds `origin`: an app call, a selection, an external drop, or a paste.
+- **Callbacks return `ChangeResult`**: `false` vetoes; nothing commits at once; a promise commits on resolve (with the saved event, if any) and rolls back on reject (D-29). TypeScript checks the resolved value against the event type.
+- **`calendar.createEvent`, `updateEvent` and `deleteEvent`** send app-started edits through the same pipeline, with the pending state, callbacks and rollback. `calendar.events.upsert` and its siblings still write directly, with no callback (edit model). _Proposed._
+- **Creating events.** The `selection` slice holds only finished selections; a selection in progress is a `creation` draft, which live constraints can refuse. The app creates the event when it chooses, for example on `onSelectionChange` or after its own dialog, by calling `createEvent`, which goes through `onEventCreate`. External drops and paste also arrive as `create` changes, so one callback covers every new event. **Question 13.**
+
+### 2.5 Callback names (D-33)
+
+| Callback                | Fires                                                             | RBC                          |
+| ----------------------- | ----------------------------------------------------------------- | ---------------------------- |
+| `onEventMove`           | A move by pointer, touch, keyboard or paste-cut (`dnd`)           | `onEventDrop`                |
+| `onEventResize`         | A resize (`dnd`)                                                  | `onEventResize`              |
+| `onEventCreate`         | Any new event: `createEvent`, an external drop, a paste           | `onDropFromOutside` (partly) |
+| `onEventUpdate`         | `updateEvent` and editing-module edits                            | —                            |
+| `onEventDelete`         | `deleteEvent` and keyboard delete                                 | —                            |
+| `onEventDragOut`        | A drag out of the calendar ended (`dnd`)                          | —                            |
+| `onChangeError`         | A rejected promise rolled a change back                           | —                            |
+| `onEventsChange`        | The full copy after each commit (iterables only)                  | —                            |
+| `onEventOpen`           | The event's secondary action: double-click, or "Open" in its menu | `onDoubleClickEvent`         |
+| `resolveRecurringScope` | Required with recurrence: the app picks the scope (D-30)          | —                            |
+
+- "Move" rather than "drop", because keyboard moves have no drop and the change kind is `move`. **Question 12.**
+- **Callbacks are flat props**, like `events`, even when a feature unlocks them: `onEventMove` exists in the types only with `dnd`, and `resolveRecurringScope` becomes **required** with recurrence. Grouping them under the feature (`dnd: { onEventMove }`) would follow D-61 literally but split one app's edit handlers across groups. **Question 14.**
+
+### 2.6 Live constraints (D-76)
+
+`constraints` is a core option: `allowedResources` (a list, or a function of the draft), `minDuration`, `maxDuration`, `overlap` (default `true`; `false` refuses overlapping busy events in the same lane) and `validate(draft)`, which returns `true` or the message to show and announce. They apply to selections and drags alike. Each broken rule becomes a `ConstraintViolation` (`rule`, `message`) on the draft. Availability adds its `availability` rule in S8. _Proposed._
+
+### 2.7 What the prototype taught
+
+- **Keys taken from the inferred feature set break callback typing for the whole options object**, not only for those keys. Feature options, slices, flat props and required props are now all keyed by the installed packages' registries, with only the values depending on what's registered. Required props are built from one conditional piece per key.
+- **Error types must be inlined.** Through a named alias, the error shows `NotRegistered<"onEventMove">` instead of the message naming the feature.

@@ -6,6 +6,7 @@ export * from './collections.ts'
 export * from './features.ts'
 export * from './builtin.ts'
 export * from './calendar.ts'
+export * from './edit.ts'
 
 import type {
   AgendaFeature,
