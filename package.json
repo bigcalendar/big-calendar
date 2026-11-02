@@ -1,0 +1,26 @@
+{
+  "name": "@big-calendar/source",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Big Calendar workspace root. Not published.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@12.16.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "nx run-many -t build",
+    "typecheck": "nx run-many -t typecheck",
+    "lint": "nx run-many -t lint",
+    "test": "nx run-many -t test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@nx/js": "24.0.3",
+    "nx": "24.0.3",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3"
+  }
+}

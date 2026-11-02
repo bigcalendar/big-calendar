@@ -4,7 +4,7 @@ Sources: D-21, D-46, D-63, [architecture](../spec/architecture.md). Lint enforce
 
 ## Language and modules
 
-- Strict TypeScript, ESM only. Source is ESNext, compiled to ES2025 (D-21). Compiling rewrites syntax only, so any runtime built-in newer than ES2025 needs a P2 support-matrix entry with a polyfill or fallback.
+- Strict TypeScript, ESM only. Source is ESNext, compiled to ES2025 (D-21). `tsconfig.base.json` adds to `strict`: `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, `noImplicitOverride`, `noImplicitReturns`, `noPropertyAccessFromIndexSignature` and `verbatimModuleSyntax`. TypeScript is 6.0 (D-97). Compiling rewrites syntax only, so any runtime built-in newer than ES2025 needs a P2 support-matrix entry with a polyfill or fallback.
 - Every package is side-effect-free except the CSS and the `temporal` loader (D-63).
 - Respect the dependency direction in [architecture](../spec/architecture.md#package-map). The kernel depends on nothing in the workspace. Nx boundary rules enforce it; never disable them.
 - The kernel (`core`) has no DOM code, so it runs in tests and web workers (D-41).

@@ -1,0 +1,13 @@
+packages:
+  - packages/*
+  - apps/*
+  - tools/*
+  - tools/smoke/*
+
+# Exact versions only (D-97).
+saveExact: true
+# Workspace packages resolve to each other, never to the registry.
+linkWorkspacePackages: true
+preferWorkspacePackages: true
+allowBuilds:
+  nx: true

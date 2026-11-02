@@ -258,13 +258,11 @@ export function runCorpus(T) {
       fz.toLocaleString(loc, { dateStyle: 'full', timeStyle: 'long' }),
     )
     rec(`fmt:date:${loc}`, () =>
-      fz
-        .toPlainDate()
-        .toLocaleString(loc, {
-          weekday: 'long',
-          month: 'long',
-          day: 'numeric',
-        }),
+      fz.toPlainDate().toLocaleString(loc, {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+      }),
     )
     rec(`fmt:time:${loc}`, () =>
       fz
