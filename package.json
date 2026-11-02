@@ -19,15 +19,20 @@
     "prepare": "husky"
   },
   "devDependencies": {
+    "@babel/core": "8.1.0",
     "@commitlint/cli": "21.2.4",
     "@commitlint/config-conventional": "21.2.4",
     "@eslint/js": "10.0.1",
     "@nx/eslint": "24.0.3",
     "@nx/eslint-plugin": "24.0.3",
     "@nx/js": "24.0.3",
+    "@nx/vite": "24.0.3",
+    "@rolldown/plugin-babel": "0.3.0",
     "@types/node": "24.19.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.2.1",
+    "babel-plugin-react-compiler": "1.0.0",
     "eslint": "10.14.0",
     "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-tsdoc": "0.5.4",
@@ -39,6 +44,7 @@
     "react-dom": "19.3.1",
     "typescript": "6.0.3",
     "typescript-eslint": "8.72.1",
+    "vite": "8.3.5",
     "vitest": "5.1.0"
   }
 }

@@ -1,0 +1,289 @@
+// The features core ships: the four families, slot selection, drag and drop, resources and sources.
+import type { Feature, FeatureMap, Has } from './features.type'
+import type { DataInput } from './collections.type'
+import type {
+  EventSource,
+  ProcessedEvent,
+  Resizable,
+  Resource,
+} from './data.type'
+import type {
+  ChangeHandler,
+  DragOutResult,
+  ExternalItem,
+  MoveChange,
+  ResizeChange,
+} from './edit.type'
+import type {
+  DateString,
+  DurationString,
+  ResourceId,
+  SourceId,
+  Weekday,
+} from './values.type'
+
+/** A wall-clock time of day, `HH:MM`. `24:00` is allowed as a `max`. */
+export type TimeString = string
+
+/** Packing for time-grid lanes (engine). A custom function is specified with the S2 view model. */
+export type TimeGridPacking = 'overlap' | 'no-overlap'
+
+// Families ------------------------------------------------------------------------------------
+
+/** Options for the `dayGrid` feature, under the `dayGrid` key (api.md section 1.3). */
+export interface DayGridOptions {
+  /** Event rows per week before "+N more". `'auto'` fits the row height (default); `'all'` shows every event and lets rows scroll (RBC `showAllEvents`). */
+  maxRows?: number | 'auto' | 'all'
+  /**
+   * What "+N more" does: open a popover (default; RBC `popup`), move to that day's drill-down view
+   * (RBC `popup={false}`), or nothing beyond `onShowMore` (RBC `doShowMoreDrillDown={false}`).
+   */
+  overflow?: 'popover' | 'drilldown' | 'none'
+}
+/** The `dayGrid` feature: month and other day-grid views, and `onShowMore`. */
+export type DayGridFeature = Feature<{
+  name: 'dayGrid'
+  optionsKey: 'dayGrid'
+  options: DayGridOptions
+  state: {}
+  api: {}
+  flat: 'onShowMore'
+  required: never
+  requires: []
+}>
+
+/** Options for the `timeGrid` feature, under the `timeGrid` key. */
+export interface TimeGridOptions {
+  /** Slot length. Default `PT30M`. */
+  step?: DurationString
+  /** Slots per labelled group. Default 2. */
+  timeslots?: number
+  /** The visible window (T-14). Default `00:00` to `24:00`. */
+  min?: TimeString
+  max?: TimeString
+  /** Where the body scrolls to on first render. Default: the current time on today's view, else `min`. */
+  scrollToTime?: TimeString
+  /** T-7: multi-day timed events stay in the grid (default) or move to the all-day row. */
+  multiDayTimedEvents?: 'grid' | 'allDayRow'
+  packing?: TimeGridPacking
+  /** Rows in the all-day row before "+N more". Default `'auto'` (RBC `allDayMaxRows`). */
+  allDayMaxRows?: number | 'auto' | 'all'
+}
+/** The `timeGrid` feature: day, week and N-day views. */
+export type TimeGridFeature = Feature<{
+  name: 'timeGrid'
+  optionsKey: 'timeGrid'
+  options: TimeGridOptions
+  state: {}
+  api: {}
+  flat: never
+  required: never
+  requires: []
+}>
+
+/** Options for the `timeline` feature, under the `timeline` key. */
+export interface TimelineOptions {
+  step?: DurationString
+  min?: TimeString
+  max?: TimeString
+  /** What each row is (engine). `'resources'` needs the resources feature. Default `'resources'` when registered, else `'days'`. */
+  lanes?: 'resources' | 'days' | 'resourcesByDay'
+}
+/** The `timeline` feature: timeline views. */
+export type TimelineFeature = Feature<{
+  name: 'timeline'
+  optionsKey: 'timeline'
+  options: TimelineOptions
+  state: {}
+  api: {}
+  flat: never
+  required: never
+  requires: []
+}>
+
+/** Options for the `agenda` feature, under the `agenda` key. */
+export interface AgendaOptions {
+  /** Days shown (RBC `length`). Default 30. */
+  length?: number
+}
+/** The `agenda` feature: the agenda view. */
+export type AgendaFeature = Feature<{
+  name: 'agenda'
+  optionsKey: 'agenda'
+  options: AgendaOptions
+  state: {}
+  api: {}
+  flat: never
+  required: never
+  requires: []
+}>
+
+type GridFamily = 'dayGrid' | 'timeGrid' | 'timeline'
+
+// Behavior features ---------------------------------------------------------------------------
+
+/** A selected range of slots, in the display zone (T-11), with its lane. */
+export interface SlotSelection {
+  start: string
+  end: string
+  allDay: boolean
+  resourceId: ResourceId | undefined
+}
+/** Options for the `slotSelection` feature, under the `slotSelection` key. */
+export interface SlotSelectionOptions {
+  /** Touch long-press before a selection starts, in ms. Default 400 (P4). */
+  longPressDelay?: number
+}
+/** The `slotSelection` feature (RBC `selectable`): the `selection` slice and `clearSelection()`. Needs a grid family. */
+export type SlotSelectionFeature = Feature<{
+  name: 'slotSelection'
+  optionsKey: 'slotSelection'
+  options: SlotSelectionOptions
+  state: { selection: SlotSelection | null }
+  api: { clearSelection(): void }
+  flat: never
+  required: never
+  requires: [
+    {
+      anyOf: GridFamily
+      message: 'slotSelection needs a grid family: dayGrid, timeGrid or timeline'
+    },
+  ]
+}>
+
+/** Options for the `dnd` feature, under the `dnd` key. */
+export interface DndOptions {
+  /** The calendar level of the permission cascade (D-83). Default `true`. */
+  draggable?: boolean
+  /** Default `true`. */
+  resizable?: Resizable
+  /** Drop granularity, separate from slot size (gap #2). Default: the slot `step`. */
+  snap?: DurationString
+  /** Scroll near the edges while dragging. Default `true` (RBC `enableAutoScroll`). */
+  autoScroll?: boolean
+  /**
+   * Turns a native drag from outside into an item, or `false` to refuse it. Events dragged out of
+   * another Big Calendar are recognized without it (`EVENT_MIME_TYPE`). Omitted: only those are accepted.
+   */
+  acceptExternal?: (data: DataTransfer) => ExternalItem | false
+  /** Allow dragging events out of the calendar (D-36). Default `true`. */
+  dragOut?: boolean
+}
+/** The `dnd` feature: moving, resizing, and dragging in and out (D-92). Unlocks `onEventMove`, `onEventResize` and `onEventDragOut`. Needs a grid family. */
+export type DndFeature = Feature<{
+  name: 'dnd'
+  optionsKey: 'dnd'
+  options: DndOptions
+  state: {}
+  api: {}
+  flat: 'onEventMove' | 'onEventResize' | 'onEventDragOut'
+  required: never
+  requires: [
+    {
+      anyOf: GridFamily
+      message: 'dnd needs a grid family: dayGrid, timeGrid or timeline'
+    },
+  ]
+}>
+
+/** Options for the `resources` feature, under the `resourceOptions` key (D-94). */
+export interface ResourceOptions {
+  /** Time grid only: resources outside, days inside (default), or the reverse. */
+  layout?: 'resourceMajor' | 'dayMajor'
+  /** The Unassigned lane (D-38). Default `false`. */
+  unassignedLane?: boolean | { title: string }
+}
+/** The `resources` feature: the `resources` input and the visibility slices. Needs `timeGrid` or `timeline`. */
+export type ResourcesFeature = Feature<{
+  name: 'resources'
+  optionsKey: 'resourceOptions'
+  options: ResourceOptions
+  state: {
+    /** `'all'` (default) also shows resources added later. */
+    visibleResources: readonly ResourceId[] | 'all'
+    collapsedResources: readonly ResourceId[]
+  }
+  api: {
+    /** Events matching no lane while the Unassigned lane is off (D-38). */
+    readonly hiddenEventCount: { get(): number }
+  }
+  flat: 'resources'
+  required: never
+  requires: [
+    {
+      anyOf: 'timeGrid' | 'timeline'
+      message: 'resources needs timeGrid or timeline'
+    },
+  ]
+}>
+
+/** The `sources` feature: the `sources` input and the `visibleSources` slice (D-73, D-81). */
+export type SourcesFeature = Feature<{
+  name: 'sources'
+  optionsKey: 'sourceOptions'
+  options: never
+  state: { visibleSources: readonly SourceId[] | 'all' }
+  api: {}
+  flat: 'sources'
+  required: never
+  requires: []
+}>
+
+declare module './features.type' {
+  interface FeatureRegistry {
+    dayGrid: DayGridFeature
+    timeGrid: TimeGridFeature
+    timeline: TimelineFeature
+    agenda: AgendaFeature
+    slotSelection: SlotSelectionFeature
+    dnd: DndFeature
+    resources: ResourcesFeature
+    sources: SourcesFeature
+  }
+  interface FlatPropRegistry<TEventMeta, TResourceMeta> {
+    resources: DataInput<Resource<TResourceMeta>, ResourceId>
+    sources: DataInput<EventSource, SourceId>
+    onEventMove: ChangeHandler<MoveChange<TEventMeta>, TEventMeta>
+    onEventResize: ChangeHandler<ResizeChange<TEventMeta>, TEventMeta>
+    onEventDragOut: (result: DragOutResult<TEventMeta>) => void
+    /** "+N more" was activated, before the popover or drill-down (RBC `onShowMore`). */
+    onShowMore: (details: {
+      date: DateString
+      events: readonly ProcessedEvent<TEventMeta>[]
+    }) => void
+  }
+}
+
+// Views ---------------------------------------------------------------------------------------
+
+/** Context a custom view's functions receive. */
+export interface ViewContext {
+  weekStartsOn: Weekday
+  locale: Intl.Locale
+  hiddenDays: readonly Weekday[]
+}
+
+/** A view, made by a view helper such as `dayGridView()`; the key it has in `views` is its name (api.md section 1.4). */
+export interface ViewDefinition<Family extends string = string> {
+  readonly family: Family
+  /** The view switcher's label. Default views use `messages` (`monthView`, …); others need one. */
+  readonly label: string | undefined
+}
+
+/** The `views` option: view names to definitions, each from a registered family or custom. */
+export type ViewMap<F extends FeatureMap> = Record<
+  string,
+  ViewDefinition<Extract<F[keyof F]['name'], string> | 'custom'>
+>
+
+/** Views you get when `views` is omitted: RBC's defaults for the registered families. */
+export type DefaultViews<F extends FeatureMap> = (Has<F, 'dayGrid'> extends true
+  ? { month: ViewDefinition<'dayGrid'> }
+  : {}) &
+  (Has<F, 'timeGrid'> extends true
+    ? { week: ViewDefinition<'timeGrid'>; day: ViewDefinition<'timeGrid'> }
+    : {}) &
+  (Has<F, 'agenda'> extends true ? { agenda: ViewDefinition<'agenda'> } : {}) &
+  (Has<F, 'timeline'> extends true
+    ? { timeline: ViewDefinition<'timeline'> }
+    : {})

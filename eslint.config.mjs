@@ -164,6 +164,9 @@ export default tseslint.config(
       // D-46: function declarations for named functions; one object parameter when there's more
       // than one. Signatures fixed by the P5 API (machine handlers, `mergeProps`) disable it inline
       // with a comment citing docs/spec/api.md.
+      // The P5 types use mapped types on purpose: an error type must be an inlined mapped type, or
+      // the error shows an alias name instead of its message (api.md section 1.3, typing rule).
+      '@typescript-eslint/consistent-indexed-object-style': 'off',
       'func-style': ['error', 'declaration'],
       'max-params': ['error', 1],
       'no-restricted-syntax': ['error', ...noHtmlSinks],
@@ -228,10 +231,25 @@ export default tseslint.config(
       ],
     },
   },
+  // Type files: `{}` is the empty piece the P5 types intersect with (a family with no state, a view
+  // set without a family). `object` isn't equivalent: it has no index signature, so `DefaultViews`
+  // stops satisfying `Record<string, ViewDefinition>`.
+  {
+    files: ['packages/*/src/**/*.type.ts'],
+    rules: { '@typescript-eslint/no-empty-object-type': 'off' },
+  },
   // Tests and stories don't need TSDoc or suffix checks beyond their own names.
   {
     files: ['**/*.test.{ts,tsx}', '**/*.test-d.ts', '**/*.stories.tsx'],
     rules: { '@nx/workspace-require-tsdoc': 'off', 'max-params': 'off' },
+  },
+  // Build configs sit outside every package's TypeScript project: lint them without types.
+  {
+    files: ['vite.library.ts', '**/vite.config.ts', '**/*.config.ts'],
+    extends: [tseslint.configs.disableTypeChecked],
+    languageOptions: { parserOptions: { projectService: false } },
+    // Build configs aren't library code; they share the root build helper by path.
+    rules: { '@nx/enforce-module-boundaries': 'off' },
   },
   // Plain JavaScript (configs, tools, agent hooks): Node scripts, no type information.
   {

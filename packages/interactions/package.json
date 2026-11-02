@@ -1,0 +1,32 @@
+{
+  "name": "@big-calendar/interactions",
+  "version": "0.0.0",
+  "description": "The interaction machines: keyboard, focus, selection, drag and drop and the prop-getters, written once for every framework.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "@big-calendar/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@big-calendar/core": "workspace:*"
+  },
+  "bigCalendar": {
+    "sizeBudgets": {
+      ".": "1 KB"
+    }
+  },
+  "nx": {
+    "tags": [
+      "layer:machines"
+    ]
+  }
+}

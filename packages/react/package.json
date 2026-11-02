@@ -1,0 +1,36 @@
+{
+  "name": "@big-calendar/react",
+  "version": "0.0.0",
+  "description": "The React binding: hooks that connect the kernel and the machines to React. About 600 lines, with no behavior.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "@big-calendar/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@big-calendar/core": "workspace:*",
+    "@big-calendar/interactions": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=19"
+  },
+  "bigCalendar": {
+    "sizeBudgets": {
+      ".": "1 KB"
+    }
+  },
+  "nx": {
+    "tags": [
+      "layer:binding"
+    ]
+  }
+}

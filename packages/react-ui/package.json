@@ -1,0 +1,39 @@
+{
+  "name": "@big-calendar/react-ui",
+  "version": "0.0.0",
+  "description": "The prebuilt UI: `<Calendar>` and its parts, with `render` and `wrap` slots. Markup and composition only.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "@big-calendar/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@big-calendar/react": "workspace:*",
+    "@big-calendar/styles": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=19",
+    "react-dom": ">=19"
+  },
+  "bigCalendar": {
+    "sizeBudgets": {
+      ".": "1 KB"
+    }
+  },
+  "nx": {
+    "tags": [
+      "layer:ui"
+    ]
+  }
+}

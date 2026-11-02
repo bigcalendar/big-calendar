@@ -1,0 +1,31 @@
+{
+  "name": "@big-calendar/styles",
+  "version": "0.0.0",
+  "description": "`react-ui`'s CSS compiled with stable `.bc-*` selectors, per part, plus `tokens.css`, for headless users (D-69).",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "@big-calendar/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "bigCalendar": {
+    "sizeBudgets": {
+      ".": "1 KB"
+    }
+  },
+  "nx": {
+    "tags": [
+      "layer:styles"
+    ]
+  }
+}

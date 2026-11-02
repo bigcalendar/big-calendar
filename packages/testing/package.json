@@ -1,0 +1,29 @@
+{
+  "name": "@big-calendar/testing",
+  "version": "0.0.0",
+  "description": "Test helpers: a fake clock, drag and keyboard helpers, and role-based queries; Testing Library compatible (D-79).",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "@big-calendar/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "bigCalendar": {
+    "sizeBudgets": {
+      ".": "1 KB"
+    }
+  },
+  "nx": {
+    "tags": [
+      "layer:testing"
+    ]
+  }
+}

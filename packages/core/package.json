@@ -1,0 +1,29 @@
+{
+  "name": "@big-calendar/core",
+  "version": "0.0.0",
+  "description": "The kernel: canonical types, ingest, the time engine, view families, layout, the store and the signals facade. Pure TypeScript, no DOM code.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "@big-calendar/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "bigCalendar": {
+    "sizeBudgets": {
+      ".": "1 KB"
+    }
+  },
+  "nx": {
+    "tags": [
+      "layer:kernel"
+    ]
+  }
+}
