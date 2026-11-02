@@ -12,11 +12,13 @@
   - commits from confirmed changes;
   - a granular API, `calendar.events.upsert(event)`, `.patch(id, fields)` and `.remove(id)`, for updates the calendar didn't start, such as server pushes.
 
-  The app never has to rebuild the whole array to change one event.
+  The app never has to rebuild the whole array to change one event. Collections also have the reads `get`, `has` and `size` (D-95).
+
+- **App-started edits go through the pipeline.** `calendar.createEvent`, `updateEvent` and `deleteEvent` produce the same `Change`, pending state, callbacks and rollback as user edits; the granular writes above stay direct, with no callback (D-95).
 
 - **Every edit becomes one typed `Change`:** `move`, `resize`, `create`, `delete` or `update`. It holds the before and after values in source form (T-11) and is built from typed drafts ([interaction and accessibility](interaction-accessibility.md)).
 - **Pending layer.** A change shows on screen immediately, marked `data-state="pending"`.
-- **Per-kind callbacks only** (for example `onEventDrop`, `onEventResize`, `onEventCreate`, `onEventDelete`, `onEventUpdate`; final names are O-2). What the callback returns decides what happens:
+- **Per-kind callbacks only** (`onEventMove`, `onEventResize`, `onEventCreate`, `onEventUpdate`, `onEventDelete`; names fixed by D-94, payloads in [types and public API](api.md)). What the callback returns decides what happens:
   - `false` vetoes the change, and the pending entry is removed with no flicker.
   - A **Promise that resolves** commits the change to the copy. If it resolves with the saved event, the server's version is stored, and for a create the temporary id is swapped for the real one so selection and focus carry over.
   - A **Promise that rejects** rolls the change back. A live region announces it, and `onChangeError` fires.

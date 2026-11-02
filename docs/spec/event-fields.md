@@ -18,9 +18,9 @@
 | `busy`                               | `boolean`, default `true`                   | `TRANSP`                         | Free events (`busy: false`) never count as conflicts                                                |
 | `color`                              | string                                      | `COLOR` (RFC 7986)               | Overrides the resource's color                                                                      |
 | `description`, `location`, `url`     | plain text                                  | `DESCRIPTION`, `LOCATION`, `URL` |                                                                                                     |
-| `descriptionHtml`                    | `UntrustedHtml` (branded string)            | `X-ALT-DESC`                     | Can't be used as a safe string without an explicit sanitize step; the prebuilt UI never renders it  |
+| `descriptionHtml`                    | `UntrustedHtml` (opaque type, D-94)         | `X-ALT-DESC`                     | Can't be used as a safe string without an explicit sanitize step; the prebuilt UI never renders it  |
 | `draggable`, `resizable`, `readOnly` | permission cascade (D-24)                   | none                             |                                                                                                     |
 | `meta`                               | `TMeta`                                     | imported `X-` properties         | The app's own data                                                                                  |
 
 - **`allDay` is not an input field.** The kernel derives it from the value types (T-1) and exposes it read-only on processed events. `normalize` converts RBC-style `allDay: true` records.
-- P5 writes the final TypeScript types from this table. Adding or removing a field is a plan change.
+- The TypeScript types written from this table (`CalendarEvent`, `BackgroundEvent`, `ProcessedEvent`, `RecurrenceRule`) are in [types and public API](api.md) (D-95). Adding or removing a field is a plan change.

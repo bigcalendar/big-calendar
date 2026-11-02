@@ -43,7 +43,8 @@ export interface RecurrenceRule {
   byMinute?: readonly number[]
   bySecond?: readonly number[]
   bySetPos?: readonly number[]
-  weekStart?: Weekday
+  /** RFC 5545 `WKST`. */
+  wkst?: Weekday
 }
 
 /** The canonical event (event-fields.md, D-37). `allDay` isn't an input: it's derived (T-1). */

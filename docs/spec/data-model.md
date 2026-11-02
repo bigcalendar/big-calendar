@@ -2,7 +2,7 @@
 
 > **Normative.** Split verbatim from the approved plan (`plan/P1-PLAN.md` §6, approved 2026-10-27). Changing anything here needs a new entry in the [decision log](../decisions.md).
 
-_The field-level spec is P5. This section locks its principles._
+_The exact types are in [types and public API](api.md) (D-95). This section locks the principles._
 
 - **Canonical event shape plus `meta`. No accessors.** The library defines the event shape, and consumer-specific data goes in `meta?: TMeta`. The kernel never mutates consumer objects.
 - **Resources** have a canonical shape with `id`, `title`, optional `parentId` (hierarchy) and `meta`.

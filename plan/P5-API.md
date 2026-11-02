@@ -1,6 +1,6 @@
 # Types and public API (P5)
 
-> **Status: draft. Part 1 answered (2026-10-31). All four parts answered; answers recorded as D-94 (2026-11-02). Waiting for the maintainer's P5 review.** Not normative until the maintainer approves P5. On approval, the types and contracts move into the specs they complete, with a decision.
+> **Status: approved 2026-11-02 (D-94 answers, D-95 approval).** This is the review record; it isn't normative. Parts 1–3 moved to [types and public API](../docs/spec/api.md) and part 4 to [RBC parity](../docs/spec/rbc-parity.md), which win where they differ from this draft. Every item marked Proposed below was accepted at the review.
 
 Exit criteria: [roadmap](../docs/spec/roadmap.md#planning-phase), row P5.
 

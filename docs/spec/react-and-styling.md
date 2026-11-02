@@ -6,7 +6,7 @@
 - **The prebuilt UI has two kinds of slot:**
   - **`render` slots** replace the element and receive prop-getters that must be spread onto it. A dev-mode check warns when roles or handlers are missing.
   - **`wrap` slots** decorate an element the library owns, and cannot break behavior.
-- **Slot names are all new.** A published mapping table links each RBC `components` key to its replacement.
+- **Slot names are all new.** There is one slot per part, keyed by part name ([types and public API](api.md), D-94). The [RBC parity](rbc-parity.md) mapping table links each RBC `components` key to its replacement.
 - **Styling contract (D-68).** Developers may style with any method or library: a global stylesheet, CSS Modules, any CSS-in-JS library, a utility framework, or none of ours at all. Docs assume no particular tool.
   - **Hooks:** a stable `bc-*` base class on every part (`bc-time-grid`, `bc-event`), and state as data attributes (`data-state="selected"`, edge flags).
   - **Always lower priority than app CSS.** All our CSS lives in cascade layers (`bc.tokens`, `bc.structure`, `bc.theme`), with selectors in `:where()` for zero specificity. Any unlayered app style wins, whatever its specificity. The docs explain how to order layers for any library that also uses cascade layers.
@@ -29,7 +29,7 @@
     - **Reference generated from the part manifests (D-25):** every part's class, data attributes and CSS variables, plus every token with its default.
     - **Headless styling** with `@big-calendar/styles`.
   - **One source, two outputs.** The same module sources are compiled a second time with stable `.bc-*` selectors and published per part, plus `tokens.css`, as `@big-calendar/styles`. That's for headless users who write their own markup with `bc-*` classes, and it's entirely optional for them.
-- **Every part ships a typed manifest** of its `bc-*` class, `data-*` attributes and CSS variables. The manifests are the styling contract and generate the styling docs.
+- **Every part ships a typed manifest** of its `bc-*` class, `data-*` attributes and CSS variables. The manifests are the styling contract and generate the styling docs. Their format and the part catalog are in [types and public API](api.md) (D-95).
 - **Edge flags.** Events clipped by the visible range or the `min`/`max` window carry `data-starting-before-edge` and `data-ending-after-edge`.
 - **Extra prebuilt UI at 1.0:**
   - a **mini calendar**, which is a day-grid configuration;

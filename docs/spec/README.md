@@ -12,31 +12,31 @@ These topic specs are the normative description of Big Calendar. They were split
 
 ## Index
 
-| Spec                                                         | P1 source | Covers                                                                                                                           |
-| ------------------------------------------------------------ | --------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| [vision.md](vision.md)                                       | §1–§2     | Why we restarted, product vision                                                                                                 |
-| [developer-experience.md](developer-experience.md)           | §2.1      | Option shape, explicit features, guardrails, docs structure                                                                      |
-| [architecture.md](architecture.md)                           | §4.1–§4.3 | Layers, package map, dependency direction, binding budget                                                                        |
-| [headless-api.md](headless-api.md)                           | §4.4      | Registered features, state slices, view models, pipelines, prop-getters                                                          |
-| [engine.md](engine.md)                                       | §5        | Axis, lanes, segmentation, packing, coordinates; the four families                                                               |
-| [data-model.md](data-model.md)                               | §6        | Canonical shapes, resources, background events, permission cascade                                                               |
-| [event-fields.md](event-fields.md)                           | §6.0      | The canonical event field table                                                                                                  |
-| [edit-model.md](edit-model.md)                               | §6.1      | Input forms, event copy, `Change`, pending layer, callbacks, recurring edits                                                     |
-| [time-semantics.md](time-semantics.md)                       | §7        | Values, rules T-1 to T-14, worked examples                                                                                       |
-| [date-engine.md](date-engine.md)                             | §8        | Temporal use, the `temporal` loader, performance budgets                                                                         |
-| [reactivity.md](reactivity.md)                               | §9        | Signals facade                                                                                                                   |
-| [interaction-accessibility.md](interaction-accessibility.md) | §10       | Machines, pointer and keyboard model, typed drafts, MUI X patterns                                                               |
-| [react-and-styling.md](react-and-styling.md)                 | §11       | Slots, styling contract, CSS packaging, manifests, extra prebuilt UI                                                             |
-| [modules.md](modules.md)                                     | §12       | Recurrence, availability, ICS, normalize                                                                                         |
-| [migration.md](migration.md)                                 | §13       | RBC parity and codemods                                                                                                          |
-| [gap-additions.md](gap-additions.md)                         | §18       | Items added to 1.0 after the gap review; post-1.0 backlog                                                                        |
-| [accessibility.md](accessibility.md)                         | P3 (D-91) | Roles, keyboard map, focus model, names and announcements per family; visual requirements; WCAG 2.2 AA coverage                  |
-| [support-matrix.md](support-matrix.md)                       | P2 (D-87) | Browser floor, Baseline status of every platform feature, polyfills, fallbacks, "don't use" list, supported bundlers and runners |
-| [roadmap.md](roadmap.md)                                     | §14–§16   | Planning artifacts P0–P5, slices S0–S11, open items register                                                                     |
+| Spec                                                         | P1 source | Covers                                                                                                                                                        |
+| ------------------------------------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [vision.md](vision.md)                                       | §1–§2     | Why we restarted, product vision                                                                                                                              |
+| [developer-experience.md](developer-experience.md)           | §2.1      | Option shape, explicit features, guardrails, docs structure                                                                                                   |
+| [architecture.md](architecture.md)                           | §4.1–§4.3 | Layers, package map, dependency direction, binding budget                                                                                                     |
+| [headless-api.md](headless-api.md)                           | §4.4      | Registered features, state slices, view models, pipelines, prop-getters                                                                                       |
+| [engine.md](engine.md)                                       | §5        | Axis, lanes, segmentation, packing, coordinates; the four families                                                                                            |
+| [data-model.md](data-model.md)                               | §6        | Canonical shapes, resources, background events, permission cascade                                                                                            |
+| [event-fields.md](event-fields.md)                           | §6.0      | The canonical event field table                                                                                                                               |
+| [edit-model.md](edit-model.md)                               | §6.1      | Input forms, event copy, `Change`, pending layer, callbacks, recurring edits                                                                                  |
+| [time-semantics.md](time-semantics.md)                       | §7        | Values, rules T-1 to T-14, worked examples                                                                                                                    |
+| [date-engine.md](date-engine.md)                             | §8        | Temporal use, the `temporal` loader, performance budgets                                                                                                      |
+| [reactivity.md](reactivity.md)                               | §9        | Signals facade                                                                                                                                                |
+| [interaction-accessibility.md](interaction-accessibility.md) | §10       | Machines, pointer and keyboard model, typed drafts, MUI X patterns                                                                                            |
+| [react-and-styling.md](react-and-styling.md)                 | §11       | Slots, styling contract, CSS packaging, manifests, extra prebuilt UI                                                                                          |
+| [modules.md](modules.md)                                     | §12       | Recurrence, availability, ICS, normalize                                                                                                                      |
+| [migration.md](migration.md)                                 | §13       | RBC parity and codemods                                                                                                                                       |
+| [gap-additions.md](gap-additions.md)                         | §18       | Items added to 1.0 after the gap review; post-1.0 backlog                                                                                                     |
+| [accessibility.md](accessibility.md)                         | P3 (D-91) | Roles, keyboard map, focus model, names and announcements per family; visual requirements; WCAG 2.2 AA coverage                                               |
+| [support-matrix.md](support-matrix.md)                       | P2 (D-87) | Browser floor, Baseline status of every platform feature, polyfills, fallbacks, "don't use" list, supported bundlers and runners                              |
+| [api.md](api.md)                                             | P5 (D-95) | Exact types and names: data, options, features, slices, machine contract, getters, drafts, changes, callbacks, React binding, slots, parts, formats, messages |
+| [rbc-parity.md](rbc-parity.md)                               | P5 (D-95) | RBC 1.20.0 prop-by-prop map, `components` → slots, `formats` and `messages` keys, with codemod actions                                                        |
+| [roadmap.md](roadmap.md)                                     | §14–§16   | Planning artifacts P0–P5, slices S0–S11, open items register                                                                                                  |
 
 Outside `docs/spec/`:
 
 - [standards/workflow.md](../standards/workflow.md) (§3): execution rules.
 - [standards/agent-toolset.md](../standards/agent-toolset.md) (§17): how this agent context is organized.
-
-Later planning artifacts (P4 benchmarks, P5 types and API) add their own files here when approved.
