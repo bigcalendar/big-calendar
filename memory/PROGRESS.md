@@ -6,7 +6,7 @@
 
 ### S0 tasks
 
-1. [ ] Remove attempt 1
+1. [x] Remove attempt 1
 2. [ ] Workspace
 3. [ ] Git hooks
 4. [ ] Lint
