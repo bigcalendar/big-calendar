@@ -9,7 +9,7 @@
 1. [x] Remove attempt 1
 2. [x] Workspace
 3. [x] Git hooks
-4. [ ] Lint
+4. [x] Lint
 5. [ ] Package skeletons
 6. [ ] Build proofs
 7. [ ] Type checks
