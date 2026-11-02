@@ -10,7 +10,7 @@
 2. [x] Workspace
 3. [x] Git hooks
 4. [x] Lint
-5. [ ] Package skeletons
+5. [x] Package skeletons
 6. [ ] Build proofs
 7. [ ] Type checks
 8. [ ] Tests
