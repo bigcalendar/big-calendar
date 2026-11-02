@@ -15,10 +15,15 @@
     "lint": "nx run-many -t lint",
     "test": "nx run-many -t test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4",
     "@nx/js": "24.0.3",
+    "husky": "9.1.7",
+    "lint-staged": "17.6.0",
     "nx": "24.0.3",
     "prettier": "3.9.10",
     "typescript": "6.0.3"

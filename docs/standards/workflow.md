@@ -27,7 +27,8 @@
 
 These restate the rules above as day-to-day steps. They add nothing new.
 
-- **Commits.** Conventional commit format (`feat(core): …`, `docs(spec): …`). Commit messages say _why_. Never skip hooks (`--no-verify`).
+- **Commits.** Conventional commit format (`feat(core): …`, `docs(repo): …`), with a lowercase subject. The scope is required: a package name, or `repo`, `docs`, `ci`, `deps`, `tools` or `release` (`commitlint.config.mjs`). Commit messages say _why_. Never skip hooks (`--no-verify`).
+- **Git hooks** (husky): `pre-commit` formats staged files with Prettier (lint-staged); `commit-msg` runs commitlint.
 - **Planning artifacts** (P0–P5) are built on the `planning` branch and reviewed there.
 - **Memory files.**
   - `memory/PROGRESS.md`: where things stand and the **Next step** section every session reads first. Keep it short; replace stale content rather than appending forever.
