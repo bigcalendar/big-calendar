@@ -1,6 +1,6 @@
 # Types and public API (P5)
 
-> **Status: draft. Part 1 answered (2026-10-31). Parts 1–3 answered (2026-10-31). Part 4 is written and waiting for the maintainer's answers (questions 18–20).** Not normative until the maintainer approves P5. On approval, the types and contracts move into the specs they complete, with a decision.
+> **Status: draft. Part 1 answered (2026-10-31). All four parts answered; answers recorded as D-94 (2026-11-02). Waiting for the maintainer's P5 review.** Not normative until the maintainer approves P5. On approval, the types and contracts move into the specs they complete, with a decision.
 
 Exit criteria: [roadmap](../docs/spec/roadmap.md#planning-phase), row P5.
 
@@ -415,3 +415,15 @@ Mapping every prop showed seven RBC capabilities without a home in parts 1–3. 
 - the five parts listed in 4.3.
 
 **Questions 18 to 20.**
+
+### Answers, part 4 (2026-11-02)
+
+Every recommendation was accepted:
+
+18. **The codemod keeps RBC's look**: with `showMultiDayTimes` absent it writes `multiDayTimedEvents: 'allDayRow'`.
+19. **Per-view components become one slot** that branches on `view`.
+20. **Equivalents are acceptable homes** for `onDrillDown`, `onDragStart`, `onDragOver` and `popupOffset`.
+
+## Answers (D-94)
+
+All 20 answers are recorded as **D-94**. On P5 approval, a new decision approves P5, and the types and contracts move into the specs they complete: [data model](../docs/spec/data-model.md) and [event fields](../docs/spec/event-fields.md) (part 1), [headless API](../docs/spec/headless-api.md) and [interaction and accessibility](../docs/spec/interaction-accessibility.md) (parts 1 and 2), [edit model](../docs/spec/edit-model.md) (part 2), [React and styling](../docs/spec/react-and-styling.md) (part 3) and [migration](../docs/spec/migration.md) (part 4), with the prototype's files as the reference types for S0 to copy.
