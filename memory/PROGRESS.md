@@ -2,7 +2,12 @@
 
 ## Next step
 
-**All planning artifacts (P0–P5) are approved. Waiting for the maintainer to start S0.** Don't start S0 until the maintainer says so; then use the `slice-start` skill. S0 copies the reference types from `prototypes/p5-types/` (run `npm install` there first to re-check them; `node_modules` was removed after approval).
+**S0 kickoff** (foundations), started 2026-11-02 by the maintainer. Skill: `slice-start`. D-96 settles the archive and reset: attempt 1 is archived as tag `archive/attempt-1-final` and branch `archive/attempt-1` (done, both at `05f0826`).
+
+1. [x] Archive attempt 1; open PR #3, `planning` → `main` (fast-forward, no history rewritten).
+2. [ ] **Waiting for the maintainer to merge PR #3.**
+3. [ ] Branch `slice/s0-foundations` off the updated `main`; write the slice spec `docs/spec/slices/s0.md` (task list and questions); first task deletes the attempt-1 code (`packages/`, `storybook-site/`, root build configs).
+4. [ ] Kickoff gate: the maintainer approves the slice spec before any code.
 
 Open for the maintainer (not blocking): post the comment draft for temporal-polyfill#121 at the end of `prototypes/p4-bench/temporal/UPSTREAM-ISSUES.md` (D-93).
 
