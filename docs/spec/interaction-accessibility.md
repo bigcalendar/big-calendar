@@ -19,7 +19,7 @@
   - On touch, resizing needs a visible handle of at least 44px, for example shown once the event is selected (S4).
   - The S4 interaction tests cover all three engines and the real-device check, including native DnD on Android Chrome, which P4 didn't test.
 - **Top-layer UI** (popovers, overflow, tooltips) uses the Popover API and `<dialog>` with CSS anchor positioning. Where `CSS.supports('anchor-name: --a')` is false, `@floating-ui/dom` is lazy-loaded for positioning only (D-43).
-- **Drafts are typed.** Every temporary event is one of `creation`, `internal-drag`, `internal-resize` or `external-drag`. Each carries its surface (day grid, time grid or timeline), its proposed start and end, its target resource, and, for internal drags, the source resource. Machines produce drafts, and the exact payloads are specified in P5.
+- **Drafts are typed.** Every temporary event is one of `creation`, `internal-drag`, `internal-resize` or `external-drag`. Each carries its surface (day grid, time grid or timeline), its proposed start and end, its target resource, and, for internal drags, the source resource. Machines produce drafts; the exact payloads are in [types and public API](api.md) (D-95).
 - **Keyboard model (D-51).**
   - **One Tab stop per grid.** Each grid uses a roving `tabIndex`, with arrow keys moving inside it, and events form their own group with one Tab stop.
   - **Per-slot cells.** Every time-grid slot is a focusable cell, so arrow keys move slot by slot and Shift+Arrow extends a selection.

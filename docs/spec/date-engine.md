@@ -11,7 +11,7 @@
 - **Temporal loads automatically, behind one ready promise (D-87, amending D-32).** Every package that uses Temporal depends on `@big-calendar/temporal`. It does **not** use top-level `await`, which breaks in Safari before 27 ([support matrix](support-matrix.md), finding 1):
   - If a complete `globalThis.Temporal` already exists, native or installed by the app, it is used as-is, nothing is loaded, and `temporalReady` is already resolved.
   - Otherwise, importing the module starts loading the polyfill, which bundlers split into its own chunk. When it arrives, the module **installs it on `globalThis`** and resolves `temporalReady`. The app and its other libraries therefore see it too, and the docs must say so.
-  - **React users do nothing.** `<Calendar>` and the binding wait for `temporalReady` internally; P5 specifies how.
+  - **React users do nothing.** `<Calendar>` and the binding wait for `temporalReady` internally, as [types and public API](api.md) section 3.1 specifies (D-94).
   - **Headless and kernel users `await temporalReady` once**, before `createCalendar`. Calling `createCalendar` earlier gives a teaching dev error that names `temporalReady` and links to the docs.
   - After that one wait, kernel APIs stay **synchronous**. No Big Calendar code may use Temporal at module evaluation time.
   - Browsers with native Temporal never download the polyfill. If the polyfill chunk fails to load, `temporalReady` rejects, as any failed lazy chunk would.

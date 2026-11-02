@@ -2,18 +2,7 @@
 
 ## Next step
 
-**P5 in progress** (types and public API spec), started 2026-10-30. Continue with the first unchecked task below. Exit criteria: `docs/spec/roadmap.md`, row P5. Draft: `plan/P5-API.md`. Types: `prototypes/p5-types/` (npm, outside the workspace; `npm run check` runs `tsc`).
-
-Kickoff answers (2026-10-30, maintainer): the types are real `.ts` files type-checked in the prototype, with must-compile and must-fail usage files; the review is in four parts, each part's questions answered before the next starts, then one P5 approval; the RBC parity matrix covers react-big-calendar 1.20.0, read from its installed source. Dependencies authorized for the prototype only: `typescript`, `@types/react`, `react-big-calendar`, `@types/react-big-calendar`.
-
-### P5 tasks
-
-1. [x] Kickoff answers; prototype scaffold.
-2. [x] **Part 1:** canonical data types (events, background events, resources, sources, processed events), `createCalendar` options, registered features (D-52), state slices and atoms (D-53), store, actions and signals, permission cascade, `temporalReady` on the kernel side. Answered 2026-10-31: every recommendation accepted (draft, "Answers, part 1"); recorded in the decision log with the other parts at task 6.
-3. [x] **Part 2:** machine contract (D-90), prop-getter descriptors and `mergeProps` (D-72), effects, typed drafts, `Change`, callback names and payloads (D-33), live constraints. Answered 2026-10-31 (draft, "Answers, part 2"): all recommended except answer 9, the machine contract is public and stable from 1.0, which also makes the feature-definition types public (to confirm at the P5 review).
-4. [x] **Part 3:** React binding (hooks, `normalize`, waiting for `temporalReady`), `react-ui` slots, part manifest format, `formats` slots and `messages` keys (D-40). Answered 2026-10-31: every recommendation accepted (draft, "Answers, part 3"), including keeping `UntrustedHtml` opaque after finding that React's empty `TrustedHTML` type lets it reach `dangerouslySetInnerHTML`.
-5. [x] **Part 4:** RBC 1.20.0 prop-by-prop parity matrix and the `components` → slot mapping table. Answered 2026-11-02: every recommendation accepted.
-6. [ ] All answers recorded as **D-94**. **Stopped for the maintainer's P5 review.** Open at the review: confirm that answer 9 (public machine contract) makes the feature-definition types public too. On approval: a new decision approves P5 and the types and contracts move into the specs (list in the draft, "Answers (D-94)"); remove `node_modules` from `prototypes/p5-types/` (keep `package.json`), as after P4; S0 starts only when the maintainer says so.
+**All planning artifacts (P0–P5) are approved. Waiting for the maintainer to start S0.** Don't start S0 until the maintainer says so; then use the `slice-start` skill. S0 copies the reference types from `prototypes/p5-types/` (run `npm install` there first to re-check them; `node_modules` was removed after approval).
 
 Open for the maintainer (not blocking): post the comment draft for temporal-polyfill#121 at the end of `prototypes/p4-bench/temporal/UPSTREAM-ISSUES.md` (D-93).
 
@@ -21,8 +10,9 @@ Open for the maintainer (not blocking): post the comment draft for temporal-poly
 
 - **NVDA + Firefox run** of the P3 prototype (D-91): `node prototypes/p3-vanilla/serve.mjs`, then `prototypes/p3-vanilla/SCREEN-READER-SCRIPT.md`. The maintainer has no Windows machine yet (2026-10-28). It must confirm the two "NVDA check" items in `docs/spec/accessibility.md` (sections 2.6 and 4.3). Any finding is fixed through a new decision.
 
-## Where things stand (2026-10-30)
+## Where things stand (2026-11-02)
 
+- **P5 approved** 2026-11-02 (D-94 answers, D-95 approval): `docs/spec/api.md` (types and public API) and `docs/spec/rbc-parity.md` (RBC 1.20.0 map); `plan/P5-API.md` is the review record. Reference types in `prototypes/p5-types/` (`npm run check`: 26 must-fail cases). Feature-definition types are public and stable from 1.0, with the machine contract.
 - **P4 approved** 2026-10-30 (D-92 answers, D-93 approval): results in `docs/spec/date-engine.md` (`temporal-polyfill`, epoch-BigInt instant ordering, phone tracking), `reactivity.md` (`@preact/signals-core`), `interaction-accessibility.md` (own DnD code on native DnD; O-5 resolved), `support-matrix.md` and `docs/standards/testing.md` (harness). Record: `plan/P4-BENCHMARKS.md`; evidence in `prototypes/p4-bench/` (run `npm install` there first; same for `prototypes/p3-vanilla/o6/`). Upstream: temporal-polyfill#123 filed, #121 already open.
 - **P3 approved** 2026-10-29 (D-89 answers, D-90 hand-written machines for O-6, D-91 approval): `docs/spec/accessibility.md`. Evidence in `prototypes/p3-vanilla/` (findings in spec section 13; O-6 comparison in `o6/RESULTS.md`). VoiceOver + Safari passed; NVDA deferred to before S1.
 - **P2 approved** 2026-10-28 (D-87, D-88): `docs/spec/support-matrix.md`. Evidence in `prototypes/p2-top-level-await/`. D-87 amends D-32 (the `temporalReady` promise replaces top-level `await`).
