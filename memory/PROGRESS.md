@@ -2,12 +2,26 @@
 
 ## Next step
 
-**S0 kickoff** (foundations), started 2026-11-02 by the maintainer. Skill: `slice-start`. D-96 settles the archive and reset: attempt 1 is archived as tag `archive/attempt-1-final` and branch `archive/attempt-1` (done, both at `05f0826`).
+**S0 in progress** (foundations) on `slice/s0-foundations`. Slice spec approved 2026-11-02 (D-97): `docs/spec/slices/s0.md`, whose task list has the detail. Continue with the first unchecked task. Archive and reset done (D-96; PR #3 merged). Attempt 1's `release.yml` and `docs.yml` workflows are disabled in GitHub; the new workflows use other file names.
 
-1. [x] Archive attempt 1; open PR #3, `planning` → `main` (fast-forward, no history rewritten).
-2. [ ] **Waiting for the maintainer to merge PR #3.**
-3. [ ] Branch `slice/s0-foundations` off the updated `main`; write the slice spec `docs/spec/slices/s0.md` (task list and questions); first task deletes the attempt-1 code (`packages/`, `storybook-site/`, root build configs).
-4. [ ] Kickoff gate: the maintainer approves the slice spec before any code.
+### S0 tasks
+
+1. [ ] Remove attempt 1
+2. [ ] Workspace
+3. [ ] Git hooks
+4. [ ] Lint
+5. [ ] Package skeletons
+6. [ ] Build proofs
+7. [ ] Type checks
+8. [ ] Tests
+9. [ ] Size and binding budgets
+10. [ ] Benchmark harness
+11. [ ] Storybook shell
+12. [ ] Bundler and runner smoke tests
+13. [ ] CI
+14. [ ] Nx Release configuration (dry run only)
+15. [ ] Agent setup follow-ups
+16. [ ] Slice finish (skill `slice-finish`)
 
 Open for the maintainer (not blocking): post the comment draft for temporal-polyfill#121 at the end of `prototypes/p4-bench/temporal/UPSTREAM-ISSUES.md` (D-93).
 
