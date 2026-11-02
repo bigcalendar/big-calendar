@@ -47,4 +47,4 @@ Each package will have its own `AGENTS.md` (purpose, boundaries, commands, gover
 
 ## Current state
 
-Planning phase on the `planning` branch. `packages/`, `storybook-site/` and the root build configs are **attempt-1 code**: archived and replaced in S0. Don't read them for guidance or build on them.
+Slice S0 (foundations) on `slice/s0-foundations`; the slice spec is [`docs/spec/slices/s0.md`](docs/spec/slices/s0.md). Attempt 1 is archived (tag `archive/attempt-1-final`, branch `archive/attempt-1`) and removed from the working tree. Don't read the archive for guidance or build on it.

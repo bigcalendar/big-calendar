@@ -1,1 +1,0 @@
-export { DefaultToolbarComponent } from './DefaultToolbarComponent'

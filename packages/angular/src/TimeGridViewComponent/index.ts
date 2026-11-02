@@ -1,1 +1,0 @@
-export { TimeGridViewComponent } from './TimeGridViewComponent'

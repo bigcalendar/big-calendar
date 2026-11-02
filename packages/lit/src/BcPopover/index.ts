@@ -1,1 +1,0 @@
-export { BcPopoverElement } from './BcPopoverElement'
