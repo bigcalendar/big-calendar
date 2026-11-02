@@ -21,11 +21,24 @@
   "devDependencies": {
     "@commitlint/cli": "21.2.4",
     "@commitlint/config-conventional": "21.2.4",
+    "@eslint/js": "10.0.1",
+    "@nx/eslint": "24.0.3",
+    "@nx/eslint-plugin": "24.0.3",
     "@nx/js": "24.0.3",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "10.14.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-tsdoc": "0.5.4",
     "husky": "9.1.7",
     "lint-staged": "17.6.0",
     "nx": "24.0.3",
     "prettier": "3.9.10",
-    "typescript": "6.0.3"
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1",
+    "vitest": "5.1.0"
   }
 }

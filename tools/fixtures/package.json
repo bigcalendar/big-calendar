@@ -1,0 +1,15 @@
+{
+  "name": "@big-calendar-tools/fixtures",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Code that breaks each lint, boundary and size rule on purpose, and the tests proving the rules catch it.",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "nx": {
+    "tags": [
+      "layer:tooling"
+    ]
+  }
+}

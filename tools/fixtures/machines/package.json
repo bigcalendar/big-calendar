@@ -1,0 +1,14 @@
+{
+  "name": "@big-calendar-fixture/machines",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "nx": {
+    "tags": [
+      "layer:machines"
+    ]
+  }
+}

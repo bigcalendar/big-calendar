@@ -3,6 +3,7 @@ packages:
   - apps/*
   - tools/*
   - tools/smoke/*
+  - tools/fixtures/*
 
 # Exact versions only (D-97).
 saveExact: true
@@ -11,3 +12,12 @@ linkWorkspacePackages: true
 preferWorkspacePackages: true
 allowBuilds:
   nx: true
+
+overrides:
+  # eslint-plugin-tsdoc pins an older typescript-eslint that predates TypeScript 6; use the
+  # workspace's version (D-97).
+  'eslint-plugin-tsdoc>@typescript-eslint/utils': 8.72.1
+minimumReleaseAgeExclude:
+  - '@vitest/mocker@5.1.0'
+  - '@vitest/spy@5.1.0'
+  - vitest@5.1.0

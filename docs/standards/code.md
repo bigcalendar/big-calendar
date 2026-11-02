@@ -39,3 +39,9 @@ Sources: D-21, D-46, D-63, [architecture](../spec/architecture.md). Lint enforce
 
 - No `innerHTML`. Styles are set through the CSSOM only. The code must work under a strict CSP with Trusted Types ([gap additions](../spec/gap-additions.md) #15).
 - HTML-bearing fields are `UntrustedHtml`. Nothing in Big Calendar sanitizes or renders them ([event fields](../spec/event-fields.md)).
+
+## Lint
+
+`eslint.config.mjs` enforces the rules above: the layer boundaries (Nx tags `layer:*` on each project), the D-46 rules (`func-style`, `max-params`, and the local rules in `tools/eslint-rules`: file suffixes, `displayName`, TSDoc on exports), the binding and `react-ui` limits, and the HTML-sink ban. `tools/fixtures` holds code that breaks each rule, and its test proves each one fails. When you add a rule, add a fixture for it.
+
+A signature fixed by the [types and public API](../spec/api.md) spec (machine handlers, `mergeProps`) disables `max-params` inline, with a comment citing the spec.

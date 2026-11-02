@@ -1,0 +1,242 @@
+// Lint for the whole workspace. Everything enforceable lives here (D-46): the dependency direction
+// (architecture), the D-46 code standards, TSDoc (D-65), the layer limits on the binding and the
+// prebuilt UI (architecture, docs/standards/react.md) and the security rules (docs/standards/code.md).
+import js from '@eslint/js'
+import nx from '@nx/eslint-plugin'
+import reactHooks from 'eslint-plugin-react-hooks'
+import tsdoc from 'eslint-plugin-tsdoc'
+import tseslint from 'typescript-eslint'
+
+/** The Node globals our scripts use; listed here rather than adding the `globals` package. */
+const nodeGlobals = {
+  process: 'readonly',
+  console: 'readonly',
+  URL: 'readonly',
+  Buffer: 'readonly',
+  setTimeout: 'readonly',
+  clearTimeout: 'readonly',
+  structuredClone: 'readonly',
+  performance: 'readonly',
+}
+
+/** Which layers each layer may import (architecture, "Dependency direction"). */
+const depConstraints = [
+  { sourceTag: 'layer:kernel', onlyDependOnLibsWithTags: [] },
+  { sourceTag: 'layer:loader', onlyDependOnLibsWithTags: [] },
+  { sourceTag: 'layer:styles', onlyDependOnLibsWithTags: [] },
+  { sourceTag: 'layer:machines', onlyDependOnLibsWithTags: ['layer:kernel'] },
+  { sourceTag: 'layer:module', onlyDependOnLibsWithTags: ['layer:kernel'] },
+  {
+    sourceTag: 'layer:binding',
+    onlyDependOnLibsWithTags: ['layer:kernel', 'layer:machines'],
+  },
+  {
+    sourceTag: 'layer:ui',
+    onlyDependOnLibsWithTags: ['layer:binding', 'layer:styles'],
+  },
+  {
+    sourceTag: 'layer:testing',
+    onlyDependOnLibsWithTags: [
+      'layer:kernel',
+      'layer:machines',
+      'layer:binding',
+      'layer:loader',
+    ],
+  },
+  { sourceTag: 'layer:tooling', onlyDependOnLibsWithTags: ['*'] },
+  // The kernel and the machines never touch a framework.
+  {
+    sourceTag: 'layer:kernel',
+    bannedExternalImports: ['react', 'react-dom', 'react/*', 'react-dom/*'],
+  },
+  {
+    sourceTag: 'layer:machines',
+    bannedExternalImports: ['react', 'react-dom', 'react/*', 'react-dom/*'],
+  },
+]
+
+/** Code that may never set HTML from strings (strict CSP, gap #15; docs/standards/code.md). */
+const noHtmlSinks = [
+  {
+    selector: 'MemberExpression[property.name=/^(innerHTML|outerHTML)$/]',
+    message:
+      'No innerHTML or outerHTML: the code runs under a strict CSP with Trusted Types (gap #15).',
+  },
+  {
+    selector: "CallExpression[callee.property.name='insertAdjacentHTML']",
+    message:
+      'No insertAdjacentHTML: the code runs under a strict CSP with Trusted Types (gap #15).',
+  },
+  {
+    selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']",
+    message:
+      'Nothing in Big Calendar renders HTML fields (docs/standards/react.md).',
+  },
+]
+
+/** Behavior that belongs in the machines, never in the binding or the prebuilt UI (architecture). */
+const noBehavior = [
+  {
+    selector: "CallExpression[callee.property.name='focus']",
+    message:
+      'Focus belongs to the interaction machines, not the React layers (architecture).',
+  },
+  {
+    selector:
+      'CallExpression[callee.property.name=/^(elementFromPoint|elementsFromPoint|getBoundingClientRect|getClientRects)$/]',
+    message:
+      'Hit-testing belongs to the interaction machines, not the React layers (architecture).',
+  },
+  {
+    selector: 'JSXAttribute[name.name=/^onKey(Down|Up|Press)$/]',
+    message:
+      'Keyboard handling belongs to the interaction machines; spread the getter props instead.',
+  },
+  {
+    selector: 'Literal[value=/^key(down|up|press)$/]',
+    message:
+      'Keyboard handling belongs to the interaction machines (architecture).',
+  },
+  {
+    selector: 'TSTypeReference[typeName.name=/^(KeyboardEvent)$/]',
+    message:
+      'Keyboard handling belongs to the interaction machines (architecture).',
+  },
+]
+const noTimers = [
+  'setTimeout',
+  'setInterval',
+  'clearTimeout',
+  'clearInterval',
+  'requestAnimationFrame',
+  'cancelAnimationFrame',
+  'requestIdleCallback',
+].map((name) => ({
+  name,
+  message:
+    'Timers belong to the machines runtime, not the React layers (architecture).',
+}))
+
+export default tseslint.config(
+  {
+    ignores: [
+      '**/dist/**',
+      '**/coverage/**',
+      '**/node_modules/**',
+      '**/storybook-static/**',
+      'plan/**',
+      'prototypes/**',
+      // Fixtures break the rules on purpose; tools/fixtures/lint-fixtures.test.ts lints them.
+      'tools/fixtures/*/src/**',
+    ],
+  },
+  js.configs.recommended,
+  ...nx.configs['flat/base'],
+  {
+    files: ['**/*.{ts,tsx,js,mjs}'],
+    rules: {
+      '@nx/enforce-module-boundaries': [
+        'error',
+        {
+          enforceBuildableLibDependency: true,
+          allow: [],
+          depConstraints,
+        },
+      ],
+    },
+  },
+  // TypeScript, type-checked, in packages and tools.
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      ...tseslint.configs.strictTypeChecked,
+      ...tseslint.configs.stylisticTypeChecked,
+    ],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    plugins: { tsdoc },
+    rules: {
+      'tsdoc/syntax': 'error',
+      // D-46: function declarations for named functions; one object parameter when there's more
+      // than one. Signatures fixed by the P5 API (machine handlers, `mergeProps`) disable it inline
+      // with a comment citing docs/spec/api.md.
+      'func-style': ['error', 'declaration'],
+      'max-params': ['error', 1],
+      'no-restricted-syntax': ['error', ...noHtmlSinks],
+    },
+  },
+  // Published package sources: D-46 suffixes and TSDoc on every export.
+  {
+    files: [
+      'packages/*/src/**/*.{ts,tsx}',
+      'tools/fixtures/*/src/**/*.{ts,tsx}',
+    ],
+    rules: {
+      '@nx/workspace-file-suffix': 'error',
+      '@nx/workspace-require-tsdoc': 'error',
+    },
+  },
+  // React packages: the compiler's rules (D-47) and displayName (D-46).
+  {
+    files: [
+      'packages/{react,react-ui}/src/**/*.{ts,tsx}',
+      'tools/fixtures/react-*/**/*.{ts,tsx}',
+    ],
+    extends: [reactHooks.configs.flat['recommended-latest']],
+    rules: { '@nx/workspace-display-name': 'error' },
+  },
+  // The binding and the prebuilt UI hold no behavior (architecture; docs/standards/react.md).
+  {
+    files: [
+      'packages/{react,react-ui}/src/**/*.{ts,tsx}',
+      'tools/fixtures/react-*/**/*.{ts,tsx}',
+    ],
+    rules: {
+      'no-restricted-globals': ['error', ...noTimers],
+      'no-restricted-syntax': ['error', ...noHtmlSinks, ...noBehavior],
+    },
+  },
+  // react-ui also keeps no state and no effects: markup and composition only.
+  {
+    files: [
+      'packages/react-ui/src/**/*.{ts,tsx}',
+      'tools/fixtures/react-ui-*/**/*.{ts,tsx}',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'react',
+              importNames: [
+                'useState',
+                'useReducer',
+                'useEffect',
+                'useLayoutEffect',
+                'useRef',
+              ],
+              message:
+                'react-ui holds no behavior or state; it composes the binding (docs/standards/react.md).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // Tests and stories don't need TSDoc or suffix checks beyond their own names.
+  {
+    files: ['**/*.test.{ts,tsx}', '**/*.test-d.ts', '**/*.stories.tsx'],
+    rules: { '@nx/workspace-require-tsdoc': 'off', 'max-params': 'off' },
+  },
+  // Plain JavaScript (configs, tools, agent hooks): Node scripts, no type information.
+  {
+    files: ['**/*.{js,mjs}'],
+    extends: [tseslint.configs.disableTypeChecked],
+    languageOptions: { globals: nodeGlobals },
+  },
+)
