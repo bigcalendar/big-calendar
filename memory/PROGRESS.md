@@ -11,7 +11,7 @@
 3. [x] Git hooks
 4. [x] Lint
 5. [x] Package skeletons
-6. [ ] Build proofs
+6. [x] Build proofs
 7. [ ] Type checks
 8. [ ] Tests
 9. [ ] Size and binding budgets
