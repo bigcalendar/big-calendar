@@ -12,7 +12,7 @@
 4. [x] Lint
 5. [x] Package skeletons
 6. [x] Build proofs
-7. [ ] Type checks
+7. [x] Type checks
 8. [ ] Tests
 9. [ ] Size and binding budgets
 10. [ ] Benchmark harness
