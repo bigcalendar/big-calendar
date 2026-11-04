@@ -1,6 +1,6 @@
 # Testing
 
-Sources: D-42, D-44, D-79, D-92, D-93, [date engine](../spec/date-engine.md).
+Sources: D-42, D-44, D-79, D-92, D-93, D-100, [date engine](../spec/date-engine.md).
 
 ## Layers (D-42)
 
@@ -41,7 +41,7 @@ Per package, never per file:
 ## Time-semantics corpus (D-92, D-93)
 
 - The conformance suite includes the P4 correctness corpus (`prototypes/p4-bench/temporal/corpus.js`, 17,777 cases), with native Temporal as the reference, on both the native and the polyfill path.
-- It adds Morocco's future Ramadan periods (2029–2032, 2039–2040), so the fix for temporal-polyfill#121 shows up. Until then, those cases are expected failures on the polyfill path, listed with the issue link.
+- It adds Morocco's future Ramadan periods (2029–2032, 2039–2040). They pass on the polyfill path since `temporal-polyfill` 1.0.7 (D-100), so they're ordinary cases: a failure there is a regression.
 
 ## Benchmarks (D-44, D-92)
 

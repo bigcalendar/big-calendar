@@ -23,8 +23,6 @@
 15. [ ] Agent setup follow-ups
 16. [ ] Slice finish (skill `slice-finish`)
 
-Open for the maintainer (not blocking): post the comment draft for temporal-polyfill#121 at the end of `prototypes/p4-bench/temporal/UPSTREAM-ISSUES.md` (D-93).
-
 ## Before S1 starts
 
 - **NVDA + Firefox run** of the P3 prototype (D-91): `node prototypes/p3-vanilla/serve.mjs`, then `prototypes/p3-vanilla/SCREEN-READER-SCRIPT.md`. The maintainer has no Windows machine yet (2026-10-28). It must confirm the two "NVDA check" items in `docs/spec/accessibility.md` (sections 2.6 and 4.3). Any finding is fixed through a new decision.
