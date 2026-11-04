@@ -128,6 +128,9 @@ export default tseslint.config(
       'prototypes/**',
       // Fixtures break the rules on purpose; tools/fixtures/lint-fixtures.test.ts lints them.
       'tools/fixtures/*/src/**',
+      // Type fixtures: they break types on purpose; tools/type-checks/check-fail.mjs checks them.
+      'tools/type-checks/src/**',
+      'tools/type-checks/fail/**',
     ],
   },
   js.configs.recommended,

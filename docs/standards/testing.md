@@ -31,6 +31,15 @@ Per package, never per file:
 - Tests of the time semantics cite the T-rule they cover (for example `T-10`). (D-85)
 - Each bug fix starts with a failing test. (D-85)
 
+## Type checks (D-95, D-97)
+
+The public types are tested like code, in `tools/type-checks`:
+
+- `src/usage/` must compile (`typecheck` target): realistic calendar setups, a feature package registering itself from outside core (`src/runtime/recurrence.ts`), and the P3 move machine in table form.
+- `fail/` holds cases that must fail (`test` target): each `// expect: <text>` line names the error the case below it must produce. A missing error, an error elsewhere, or different text fails the check. Error text is part of the API (D-63), so a case checks the message, not just that something failed.
+- `src/runtime/` declares the runtime the slices haven't written yet (`createCalendar`, `defineMachine`, …), typed against the real packages (D-99). When a slice implements one, delete its stand-in so the checks use the real export.
+- When you change a public type, add a usage case for what it allows and a `fail/` case for what it forbids.
+
 ## Dates, times and browsers (D-87)
 
 - **Compare formatted output by parts, never as full strings across engines.** Use `formatToParts()` structure or the underlying values (year, month, era). Engines format the same date differently ("Jum. I" vs "Jmd. I", "8 Reiwa" vs "Reiwa 8").

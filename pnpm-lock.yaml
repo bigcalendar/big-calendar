@@ -339,6 +339,21 @@ importers:
         specifier: workspace:*
         version: link:../../packages/testing
 
+  tools/type-checks:
+    devDependencies:
+      '@big-calendar/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@big-calendar/interactions':
+        specifier: workspace:*
+        version: link:../../packages/interactions
+      '@big-calendar/react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      '@big-calendar/react-ui':
+        specifier: workspace:*
+        version: link:../../packages/react-ui
+
 packages:
 
   '@babel/code-frame@7.29.7':
