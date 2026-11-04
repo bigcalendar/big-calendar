@@ -13,7 +13,7 @@
 5. [x] Package skeletons
 6. [x] Build proofs
 7. [x] Type checks
-8. [ ] Tests
+8. [x] Tests (Playwright end-to-end config moves to task 11, with the Storybook shell it tests)
 9. [ ] Size and binding budgets
 10. [ ] Benchmark harness
 11. [ ] Storybook shell
