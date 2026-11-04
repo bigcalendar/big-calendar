@@ -18,12 +18,16 @@
   "files": [
     "dist"
   ],
+  "scripts": {
+    "test": "vitest run"
+  },
   "bigCalendar": {
     "sizeBudgets": {
       ".": "1 KB"
     }
   },
   "nx": {
+    "name": "styles",
     "tags": [
       "layer:styles"
     ]

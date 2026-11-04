@@ -20,6 +20,9 @@ Per package, never per file:
 
 - kernel, interactions and modules: 90% branches, 95% lines;
 - binding and UI: 80% branches.
+- `temporal` and `testing`: 90% branches, 95% lines, like the kernel; `styles` has no JavaScript and no threshold (D-101).
+
+Thresholds live in `vite.library.ts` (`coverage`) and each package's `vite.config.ts`. Framework-free packages run their unit tests in Node, where any DOM use fails; the binding and `react-ui` run theirs in Chromium, Firefox and WebKit, with coverage collected from the Chromium run (D-101). Each package has a `test-environment.test.ts` that fails if its environment is switched.
 
 **Never lower a threshold, skip a test or delete a test to make the build pass without asking the maintainer first** ([workflow](workflow.md) rule 3).
 

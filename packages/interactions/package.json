@@ -16,6 +16,9 @@
   "files": [
     "dist"
   ],
+  "scripts": {
+    "test": "vitest run"
+  },
   "dependencies": {
     "@big-calendar/core": "workspace:*"
   },
@@ -25,6 +28,7 @@
     }
   },
   "nx": {
+    "name": "interactions",
     "tags": [
       "layer:machines"
     ]

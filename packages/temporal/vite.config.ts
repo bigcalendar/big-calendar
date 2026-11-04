@@ -1,6 +1,8 @@
-import { libraryConfig } from '../../vite.library.ts'
+import { coverage, libraryConfig } from '../../vite.library.ts'
 
 export default libraryConfig({
   root: import.meta.dirname,
   entries: { '.': 'src/index.ts' },
+  testEnvironment: 'node',
+  thresholds: coverage.frameworkFree,
 })

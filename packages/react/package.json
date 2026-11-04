@@ -16,6 +16,9 @@
   "files": [
     "dist"
   ],
+  "scripts": {
+    "test": "vitest run --project firefox --project webkit && vitest run --project chromium --coverage"
+  },
   "dependencies": {
     "@big-calendar/core": "workspace:*",
     "@big-calendar/interactions": "workspace:*"
@@ -29,6 +32,7 @@
     }
   },
   "nx": {
+    "name": "react",
     "tags": [
       "layer:binding"
     ]
