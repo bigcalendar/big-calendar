@@ -1,0 +1,20 @@
+{
+  "name": "@big-calendar-fixture/size-over",
+  "version": "0.0.0",
+  "private": true,
+  "description": "An entry point over its size budget, which tools/size must catch.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "bigCalendar": {
+    "sizeBudgets": {
+      ".": "100 B"
+    }
+  },
+  "nx": {
+    "tags": [
+      "layer:tooling"
+    ]
+  }
+}

@@ -13,6 +13,8 @@ async function buildFixture(reactCompiler: boolean): Promise<string> {
     root: join(root, 'tools/fixtures/react-compiler'),
     entries: { '.': 'src/greeting.component.tsx' },
     reactCompiler,
+    testEnvironment: 'browser',
+    thresholds: false,
   })
   const output = (await build({
     ...config,
