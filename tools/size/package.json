@@ -1,0 +1,42 @@
+{
+  "name": "@big-calendar-tools/size",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Checks on the built packages: ES2025 output, side-effect-free modules, the React Compiler build, and (from task 9) size budgets.",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@big-calendar/core": "workspace:*",
+    "@big-calendar/interactions": "workspace:*",
+    "@big-calendar/react": "workspace:*",
+    "@big-calendar/react-ui": "workspace:*",
+    "@big-calendar/styles": "workspace:*",
+    "@big-calendar/temporal": "workspace:*",
+    "@big-calendar/testing": "workspace:*"
+  },
+  "nx": {
+    "tags": [
+      "layer:tooling"
+    ],
+    "targets": {
+      "test": {
+        "dependsOn": [
+          "^build"
+        ]
+      },
+      "typecheck": {
+        "command": "tsc -p tsconfig.json",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production"
+        ]
+      }
+    }
+  }
+}

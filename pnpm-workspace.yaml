@@ -11,6 +11,7 @@ saveExact: true
 linkWorkspacePackages: true
 preferWorkspacePackages: true
 allowBuilds:
+  esbuild: true
   nx: true
 
 overrides:

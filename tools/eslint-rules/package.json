@@ -10,7 +10,20 @@
   "nx": {
     "tags": [
       "layer:tooling"
-    ]
+    ],
+    "targets": {
+      "typecheck": {
+        "command": "tsc -p tsconfig.json",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production"
+        ]
+      }
+    }
   },
   "main": "./index.ts"
 }

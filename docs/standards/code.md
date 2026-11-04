@@ -6,6 +6,7 @@ Sources: D-21, D-46, D-63, [architecture](../spec/architecture.md). Lint enforce
 
 - Strict TypeScript, ESM only. Source is ESNext, compiled to ES2025 (D-21). `tsconfig.base.json` adds to `strict`: `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, `noImplicitOverride`, `noImplicitReturns`, `noPropertyAccessFromIndexSignature` and `verbatimModuleSyntax`. TypeScript is 6.0 (D-97). Compiling rewrites syntax only, so any runtime built-in newer than ES2025 needs a P2 support-matrix entry with a polyfill or fallback.
 - Every package is side-effect-free except the CSS and the `temporal` loader (D-63).
+- `tools/size` proves both on the built packages: no built file may hold syntax newer than ES2025, and importing a package for its side effects alone must bundle to nothing. It also proves the React packages build with the React Compiler (D-47). Each check has a fixture showing it catches a failure.
 - Respect the dependency direction in [architecture](../spec/architecture.md#package-map). The kernel depends on nothing in the workspace. Nx boundary rules enforce it; never disable them.
 - The kernel (`core`) has no DOM code, so it runs in tests and web workers (D-41).
 
