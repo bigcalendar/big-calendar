@@ -1,5 +1,5 @@
 {
-  "name": "@big-calendar-fixture/react-ui-parts",
+  "name": "@big-calendar/fixture-react-ui-parts",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,9 +9,10 @@
   "nx": {
     "tags": [
       "layer:ui"
-    ]
+    ],
+    "name": "fixture-react-ui-parts"
   },
   "dependencies": {
-    "@big-calendar-fixture/kernel": "workspace:*"
+    "@big-calendar/fixture-kernel": "workspace:*"
   }
 }

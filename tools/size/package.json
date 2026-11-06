@@ -1,5 +1,5 @@
 {
-  "name": "@big-calendar-tools/size",
+  "name": "@big-calendar/tools-size",
   "version": "0.0.0",
   "private": true,
   "description": "Checks on the built packages: ES2025 output, side-effect-free modules, the React Compiler build, and (from task 9) size budgets.",
@@ -37,6 +37,7 @@
           "^production"
         ]
       }
-    }
+    },
+    "name": "tools-size"
   }
 }

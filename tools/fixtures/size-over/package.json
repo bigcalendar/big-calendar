@@ -1,5 +1,5 @@
 {
-  "name": "@big-calendar-fixture/size-over",
+  "name": "@big-calendar/fixture-size-over",
   "version": "0.0.0",
   "private": true,
   "description": "An entry point over its size budget, which tools/size must catch.",
@@ -15,6 +15,7 @@
   "nx": {
     "tags": [
       "layer:tooling"
-    ]
+    ],
+    "name": "fixture-size-over"
   }
 }

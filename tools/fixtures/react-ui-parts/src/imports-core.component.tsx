@@ -1,5 +1,5 @@
 // Breaks the dependency direction: react-ui imports the kernel directly.
-import { kernel } from '@big-calendar-fixture/kernel'
+import { kernel } from '@big-calendar/fixture-kernel'
 
 /** Shows the kernel. */
 export function Kernel() {

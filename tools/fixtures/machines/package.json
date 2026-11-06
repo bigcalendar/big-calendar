@@ -1,5 +1,5 @@
 {
-  "name": "@big-calendar-fixture/machines",
+  "name": "@big-calendar/fixture-machines",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,6 +9,7 @@
   "nx": {
     "tags": [
       "layer:machines"
-    ]
+    ],
+    "name": "fixture-machines"
   }
 }

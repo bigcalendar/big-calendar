@@ -5,7 +5,7 @@ import requireTsdoc from './require-tsdoc.js'
 import singleObjectParam from './single-object-param.js'
 
 export default {
-  meta: { name: '@big-calendar-tools/eslint-rules' },
+  meta: { name: '@big-calendar/tools-eslint-rules' },
   rules: {
     'display-name': displayName,
     'file-suffix': fileSuffix,

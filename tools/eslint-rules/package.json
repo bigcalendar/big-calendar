@@ -1,5 +1,5 @@
 {
-  "name": "@big-calendar-tools/eslint-rules",
+  "name": "@big-calendar/tools-eslint-rules",
   "version": "0.0.0",
   "private": true,
   "description": "Local ESLint rules for the D-46 coding standards.",
@@ -23,7 +23,8 @@
           "^production"
         ]
       }
-    }
+    },
+    "name": "tools-eslint-rules"
   },
   "main": "./index.ts"
 }

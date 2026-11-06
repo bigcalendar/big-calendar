@@ -54,6 +54,8 @@ Node 24 (`.nvmrc`); pnpm switches itself to the version in `package.json`.
 - `pnpm exec nx affected -t <target>` (only what changed against `main`)
 - `pnpm format` · `pnpm format:check`
 
+Published packages live in `packages/` (`@big-calendar/<name>`, D-60). Private tools and fixtures live in `tools/` as `@big-calendar/tools-<name>` and `@big-calendar/fixture-<name>` (D-104); Nx names drop the scope (`pnpm nx test tools-size`).
+
 ## Current state
 
 Slice S0 (foundations) on `slice/s0-foundations`; the slice spec is [`docs/spec/slices/s0.md`](docs/spec/slices/s0.md). Attempt 1 is archived (tag `archive/attempt-1-final`, branch `archive/attempt-1`) and removed from the working tree. Don't read the archive for guidance or build on it.

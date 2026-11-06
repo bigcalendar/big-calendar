@@ -1,5 +1,5 @@
 {
-  "name": "@big-calendar-fixture/react-binding",
+  "name": "@big-calendar/fixture-react-binding",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,6 +9,7 @@
   "nx": {
     "tags": [
       "layer:binding"
-    ]
+    ],
+    "name": "fixture-react-binding"
   }
 }

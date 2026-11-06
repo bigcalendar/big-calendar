@@ -1,5 +1,5 @@
 {
-  "name": "@big-calendar-fixture/kernel",
+  "name": "@big-calendar/fixture-kernel",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,9 +9,10 @@
   "nx": {
     "tags": [
       "layer:kernel"
-    ]
+    ],
+    "name": "fixture-kernel"
   },
   "dependencies": {
-    "@big-calendar-fixture/machines": "workspace:*"
+    "@big-calendar/fixture-machines": "workspace:*"
   }
 }
