@@ -35,3 +35,15 @@ These restate the rules above as day-to-day steps. They add nothing new.
   - `memory/ERRORS.md`: approaches that failed and why, so nobody retries them. Never store decisions here.
 - **Dependencies.** A dependency is "named" only if a spec, decision or approved planning artifact names it. Anything else is an ask-first.
 - **Tool-specific files** (`CLAUDE.md`, `.claude/`) only point at tool-neutral content. Never put a rule only in a tool-specific file.
+
+## CI (D-48)
+
+GitHub Actions, in `.github/workflows/`. `.github/actions/setup` installs Node (`.nvmrc`), pnpm (through corepack) and the dependencies. Nothing publishes before 1.0.
+
+- `pr.yml`: formatting, commit messages, decision entries (`tools/ci`), Nx sync, then `nx affected -t lint typecheck test build`. That covers boundaries, coverage, sizes, the binding line count, tree-shaking and the type checks.
+- `browser.yml`: the Playwright suite (`pnpm nx e2e docs`).
+- `bench.yml`: benchmarks for the branch and `main` in one job, the table posted on the PR (D-44, D-103).
+- `smoke.yml`: the bundler and test-runner smoke tests (D-87).
+- `pages.yml`: the docs site to GitHub Pages on merge to `main`.
+
+Run a check locally with the same command before pushing; every step is a plain `pnpm` or `node` command.

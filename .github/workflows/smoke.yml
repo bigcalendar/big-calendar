@@ -1,0 +1,21 @@
+# Bundler and test-runner smoke tests on PRs (D-87): every supported target builds and runs a small
+# app that imports every published package.
+name: Smoke tests
+on:
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: smoke-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      NX_NO_CLOUD: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - name: Smoke tests
+        run: pnpm exec nx run-many -t smoke
