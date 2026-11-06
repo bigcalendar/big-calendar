@@ -54,3 +54,8 @@ apps/docs/src/api
 
 # docs site build
 apps/docs/storybook-static
+
+# smoke-test build output
+tools/smoke/*/dist
+tools/smoke/next/.next
+tools/smoke/next/next-env.d.ts

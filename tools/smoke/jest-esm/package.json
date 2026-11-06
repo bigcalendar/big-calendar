@@ -1,0 +1,33 @@
+{
+  "name": "@big-calendar/tools-smoke-jest-esm",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Smoke test: Jest in ESM mode imports every package.",
+  "type": "module",
+  "scripts": {
+    "smoke": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
+  "devDependencies": {
+    "@big-calendar/core": "workspace:*",
+    "@big-calendar/interactions": "workspace:*",
+    "@big-calendar/react": "workspace:*",
+    "@big-calendar/react-ui": "workspace:*",
+    "@big-calendar/temporal": "workspace:*",
+    "@big-calendar/testing": "workspace:*",
+    "jest": "30.5.2"
+  },
+  "nx": {
+    "name": "tools-smoke-jest-esm",
+    "tags": [
+      "layer:tooling"
+    ],
+    "targets": {
+      "smoke": {
+        "dependsOn": [
+          "^build"
+        ],
+        "cache": false
+      }
+    }
+  }
+}

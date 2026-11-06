@@ -123,6 +123,7 @@ export default tseslint.config(
       '**/dist/**',
       '**/coverage/**',
       '**/out-tsc/**',
+      '**/.next/**',
       '**/node_modules/**',
       '**/storybook-static/**',
       'plan/**',
@@ -259,8 +260,16 @@ export default tseslint.config(
   },
   // Plain JavaScript (configs, tools, agent hooks): Node scripts, no type information.
   {
-    files: ['**/*.{js,mjs}'],
+    files: ['**/*.{js,mjs,cjs,jsx}'],
     extends: [tseslint.configs.disableTypeChecked],
-    languageOptions: { globals: nodeGlobals },
+    languageOptions: {
+      globals: nodeGlobals,
+      parserOptions: { ecmaFeatures: { jsx: true } },
+    },
+  },
+  // The Jest smoke tests use Jest's globals, as apps on Jest do.
+  {
+    files: ['tools/smoke/jest-*/src/**'],
+    languageOptions: { globals: { test: 'readonly', expect: 'readonly' } },
   },
 )

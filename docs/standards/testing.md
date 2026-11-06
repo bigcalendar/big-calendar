@@ -48,7 +48,7 @@ The public types are tested like code, in `tools/type-checks`:
 - **Compare formatted output by parts, never as full strings across engines.** Use `formatToParts()` structure or the underlying values (year, month, era). Engines format the same date differently ("Jum. I" vs "Jmd. I", "8 Reiwa" vs "Reiwa 8").
 - **The Playwright suite runs twice on every engine:** once as-is, and once with `globalThis.Temporal` removed by an init script, so the polyfill path is always tested. Playwright's WebKit has native Temporal, which shipped Safari doesn't. The suite is `apps/docs/e2e` (`pnpm nx e2e docs`): each engine has a `-polyfill` project, and `fixtures.ts` provides the `Temporal`-deleting context and `expectNoAxeViolations`.
 - **The per-slice real-device check includes Safari 26.x** (iOS or macOS) while Safari 26 is on the browser floor. Playwright's WebKit can't reproduce Safari 26 bugs.
-- **Each supported bundler and test runner gets a CI smoke test** that builds and runs a small sample app ([support matrix](../spec/support-matrix.md)).
+- **Each supported bundler and test runner gets a CI smoke test** that builds and runs a small sample app ([support matrix](../spec/support-matrix.md)). They live in `tools/smoke/<target>` (Vite, Rollup, esbuild, webpack, Rspack, Next.js with Turbopack and webpack, Vitest, Jest in ESM and CommonJS modes, `node:test`); each app imports every published package and checks one printed line. `pnpm nx run-many -t smoke` runs them all. When a package gains runtime that could break in a bundler, such as the `temporal` loader's lazy polyfill chunk, extend `src/app.js` in each target to exercise it.
 
 ## Time-semantics corpus (D-92, D-93)
 

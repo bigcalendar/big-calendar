@@ -1,0 +1,32 @@
+{
+  "name": "@big-calendar/tools-smoke-node-test",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Smoke test: Node's test runner imports every package.",
+  "type": "module",
+  "scripts": {
+    "smoke": "node --test src/*.test.js"
+  },
+  "devDependencies": {
+    "@big-calendar/core": "workspace:*",
+    "@big-calendar/interactions": "workspace:*",
+    "@big-calendar/react": "workspace:*",
+    "@big-calendar/react-ui": "workspace:*",
+    "@big-calendar/temporal": "workspace:*",
+    "@big-calendar/testing": "workspace:*"
+  },
+  "nx": {
+    "name": "tools-smoke-node-test",
+    "tags": [
+      "layer:tooling"
+    ],
+    "targets": {
+      "smoke": {
+        "dependsOn": [
+          "^build"
+        ],
+        "cache": false
+      }
+    }
+  }
+}

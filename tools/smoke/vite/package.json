@@ -1,0 +1,32 @@
+{
+  "name": "@big-calendar/tools-smoke-vite",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Smoke test: Vite builds and runs an app using every package.",
+  "type": "module",
+  "scripts": {
+    "smoke": "node build.mjs"
+  },
+  "devDependencies": {
+    "@big-calendar/core": "workspace:*",
+    "@big-calendar/interactions": "workspace:*",
+    "@big-calendar/react": "workspace:*",
+    "@big-calendar/react-ui": "workspace:*",
+    "@big-calendar/temporal": "workspace:*",
+    "@big-calendar/testing": "workspace:*"
+  },
+  "nx": {
+    "name": "tools-smoke-vite",
+    "tags": [
+      "layer:tooling"
+    ],
+    "targets": {
+      "smoke": {
+        "dependsOn": [
+          "^build"
+        ],
+        "cache": false
+      }
+    }
+  }
+}

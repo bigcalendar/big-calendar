@@ -1,0 +1,33 @@
+{
+  "name": "@big-calendar/tools-smoke-rspack",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Smoke test: Rspack builds and runs an app using every package.",
+  "type": "module",
+  "scripts": {
+    "smoke": "node build.mjs"
+  },
+  "devDependencies": {
+    "@big-calendar/core": "workspace:*",
+    "@big-calendar/interactions": "workspace:*",
+    "@big-calendar/react": "workspace:*",
+    "@big-calendar/react-ui": "workspace:*",
+    "@big-calendar/temporal": "workspace:*",
+    "@big-calendar/testing": "workspace:*",
+    "@rspack/core": "2.3.1"
+  },
+  "nx": {
+    "name": "tools-smoke-rspack",
+    "tags": [
+      "layer:tooling"
+    ],
+    "targets": {
+      "smoke": {
+        "dependsOn": [
+          "^build"
+        ],
+        "cache": false
+      }
+    }
+  }
+}
