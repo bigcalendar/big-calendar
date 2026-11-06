@@ -16,7 +16,7 @@
 8. [x] Tests (Playwright end-to-end config moves to task 11, with the Storybook shell it tests)
 9. [x] Size and binding budgets
 10. [x] Benchmark harness
-11. [ ] Storybook shell
+11. [x] Storybook shell (with the Playwright browser suite)
 12. [ ] Bundler and runner smoke tests
 13. [ ] CI
 14. [ ] Nx Release configuration (dry run only)
