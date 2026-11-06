@@ -18,7 +18,7 @@
 10. [x] Benchmark harness
 11. [x] Storybook shell (with the Playwright browser suite)
 12. [x] Bundler and runner smoke tests
-13. [ ] CI
+13. [x] CI
 14. [ ] Nx Release configuration (dry run only)
 15. [ ] Agent setup follow-ups
 16. [ ] Slice finish (skill `slice-finish`)
