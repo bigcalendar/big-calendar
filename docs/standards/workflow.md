@@ -47,3 +47,7 @@ GitHub Actions, in `.github/workflows/`. `.github/actions/setup` installs Node (
 - `pages.yml`: the docs site to GitHub Pages on merge to `main`.
 
 Run a check locally with the same command before pushing; every step is a plain `pnpm` or `node` command.
+
+## Releases (D-106)
+
+Nothing is published before 1.0, and only the maintainer decides 1.0. Nx Release is configured in `nx.json` for the seven published packages, at one shared version tagged `big-calendar@{version}`. Preview with `pnpm exec nx release --dry-run`; never run it without `--dry-run` unless the maintainer asks. A `tools-ci` test fails if a package version reaches 1.0.0.

@@ -59,5 +59,38 @@
     "test": {
       "cache": true
     }
+  },
+  "release": {
+    "projects": [
+      "core",
+      "interactions",
+      "react",
+      "react-ui",
+      "styles",
+      "temporal",
+      "testing"
+    ],
+    "projectsRelationship": "fixed",
+    "version": {
+      "conventionalCommits": true,
+      "git": {
+        "commit": false,
+        "tag": false,
+        "push": false
+      },
+      "fallbackCurrentVersionResolver": "disk"
+    },
+    "changelog": {
+      "workspaceChangelog": false,
+      "projectChangelogs": true,
+      "git": {
+        "commit": false,
+        "tag": false,
+        "push": false
+      }
+    },
+    "releaseTag": {
+      "pattern": "big-calendar@{version}"
+    }
   }
 }
