@@ -40,7 +40,7 @@ const cases: readonly { file: string; rule: string; why: string }[] = [
   },
   {
     file: 'kernel/src/two-params.function.ts',
-    rule: 'max-params',
+    rule: '@nx/workspace-single-object-param',
     why: 'one object parameter (D-46)',
   },
   {
@@ -82,10 +82,11 @@ describe('lint fixtures', () => {
     expect(rules).toContain(rule)
   })
 
-  it('passes the stand-in index files, so failures come from the rule under test', async () => {
+  it('passes the stand-in files and inline callbacks, so failures come from the rule under test', async () => {
     const results = await eslint.lintFiles([
       'tools/fixtures/kernel/src/index.ts',
       'tools/fixtures/machines/src/index.ts',
+      'tools/fixtures/kernel/src/callbacks.function.ts',
     ])
     expect(results.flatMap((result) => result.messages)).toEqual([])
   })

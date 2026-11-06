@@ -156,7 +156,6 @@ export interface CoreOptions<TEventMeta> {
   readOnly?: boolean
   /** T-9: the length of a date-time event with no `end`. Default `PT1H`. */
   defaultEventDuration?: DurationString
-  /* eslint-disable max-params -- callback signature fixed by docs/spec/api.md section 1.5 */
   /** Custom ordering (gap #3). Ties still break by D-59. */
   eventOrder?: (
     a: ProcessedEvent<TEventMeta>,
@@ -193,7 +192,6 @@ export interface CoreOptions<TEventMeta> {
   ) => void
   /** The event's secondary action: double-click, or "Open" in its menu (D-51, P3 section 6.2). */
   onEventOpen?: (event: ProcessedEvent<TEventMeta>) => void
-  /* eslint-enable max-params */
 }
 
 /** Everything `createCalendar` takes: core options, features, views, state slice props, feature flat props and feature options. */

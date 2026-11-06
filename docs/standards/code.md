@@ -43,6 +43,6 @@ Sources: D-21, D-46, D-63, [architecture](../spec/architecture.md). Lint enforce
 
 ## Lint
 
-`eslint.config.mjs` enforces the rules above: the layer boundaries (Nx tags `layer:*` on each project), the D-46 rules (`func-style`, `max-params`, and the local rules in `tools/eslint-rules`: file suffixes, `displayName`, TSDoc on exports), the binding and `react-ui` limits, and the HTML-sink ban. `tools/fixtures` holds code that breaks each rule, and its test proves each one fails. When you add a rule, add a fixture for it.
+`eslint.config.mjs` enforces the rules above: the layer boundaries (Nx tags `layer:*` on each project), the D-46 rules (`func-style`, and the local rules in `tools/eslint-rules`: one object parameter, file suffixes, `displayName`, TSDoc on exports), the binding and `react-ui` limits, and the HTML-sink ban. `tools/fixtures` holds code that breaks each rule, and its test proves each one fails. When you add a rule, add a fixture for it.
 
-A signature fixed by the [types and public API](../spec/api.md) spec (machine handlers, `mergeProps`) disables `max-params` inline, with a comment citing the spec.
+The one-object-parameter rule applies to functions we declare and name. Inline callbacks passed to another API (`sort((a, b) => …)`, `reduce`) take the parameters their caller defines (D-102), and function types aren't checked: their signatures come from the [types and public API](../spec/api.md) spec.

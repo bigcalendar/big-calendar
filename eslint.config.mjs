@@ -122,6 +122,7 @@ export default tseslint.config(
     ignores: [
       '**/dist/**',
       '**/coverage/**',
+      '**/out-tsc/**',
       '**/node_modules/**',
       '**/storybook-static/**',
       'plan/**',
@@ -164,14 +165,13 @@ export default tseslint.config(
     plugins: { tsdoc },
     rules: {
       'tsdoc/syntax': 'error',
-      // D-46: function declarations for named functions; one object parameter when there's more
-      // than one. Signatures fixed by the P5 API (machine handlers, `mergeProps`) disable it inline
-      // with a comment citing docs/spec/api.md.
       // The P5 types use mapped types on purpose: an error type must be an inlined mapped type, or
       // the error shows an alias name instead of its message (api.md section 1.3, typing rule).
       '@typescript-eslint/consistent-indexed-object-style': 'off',
+      // D-46: function declarations for named functions, each taking one object parameter when it
+      // needs more than one value. Inline callbacks are exempt (D-102).
       'func-style': ['error', 'declaration'],
-      'max-params': ['error', 1],
+      '@nx/workspace-single-object-param': 'error',
       'no-restricted-syntax': ['error', ...noHtmlSinks],
     },
   },
@@ -244,7 +244,10 @@ export default tseslint.config(
   // Tests and stories don't need TSDoc or suffix checks beyond their own names.
   {
     files: ['**/*.test.{ts,tsx}', '**/*.test-d.ts', '**/*.stories.tsx'],
-    rules: { '@nx/workspace-require-tsdoc': 'off', 'max-params': 'off' },
+    rules: {
+      '@nx/workspace-require-tsdoc': 'off',
+      '@nx/workspace-single-object-param': 'off',
+    },
   },
   // Build configs sit outside every package's TypeScript project: lint them without types.
   {

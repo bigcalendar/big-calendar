@@ -66,7 +66,6 @@ export interface TransitionResult<S extends MachineState> {
  * Transitions keyed by state mode, then event type. Each handler is pure. A missing entry means the
  * event is ignored in that state.
  */
-/* eslint-disable max-params -- handler signature fixed by docs/spec/api.md section 2.1 */
 export type TransitionTable<
   S extends MachineState,
   E extends MachineEvent,
@@ -80,8 +79,6 @@ export type TransitionTable<
     ) => TransitionResult<S>
   }
 }
-
-/* eslint-enable max-params */
 
 /** A machine: its id, initial state and transition table (api.md section 2.1). */
 export interface MachineDefinition<
