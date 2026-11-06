@@ -20,7 +20,7 @@
 12. [x] Bundler and runner smoke tests
 13. [x] CI
 14. [x] Nx Release configuration (dry run only). **After S0 merges:** ask the maintainer, then tag `main`'s S0 merge commit `big-calendar@0.0.0` and push the tag (D-106).
-15. [ ] Agent setup follow-ups
+15. [x] Agent setup follow-ups
 16. [ ] Slice finish (skill `slice-finish`)
 
 ## Before S1 starts
