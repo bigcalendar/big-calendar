@@ -310,13 +310,15 @@ importers:
 
   packages/testing: {}
 
+  tools/bench: {}
+
   tools/eslint-rules: {}
 
   tools/fixtures: {}
 
   tools/fixtures/kernel:
     dependencies:
-      '@big-calendar-fixture/machines':
+      '@big-calendar/fixture-machines':
         specifier: workspace:*
         version: link:../machines
 
@@ -326,9 +328,11 @@ importers:
 
   tools/fixtures/react-ui-parts:
     dependencies:
-      '@big-calendar-fixture/kernel':
+      '@big-calendar/fixture-kernel':
         specifier: workspace:*
         version: link:../kernel
+
+  tools/fixtures/size-over: {}
 
   tools/size:
     devDependencies:

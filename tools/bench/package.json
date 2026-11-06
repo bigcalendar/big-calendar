@@ -1,0 +1,38 @@
+{
+  "name": "@big-calendar/tools-bench",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The benchmark harness (D-44, D-92): profiles, scenarios, medians, budgets and the comparison against main.",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "bench": "node src/run.cli.ts",
+    "compare": "node src/compare.cli.ts"
+  },
+  "nx": {
+    "tags": [
+      "layer:tooling"
+    ],
+    "targets": {
+      "typecheck": {
+        "command": "tsc -p tsconfig.json",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "cache": true
+      },
+      "bench": {
+        "dependsOn": [
+          "^build"
+        ],
+        "cache": false
+      },
+      "test": {
+        "dependsOn": [
+          "^build"
+        ]
+      }
+    },
+    "name": "tools-bench"
+  }
+}
