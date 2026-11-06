@@ -52,3 +52,10 @@ memory/PROGRESS.md, ERRORS.md  progress and failed approaches only
 | MCP             | `.mcp.json`                                                    | Playwright and Nx                                                                                                     |
 
 **Backed up by git hooks and CI from S0** (product configs wait for S0): lint-staged formatting on commit, typecheck in PR checks, and the CI check that fails when `docs/spec/` or `docs/decisions.md` changes without a new decision entry.
+
+## As built at S0 (D-107)
+
+- **Skills:** Claude Code reads project skills from `.claude/skills/` only (its documentation lists no `.agents/skills`), so the `.claude/skills` symlink stays.
+- **Package context:** each package's `AGENTS.md` and `CLAUDE.md` exist for the seven S0 packages; the `new-package` skill's scaffold (`tools/ci/src/new-package.cli.ts`) writes them for new ones.
+- **Backups for agents without hooks:** lint-staged formats on commit, commitlint checks messages, PR checks typecheck, and `tools/ci` fails a PR that changes `docs/spec/` or past decisions without a new decision entry.
+- **The typecheck hook** covers `packages/`, `tools/` and `apps/`.

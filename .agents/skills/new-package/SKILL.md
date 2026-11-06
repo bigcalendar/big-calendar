@@ -6,7 +6,7 @@ description: Create a new package in the Big Calendar workspace. Use only for pa
 # New package
 
 1. **Check it's in the package map** (`docs/spec/architecture.md`, D-60). If it isn't, stop and use the `decide` skill.
-2. **Generate it with Nx** so it matches the S0 scaffold (the generator and options are recorded in `memory/PROGRESS.md` or the root `AGENTS.md` from S0). Name: `@big-calendar/<name>`, folder `packages/<name>`.
+2. **Scaffold it** with the S0 scaffold, so it matches every other package: `node tools/ci/src/new-package.cli.ts --name <name> --layer <layer> --purpose "<one line>" [--depends-on <name>]…`, then `pnpm install && pnpm exec nx sync`. Name: `@big-calendar/<name>`, folder `packages/<name>`. The scaffold writes everything in step 3 except the real size budget and the AGENTS.md TODOs.
 3. **Configure:**
    - strict TypeScript, ESM only, ES2025 output;
    - `"sideEffects": false` (except `*.css`, and the `temporal` loader);

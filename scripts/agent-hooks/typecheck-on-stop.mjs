@@ -24,7 +24,7 @@ try {
 }
 const touchesTs = changed
   .split('\n')
-  .some((l) => /^.. packages\/.*\.(ts|tsx|mts|cts)$/.test(l))
+  .some((l) => /^.. (packages|tools|apps)\/.*\.(ts|tsx|mts|cts)$/.test(l))
 if (!touchesTs) process.exit(0)
 
 try {

@@ -1,6 +1,6 @@
 # Standards
 
-Everything a tool can check lives in tooling: ESLint, Prettier, the TypeScript config and Nx boundary rules (D-46). These files hold only the short prose for what tooling can't check. Product configs arrive in S0; until then, these files are the reference.
+Everything a tool can check lives in tooling: ESLint, Prettier, the TypeScript config and Nx boundary rules (D-46). These files hold only the short prose for what tooling can't check. The product configs (`eslint.config.mjs`, `tsconfig.base.json`, `vite.library.ts`, `nx.json`, `commitlint.config.mjs`) are the enforceable part.
 
 | File                                 | Read it when you are…                                                   |
 | ------------------------------------ | ----------------------------------------------------------------------- |
