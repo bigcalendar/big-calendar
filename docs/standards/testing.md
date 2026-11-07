@@ -39,7 +39,7 @@ Thresholds live in `vite.library.ts` (`coverage`) and each package's `vite.confi
 The public types are tested like code, in `tools/type-checks`:
 
 - `src/usage/` must compile (`typecheck` target): realistic calendar setups, a feature package registering itself from outside core (`src/runtime/recurrence.ts`), and the P3 move machine in table form.
-- `fail/` holds cases that must fail (`test` target): each `// expect: <text>` line names the error the case below it must produce. A missing error, an error elsewhere, or different text fails the check. Error text is part of the API (D-63), so a case checks the message, not just that something failed.
+- `fail/` holds cases that must fail (`test` target): each `// expect: <text>` line names the error the case below it must produce. A missing error, an error elsewhere, or different text fails the check. Error text is part of the API (D-63), so a case checks the message as well as the failure.
 - `src/runtime/` declares the runtime the slices haven't written yet (`createCalendar`, `defineMachine`, …), typed against the real packages (D-99). When a slice implements one, delete its stand-in so the checks use the real export.
 - When you change a public type, add a usage case for what it allows and a `fail/` case for what it forbids.
 

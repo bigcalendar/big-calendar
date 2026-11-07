@@ -2,7 +2,9 @@
 
 ## Next step
 
-**S0 in progress** (foundations) on `slice/s0-foundations`. Slice spec approved 2026-11-02 (D-97): `docs/spec/slices/s0.md`, whose task list has the detail. Continue with the first unchecked task. Archive and reset done (D-96; PR #3 merged). Attempt 1's `release.yml` and `docs.yml` workflows are disabled in GitHub; the new workflows use other file names.
+**S0 is in review.** Wait for the maintainer's review and merge of the S0 PR (`slice/s0-foundations` → `main`). Don't start S1. After the merge: ask the maintainer, then tag `main`'s S0 merge commit `big-calendar@0.0.0` and push it (D-106); then check the first `pages.yml` deploy and the new workflows' first runs on `main`.
+
+Slice spec: `docs/spec/slices/s0.md` (D-97). Decisions during S0: D-96 to D-108.
 
 ### S0 tasks
 
@@ -21,7 +23,7 @@
 13. [x] CI
 14. [x] Nx Release configuration (dry run only). **After S0 merges:** ask the maintainer, then tag `main`'s S0 merge commit `big-calendar@0.0.0` and push the tag (D-106).
 15. [x] Agent setup follow-ups
-16. [ ] Slice finish (skill `slice-finish`)
+16. [x] Slice finish (skill `slice-finish`): gates and reviews run, PR opened
 
 ## Before S1 starts
 

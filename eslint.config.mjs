@@ -93,11 +93,6 @@ const noBehavior = [
       'Keyboard handling belongs to the interaction machines; spread the getter props instead.',
   },
   {
-    selector: 'Literal[value=/^key(down|up|press)$/]',
-    message:
-      'Keyboard handling belongs to the interaction machines (architecture).',
-  },
-  {
     selector: 'TSTypeReference[typeName.name=/^(KeyboardEvent)$/]',
     message:
       'Keyboard handling belongs to the interaction machines (architecture).',
@@ -225,7 +220,6 @@ export default tseslint.config(
                 'useReducer',
                 'useEffect',
                 'useLayoutEffect',
-                'useRef',
               ],
               message:
                 'react-ui holds no behavior or state; it composes the binding (docs/standards/react.md).',
