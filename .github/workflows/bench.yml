@@ -1,0 +1,61 @@
+# Benchmarks on PRs (D-44, D-48, D-103): the branch and main run back to back in this job, on the
+# same machine; the comparison is posted on the PR and fails it over budget or on a regression.
+name: Benchmarks
+on:
+  pull_request:
+permissions:
+  contents: read
+  pull-requests: write
+concurrency:
+  group: bench-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    env:
+      NX_NO_CLOUD: 'true'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+        with:
+          browsers: chromium firefox webkit
+      - name: Branch
+        run: |
+          pnpm exec nx run-many -t build
+          node tools/bench/src/run.cli.ts --out results/branch.json
+      - name: main
+        run: |
+          git worktree add ../main origin/${{ github.base_ref }}
+          cd ../main
+          if [ -f tools/bench/src/run.cli.ts ]; then
+            pnpm install --frozen-lockfile
+            pnpm exec nx run-many -t build
+            node tools/bench/src/run.cli.ts --out "$GITHUB_WORKSPACE/tools/bench/results/main.json"
+          else
+            echo "main has no benchmark harness yet; every result is new."
+          fi
+      - name: Compare
+        id: compare
+        working-directory: tools/bench
+        run: node src/compare.cli.ts --main results/main.json --branch results/branch.json --markdown results/table.md
+      - name: Post the table
+        if: always() && hashFiles('tools/bench/results/table.md') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo '### Benchmarks'
+            echo
+            cat tools/bench/results/table.md
+          } > comment.md
+          gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md --edit-last \
+            || gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
+      - name: Keep the results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: benchmark-results
+          path: tools/bench/results
+          retention-days: 30

@@ -1,5 +1,0 @@
-export { default as CalendarProvider } from './CalendarProvider.vue'
-export type { CalendarProviderProps } from './CalendarProvider.vue'
-export { CalendarKey } from './calendarContext'
-export type { CalendarComponents, CalendarContextValue } from './calendarContext'
-export { useCalendarContext } from './useCalendarContext'

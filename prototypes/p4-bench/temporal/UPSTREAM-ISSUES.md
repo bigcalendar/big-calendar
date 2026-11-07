@@ -2,6 +2,8 @@
 
 Status (2026-10-30): issue 1 is filed as https://github.com/fullcalendar/temporal-polyfill/issues/123. Issue 2 wasn't filed: https://github.com/fullcalendar/temporal-polyfill/issues/121 (opened 2026-10-25) already reports it, in more zones. Found by the P4 correctness corpus (`corpus.js`); reproduced in `repro.mjs`.
 
+Update (2026-11-04): both issues are closed, and `temporal-polyfill` 1.0.7 fixes both. Rerun of this corpus: 0 differences from native Temporal on Chromium, Firefox and WebKit, and correct Casablanca offsets every day 2019–2040 (D-100). The comment draft for #121 below is no longer needed.
+
 ---
 
 ## 1. `ZonedDateTime#withPlainTime()` keeps the receiver's offset in a repeated hour instead of using `'compatible'`

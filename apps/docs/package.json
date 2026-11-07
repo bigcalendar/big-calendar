@@ -1,0 +1,58 @@
+{
+  "name": "@big-calendar/tools-docs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The docs site: Storybook with MDX pages, runnable stories and the generated API reference (D-19, D-64, D-84).",
+  "type": "module",
+  "scripts": {
+    "reference": "typedoc",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build -o storybook-static --quiet",
+    "e2e": "playwright test -c e2e/playwright.config.ts"
+  },
+  "devDependencies": {
+    "@big-calendar/core": "workspace:*",
+    "@big-calendar/interactions": "workspace:*",
+    "@big-calendar/react": "workspace:*",
+    "@big-calendar/react-ui": "workspace:*"
+  },
+  "nx": {
+    "name": "docs",
+    "tags": [
+      "layer:tooling"
+    ],
+    "targets": {
+      "reference": {
+        "dependsOn": [
+          "^typecheck"
+        ],
+        "outputs": [
+          "{projectRoot}/src/api"
+        ],
+        "cache": true
+      },
+      "build-storybook": {
+        "dependsOn": [
+          "reference"
+        ],
+        "outputs": [
+          "{projectRoot}/storybook-static"
+        ],
+        "cache": true
+      },
+      "e2e": {
+        "dependsOn": [
+          "build-storybook"
+        ],
+        "cache": false
+      },
+      "typecheck": {
+        "command": "tsc -p tsconfig.json",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "cache": true
+      }
+    }
+  }
+}

@@ -1,1 +1,0 @@
-export { BcRovingSelectionDirective } from './BcRovingSelectionDirective'

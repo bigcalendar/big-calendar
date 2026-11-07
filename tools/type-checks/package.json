@@ -1,0 +1,43 @@
+{
+  "name": "@big-calendar/tools-type-checks",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The P5 type checks against the real packages: usage that must compile (src/usage) and cases that must fail with the right error (fail/).",
+  "type": "module",
+  "devDependencies": {
+    "@big-calendar/core": "workspace:*",
+    "@big-calendar/interactions": "workspace:*",
+    "@big-calendar/react": "workspace:*",
+    "@big-calendar/react-ui": "workspace:*"
+  },
+  "nx": {
+    "tags": [
+      "layer:tooling"
+    ],
+    "targets": {
+      "typecheck": {
+        "command": "tsc -p tsconfig.json",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production"
+        ]
+      },
+      "test": {
+        "command": "node check-fail.mjs",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production"
+        ]
+      }
+    },
+    "name": "tools-type-checks"
+  }
+}

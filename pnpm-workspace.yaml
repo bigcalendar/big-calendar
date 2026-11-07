@@ -1,10 +1,59 @@
 packages:
-  - 'packages/*'
-  - 'apps/*'
-  - 'e2e'
+  - packages/*
+  - apps/*
+  - tools/*
+  - tools/smoke/*
+  - tools/fixtures/*
+
+# Exact versions only (D-97).
+saveExact: true
+# Workspace packages resolve to each other, never to the registry.
+linkWorkspacePackages: true
+preferWorkspacePackages: true
 allowBuilds:
-  '@parcel/watcher': true
+  '@parcel/watcher': false
   esbuild: true
-  lmdb: true
-  msgpackr-extract: true
   nx: true
+
+overrides:
+  # eslint-plugin-tsdoc pins an older typescript-eslint that predates TypeScript 6; use the
+  # workspace's version (D-97).
+  'eslint-plugin-tsdoc>@typescript-eslint/utils': 8.72.1
+minimumReleaseAgeExclude:
+  - '@vitest/mocker@5.1.0'
+  - '@vitest/spy@5.1.0'
+  - vitest@5.1.0
+  - '@babel/core@8.1.0'
+  - '@babel/generator@8.1.0'
+  - '@babel/helpers@8.1.0'
+  - '@babel/parser@8.1.0'
+  - '@babel/traverse@8.1.0'
+  - '@babel/types@8.1.0'
+  - '@vitejs/plugin-react@6.2.1'
+  - '@rollup/rollup-android-arm-eabi@4.68.0'
+  - '@rollup/rollup-android-arm64@4.68.0'
+  - '@rollup/rollup-android-x64@4.68.0'
+  - '@rollup/rollup-darwin-arm64@4.68.0'
+  - '@rollup/rollup-darwin-x64@4.68.0'
+  - '@rollup/rollup-freebsd-arm64@4.68.0'
+  - '@rollup/rollup-freebsd-x64@4.68.0'
+  - '@rollup/rollup-linux-arm-gnueabihf@4.68.0'
+  - '@rollup/rollup-linux-arm-musleabihf@4.68.0'
+  - '@rollup/rollup-linux-arm64-gnu@4.68.0'
+  - '@rollup/rollup-linux-arm64-musl@4.68.0'
+  - '@rollup/rollup-linux-loong64-gnu@4.68.0'
+  - '@rollup/rollup-linux-loong64-musl@4.68.0'
+  - '@rollup/rollup-linux-ppc64-gnu@4.68.0'
+  - '@rollup/rollup-linux-ppc64-musl@4.68.0'
+  - '@rollup/rollup-linux-riscv64-gnu@4.68.0'
+  - '@rollup/rollup-linux-riscv64-musl@4.68.0'
+  - '@rollup/rollup-linux-s390x-gnu@4.68.0'
+  - '@rollup/rollup-linux-x64-gnu@4.68.0'
+  - '@rollup/rollup-linux-x64-musl@4.68.0'
+  - '@rollup/rollup-openbsd-x64@4.68.0'
+  - '@rollup/rollup-openharmony-arm64@4.68.0'
+  - '@rollup/rollup-win32-arm64-msvc@4.68.0'
+  - '@rollup/rollup-win32-ia32-msvc@4.68.0'
+  - '@rollup/rollup-win32-x64-gnu@4.68.0'
+  - '@rollup/rollup-win32-x64-msvc@4.68.0'
+  - rollup@4.68.0

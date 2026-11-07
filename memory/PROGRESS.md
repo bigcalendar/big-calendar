@@ -2,14 +2,28 @@
 
 ## Next step
 
-**S0 kickoff** (foundations), started 2026-11-02 by the maintainer. Skill: `slice-start`. D-96 settles the archive and reset: attempt 1 is archived as tag `archive/attempt-1-final` and branch `archive/attempt-1` (done, both at `05f0826`).
+**S0 is in review.** Wait for the maintainer's review and merge of the S0 PR (`slice/s0-foundations` → `main`). Don't start S1. After the merge: ask the maintainer, then tag `main`'s S0 merge commit `big-calendar@0.0.0` and push it (D-106); then check the first `pages.yml` deploy and the new workflows' first runs on `main`.
 
-1. [x] Archive attempt 1; open PR #3, `planning` → `main` (fast-forward, no history rewritten).
-2. [ ] **Waiting for the maintainer to merge PR #3.**
-3. [ ] Branch `slice/s0-foundations` off the updated `main`; write the slice spec `docs/spec/slices/s0.md` (task list and questions); first task deletes the attempt-1 code (`packages/`, `storybook-site/`, root build configs).
-4. [ ] Kickoff gate: the maintainer approves the slice spec before any code.
+Slice spec: `docs/spec/slices/s0.md` (D-97). Decisions during S0: D-96 to D-108.
 
-Open for the maintainer (not blocking): post the comment draft for temporal-polyfill#121 at the end of `prototypes/p4-bench/temporal/UPSTREAM-ISSUES.md` (D-93).
+### S0 tasks
+
+1. [x] Remove attempt 1
+2. [x] Workspace
+3. [x] Git hooks
+4. [x] Lint
+5. [x] Package skeletons
+6. [x] Build proofs
+7. [x] Type checks
+8. [x] Tests (Playwright end-to-end config moves to task 11, with the Storybook shell it tests)
+9. [x] Size and binding budgets
+10. [x] Benchmark harness
+11. [x] Storybook shell (with the Playwright browser suite)
+12. [x] Bundler and runner smoke tests
+13. [x] CI
+14. [x] Nx Release configuration (dry run only). **After S0 merges:** ask the maintainer, then tag `main`'s S0 merge commit `big-calendar@0.0.0` and push the tag (D-106).
+15. [x] Agent setup follow-ups
+16. [x] Slice finish (skill `slice-finish`): gates and reviews run, PR opened
 
 ## Before S1 starts
 

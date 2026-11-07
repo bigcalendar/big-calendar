@@ -1,29 +1,35 @@
 {
   "name": "@big-calendar/styles",
-  "version": "0.1.0",
-  "type": "module",
-  "description": "Big Calendar — @big-calendar/styles (Baseline 2024 CSS)",
+  "version": "0.0.0",
+  "description": "`react-ui`'s CSS compiled with stable `.bc-*` selectors, per part, plus `tokens.css`, for headless users (D-69).",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/bigcalendar/big-calendar.git",
-    "directory": "packages/styles"
-  },
+  "type": "module",
   "sideEffects": [
     "**/*.css"
   ],
   "exports": {
-    "./index.css": "./dist/index.css",
-    "./reset.css": "./dist/reset.css",
-    "./tokens.css": "./dist/tokens.css",
-    "./layout.css": "./dist/layout.css",
-    "./components/*.css": "./dist/components/*.css",
+    ".": {
+      "@big-calendar/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
     "dist"
   ],
-  "publishConfig": {
-    "access": "public"
+  "scripts": {
+    "test": "vitest run"
+  },
+  "bigCalendar": {
+    "sizeBudgets": {
+      ".": "1 KB"
+    }
+  },
+  "nx": {
+    "name": "styles",
+    "tags": [
+      "layer:styles"
+    ]
   }
 }

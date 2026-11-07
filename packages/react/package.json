@@ -1,61 +1,40 @@
 {
   "name": "@big-calendar/react",
-  "version": "0.1.0",
-  "type": "module",
-  "description": "Big Calendar — @big-calendar/react",
+  "version": "0.0.0",
+  "description": "The React binding: hooks that connect the kernel and the machines to React. About 600 lines, with no behavior.",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/bigcalendar/big-calendar.git",
-    "directory": "packages/react"
-  },
+  "type": "module",
   "sideEffects": false,
   "exports": {
-    "./package.json": "./package.json",
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "@big-calendar/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
-    "./*": {
-      "import": "./dist/*/index.js",
-      "types": "./dist/*/index.d.ts",
-      "default": "./dist/*/index.js"
-    }
+    "./package.json": "./package.json"
   },
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
-  "publishConfig": {
-    "access": "public"
+  "scripts": {
+    "test": "vitest run --project firefox --project webkit && vitest run --project chromium --coverage"
   },
   "dependencies": {
     "@big-calendar/core": "workspace:*",
-    "@big-calendar/styles": "workspace:*",
-    "@preact/signals-core": "^1.14.2",
-    "clsx": "^2.1.1"
+    "@big-calendar/interactions": "workspace:*"
   },
   "peerDependencies": {
-    "@big-calendar/dnd": "workspace:*",
-    "react": ">=18",
-    "react-dom": ">=18"
+    "react": ">=19"
   },
-  "peerDependenciesMeta": {
-    "@big-calendar/dnd": {
-      "optional": true
+  "bigCalendar": {
+    "sizeBudgets": {
+      ".": "1 KB"
     }
   },
-  "devDependencies": {
-    "@big-calendar/dnd": "workspace:*",
-    "@big-calendar/localizer-luxon": "workspace:*",
-    "@big-calendar/localizer-temporal": "workspace:*",
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/react": "^16.3.2",
-    "@types/react": "^19.2.16",
-    "@types/react-dom": "^19.2.3",
-    "jsdom": "^29.1.1",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+  "nx": {
+    "name": "react",
+    "tags": [
+      "layer:binding"
+    ]
   }
 }

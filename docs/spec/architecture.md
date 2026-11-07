@@ -45,7 +45,7 @@ _Final (D-60). The maintainer owns the `@big-calendar` npm scope._
 | `@big-calendar/testing`      | Testing     | Fake clock, interaction helpers, role-based queries; Testing Library compatible (D-79)                                                  |
 | `@big-calendar/mcp`          | Tooling     | MCP server for AI assistants                                                                                                            |
 
-**Dependency direction** (never inverted): modules and machines → core; binding → core + machines; react-ui → binding + styles. The kernel depends on nothing in the workspace. Nx module-boundary lint rules enforce this.
+**Dependency direction** (never inverted): modules and machines → core; binding → core + machines; react-ui → binding + styles, with the core and machine types it needs re-exported by the binding (D-98); testing → core + machines + binding + `temporal`, imported only by tests (D-98). The kernel depends on nothing in the workspace. Nx module-boundary lint rules enforce this (`eslint.config.mjs`, proven by `tools/fixtures`).
 
 ## The binding budget (hard rule)
 

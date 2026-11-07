@@ -1,49 +1,33 @@
 {
   "name": "@big-calendar/core",
-  "version": "0.1.0",
-  "type": "module",
-  "description": "Big Calendar — @big-calendar/core",
+  "version": "0.0.0",
+  "description": "The kernel: canonical types, ingest, the time engine, view families, layout, the store and the signals facade. Pure TypeScript, no DOM code.",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/bigcalendar/big-calendar.git",
-    "directory": "packages/core"
-  },
+  "type": "module",
   "sideEffects": false,
   "exports": {
     ".": {
+      "@big-calendar/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "default": "./dist/index.js"
     },
-    "./utils": {
-      "types": "./dist/utils/index.d.ts",
-      "import": "./dist/utils.js"
-    }
-  },
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "typesVersions": {
-    "*": {
-      "utils": [
-        "./dist/utils/index.d.ts"
-      ]
-    }
+    "./package.json": "./package.json"
   },
   "files": [
     "dist"
   ],
-  "publishConfig": {
-    "access": "public"
+  "scripts": {
+    "test": "vitest run"
   },
-  "dependencies": {
-    "@big-calendar/localizer": "workspace:*",
-    "@floating-ui/core": "^1.7.5",
-    "@preact/signals-core": "^1.14.2"
+  "bigCalendar": {
+    "sizeBudgets": {
+      ".": "1 KB"
+    }
   },
-  "devDependencies": {
-    "@big-calendar/localizer-luxon": "workspace:*",
-    "@big-calendar/localizer-temporal": "workspace:*",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+  "nx": {
+    "name": "core",
+    "tags": [
+      "layer:kernel"
+    ]
   }
 }

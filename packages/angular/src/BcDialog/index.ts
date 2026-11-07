@@ -1,1 +1,0 @@
-export { BcDialogComponent } from './BcDialogComponent'

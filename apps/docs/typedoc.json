@@ -1,0 +1,36 @@
+{
+  "$schema": "https://typedoc-plugin-markdown.org/schema.json",
+  "entryPointStrategy": "packages",
+  "entryPoints": [
+    "../../packages/core",
+    "../../packages/interactions",
+    "../../packages/react",
+    "../../packages/react-ui"
+  ],
+  "packageOptions": {
+    "entryPoints": ["src/index.ts"],
+    "tsconfig": "tsconfig.lib.json"
+  },
+  "plugin": ["typedoc-plugin-markdown"],
+  "out": "src/api",
+  "fileExtension": ".mdx",
+  "sanitizeComments": true,
+  "readme": "none",
+  "hidePageHeader": true,
+  "hideBreadcrumbs": true,
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "validation": {
+    "notExported": true,
+    "invalidLink": true
+  },
+  "parametersFormat": "list",
+  "propertiesFormat": "list",
+  "enumMembersFormat": "list",
+  "typeDeclarationFormat": "list",
+  "indexFormat": "list",
+  "classPropertiesFormat": "list",
+  "interfacePropertiesFormat": "list",
+  "propertyMembersFormat": "list",
+  "typeAliasPropertiesFormat": "list"
+}

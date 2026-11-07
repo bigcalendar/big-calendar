@@ -1,0 +1,35 @@
+{
+  "name": "@big-calendar/tools-smoke-next",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Smoke test: Next.js builds a page using every package, with Turbopack and with webpack.",
+  "type": "module",
+  "scripts": {
+    "smoke": "node build.mjs"
+  },
+  "devDependencies": {
+    "@big-calendar/core": "workspace:*",
+    "@big-calendar/interactions": "workspace:*",
+    "@big-calendar/react": "workspace:*",
+    "@big-calendar/react-ui": "workspace:*",
+    "@big-calendar/temporal": "workspace:*",
+    "@big-calendar/testing": "workspace:*",
+    "next": "16.4.5",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "nx": {
+    "name": "tools-smoke-next",
+    "tags": [
+      "layer:tooling"
+    ],
+    "targets": {
+      "smoke": {
+        "dependsOn": [
+          "^build"
+        ],
+        "cache": false
+      }
+    }
+  }
+}

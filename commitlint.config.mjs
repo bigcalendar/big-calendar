@@ -1,33 +1,27 @@
-/**
- * Conventional Commits are mandatory — versioning, changelogs, and GitHub
- * Release notes are all derived from them (see plan §13).
- */
+// Conventional commits (workflow rule 8). Scopes are the package names (D-60) plus the
+// workspace areas below; a commit outside them uses `repo`.
+const packages = [
+  'core',
+  'interactions',
+  'react',
+  'react-ui',
+  'styles',
+  'temporal',
+  'recurrence',
+  'availability',
+  'ics',
+  'normalize',
+  'editing',
+  'codemods',
+  'testing',
+  'mcp',
+]
+const areas = ['repo', 'docs', 'ci', 'deps', 'tools', 'release']
+
 export default {
   extends: ['@commitlint/config-conventional'],
   rules: {
-    'scope-enum': [
-      1,
-      'always',
-      [
-        'core',
-        'localizer',
-        'localizer-temporal',
-        'localizer-luxon',
-        'styles',
-        'dnd',
-        'react',
-        'codemods',
-        'vue',
-        'angular',
-        'lit',
-        'svelte',
-        'storybook-core',
-        'storybook-react',
-        'e2e',
-        'repo',
-        'ci',
-        'deps',
-      ],
-    ],
+    'scope-enum': [2, 'always', [...packages, ...areas]],
+    'scope-empty': [2, 'never'],
   },
 }

@@ -1,1 +1,1 @@
-pnpm exec nx affected -t lint --uncommitted
+pnpm exec lint-staged

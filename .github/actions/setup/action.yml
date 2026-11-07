@@ -1,0 +1,22 @@
+name: Set up the workspace
+description: Node from .nvmrc, pnpm from package.json's packageManager (through corepack), and a frozen install.
+inputs:
+  browsers:
+    description: Playwright browsers to install with their system dependencies (empty for none).
+    default: ''
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v7
+      with:
+        node-version-file: .nvmrc
+    - name: Enable pnpm
+      shell: bash
+      run: corepack enable
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
+    - name: Install Playwright browsers
+      if: inputs.browsers != ''
+      shell: bash
+      run: pnpm exec playwright install --with-deps ${{ inputs.browsers }}

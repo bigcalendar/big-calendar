@@ -1,60 +1,96 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "neverConnectToCloud": true,
+  "defaultBase": "main",
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "production": [
       "default",
-      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
-      "!{projectRoot}/vitest.config.[jt]s",
-      "!{projectRoot}/**/*.stories.@(js|jsx|ts|tsx|mdx)",
-      "!{projectRoot}/.storybook/**/*",
-      "!{projectRoot}/stories/**/*"
+      "!{projectRoot}/**/*.test.{ts,tsx}",
+      "!{projectRoot}/**/*.stories.{ts,tsx}",
+      "!{projectRoot}/**/*.md",
+      "!{projectRoot}/vite.config.ts"
     ],
-    "sharedGlobals": [
-      "{workspaceRoot}/tsconfig.base.json",
-      "{workspaceRoot}/eslint.config.mjs"
-    ]
+    "sharedGlobals": ["{workspaceRoot}/tsconfig.base.json"]
+  },
+  "plugins": [
+    {
+      "plugin": "@nx/js/typescript",
+      "options": {
+        "typecheck": {
+          "targetName": "typecheck"
+        },
+        "build": false
+      }
+    },
+    {
+      "plugin": "@nx/vite/plugin",
+      "options": {
+        "buildTargetName": "build",
+        "testTargetName": "test",
+        "serveTargetName": "serve",
+        "previewTargetName": "preview",
+        "serveStaticTargetName": "serve-static",
+        "typecheckTargetName": "vite-typecheck"
+      }
+    },
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "lint"
+      }
+    }
+  ],
+  "sync": {
+    "applyChanges": true
   },
   "targetDefaults": {
     "build": {
-      "dependsOn": ["^build"],
-      "inputs": ["production", "^production"],
-      "outputs": ["{projectRoot}/dist"],
-      "cache": true
-    },
-    "test": {
-      "inputs": ["default", "^production"],
-      "cache": true
-    },
-    "lint": {
-      "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
+      "dependsOn": ["^build", "typecheck"],
       "cache": true
     },
     "typecheck": {
-      "dependsOn": ["^build"],
-      "inputs": ["production", "^production"],
+      "dependsOn": ["^typecheck"],
+      "cache": true
+    },
+    "lint": {
+      "cache": true
+    },
+    "test": {
       "cache": true
     }
   },
   "release": {
+    "projects": [
+      "core",
+      "interactions",
+      "react",
+      "react-ui",
+      "styles",
+      "temporal",
+      "testing"
+    ],
     "projectsRelationship": "fixed",
     "version": {
-      "conventionalCommits": true
+      "conventionalCommits": true,
+      "git": {
+        "commit": false,
+        "tag": false,
+        "push": false
+      },
+      "fallbackCurrentVersionResolver": "disk"
     },
     "changelog": {
-      "automaticFromRef": true,
-      "workspaceChangelog": {
-        "createRelease": "github"
-      },
-      "projectChangelogs": true
-    },
-    "git": {
-      "commit": true,
-      "tag": true
+      "workspaceChangelog": false,
+      "projectChangelogs": true,
+      "git": {
+        "commit": false,
+        "tag": false,
+        "push": false
+      }
     },
     "releaseTag": {
-      "pattern": "v{version}"
+      "pattern": "big-calendar@{version}"
     }
-  },
-  "analytics": false
+  }
 }

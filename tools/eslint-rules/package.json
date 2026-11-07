@@ -1,0 +1,30 @@
+{
+  "name": "@big-calendar/tools-eslint-rules",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Local ESLint rules for the D-46 coding standards.",
+  "type": "module",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "nx": {
+    "tags": [
+      "layer:tooling"
+    ],
+    "targets": {
+      "typecheck": {
+        "command": "tsc -p tsconfig.json",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production"
+        ]
+      }
+    },
+    "name": "tools-eslint-rules"
+  },
+  "main": "./index.ts"
+}

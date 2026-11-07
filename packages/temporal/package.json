@@ -1,0 +1,33 @@
+{
+  "name": "@big-calendar/temporal",
+  "version": "0.0.0",
+  "description": "Resolves native Temporal, or loads and installs the polyfill, and exports `temporalReady` (D-87).",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": true,
+  "exports": {
+    ".": {
+      "@big-calendar/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "vitest run"
+  },
+  "bigCalendar": {
+    "sizeBudgets": {
+      ".": "1 KB"
+    }
+  },
+  "nx": {
+    "name": "temporal",
+    "tags": [
+      "layer:loader"
+    ]
+  }
+}

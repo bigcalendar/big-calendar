@@ -45,6 +45,17 @@ Full rules: [docs/standards/workflow.md](docs/standards/workflow.md).
 
 Each package will have its own `AGENTS.md` (purpose, boundaries, commands, governing specs). Skills live in [`.agents/skills/`](.agents/skills); checklists any agent can run live in [`docs/checklists/`](docs/checklists/README.md).
 
+## Commands
+
+Node 24 (`.nvmrc`); pnpm switches itself to the version in `package.json`.
+
+- `pnpm install`
+- `pnpm build` · `pnpm typecheck` · `pnpm lint` · `pnpm test` (all projects, through Nx)
+- `pnpm exec nx affected -t <target>` (only what changed against `main`)
+- `pnpm format` · `pnpm format:check`
+
+Published packages live in `packages/` (`@big-calendar/<name>`, D-60). Private tools and fixtures live in `tools/` as `@big-calendar/tools-<name>` and `@big-calendar/fixture-<name>` (D-104); Nx names drop the scope (`pnpm nx test tools-size`).
+
 ## Current state
 
-Planning phase on the `planning` branch. `packages/`, `storybook-site/` and the root build configs are **attempt-1 code**: archived and replaced in S0. Don't read them for guidance or build on them.
+Slice S0 (foundations) on `slice/s0-foundations`; the slice spec is [`docs/spec/slices/s0.md`](docs/spec/slices/s0.md). Attempt 1 is archived (tag `archive/attempt-1-final`, branch `archive/attempt-1`) and removed from the working tree. Don't read the archive for guidance or build on it.

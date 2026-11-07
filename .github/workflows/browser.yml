@@ -1,0 +1,29 @@
+# The browser suite on PRs (D-48): end to end, visual and axe on Chromium, Firefox and WebKit, each
+# with and without native Temporal (D-87).
+name: Browser suite
+on:
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: browser-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    env:
+      NX_NO_CLOUD: 'true'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          browsers: chromium firefox webkit
+      - name: Playwright suite
+        run: pnpm exec nx run docs:e2e
+      - name: Keep the report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 14

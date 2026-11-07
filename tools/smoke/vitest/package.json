@@ -1,0 +1,32 @@
+{
+  "name": "@big-calendar/tools-smoke-vitest",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Smoke test: Vitest (Node) imports every package.",
+  "type": "module",
+  "scripts": {
+    "smoke": "vitest run"
+  },
+  "devDependencies": {
+    "@big-calendar/core": "workspace:*",
+    "@big-calendar/interactions": "workspace:*",
+    "@big-calendar/react": "workspace:*",
+    "@big-calendar/react-ui": "workspace:*",
+    "@big-calendar/temporal": "workspace:*",
+    "@big-calendar/testing": "workspace:*"
+  },
+  "nx": {
+    "name": "tools-smoke-vitest",
+    "tags": [
+      "layer:tooling"
+    ],
+    "targets": {
+      "smoke": {
+        "dependsOn": [
+          "^build"
+        ],
+        "cache": false
+      }
+    }
+  }
+}
